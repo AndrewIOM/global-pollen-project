@@ -1,0 +1,43 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable",
+    "compilerName": "fsc",
+    "compile": {
+      "includeFiles": [
+        "ErrorHandling.fs",
+        "AgentHelper.fs",
+        "Serialisation.fs",
+        "EventStore.fs",
+        "ReadStore.fs",
+        "Migrations.fs"
+      ]
+    }
+  },
+  "dependencies": {
+    "GlobalPollenProject.Core": {
+      "target": "project"
+    },
+    "Microsoft.EntityFrameworkCore": "1.0.1",
+    "Microsoft.EntityFrameworkCore.Sqlite": "1.0.1",
+    "Newtonsoft.Json": "9.0.1"
+  },
+  "tools": {
+    "dotnet-compile-fsc": "1.0.0-preview2.1-*",
+    "Microsoft.EntityFrameworkCore.Tools": {
+      "version": "1.0.0-preview2-final",
+      "imports": [
+        "portable-net45+win8+dnxcore50",
+        "portable-net45+win8"
+      ]
+    }
+  },
+  "frameworks": {
+    "netstandard1.6": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.1",
+        "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160629"
+      }
+    }
+  }
+}

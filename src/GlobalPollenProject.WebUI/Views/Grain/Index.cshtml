@@ -1,0 +1,25 @@
+@model List<ReadStore.GrainSummary>
+@{
+    ViewData["Title"] = "Unidentified Grains";
+}
+
+<h2>Unidentified Pollen Grains</h2>
+<hr/>
+
+@foreach (var grain in Model)
+{
+    <p><a href="@Url.Action("Identify", "Grain", new {id = @grain.Id})">@grain.Thumbnail</a></p>
+}
+
+<h4>Functions</h4>
+<a class="btn btn-default" asp-action="SubmitUnknownGrain" asp-controller="Home">Submit a Grain</a>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>
+}
+
+<script type="text/javascript">
+// Unknown Grains view model
+
+
+</script>

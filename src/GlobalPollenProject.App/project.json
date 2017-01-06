@@ -1,0 +1,33 @@
+{
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "debugType": "portable",
+    "compilerName": "fsc",
+    "compile": {
+      "includeFiles": [
+        "EventHandler.fs",
+        "App.fs"
+      ]
+    }
+  },
+  "dependencies": {
+    "GlobalPollenProject.Core": {
+      "target": "project"
+    },
+    "GlobalPollenProject.Persistence": {
+      "target": "project"
+    },
+    "Microsoft.EntityFrameworkCore": "1.0.1"
+  },
+  "tools": {
+    "dotnet-compile-fsc": "1.0.0-preview2.1-*"
+  },
+  "frameworks": {
+    "netstandard1.6": {
+      "dependencies": {
+        "NETStandard.Library": "1.6.1",
+        "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160629"
+      }
+    }
+  }
+}
