@@ -23,7 +23,7 @@ namespace GlobalPollenProject.WebUI.Controllers
         [HttpPost]
         public IActionResult Identify(Guid id, int taxonId = 1)
         {
-            GrainService.identifyUnknownGrain(id, taxonId);
+            // GrainService.identifyUnknownGrain(id, taxonId);
             return RedirectToAction("Identify");
         }
 

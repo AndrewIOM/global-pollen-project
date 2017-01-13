@@ -61,7 +61,7 @@ type EventInfoTable =
         EventPayload: OperationBuilder<AddColumnOperation>
     }
 
-[<DbContext(typeof<SqlEventStore.SqlEventStoreContext>)>]
+[<DbContext(typeof<SqlEventStoreContext>)>]
 [<Migration("20170106144439_Initial")>]
 type InitEventStore() =
     inherit Migration()

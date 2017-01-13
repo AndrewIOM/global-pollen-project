@@ -96,14 +96,24 @@ let submitGrain (command: SubmitUnknownGrain) state =
 let identifyGrain (command: IdentifyUnknownGrain) (state:State) =
     match state with
     | InitialState -> invalidOp "This grain does not exist"
-    | _ -> 
+    | Submitted s -> 
         printfn "G - Grain Identified"
-        let result = [ GrainIdentified { Id = command.Id; Taxon = command.Taxon }]
+        let result = GrainIdentified { Id = command.Id; Taxon = command.Taxon }
+        let confirmedId = 
+            match s.IdentificationStatus with
+            | Unidentified -> calculateIdentity []
+            | Partial ids -> calculateIdentity (ids |> List.map (fun i -> i.Taxon))
+            | Confirmed (ids,t) -> calculateIdentity (ids |> List.map (fun i -> i.Taxon))
+        match confirmedId with
+        | Some id ->
+            let confirmed = GrainIdentityConfirmed { Id = command.Id; Taxon = id }
+            [result; confirmed]
+        | None -> [result]
         // If unidentified, and taxon is Some, then send Confirmed event
         // If confirmed, and taxon is the same, then don't send another event
         // If confirmed, and taxon is different, then send Confirmed/Changed event
         // If confirmed, and taxon is None, then send UnConfirmed event
-        result
+        
 
 // Handle Commands to make Decisions.
 // NB We can use 'Domain services' in this function, 
@@ -113,9 +123,10 @@ let handle =
     | SubmitUnknownGrain command -> submitGrain command
     | IdentifyUnknownGrain command -> identifyGrain command
 
-let aggregateId = function
-    | SubmitUnknownGrain c -> c.Id
-    | IdentifyUnknownGrain c -> c.Id
+let private unwrap (GrainId e) = e
+let getId = function
+    | SubmitUnknownGrain c -> unwrap c.Id
+    | IdentifyUnknownGrain c -> unwrap c.Id
 
 // Apply decisions already taken (rebuild)
 type State with
@@ -130,6 +141,10 @@ type State with
             match state with
             | InitialState -> invalidOp "Grain is not submitted"
             | Submitted grainState ->
+                // match grainState with
+                // | Unidentified -> Partial [{By = UserId "fake"; Taxon = event.Taxon}]
+                // | Partial ids -> Partial [ids :: {By = UserId "fake"; Taxon = event.Taxon}]
+                // | Confirmed ids -> Partial [ids :: {By = UserId "fake"; Taxon = event.Taxon}]
                 Submitted {
                     grainState with
                         IdentificationStatus = Partial [] }

@@ -10,23 +10,26 @@
       ]
     }
   },
+  "testRunner": "xunit",
   "dependencies": {
     "GlobalPollenProject.Core": {
       "target": "project"
     },
     "GlobalPollenProject.Persistence": {
       "target": "project"
-    }
+    },
+    "xunit":"2.1.0",
+    "dotnet-test-xunit": "1.0.0-rc2-192208-24"
   },
   "tools": {
     "dotnet-compile-fsc": "1.0.0-preview2.1-*"
   },
   "frameworks": {
-    "netstandard1.6": {
-      "dependencies": {
-        "NETStandard.Library": "1.6.1",
-        "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160629"
-      }
+    "netcoreapp1.0": {
+      "imports": [
+        "dotnet54",
+        "portable-net45+win8" 
+      ]
     }
   }
 }

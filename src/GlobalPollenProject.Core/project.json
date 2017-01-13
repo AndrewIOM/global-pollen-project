@@ -6,7 +6,10 @@
     "compile": {
       "includeFiles": [
         "Types.fs",
+        "Services.fs",
+        "Taxonomy.fs",
         "Grain.fs",
+        "User.fs",
         "CommandHandlers.fs"
       ]
     }

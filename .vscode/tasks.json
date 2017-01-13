@@ -10,6 +10,15 @@
             "isBuildCommand": true,
             "showOutput": "silent",
             "problemMatcher": "$msCompile"
+        },
+        {
+            "taskName": "test",
+            "args": [
+                "/test/GlobalPollenProject.Core.Tests/project.json"
+            ],
+            "isTestCommand": true,
+            "showOutput": "always",
+            "problemMatcher": "$msCompile"
         }
     ]
 }

@@ -15,8 +15,8 @@ namespace GlobalPollenProject.WebUI.Controllers
 
         public IActionResult Events()
         {
-            var model = GrainService.listEvents().ToList();
-            return View(model);
+            // var model = GrainService.listEvents().ToList();
+            return View();
         }
 
         public IActionResult SubmitUnknownGrain()

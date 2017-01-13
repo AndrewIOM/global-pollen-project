@@ -3,17 +3,33 @@ module GlobalPollenProject.Core.Types
 
 open System
 
+type RootAggregateId = System.Guid
+type RootAggregate<'TState, 'TCommand, 'TEvent> = {
+    initial : 'TState
+    evolve : 'TState -> 'TEvent -> 'TState
+    handle : 'TCommand -> 'TState -> 'TEvent list
+    getId: 'TCommand -> RootAggregateId }
+
 // Identities
 type UserId = UserId of string
 type OrgId = OrgId of string
 type CollectionId = CollectionId of int
 type SlideId = SlideId of CollectionId * string
-type GrainId = GrainId of Guid
-type TaxonId = TaxonId of int
+type GrainId = GrainId of RootAggregateId
+type TaxonId = TaxonId of RootAggregateId
 
 // Specialist Types
 type Url = Url of string
 type Base64Image = Base64Image of string
+
+// Taxonomy
+type Rank =
+| Family
+| Genus
+| Species
+| Subspecies
+
+type LatinName = LatinName of string
 
 // Services
 type TaxonomicBackbone = TaxonomicBackbone of string
@@ -82,4 +98,3 @@ type StorageMedium =
 //     WallThickness: WallThickness option
 //     Patterning: Patterning option
 // }
-

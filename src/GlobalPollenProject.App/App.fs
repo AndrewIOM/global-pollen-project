@@ -1,32 +1,47 @@
 namespace GlobalPollenProject.App
 
-open EventHandler
 open System
-open GlobalPollenProject.Core.Aggregates.Grain
 open GlobalPollenProject.Core.Types
 open GlobalPollenProject.Core.CommandHandlers
 open System.Threading
 
 open ReadStore
+open EventStore
+
+// ~~~~~~~~~~~~~~~~~~~~~~
+// Configure App
+// ~~~~~~~~~~~~~~~~~~~~~~
+
+// A. Set up all event handlers
+// -----------------------------
+// Event handlers are subscribed such that, as events as handled
+// by the command handler, the event handlers are notified.
+// Thus, we only need to handle the command and save the changes for
+// side-effects to occur.
+
+module Config =
+
+    let eventStore = EventStore.SqlEventStore()
+    let eventStream = eventStore.SaveEvent :> IObservable<string*obj>
+    let readModelHandler = eventStream |> EventHandlers.projectionEventHandler
+    
+
+    // B. Set up projections database
+    let projections =
+        new ReadContext()
+
 
 module GrainService =
 
-    // Setup services
-    let private eventHandler = EventHandler ()
+    open GlobalPollenProject.Core.Aggregates.Grain
 
-    // Event handlers are subscribed such that, as events as handled
-    // by the command handler, the event handlers are notified.
-    // Thus, we only need to handle the command and save the changes for
-    // side-effects to occur.
-    let private store = 
-        EventStore.SqlEventStore.create ()
-        |> EventStore.SqlEventStore.subscribe eventHandler.Handle
-
-    let readSide =
-        new ReadContext()
-
-    // It would be useful here to have a command router for individual handlers
-    let private handle = Grain.create (EventStore.SqlEventStore.readStream store) (EventStore.SqlEventStore.appendToStream store)
+    let aggregate = {
+        initial = GlobalPollenProject.Core.Aggregates.Grain.InitialState
+        evolve = GlobalPollenProject.Core.Aggregates.Grain.State.Evolve
+        handle = GlobalPollenProject.Core.Aggregates.Grain.handle
+        getId = GlobalPollenProject.Core.Aggregates.Grain.getId }
+    
+    let private handle = create aggregate "Grain" (Config.eventStore.ReadStream) Config.eventStore.Save
 
     let submitUnknownGrain grainId base64string =
 
@@ -39,7 +54,24 @@ module GrainService =
         handle (IdentifyUnknownGrain { Id = GrainId grainId; Taxon = TaxonId taxonId })
 
     let listUnknownGrains() =
-        readSide.GrainSummaries |> Seq.toList
+        Config.projections.GrainSummaries |> Seq.toList
 
-    let listEvents() =
-        store.context.Events |> Seq.toList
+    // let listEvents() =
+    //     Config.eventStore.Events |> Seq.toList
+
+
+// module TaxonomyService = 
+
+//     open GlobalPollenProject.Core.Aggregates.Taxonomy
+//     open GlobalPollenProject.Core.CommandHandlers
+
+//     let private handle = 
+//         let aggregate = {
+//             initial = GlobalPollenProject.Core.Aggregates.Taxonomy.State.InitialState
+//             evolve = GlobalPollenProject.Core.Aggregates.Taxonomy.State.Evolve
+//             handle = GlobalPollenProject.Core.Aggregates.Taxonomy.handle
+//             getId = GlobalPollenProject.Core.Aggregates.Taxonomy.getId }
+//         create aggregate "Taxonomy" (EventStore.SqlEventStore.readStream Config.eventStore) (EventStore.SqlEventStore.appendToStream Config.eventStore)
+
+//     let import latinName rank =
+//         handle (Import {Id = TaxonId (Guid.NewGuid()); Name = LatinName latinName; Rank = Rank.Family; Parent = None})
