@@ -202,6 +202,9 @@ let converters =
     @ valueConverters
 
 let deserializeUnion<'a> eventType data = 
+
+    printfn "Type to deserialise: %s" typeof<'a>.Name
+
     FSharpType.GetUnionCases(typeof<'a>)
     |> Array.tryFind (fun c -> c.Name = eventType)
     |> function

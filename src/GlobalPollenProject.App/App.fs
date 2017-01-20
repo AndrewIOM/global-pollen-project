@@ -40,8 +40,8 @@ module GrainService =
         evolve = GlobalPollenProject.Core.Aggregates.Grain.State.Evolve
         handle = GlobalPollenProject.Core.Aggregates.Grain.handle
         getId = GlobalPollenProject.Core.Aggregates.Grain.getId }
-    
-    let private handle = create aggregate "Grain" (Config.eventStore.ReadStream) Config.eventStore.Save
+
+    let private handle = create aggregate "Grain" Config.eventStore.ReadStream<GlobalPollenProject.Core.Aggregates.Grain.Event> Config.eventStore.Save
 
     let submitUnknownGrain grainId base64string =
 
@@ -56,8 +56,8 @@ module GrainService =
     let listUnknownGrains() =
         Config.projections.GrainSummaries |> Seq.toList
 
-    // let listEvents() =
-    //     Config.eventStore.Events |> Seq.toList
+    let listEvents() =
+        Config.eventStore.Events |> Seq.toList
 
 
 // module TaxonomyService = 

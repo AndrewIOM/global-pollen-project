@@ -3,12 +3,13 @@ module EventStore
 open System
 open Microsoft.EntityFrameworkCore
 open Serialisation
+open GlobalPollenProject.Core.Types
 
 exception WrongExpectedVersionException
 
 let filter<'TEvent> ev = 
-    match box ev with
-    | :? 'TEvent as tev -> Some tev
+    match box (fst ev) with
+    | :? 'TEvent as tev -> Some (tev,(snd ev))
     | _ -> None
 
 // A POCO representing event data in SQL row
@@ -36,8 +37,8 @@ let serialise (event:'a) : SerialisedEvent =
         Payload = data 
     }
 
-let deserialise (event:EventInfo) : (obj * int) option = 
-    match deserializeUnion event.EventType event.EventPayload with
+let deserialise<'TEvent> (event:EventInfo) : ('TEvent * int) option = 
+    match deserializeUnion<'TEvent> event.EventType event.EventPayload with
     | Some x -> Some (x, event.StreamVersion)
     | None -> None
 
@@ -63,10 +64,14 @@ type SqlEventStore() =
 
     let saveEvent = new Event<string * obj>()
 
+    member this.Events = context.Events |> Seq.toList
+
     member this.SaveEvent = 
         saveEvent.Publish 
 
-    member this.ReadStream<'TEvent> streamId version count = 
+    member this.ReadStream<'a> streamId version count = 
+
+        printfn "Type to read: %s" typeof<'a>.Name
 
         let result = query {
             for e in context.Events do
@@ -87,20 +92,23 @@ type SqlEventStore() =
             let lastEventNumber = (events |> Seq.last).StreamVersion 
             
             events 
-            |> List.choose deserialise
-            |> List.choose filter<'TEvent>,
+            |> List.map (fun x -> (deserializeUnion<'a> x.EventType x.EventPayload), x.StreamVersion)
+            |> List.choose (fun x -> match fst x with
+                                     | Some e -> Some (e, (snd x))
+                                     | None -> None),
+            //|> List.choose filter<'a>,
             lastEventNumber,
             if lastEventNumber < version + count 
                 then None 
                 else Some (lastEventNumber+1)
 
-    member this.Save stream expectedVersion events = 
+    member this.Save stream expectedVersion (events: 'a list) = 
 
         let eventsWithVersion =
             events
             |> List.mapi (fun index event -> (event, expectedVersion + index + 1))
 
-        let convertToEfType (event: obj * int) =
+        let convertToEfType (event: 'a * int) =
             let serialisedEvent = serialise (fst event)
             {
                 Id = serialisedEvent.Id
@@ -111,7 +119,7 @@ type SqlEventStore() =
                 EventPayload = serialisedEvent.Payload
             }
 
-        match (this.ReadStream stream expectedVersion 1) with
+        match (this.ReadStream<'a> stream expectedVersion 1) with
         | (_,v,_) when v = expectedVersion -> 
             context.Events.AddRange (eventsWithVersion |> List.map convertToEfType)
             context.SaveChanges() |> ignore
@@ -122,4 +130,4 @@ type SqlEventStore() =
 
         | _ -> raise WrongExpectedVersionException
 
-        events |> List.iter (fun e -> saveEvent.Trigger(stream,e))
+        events |> List.iter (fun e -> saveEvent.Trigger(stream,upcast e))
