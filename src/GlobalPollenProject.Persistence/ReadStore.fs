@@ -12,6 +12,29 @@ type GrainSummary = {
     Id:Guid;
     Thumbnail:string }
 
+[<CLIMutable>]
+type TaxonSummary = {
+    [<Key>]
+    Id:Guid;
+    Family:string
+    Genus:string
+    Species:string
+    LatinName:string
+    Rank:string
+    SlideCount:int
+    GrainCount:int
+    ThumbnailUrl:string
+}
+
+[<CLIMutable>]
+type PublicProfile = {
+    [<Key>]
+    UserId:Guid
+    IsPublic:bool
+    FirstName:string
+    LastName:string
+}
+
 // Entity Framework Context
 type ReadContext =
     inherit DbContext

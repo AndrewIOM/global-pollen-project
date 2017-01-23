@@ -17,7 +17,9 @@
     "GlobalPollenProject.Persistence": {
       "target": "project"
     },
-    "Microsoft.EntityFrameworkCore": "1.0.1"
+    "GlobalPollenProject.Shared.Identity": {
+      "target": "project"
+    }
   },
   "tools": {
     "dotnet-compile-fsc": "1.0.0-preview2.1-*"

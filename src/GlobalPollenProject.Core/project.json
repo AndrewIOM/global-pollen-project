@@ -10,8 +10,7 @@
         "Taxonomy.fs",
         "Grain.fs",
         "User.fs",
-        "CommandHandlers.fs",
-        "Events.fs"
+        "CommandHandlers.fs"
       ]
     }
   },

@@ -9,13 +9,13 @@ namespace GlobalPollenProject.WebUI.Controllers
     {
         public IActionResult Index()
         {
-            var model = GrainService.listUnknownGrains().ToList();
+            var model = GrainAppService.listUnknownGrains().ToList();
             return View(model);
         }
 
         public IActionResult Identify(Guid id)
         {
-            var model = GrainService.listUnknownGrains().FirstOrDefault(m => m.Id == id);
+            var model = GrainAppService.listUnknownGrains().FirstOrDefault(m => m.Id == id);
             if (model == null) return BadRequest();
             return View(model);
         }
@@ -23,7 +23,7 @@ namespace GlobalPollenProject.WebUI.Controllers
         [HttpPost]
         public IActionResult Identify(Guid id, int taxonId = 1)
         {
-            GrainService.identifyUnknownGrain(id, Guid.Empty);
+            GrainAppService.identifyUnknownGrain(id, Guid.Empty);
             return RedirectToAction("Identify");
         }
 

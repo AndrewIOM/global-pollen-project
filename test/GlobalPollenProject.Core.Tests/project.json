@@ -1,7 +1,7 @@
 {
-  "version": "1.0.0-*",
+  "version": "0.1.0-*",
   "buildOptions": {
-    "debugType": "portable",
+    "emitEntryPoint": false,
     "compilerName": "fsc",
     "compile": {
       "includeFiles": [
@@ -10,26 +10,38 @@
       ]
     }
   },
-  "testRunner": "xunit",
   "dependencies": {
+    "xunit":"2.1.0",
+    "dotnet-test-xunit":"1.0.0-*",
     "GlobalPollenProject.Core": {
       "target": "project"
-    },
-    "GlobalPollenProject.Persistence": {
-      "target": "project"
-    },
-    "xunit":"2.1.0",
-    "dotnet-test-xunit": "1.0.0-rc2-192208-24"
+    }
   },
   "tools": {
-    "dotnet-compile-fsc": "1.0.0-preview2.1-*"
-  },
-  "frameworks": {
-    "netcoreapp1.0": {
+    "xunit.runner.console":"2.1.0",
+    "dotnet-compile-fsc": {
+      "version": "1.0.0-*",
       "imports": [
-        "dotnet54",
-        "portable-net45+win8" 
+        "dnxcore50",
+        "portable-net45+win8",
+        "netstandard1.3"
       ]
     }
-  }
+  },  
+  "frameworks": {
+    "netcoreapp1.0": {
+      "dependencies": {
+        "Microsoft.FSharp.Core.netcore":"1.0.0-alpha-160509",
+        "Microsoft.NETCore.App": {
+          "type":"platform",
+          "version":"1.0.0-rc2-3002702"
+        }
+      },
+      "imports": [
+        "portable-net451+win81",
+        "dnxcore50"
+      ]
+    }
+  },
+  "testRunner":"xunit"
 }

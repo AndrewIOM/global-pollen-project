@@ -21,7 +21,8 @@ namespace GlobalPollenProject.WebUI.Controllers
         [HttpPost]
         public IActionResult Import(ImportTaxonViewModel result)
         {
-            throw new NotImplementedException();
+            TaxonomyAppService.import(result.LatinName);
+            return Ok();
         }
 
         public IActionResult Error()

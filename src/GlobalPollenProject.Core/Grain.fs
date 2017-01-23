@@ -10,11 +10,13 @@ type Command =
 
 and SubmitUnknownGrain = {
     Id: GrainId
+    SubmittedBy: UserId
     Images: Image list
 }
 
 and IdentifyUnknownGrain = {
     Id: GrainId
+    IdentifiedBy: UserId
     Taxon: TaxonId
 }
 
@@ -24,15 +26,19 @@ type Event =
     | GrainSubmitted of GrainSubmitted
     | GrainIdentified of GrainIdentified
     | GrainIdentityConfirmed of GrainIdentityConfirmed
+    | GrainIdentityChanged of GrainIdentityChanged
+    | GrainIdentityUnconfirmed of GrainIdentityUnconfirmed
 
 and GrainSubmitted = {
     Id: GrainId
     Images: Image list
+    Owner: UserId
 }
 
 and GrainIdentified = {
     Id: GrainId
     Taxon: TaxonId
+    IdentifiedBy: UserId
 }
 
 and GrainIdentityConfirmed = {
@@ -55,6 +61,7 @@ type State =
     | Submitted of GrainState
 
 and GrainState = {
+    Owner: UserId
     Images: Image list
     IdentificationStatus: IdentificationStatus
 }
@@ -70,6 +77,7 @@ and IdentificationStatus =
 
 // Decisions
 let calculateIdentity (identifications: TaxonId list) =
+    printfn "Evaluating grain identity. It has %i IDs" (identifications |> List.length)
     if identifications |> List.length < 3 then None
     else 
         let threshold = float (List.length identifications) * 0.70
@@ -82,37 +90,44 @@ let calculateIdentity (identifications: TaxonId list) =
         Some (fst taxon)
 
 let submitGrain (command: SubmitUnknownGrain) state =
-    printfn "%i %s" command.Images.Length (command.Id.ToString())
     if command.Images.Length = 0 then invalidArg "images" "At least one image is required"
     match state with
     | InitialState ->
-        printfn "G - Grain Submitted"
         [ GrainSubmitted { Id = command.Id
+                           Owner = command.SubmittedBy
                            Images = command.Images }]
     | _ -> 
-        printfn "Invalid op %s" (state.ToString())
         invalidOp "This grain has already been submitted"
 
 let identifyGrain (command: IdentifyUnknownGrain) (state:State) =
     match state with
     | InitialState -> invalidOp "This grain does not exist"
     | Submitted s -> 
-        printfn "G - Grain Identified"
-        let result = GrainIdentified { Id = command.Id; Taxon = command.Taxon }
-        let confirmedId = 
-            match s.IdentificationStatus with
-            | Unidentified -> calculateIdentity []
-            | Partial ids -> calculateIdentity (ids |> List.map (fun i -> i.Taxon))
-            | Confirmed (ids,t) -> calculateIdentity (ids |> List.map (fun i -> i.Taxon))
-        match confirmedId with
-        | Some id ->
-            let confirmed = GrainIdentityConfirmed { Id = command.Id; Taxon = id }
-            [result; confirmed]
-        | None -> [result]
-        // If unidentified, and taxon is Some, then send Confirmed event
-        // If confirmed, and taxon is the same, then don't send another event
-        // If confirmed, and taxon is different, then send Confirmed/Changed event
-        // If confirmed, and taxon is None, then send UnConfirmed event
+
+        let evaluate oldIds newId taxon =
+            printfn "Old IDs: %i." (oldIds |> List.length)
+            let result = GrainIdentified { Id = command.Id; Taxon = command.Taxon; IdentifiedBy = command.IdentifiedBy }
+            //if oldIds |> List.exists (fun x -> x.By = command.IdentifiedBy) then invalidOp "Cannot submit a second ID"
+            let ids = newId :: oldIds
+            let confirmedId = calculateIdentity (ids |> List.map (fun i -> i.Taxon))
+            match confirmedId with
+            | Some identity ->
+                let confirmed = GrainIdentityConfirmed { Id = command.Id; Taxon = identity }
+                match taxon with
+                | Some existing ->
+                    if existing = identity then [result]
+                    else [result; GrainIdentityChanged { Id = command.Id; Taxon = identity } ]
+                | None -> [result;confirmed]
+            | None ->
+                match taxon with
+                | Some existing -> [result; GrainIdentityUnconfirmed { Id = command.Id } ]
+                | None -> [result]
+
+        let newId = { By = command.IdentifiedBy; Taxon = command.Taxon }
+        match s.IdentificationStatus with
+        | Unidentified -> evaluate [] newId None
+        | Partial ids -> evaluate ids newId None
+        | Confirmed (ids,t) -> evaluate ids newId (Some t)
         
 
 // Handle Commands to make Decisions.
@@ -135,24 +150,43 @@ type State with
         | GrainSubmitted event -> 
             Submitted { 
               IdentificationStatus = Unidentified
+              Owner = event.Owner
               Images = event.Images }
 
         | GrainIdentified event ->
             match state with
             | InitialState -> invalidOp "Grain is not submitted"
             | Submitted grainState ->
-                // match grainState with
-                // | Unidentified -> Partial [{By = UserId "fake"; Taxon = event.Taxon}]
-                // | Partial ids -> Partial [ids :: {By = UserId "fake"; Taxon = event.Taxon}]
-                // | Confirmed ids -> Partial [ids :: {By = UserId "fake"; Taxon = event.Taxon}]
-                Submitted {
-                    grainState with
-                        IdentificationStatus = Partial [] }
+                let newId = {By = event.IdentifiedBy; Taxon = event.Taxon}
+                match grainState.IdentificationStatus with
+                | Unidentified ->
+                    printfn "Grain is now partially identified"
+                    Submitted {
+                        grainState with
+                            IdentificationStatus = Partial ([newId]) }
+                | Partial ids ->
+                    printfn "Partially ID'd grain gained new id. Current IDs: %i" ids.Length
+                    Submitted {
+                        grainState with
+                            IdentificationStatus = Partial (newId :: ids) }
+                | Confirmed (ids,t) ->
+                    Submitted {
+                        grainState with
+                            IdentificationStatus = Confirmed (newId :: ids,t) }
 
         | GrainIdentityConfirmed event ->
             match state with
             | InitialState -> invalidOp "Grain is not submitted"
             | Submitted grainState ->
-                Submitted {
-                    grainState with
-                        IdentificationStatus = Confirmed ([], event.Taxon) }
+                match grainState.IdentificationStatus with
+                | Partial ids ->
+                    Submitted {
+                        grainState with
+                            IdentificationStatus = Confirmed (ids, event.Taxon) }
+                | _ -> invalidOp "Cannot transition from unsubmitted or confirmed to confirmed"
+
+        | GrainIdentityChanged event ->
+            state
+        
+        | GrainIdentityUnconfirmed event ->
+            state

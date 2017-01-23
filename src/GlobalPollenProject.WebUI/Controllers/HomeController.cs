@@ -9,20 +9,20 @@ namespace GlobalPollenProject.WebUI.Controllers
     {
         public IActionResult Index()
         {
-            var model = GrainService.listUnknownGrains().ToList();
+            var model = GrainAppService.listUnknownGrains().ToList();
             return View(model);
         }
 
         public IActionResult Events()
         {
-            var model = GrainService.listEvents().ToList();
+            var model = GrainAppService.listEvents().ToList();
             return View(model);
         }
 
         public IActionResult SubmitUnknownGrain()
         {
             var id = Guid.NewGuid();
-            GrainService.submitUnknownGrain(id, "http://www.acm.im/cheuihiu.jpg");
+            GrainAppService.submitUnknownGrain(id, "http://www.acm.im/cheuihiu.jpg");
             return RedirectToAction("Home");
         }
 

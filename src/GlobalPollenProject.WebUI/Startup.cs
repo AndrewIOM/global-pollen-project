@@ -40,7 +40,6 @@ namespace GlobalPollenProject.WebUI
             {
                 app.UseDeveloperExceptionPage();
                 app.UseDatabaseErrorPage();
-                app.UseBrowserLink();
             }
             else
             {
