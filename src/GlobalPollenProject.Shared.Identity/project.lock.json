@@ -8385,8 +8385,7 @@
       "Microsoft.EntityFrameworkCore.Tools >= 1.1.0-preview4-final",
       "Microsoft.Extensions.Configuration >= 1.1.0",
       "Microsoft.Extensions.Configuration.FileExtensions >= 1.1.0",
-      "Microsoft.Extensions.Configuration.Json >= 1.0.0",
-      "NETStandard.Library >= 1.6.1"
+      "Microsoft.Extensions.Configuration.Json >= 1.0.0"
     ],
     ".NETStandard,Version=v1.6": [
       "NETStandard.Library >= 1.6.1"

@@ -58,9 +58,7 @@ type SqlEventStoreContext =
         optionsBuilder.UseSqlite "Filename=./eventstore.db" |> ignore
         printfn "Connected to Entity Framework EventStore"
 
-type SqlEventStore() = 
-
-    let mutable context = new SqlEventStoreContext()
+type EventStore(context:SqlEventStoreContext) = 
 
     let saveEvent = new Event<string * obj>()
 
@@ -131,3 +129,14 @@ type SqlEventStore() =
         | _ -> raise WrongExpectedVersionException
 
         events |> List.iter (fun e -> saveEvent.Trigger(stream,upcast e))
+
+let SqlEventStore() =
+    let mutable context = new SqlEventStoreContext()
+    EventStore(context)
+
+let InMemoryEventStore() =
+    let dbOptions = (new DbContextOptionsBuilder<SqlEventStoreContext>())
+                        .UseInMemoryDatabase()
+                        .Options
+    let inMemory = new SqlEventStoreContext(dbOptions)
+    EventStore(inMemory)

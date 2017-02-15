@@ -10,6 +10,7 @@
         "Taxonomy.fs",
         "Grain.fs",
         "User.fs",
+        "ReferenceCollection.fs",
         "CommandHandlers.fs"
       ]
     }
