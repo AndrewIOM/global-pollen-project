@@ -7,7 +7,7 @@
     "compile": {
       "includeFiles": [
         "Specification.fs",
-        "Grain.fs"
+        "Core.fs"
       ]
     }
   },
