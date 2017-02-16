@@ -10,7 +10,7 @@ init:
 before_build:
 - appveyor-retry dotnet restore -v Minimal
 build_script:
-- dotnet build "src\GlobalPollenProject.WebUI" -c %CONFIGURATION% --no-dependencies --version-suffix %LABEL%
+- dotnet build "src\GlobalPollenProject.WebUI" -c %CONFIGURATION% --version-suffix %LABEL%
 after_build:
 - dotnet publish "src\GlobalPollenProject.WebUI" -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts\GlobalPollenProject.WebUI
 test_script:
