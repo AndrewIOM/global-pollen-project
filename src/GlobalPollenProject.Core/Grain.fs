@@ -107,7 +107,7 @@ let identifyGrain (command: IdentifyUnknownGrain) (state:State) =
         let evaluate oldIds newId taxon =
             printfn "Old IDs: %i." (oldIds |> List.length)
             let result = GrainIdentified { Id = command.Id; Taxon = command.Taxon; IdentifiedBy = command.IdentifiedBy }
-            //if oldIds |> List.exists (fun x -> x.By = command.IdentifiedBy) then invalidOp "Cannot submit a second ID"
+            if oldIds |> List.exists (fun x -> x.By = command.IdentifiedBy) then invalidOp "Cannot submit a second ID"
             let ids = newId :: oldIds
             let confirmedId = calculateIdentity (ids |> List.map (fun i -> i.Taxon))
             match confirmedId with
