@@ -14,7 +14,7 @@
         {
             "taskName": "test",
             "args": [
-                "/test/GlobalPollenProject.Core.Tests/project.json"
+                "test/GlobalPollenProject.Tests/project.json"
             ],
             "isTestCommand": true,
             "showOutput": "always",

@@ -1,0 +1,84 @@
+﻿@model GlobalPollenProject.WebUI.ViewModels.ExternalLoginConfirmationViewModel
+@{
+    ViewData["Title"] = "Register";
+}
+
+@section homepageHeader {
+    <div class="addgrain-section headsection">
+        <div class="container">
+            <h2>@ViewBag.Title</h2>
+            <p>Associate your @ViewData["LoginProvider"] account.</p>
+        </div>
+    </div>
+    <br />
+}
+
+<form asp-controller="Account" asp-action="ExternalLoginConfirmation" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal" role="form">
+    <h4>Association Form</h4>
+    <hr />
+    <div asp-validation-summary="All" class="text-danger"></div>
+
+    <p class="text-info">
+        You've successfully authenticated with <strong>@ViewData["LoginProvider"]</strong>.
+        We just need a few more personal details from you before you can log in.
+    </p>
+
+    <h4>About You</h4>
+    <div class="form-group">
+        <label asp-for="Title" class="col-md-2 control-label"></label>
+        <div class="col-md-2">
+            <input asp-for="Title" class="form-control" />
+            <span asp-validation-for="Title" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label asp-for="FirstName" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <input asp-for="FirstName" class="form-control" />
+            <span asp-validation-for="FirstName" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label asp-for="LastName" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <input asp-for="LastName" class="form-control" />
+            <span asp-validation-for="LastName" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label asp-for="Email" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <input asp-for="Email" class="form-control" />
+            <span asp-validation-for="Email" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <label asp-for="Email" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <input asp-for="EmailConfirmation" class="form-control" />
+            <span asp-validation-for="EmailConfirmation" class="text-danger"></span>
+        </div>
+    </div>
+    <hr />
+    <h4>Your Organisation</h4>
+    <p>Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By using a common group name, you can build up your score together. Can your organisation become top identifiers?</p>
+    <div class="form-group">
+        <label asp-for="Organisation" class="col-md-2 control-label"></label>
+        <div class="col-md-10">
+            <input asp-for="Organisation" class="form-control" onkeyup="updateOrganisationList(this);" autocomplete="off" />
+            <div class="dropdown-menu" id="organisationsList" style="display:none"></div>
+            <span asp-validation-for="Organisation" class="text-danger"></span>
+        </div>
+    </div>
+    <div class="form-group">
+        <div class="col-md-offset-2 col-md-10">
+            <p>By registering, you agree to the Global Pollen Project <a asp-action="Terms" asp-controller="Home" target="_blank">terms and conditions</a>.</p>
+            <button type="submit" class="btn btn-primary">Register</button>
+        </div>
+    </div>
+</form>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script type="text/javascript" src="~/js/account/OrganisationAutocomplete.js"></script>
+}

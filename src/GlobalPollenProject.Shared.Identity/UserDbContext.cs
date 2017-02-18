@@ -25,7 +25,7 @@ namespace GlobalPollenProject.Shared.Identity
                 .AddJsonFile("appsettings.json")
                 .Build();
 
-            optionsBuilder.UseSqlServer(config.GetConnectionString("DefaultConnection"));
+            optionsBuilder.UseSqlite(config.GetConnectionString("UserConnection"));
         }
 
         protected override void OnModelCreating(ModelBuilder builder)

@@ -8,6 +8,7 @@
       "includeFiles": [
         "Specification.fs",
         "Grain.fs",
+        "User.fs",
         "Empty.fs"
       ]
     }

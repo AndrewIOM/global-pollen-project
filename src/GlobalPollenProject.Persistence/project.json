@@ -18,24 +18,15 @@
     "GlobalPollenProject.Core": {
       "target": "project"
     },
-    //"Chiron": "6.2.1",
-    //"Microsoft.FSharpLu.Json": "0.9.6073.20898",
     "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
-    "Microsoft.EntityFrameworkCore": "1.0.1",
-    "Microsoft.EntityFrameworkCore.Sqlite": "1.0.1",
-    "Microsoft.EntityFrameworkCore.InMemory": "1.0.1",
+    "Microsoft.EntityFrameworkCore": "1.1.0",
+    "Microsoft.EntityFrameworkCore.Sqlite": "1.1.0",
+    "Microsoft.EntityFrameworkCore.InMemory": "1.1.0",
     "Newtonsoft.Json": "9.0.1"
   },
   "tools": {
-    "dotnet-compile-fsc": "1.0.0-preview2.1-*",
-    "Microsoft.EntityFrameworkCore.Tools": {
-      "version": "1.0.0-preview2-final",
-      "imports": [
-        "portable-net45+win8+dnxcore50",
-        "portable-net45+win8+wp8+wpa81",
-        "portable-net45+win8"
-      ]
-    }
+   "Microsoft.EntityFrameworkCore.Tools.DotNet": "1.1.0-preview4-final",
+   "dotnet-compile-fsc": "1.0.0-preview2.1-*"
   },
   "frameworks": {
     "netstandard1.6": {

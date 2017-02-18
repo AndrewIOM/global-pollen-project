@@ -1,5 +1,9 @@
+using GlobalPollenProject.Shared.Identity;
+using GlobalPollenProject.Shared.Identity.Models;
+using GlobalPollenProject.Shared.Identity.Services;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -28,6 +32,13 @@ namespace GlobalPollenProject.WebUI
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddSingleton<UserDbContext>();
+            services.AddIdentity<ApplicationUser, IdentityRole>()
+                .AddEntityFrameworkStores<UserDbContext>()
+                .AddDefaultTokenProviders();
+
+            services.AddSingleton<IEmailSender, AuthEmailMessageSender>();
+
             services.AddMvc();
         }
 
@@ -47,6 +58,8 @@ namespace GlobalPollenProject.WebUI
             }
 
             app.UseStaticFiles();
+
+            app.UseIdentity();
 
             app.UseMvc(routes =>
             {

@@ -1,9 +1,8 @@
 using System.Linq;
 using System.Threading.Tasks;
-using GlobalPollenProject.Shared.Identity.Authorization;
 using Microsoft.AspNetCore.Authorization;
 
-namespace Equinox.Infra.CrossCutting.Identity.Authorization
+namespace GlobalPollenProject.Shared.Identity.Authorization
 {
     public class ClaimsRequirementHandler : AuthorizationHandler<ClaimRequirement>
     {
