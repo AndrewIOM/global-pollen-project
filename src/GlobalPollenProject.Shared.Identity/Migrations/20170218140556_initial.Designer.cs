@@ -3,7 +3,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
-using GlobalPollenProject.Shared.Identity;
 
 namespace GlobalPollenProject.Shared.Identity.Migrations
 {

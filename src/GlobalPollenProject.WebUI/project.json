@@ -1,13 +1,25 @@
 {
-  "userSecretsId": "aspnet-WebApplication-0799fe3e-6eaf-4c5f-b40e-7c6bfd5dfa9a",
+  "version": "1.0.0-*",
+  "buildOptions": {
+    "emitEntryPoint": true,
+    "preserveCompilationContext": true,
+    "compilerName": "fsc",
+    "compile": {
+      "includeFiles": [
+        "ViewModels.fs",
+        "Controllers.fs",
+        "Startup.fs",
+        "Program.fs"
+      ]
+    }
+  },
   "dependencies": {
     "GlobalPollenProject.App": {
       "target": "project"
     },
-    "Microsoft.NETCore.App": {
-      "version": "1.1.0-preview1-001153-00",
-      "type": "platform"
-    },
+    "Microsoft.FSharp.Core.netcore": "1.0.0-rc-170122",
+    "Microsoft.AspNetCore.Server.Kestrel": "1.0.0",
+
     "Microsoft.AspNetCore.Authentication.Cookies": "1.1.0",
     "Microsoft.AspNetCore.Diagnostics": "1.1.0",
     "Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore": "1.1.0",
@@ -19,11 +31,10 @@
     },
     "Microsoft.AspNetCore.Routing": "1.1.0",
     "Microsoft.AspNetCore.Server.IISIntegration": "1.1.0",
-    "Microsoft.AspNetCore.Server.Kestrel": "1.1.0",
     "Microsoft.AspNetCore.StaticFiles": "1.1.0",
     "Microsoft.EntityFrameworkCore.Sqlite": "1.1.0",
     "Microsoft.EntityFrameworkCore.Tools": {
-      "version": "1.0.0-preview2-final",
+      "version": "1.1.0-preview4-final",
       "type": "build"
     },
     "Microsoft.Extensions.Configuration.EnvironmentVariables": "1.1.0",
@@ -35,6 +46,14 @@
   },
 
   "tools": {
+    "dotnet-compile-fsc": {
+      "version": "1.0.0-preview2-*",
+      "imports": [
+        "dnxcore50",
+        "portable-net45+win81",
+        "netstandard1.3"
+      ]
+    },
     "Microsoft.AspNetCore.Razor.Tools": {
       "version": "1.0.0-preview2-final",
       "imports": "portable-net45+win8+dnxcore50"
@@ -62,44 +81,18 @@
       ]
     }
   },
-
   "frameworks": {
     "netcoreapp1.1": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.1.0"
+        }
+      },
       "imports": [
-        "dotnet5.6",
-        "dnxcore50",
-        "portable-net45+win8"
+        "portable-net45+win8",
+        "dnxcore50"
       ]
     }
-  },
-
-  "buildOptions": {
-    "debugType": "portable",
-    "emitEntryPoint": true,
-    "preserveCompilationContext": true
-  },
-
-  "runtimeOptions": {
-    "configProperties": {
-      "System.GC.Server": true
-    }
-  },
-
-  "publishOptions": {
-    "include": [
-      "wwwroot",
-      "**/*.cshtml",
-      "appsettings.json",
-      "web.config"
-    ]
-  },
-
-  "scripts": {
-    "prepublish": [ "npm install", "bower install", "gulp clean", "gulp min" ],
-    "postpublish": [ "dotnet publish-iis --publish-folder %publish:OutputPath% --framework %publish:FullTargetFramework%" ]
-  },
-
-  "tooling": {
-    "defaultNamespace": "WebApplication"
   }
 }
