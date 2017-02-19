@@ -1,12 +1,12 @@
 module AzureImageService
 
 //open ImageProcessorCore
-open Microsoft.Extensions.Options
-open Microsoft.WindowsAzure.Storage
-open Microsoft.WindowsAzure.Storage.Blob
-open Microsoft.Extensions.Logging
-open System.IO
-open GlobalPollenProject.Core.Types
+// open Microsoft.Extensions.Options
+// open Microsoft.WindowsAzure.Storage
+// open Microsoft.WindowsAzure.Storage.Blob
+// open Microsoft.Extensions.Logging
+// open System.IO
+// open GlobalPollenProject.Core.Types
 
 type SavedImage = {
     Url: string
