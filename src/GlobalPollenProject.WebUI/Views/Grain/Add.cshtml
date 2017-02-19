@@ -1,0 +1,7 @@
+@model AddGrainViewModel
+
+<form asp-action="Add" asp-controller="Grain" method="POST">
+@Html.EditorForModel()
+@Html.EditorFor(m => m.Images[0])
+<input type="submit">
+</form>

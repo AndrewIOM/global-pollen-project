@@ -43,7 +43,7 @@ type Image =
     | FocusImage of Url list
     | SingleImage of Url
 
-// Space and Time
+// Sample Collection (Space + Time)
 [<Measure>]
 type DD
 
@@ -53,11 +53,12 @@ type CalYr
 [<Measure>]
 type YBP
 
-
 type Latitude = Latitude of float<DD>
 type Longitude = Longitude of float<DD>
 type Point = Latitude * Longitude
 type Polygon = Point list
+
+type Site = Latitude * Longitude
 
 type Continent = 
     | Asia
@@ -75,26 +76,48 @@ type Age =
     | Radiocarbon of int<YBP>
     | Lead210 of int<YBP>
 
-// Reference Material Metadata
-type StorageMedium =
+// Sample Preperation
+type ChemicalTreatments =
+    | HF
+    | No
+
+type MountingMedium =
     | Glycerol
 
-// // Pollen Traits
-// [<Measure>]
-// type um // Micrometre
+type Staining = bool
 
-// type GrainDiameter = float<um>
-// type WallThickness = float<um>
 
-// type Patterning =
-//     | None
-//     | Some
+type SampleType =
+    | Palaeopalynology 
+    | Melissopalynology
+    | Aeropalynology
+    | PollinationBiology
+    | ReferenceMaterial
+    | Forensic
 
-// type Sculpturing =
-//     | Spikes
-//     | None
 
-// type PollenTraits = {
-//     WallThickness: WallThickness option
-//     Patterning: Patterning option
-// }
+// Pollen Traits
+[<Measure>]
+type um // Micrometre
+
+type GrainDiameter = float<um>
+type WallThickness = float<um>
+
+type GrainShape =
+    | Circular
+    | Triangular
+    | Unsure
+
+type Patterning =
+    | Regular
+    | No
+    | Unsure
+
+type Sculpturing =
+    | Spikes
+    | No
+
+type Pores =
+    | Pore
+    | PoreWithFurrow
+    | No

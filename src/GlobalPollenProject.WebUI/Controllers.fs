@@ -1,6 +1,7 @@
 namespace GlobalPollenProject.WebUI.Controllers
 
 open System
+open System.Linq
 open System.Collections.Generic
 open System.Security.Claims
 open System.Threading.Tasks
@@ -37,12 +38,18 @@ type HomeController () =
 type TaxonomyController () =
     inherit Controller ()
 
+    member this.Index () = 
+        let model = TaxonomyAppService.list()
+        this.View(model)
+
     member this.Import () = this.View()
 
     [<HttpPost>]
-    member this.Import (result:ImportTaxon) =
-        TaxonomyAppService.import result.LatinName
-        Ok()
+    member this.Import (result:ImportTaxonViewModel) =
+        if not this.ModelState.IsValid then this.View(result) :> IActionResult
+        else
+            TaxonomyAppService.import result.LatinName
+            this.RedirectToAction "Index" :> IActionResult
 
 
 type AdminController() =
@@ -61,16 +68,31 @@ type GrainController () =
         let model = GrainAppService.listUnknownGrains()
         this.View(model)
 
-    member this.Identify id =
-        let taxonId = Guid.NewGuid()
-        GrainAppService.identifyUnknownGrain id taxonId
+    [<HttpGet>]
+    member this.Identify (id) =
+        let model = GrainAppService.listUnknownGrains().FirstOrDefault(fun m -> m.Id = id)
+        //if model then this.BadRequest() :> IActionResult
+        //else 
+        this.View model :> IActionResult
+
+    [<HttpPost>]
+    member this.Identify (id,taxonId) =
+        GrainAppService.identifyUnknownGrain id (Guid.NewGuid())
         this.RedirectToAction "Index"
 
     [<HttpGet>]
-    member this.SubmitUnknown () =
-        let id = Guid.NewGuid()
-        GrainAppService.submitUnknownGrain id "http://www.acm.im/cheuihiu.jpg"
-        this.RedirectToAction "Home"
+    [<Authorize>]
+    member this.Add () =
+        this.View ()
+
+    [<HttpPost>]
+    [<Authorize>]
+    member this.Add (model:AddGrainViewModel) =
+        if not this.ModelState.IsValid then this.View(model) :> IActionResult
+        else
+            let id = Guid.NewGuid()
+            GrainAppService.submitUnknownGrain id (model.Images |> Array.toList) model.Age model.Latitude model.Longitude
+            this.RedirectToAction "Index" :> IActionResult
 
 
 [<Authorize>]

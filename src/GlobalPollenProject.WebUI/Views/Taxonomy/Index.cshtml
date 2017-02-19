@@ -1,1 +1,11 @@
-<h1>Hi</h1>
+@model FSharpList<TaxonSummary>
+
+<h2>Master Reference Collection</h2>
+
+<ul>
+    @foreach (var taxon in Model) {
+        <li>
+            @taxon.LatinName @taxon.Rank
+        </li>
+    }
+</ul>

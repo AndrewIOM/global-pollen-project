@@ -4,10 +4,21 @@ open System.ComponentModel.DataAnnotations
 open Microsoft.AspNetCore.Mvc.Rendering
 
 // Taxonomy
-type ImportTaxon = {
+[<CLIMutable>]
+type ImportTaxonViewModel = {
     Id: int
     LatinName: string
     Rank: string
+}
+
+// Grain
+[<CLIMutable>]
+type AddGrainViewModel = {
+    [<Required(ErrorMessage = "Use the map to enter a latitude")>] Latitude:float
+    [<Required(ErrorMessage = "Use the map to enter a longitude")>] Longitude:float
+    [<RegularExpression(@"^[0-9]+$", ErrorMessage = "Age must be numeric")>] Age:int
+    [<Required(ErrorMessage = "You must specify a scale for your image")>] ImagesScale:float
+    [<Required(ErrorMessage = "You must upload at least one file")>] Images:string[]
 }
 
 // Account

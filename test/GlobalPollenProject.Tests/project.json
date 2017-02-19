@@ -9,6 +9,7 @@
         "Specification.fs",
         "Grain.fs",
         "User.fs",
+        "Taxonomy.fs",
         "Empty.fs"
       ]
     }

@@ -10,11 +10,24 @@ open Microsoft.EntityFrameworkCore.Migrations.Operations
 
 open ReadStore
 
-type GrainSummaryTable = 
-    {Id:OperationBuilder<AddColumnOperation>;Thumbnail:OperationBuilder<AddColumnOperation>}
-
 // dotnet ef --startup-project ../GlobalPollenProject.WebUI  migrations add Initial -c SqlEventStoreContext
 // dotnet ef --startup-project ../GlobalPollenProject.WebUI database update
+
+type GrainSummaryTable = {
+    Id:OperationBuilder<AddColumnOperation>;
+    Id2:OperationBuilder<AddColumnOperation>; // Temporary fix for conflicting DUs
+    Thumbnail:OperationBuilder<AddColumnOperation> }
+
+type TaxonSummaryTable = {
+    Id: OperationBuilder<AddColumnOperation>
+    Family: OperationBuilder<AddColumnOperation>
+    Genus: OperationBuilder<AddColumnOperation>
+    GrainCount: OperationBuilder<AddColumnOperation>
+    LatinName: OperationBuilder<AddColumnOperation>
+    Rank: OperationBuilder<AddColumnOperation>
+    SlideCount: OperationBuilder<AddColumnOperation>
+    Species: OperationBuilder<AddColumnOperation>
+    ThumbnailUrl: OperationBuilder<AddColumnOperation> }
 
 // Migrations
 [<DbContext(typeof<ReadContext>)>]
@@ -28,14 +41,33 @@ type Init() =
             columns = 
                 (fun table -> 
                     { Id = table.Column<Guid>(nullable = false)
+                      Id2 = table.Column<Guid>(nullable = true)
                       Thumbnail = table.Column<string>(nullable = true) }),
             constraints = 
                 fun table -> 
-                    table.PrimaryKey("PK_GrainSummaries", (fun x -> x.Id :> obj))|> ignore ) |> ignore
+                    table.PrimaryKey("PK_GrainSummaries", (fun x -> x.Id2 :> obj))|> ignore ) |> ignore
         
+        migrationBuilder.CreateTable(
+            name = "TaxonSummaries",
+            columns =
+                (fun table ->
+                    { Id = table.Column<Guid>(nullable = false)
+                      Family = table.Column<string>(nullable = true)
+                      Genus = table.Column<string>(nullable = true)
+                      GrainCount = table.Column<int>(nullable = false)
+                      LatinName = table.Column<string>(nullable = true)
+                      Rank = table.Column<string>(nullable = true)
+                      SlideCount = table.Column<int>(nullable = false)
+                      Species = table.Column<string>(nullable = true)
+                      ThumbnailUrl = table.Column<string>(nullable = true) }),
+            constraints =
+                fun table ->
+                    table.PrimaryKey("PK_TaxonSummaries", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
+
 
     override this.Down(migrationBuilder: MigrationBuilder) = 
         migrationBuilder.DropTable(name = "GrainSummaries") |> ignore
+        migrationBuilder.DropTable(name = "TaxonSummaries") |> ignore
 
     override this.BuildTargetModel(modelBuilder: ModelBuilder) =
         modelBuilder
@@ -48,6 +80,20 @@ type Init() =
                 b.Property<string>("Thumbnail") |> ignore
                 b.HasKey("Id") |> ignore
                 b.ToTable("GrainSummaries") |> ignore)|> ignore
+
+        modelBuilder.Entity("ReadStore.TaxonSummary",
+            fun b ->
+                b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
+                b.Property<string>("Family") |> ignore
+                b.Property<string>("Genus") |> ignore
+                b.Property<int>("GrainCount") |> ignore
+                b.Property<string>("LatinName") |> ignore
+                b.Property<string>("Rank") |> ignore
+                b.Property<int>("SlideCount") |> ignore
+                b.Property<string>("Species") |> ignore
+                b.Property<string>("ThumbnailUrl") |> ignore
+                b.HasKey("Id") |> ignore
+                b.ToTable("TaxonSummaries") |> ignore) |> ignore
 
 open EventStore
 

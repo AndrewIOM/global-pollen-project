@@ -30,3 +30,15 @@ let ExpectInvalidOp (aggregate, events, command) =
         |> aggregate.handle command
         |> ignore)
     |> Assert.Throws<System.InvalidOperationException> |> ignore
+    
+let ExpectInvalidArg (aggregate, events, command) =
+    printfn "Given: %A" events
+    printfn "When: %A" command
+    printfn "Expects: Invalid Arg"
+
+    (fun () ->
+        events
+        |> List.fold aggregate.evolve aggregate.initial
+        |> aggregate.handle command
+        |> ignore)
+    |> Assert.Throws<System.ArgumentException> |> ignore

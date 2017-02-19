@@ -15,6 +15,8 @@ let a = {
 let grainId = GrainId (Guid.NewGuid())
 let currentUser = UserId (Guid.NewGuid())
 let testImage = SingleImage (Url "https://sometest.com/someimage.png")
+let latlon = Latitude 1.0<DD>, Longitude 1.0<DD>
+let time = CollectionDate 1995<CalYr>
 
 
 module ``When submitting an unknown grain`` =
@@ -22,15 +24,21 @@ module ``When submitting an unknown grain`` =
     [<Fact>]
     let ``It should be flagged as unidentified`` () =
         Given a []
-        |> When ( SubmitUnknownGrain { Id = grainId; SubmittedBy = currentUser; Images = [testImage] } )
+        |> When ( SubmitUnknownGrain { Id = grainId; SubmittedBy = currentUser; Images = [testImage]; Temporal = Some time; Spatial = latlon } )
         |> Expect [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser } ]
 
     [<Fact>]
     let ``The same grain cannot be submitted twice`` () =
         Given a [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser } ]
-        |> When ( SubmitUnknownGrain { Id = grainId; SubmittedBy = currentUser; Images = [testImage] } )
+        |> When ( SubmitUnknownGrain { Id = grainId; SubmittedBy = currentUser; Images = [testImage]; Temporal = Some time; Spatial = latlon } )
         |> ExpectInvalidOp
-        
+
+    [<Fact>]
+    let ``At least one image must be submitted`` () =
+        Given a []
+        |> When ( SubmitUnknownGrain { Id = grainId; SubmittedBy = currentUser; Images = []; Temporal = Some time; Spatial = latlon } )
+        |> ExpectInvalidArg
+
 
 module ``When identifying an unknown grain`` =
 

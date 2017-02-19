@@ -3,6 +3,7 @@ namespace GlobalPollenProject.App
 open System
 open GlobalPollenProject.Core.Types
 open GlobalPollenProject.Core.CommandHandlers
+open GlobalPollenProject.Shared.Identity.Models
 open System.Threading
 
 open ReadStore
@@ -15,7 +16,6 @@ module Config =
     let readModelHandler = eventStream |> EventHandlers.projectionEventHandler
     let projections = new ReadContext()
 
-
 module GrainAppService =
 
     open GlobalPollenProject.Core.Aggregates.Grain
@@ -27,14 +27,15 @@ module GrainAppService =
         getId = getId 
     }
 
-    let private handle = create aggregate "Grain" Config.eventStore.ReadStream<GlobalPollenProject.Core.Aggregates.Grain.Event> Config.eventStore.Save
+    let handle = create aggregate "Grain" Config.eventStore.ReadStream<GlobalPollenProject.Core.Aggregates.Grain.Event> Config.eventStore.Save
 
-    let submitUnknownGrain grainId base64string =
-
+    let submitUnknownGrain grainId (images:string list) age (lat:float) lon =
         let id = GrainId grainId
-        let uploadedImage = Url base64string
-        let image = SingleImage uploadedImage
-        handle (SubmitUnknownGrain {Id = id; Images = [image]; SubmittedBy = UserId (Guid.NewGuid()) })
+        let uploadedImages = images |> List.map (fun x -> SingleImage (Url x))
+        let spatial = Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>)
+        let temporal = CollectionDate (age * 1<CalYr>)
+        let userId = UserId (Guid.NewGuid())
+        handle (SubmitUnknownGrain {Id = id; Images = uploadedImages; SubmittedBy = userId; Temporal = Some temporal; Spatial = spatial })
 
     let identifyUnknownGrain grainId taxonId =
         handle (IdentifyUnknownGrain { Id = GrainId grainId; Taxon = TaxonId taxonId; IdentifiedBy = UserId (Guid.NewGuid()) })
@@ -51,7 +52,7 @@ module UserAppService =
     open GlobalPollenProject.Core.Aggregates.User
     open GlobalPollenProject.Shared.Identity
 
-    let private handle =
+    let handle =
         let aggregate = {
             initial = State.InitialState
             evolve = State.Evolve
@@ -68,7 +69,7 @@ module TaxonomyAppService =
 
     open GlobalPollenProject.Core.Aggregates.Taxonomy
 
-    let private handle =
+    let handle =
         let aggregate = {
             initial = State.InitialState
             evolve = State.Evolve
@@ -81,3 +82,6 @@ module TaxonomyAppService =
         let domainName = LatinName name
         let id = Guid.NewGuid()
         handle ( Import { Id = TaxonId id; Name = domainName; Rank = Family; Parent = None })
+
+    let list() =
+        Config.projections.TaxonSummaries |> Seq.toList

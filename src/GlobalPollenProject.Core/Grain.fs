@@ -12,6 +12,8 @@ and SubmitUnknownGrain = {
     Id: GrainId
     SubmittedBy: UserId
     Images: Image list
+    Temporal: Age option
+    Spatial: Site
 }
 
 and IdentifyUnknownGrain = {

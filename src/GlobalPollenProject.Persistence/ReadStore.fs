@@ -45,9 +45,15 @@ type ReadContext =
     // Unknown Grains Index View
     [<DefaultValue>]
     val mutable grainSummaries:DbSet<GrainSummary>
+    [<DefaultValue>]
+    val mutable taxonSummaries:DbSet<TaxonSummary>
     member x.GrainSummaries
         with get() = x.grainSummaries
         and set v = x.grainSummaries <- v
+
+    member x.TaxonSummaries
+        with get() = x.taxonSummaries
+        and set v = x.taxonSummaries <- v
 
     override this.OnConfiguring optionsBuilder = 
         optionsBuilder.UseSqlite "Filename=./projections.db" |> ignore
