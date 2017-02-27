@@ -135,7 +135,7 @@ let identifyGrain (command: IdentifyUnknownGrain) (state:State) =
 // Handle Commands to make Decisions.
 // NB We can use 'Domain services' in this function, 
 // as their decision will be saved in the resulting event
-let handle = 
+let handle deps = 
     function
     | SubmitUnknownGrain command -> submitGrain command
     | IdentifyUnknownGrain command -> identifyGrain command

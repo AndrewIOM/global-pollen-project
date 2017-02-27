@@ -12,6 +12,8 @@ let a = {
     getId = getId 
 }
 
+let Given = Given a defaultDependencies
+
 let grainId = GrainId (Guid.NewGuid())
 let currentUser = UserId (Guid.NewGuid())
 let testImage = SingleImage (Url "https://sometest.com/someimage.png")
@@ -23,19 +25,19 @@ module ``When submitting an unknown grain`` =
 
     [<Fact>]
     let ``It should be flagged as unidentified`` () =
-        Given a []
+        Given []
         |> When ( SubmitUnknownGrain { Id = grainId; SubmittedBy = currentUser; Images = [testImage]; Temporal = Some time; Spatial = latlon } )
         |> Expect [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser } ]
 
     [<Fact>]
     let ``The same grain cannot be submitted twice`` () =
-        Given a [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser } ]
+        Given [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser } ]
         |> When ( SubmitUnknownGrain { Id = grainId; SubmittedBy = currentUser; Images = [testImage]; Temporal = Some time; Spatial = latlon } )
         |> ExpectInvalidOp
 
     [<Fact>]
     let ``At least one image must be submitted`` () =
-        Given a []
+        Given []
         |> When ( SubmitUnknownGrain { Id = grainId; SubmittedBy = currentUser; Images = []; Temporal = Some time; Spatial = latlon } )
         |> ExpectInvalidArg
 
@@ -47,22 +49,22 @@ module ``When identifying an unknown grain`` =
 
     [<Fact>]
     let ``The grain gains an identification`` () =
-        Given a [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = identifier } ]
+        Given [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = identifier } ]
         |> When ( IdentifyUnknownGrain { Id = grainId; IdentifiedBy = identifier; Taxon = taxon })
         |> Expect [ GrainIdentified { Id = grainId; IdentifiedBy = identifier; Taxon = taxon } ]
 
     [<Fact>]
     let ``A user cannot submit more than one identification at any time`` () =
-        Given a [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = identifier }
-                  GrainIdentified { Id = grainId; IdentifiedBy = currentUser; Taxon = taxon } ]
+        Given [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = identifier }
+                GrainIdentified { Id = grainId; IdentifiedBy = currentUser; Taxon = taxon } ]
         |> When ( IdentifyUnknownGrain { Id = grainId; IdentifiedBy = currentUser; Taxon = taxon } )
         |> ExpectInvalidOp
 
     [<Fact>]
     let ``The taxonomic identity is confirmed after 70% agreement with three or more IDs`` () =
-        Given a [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = identifier }
-                  GrainIdentified { Id = grainId; IdentifiedBy = UserId (Guid.NewGuid()); Taxon = taxon }
-                  GrainIdentified { Id = grainId; IdentifiedBy = UserId (Guid.NewGuid()); Taxon = taxon } ]
+        Given [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = identifier }
+                GrainIdentified { Id = grainId; IdentifiedBy = UserId (Guid.NewGuid()); Taxon = taxon }
+                GrainIdentified { Id = grainId; IdentifiedBy = UserId (Guid.NewGuid()); Taxon = taxon } ]
         |> When ( IdentifyUnknownGrain { Id = grainId; IdentifiedBy = currentUser; Taxon = taxon } )
         |> Expect [ GrainIdentified { Id = grainId; IdentifiedBy = currentUser; Taxon = taxon }
                     GrainIdentityConfirmed { Id = grainId; Taxon = taxon } ]

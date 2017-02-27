@@ -15,6 +15,7 @@ module Config =
     let eventStream = eventStore.SaveEvent :> IObservable<string*obj>
     let readModelHandler = eventStream |> EventHandlers.projectionEventHandler
     let projections = new ReadContext()
+    let deps = {GenerateId = Guid.NewGuid}
 
 module GrainAppService =
 
@@ -27,7 +28,7 @@ module GrainAppService =
         getId = getId 
     }
 
-    let handle = create aggregate "Grain" Config.eventStore.ReadStream<GlobalPollenProject.Core.Aggregates.Grain.Event> Config.eventStore.Save
+    let handle = create aggregate "Grain" Config.deps Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
     let submitUnknownGrain grainId (images:string list) age (lat:float) lon =
         let id = GrainId grainId
@@ -59,7 +60,7 @@ module UserAppService =
             handle = handle
             getId = getId
         }
-        create aggregate "User" Config.eventStore.ReadStream<Event> Config.eventStore.Save
+        create aggregate "User" Config.deps Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
     let register userId title firstName lastName =
         handle ( Register { Id = UserId userId; Title = title; FirstName = firstName; LastName = lastName })
@@ -76,7 +77,7 @@ module TaxonomyAppService =
             handle = handle
             getId = getId
         }
-        create aggregate "Taxon" Config.eventStore.ReadStream<Event> Config.eventStore.Save
+        create aggregate "Taxon" Config.deps Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
     let import name =
         let domainName = LatinName name

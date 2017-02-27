@@ -11,6 +11,7 @@ let a = {
     handle = handle
     getId = getId 
 }
+let Given = Given a defaultDependencies
 
 module ``When registering a new account`` =
 
@@ -21,12 +22,12 @@ module ``When registering a new account`` =
 
     [<Fact>]
     let ``A new account is created`` =
-        Given a []
+        Given []
         |> When ( Register { Id = id; Title = title; FirstName = firstName; LastName = lastName } )
         |> Expect [ UserRegistered { Id = id; Title = title; FirstName = firstName; LastName = lastName } ]
     
     [<Fact>]
     let ``It fails if the account already exists`` =
-        Given a [ UserRegistered { Id = id; Title = title; FirstName = firstName; LastName = lastName } ]
+        Given [ UserRegistered { Id = id; Title = title; FirstName = firstName; LastName = lastName } ]
         |> When ( Register { Id = id; Title = title; FirstName = firstName; LastName = lastName } )
         |> ExpectInvalidOp

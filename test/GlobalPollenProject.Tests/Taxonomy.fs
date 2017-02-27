@@ -11,6 +11,7 @@ let a = {
     handle = handle
     getId = getId 
 }
+let Given = Given a defaultDependencies
 
 module ``When importing a taxon`` =
 
@@ -19,6 +20,6 @@ module ``When importing a taxon`` =
 
     [<Fact>]
     let ``A family is the highest taxonomic rank`` =
-        Given a []
+        Given []
         |> When (Import {Id = taxonId; Name = LatinName "Apiaceae"; Rank = Family; Parent = Some parentId })
         |> ExpectInvalidArg

@@ -77,7 +77,7 @@ let joinClub command state =
     | _ -> 
         invalidOp "User does not exist"
 
-let handle = 
+let handle deps = 
     function
     | Register command -> register command
     | ActivatePublicProfile command -> activateProfile command

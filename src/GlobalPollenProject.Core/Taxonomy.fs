@@ -78,6 +78,7 @@ and ExternalLink = {
 
 
 // Descisions
+type ValidateTaxon = LatinName * Rank -> bool
 let import (command:Import) state =
 
     match command.Parent with
@@ -117,7 +118,7 @@ let import (command:Import) state =
 // Handle Commands to make Decisions.
 // NB We can use 'Domain services' in this function, 
 // as their decision will be saved in the resulting event
-let handle = 
+let handle deps = 
     function
     | Import command -> import command
     // | Split command -> split command

@@ -3,11 +3,13 @@ module GlobalPollenProject.Core.Types
 
 open System
 
+type Dependencies = {GenerateId: unit -> Guid}
+
 type RootAggregateId = System.Guid
 type RootAggregate<'TState, 'TCommand, 'TEvent> = {
     initial : 'TState
     evolve : 'TState -> 'TEvent -> 'TState
-    handle : 'TCommand -> 'TState -> 'TEvent list
+    handle : Dependencies -> 'TCommand -> 'TState -> 'TEvent list
     getId: 'TCommand -> RootAggregateId }
 
 // Identities

@@ -2,7 +2,7 @@ module GlobalPollenProject.Core.CommandHandlers
 
 open GlobalPollenProject.Core.Types
 
-let create aggregate aggregateName readStream (appendToStream) =
+let create aggregate aggregateName deps readStream (appendToStream) =
 
     let streamId grainId = sprintf "%s-%s" aggregateName (grainId.ToString())
     let load grainId =
@@ -20,5 +20,5 @@ let create aggregate aggregateName readStream (appendToStream) =
     fun command ->
         let id = aggregate.getId command
         load id
-        |> mapsnd (aggregate.handle command)
+        |> mapsnd (aggregate.handle deps command)
         ||> save id
