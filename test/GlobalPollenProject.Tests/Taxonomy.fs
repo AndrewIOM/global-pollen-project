@@ -19,7 +19,7 @@ module ``When importing a taxon`` =
     let parentId = TaxonId (Guid.NewGuid())
 
     [<Fact>]
-    let ``A family is the highest taxonomic rank`` =
+    let ``A family is the highest taxonomic rank`` () =
         Given []
         |> When (Import {Id = taxonId; Name = LatinName "Apiaceae"; Rank = Family; Parent = Some parentId })
         |> ExpectInvalidArg

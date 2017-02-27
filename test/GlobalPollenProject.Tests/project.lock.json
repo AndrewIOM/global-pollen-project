@@ -161,19 +161,12 @@
           "lib/netstandard1.3/Microsoft.CSharp.dll": {}
         }
       },
-      "Microsoft.Data.Sqlite/1.0.0": {
+      "Microsoft.Data.Sqlite/1.1.0": {
         "type": "package",
         "dependencies": {
-          "SQLite": "3.12.2",
-          "System.AppContext": "4.1.0",
-          "System.Data.Common": "4.1.0",
-          "System.Diagnostics.Debug": "4.0.11",
-          "System.Linq": "4.1.0",
-          "System.Reflection.Extensions": "4.0.1",
-          "System.Resources.ResourceManager": "4.0.1",
-          "System.Runtime.Extensions": "4.1.0",
-          "System.Runtime.InteropServices": "4.1.0",
-          "System.Text.Encoding": "4.0.11"
+          "NETStandard.Library": "1.6.1",
+          "SQLite": "3.13.0",
+          "System.Data.Common": "4.3.0"
         },
         "compile": {
           "lib/netstandard1.3/Microsoft.Data.Sqlite.dll": {}
@@ -295,14 +288,14 @@
           "lib/netstandard1.3/Microsoft.EntityFrameworkCore.InMemory.dll": {}
         }
       },
-      "Microsoft.EntityFrameworkCore.Relational/1.0.1": {
+      "Microsoft.EntityFrameworkCore.Relational/1.1.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.CSharp": "4.0.1",
-          "Microsoft.EntityFrameworkCore": "1.0.1",
-          "System.Data.Common": "4.1.0",
-          "System.Diagnostics.DiagnosticSource": "4.0.0",
-          "System.Text.RegularExpressions": "4.1.0"
+          "Microsoft.CSharp": "4.3.0",
+          "Microsoft.EntityFrameworkCore": "1.1.0",
+          "NETStandard.Library": "1.6.1",
+          "System.Data.Common": "4.3.0",
+          "System.Diagnostics.DiagnosticSource": "4.3.0"
         },
         "compile": {
           "lib/netstandard1.3/Microsoft.EntityFrameworkCore.Relational.dll": {}
@@ -311,12 +304,12 @@
           "lib/netstandard1.3/Microsoft.EntityFrameworkCore.Relational.dll": {}
         }
       },
-      "Microsoft.EntityFrameworkCore.Sqlite/1.0.1": {
+      "Microsoft.EntityFrameworkCore.Sqlite/1.1.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Data.Sqlite": "1.0.0",
-          "Microsoft.EntityFrameworkCore.Relational": "1.0.1",
-          "System.IO.FileSystem": "4.0.1"
+          "Microsoft.Data.Sqlite": "1.1.0",
+          "Microsoft.EntityFrameworkCore.Relational": "1.1.0",
+          "NETStandard.Library": "1.6.1"
         },
         "compile": {
           "lib/netstandard1.3/Microsoft.EntityFrameworkCore.Sqlite.dll": {}
@@ -1083,14 +1076,14 @@
           }
         }
       },
-      "SQLite/3.12.2": {
+      "SQLite/3.13.0": {
         "type": "package",
-        "dependencies": {
-          "SQLite.Native": "3.12.2"
-        }
-      },
-      "SQLite.Native/3.12.2": {
-        "type": "package",
+        "compile": {
+          "lib/netstandard1.0/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/_._": {}
+        },
         "runtimeTargets": {
           "runtimes/linux-x64/native/libsqlite3.so": {
             "assetType": "native",
@@ -1239,17 +1232,17 @@
           "ref/netstandard1.3/System.Console.dll": {}
         }
       },
-      "System.Data.Common/4.1.0": {
+      "System.Data.Common/4.3.0": {
         "type": "package",
         "dependencies": {
-          "System.Collections": "4.0.11",
-          "System.Globalization": "4.0.11",
-          "System.IO": "4.1.0",
-          "System.Resources.ResourceManager": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Runtime.Extensions": "4.1.0",
-          "System.Text.RegularExpressions": "4.1.0",
-          "System.Threading.Tasks": "4.0.11"
+          "System.Collections": "4.3.0",
+          "System.Globalization": "4.3.0",
+          "System.IO": "4.3.0",
+          "System.Resources.ResourceManager": "4.3.0",
+          "System.Runtime": "4.3.0",
+          "System.Runtime.Extensions": "4.3.0",
+          "System.Text.RegularExpressions": "4.3.0",
+          "System.Threading.Tasks": "4.3.0"
         },
         "compile": {
           "ref/netstandard1.2/System.Data.Common.dll": {}
@@ -2924,97 +2917,68 @@
           "lib/netstandard1.3/System.Xml.XPath.XDocument.dll": {}
         }
       },
-      "xunit/2.1.0": {
+      "xunit/2.2.0": {
         "type": "package",
         "dependencies": {
-          "xunit.assert": "[2.1.0]",
-          "xunit.core": "[2.1.0]"
+          "xunit.assert": "[2.2.0]",
+          "xunit.core": "[2.2.0]"
         }
       },
-      "xunit.abstractions/2.0.0": {
-        "type": "package",
-        "compile": {
-          "lib/portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS/xunit.abstractions.dll": {}
-        },
-        "runtime": {
-          "lib/portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS/xunit.abstractions.dll": {}
-        }
-      },
-      "xunit.assert/2.1.0": {
+      "xunit.abstractions/2.0.1": {
         "type": "package",
         "dependencies": {
-          "System.Collections": "4.0.0",
-          "System.Diagnostics.Debug": "4.0.0",
-          "System.Globalization": "4.0.0",
-          "System.Linq": "4.0.0",
-          "System.ObjectModel": "4.0.0",
-          "System.Reflection": "4.0.0",
-          "System.Reflection.Extensions": "4.0.0",
-          "System.Runtime": "4.0.0",
-          "System.Runtime.Extensions": "4.0.0",
-          "System.Text.RegularExpressions": "4.0.0",
-          "System.Threading.Tasks": "4.0.0"
+          "NETStandard.Library": "1.6.0"
         },
         "compile": {
-          "lib/dotnet/xunit.assert.dll": {}
+          "lib/netstandard1.0/xunit.abstractions.dll": {}
         },
         "runtime": {
-          "lib/dotnet/xunit.assert.dll": {}
+          "lib/netstandard1.0/xunit.abstractions.dll": {}
         }
       },
-      "xunit.core/2.1.0": {
+      "xunit.assert/2.2.0": {
         "type": "package",
         "dependencies": {
-          "System.Collections": "4.0.0",
-          "System.Diagnostics.Debug": "4.0.0",
-          "System.Globalization": "4.0.0",
-          "System.Linq": "4.0.0",
-          "System.Reflection": "4.0.0",
-          "System.Reflection.Extensions": "4.0.0",
-          "System.Runtime": "4.0.0",
-          "System.Runtime.Extensions": "4.0.0",
-          "System.Threading.Tasks": "4.0.0",
-          "xunit.abstractions": "2.0.0",
-          "xunit.extensibility.core": "[2.1.0]",
-          "xunit.extensibility.execution": "[2.1.0]"
-        }
-      },
-      "xunit.extensibility.core/2.1.0": {
-        "type": "package",
-        "dependencies": {
-          "xunit.abstractions": "[2.0.0]"
+          "NETStandard.Library": "1.6.0"
         },
         "compile": {
-          "lib/dotnet/xunit.core.dll": {}
+          "lib/netstandard1.1/xunit.assert.dll": {}
         },
         "runtime": {
-          "lib/dotnet/xunit.core.dll": {}
+          "lib/netstandard1.1/xunit.assert.dll": {}
         }
       },
-      "xunit.extensibility.execution/2.1.0": {
+      "xunit.core/2.2.0": {
         "type": "package",
         "dependencies": {
-          "System.Collections": "4.0.0",
-          "System.Diagnostics.Debug": "4.0.0",
-          "System.Globalization": "4.0.0",
-          "System.IO": "4.0.0",
-          "System.Linq": "4.0.0",
-          "System.Linq.Expressions": "4.0.0",
-          "System.Reflection": "4.0.0",
-          "System.Reflection.Extensions": "4.0.0",
-          "System.Runtime": "4.0.0",
-          "System.Runtime.Extensions": "4.0.0",
-          "System.Text.Encoding": "4.0.0",
-          "System.Threading": "4.0.0",
-          "System.Threading.Tasks": "4.0.0",
-          "xunit.abstractions": "2.0.0",
-          "xunit.extensibility.core": "[2.1.0]"
+          "xunit.extensibility.core": "[2.2.0]",
+          "xunit.extensibility.execution": "[2.2.0]"
+        }
+      },
+      "xunit.extensibility.core/2.2.0": {
+        "type": "package",
+        "dependencies": {
+          "NETStandard.Library": "1.6.0",
+          "xunit.abstractions": "2.0.1"
         },
         "compile": {
-          "lib/dotnet/xunit.execution.dotnet.dll": {}
+          "lib/netstandard1.1/xunit.core.dll": {}
         },
         "runtime": {
-          "lib/dotnet/xunit.execution.dotnet.dll": {}
+          "lib/netstandard1.1/xunit.core.dll": {}
+        }
+      },
+      "xunit.extensibility.execution/2.2.0": {
+        "type": "package",
+        "dependencies": {
+          "NETStandard.Library": "1.6.0",
+          "xunit.extensibility.core": "[2.2.0]"
+        },
+        "compile": {
+          "lib/netstandard1.1/xunit.execution.dotnet.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/xunit.execution.dotnet.dll": {}
         }
       },
       "xunit.runner.reporters/2.1.0": {
@@ -3079,9 +3043,9 @@
         "framework": ".NETStandard,Version=v1.6",
         "dependencies": {
           "GlobalPollenProject.Core": "(, )",
-          "Microsoft.EntityFrameworkCore": "1.0.1",
-          "Microsoft.EntityFrameworkCore.InMemory": "1.0.1",
-          "Microsoft.EntityFrameworkCore.Sqlite": "1.0.1",
+          "Microsoft.EntityFrameworkCore": "1.1.0",
+          "Microsoft.EntityFrameworkCore.InMemory": "1.1.0",
+          "Microsoft.EntityFrameworkCore.Sqlite": "1.1.0",
           "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160629",
           "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
           "NETStandard.Library": "1.6.1",
@@ -3245,12 +3209,12 @@
         "ref/xamarinwatchos10/_._"
       ]
     },
-    "Microsoft.Data.Sqlite/1.0.0": {
-      "sha512": "dezlCGK9zVrPNfoX1SL50GmWDdRQNcV1SBy3wuCn/a0g7Gc26PyvlA4BKapjnCK5N8LSQ2+1PdW2imiRr+YvxA==",
+    "Microsoft.Data.Sqlite/1.1.0": {
+      "sha512": "T09U31d2uBe9bvECrz/5cgMPR3256D8SY/+bVDD+KqpX9kbLQuyunm8pR9aUDlsRrVOlSq5Gbg2vMOnBMRbJRQ==",
       "type": "package",
-      "path": "Microsoft.Data.Sqlite/1.0.0",
+      "path": "Microsoft.Data.Sqlite/1.1.0",
       "files": [
-        "Microsoft.Data.Sqlite.1.0.0.nupkg.sha512",
+        "Microsoft.Data.Sqlite.1.1.0.nupkg.sha512",
         "Microsoft.Data.Sqlite.nuspec",
         "lib/net451/Microsoft.Data.Sqlite.dll",
         "lib/net451/Microsoft.Data.Sqlite.xml",
@@ -3335,12 +3299,12 @@
         "lib/netstandard1.3/Microsoft.EntityFrameworkCore.InMemory.xml"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Relational/1.0.1": {
-      "sha512": "2LZ746BTMSoAHsqsxFAVYVzo/ziS682z2evAxDnwwg1Fw27MuxqEjl38YWz5OE1TchmtEPxWWVcup+sL6rjPXg==",
+    "Microsoft.EntityFrameworkCore.Relational/1.1.0": {
+      "sha512": "5LkSh1GHK/ZbI/2N6YxyofFKaAVe5/RBN38G6UQzOQVgfJxzucpJVyZt1mGHBkJ4yTlr4WQS9Wr3Ppa5X0opbw==",
       "type": "package",
-      "path": "Microsoft.EntityFrameworkCore.Relational/1.0.1",
+      "path": "Microsoft.EntityFrameworkCore.Relational/1.1.0",
       "files": [
-        "Microsoft.EntityFrameworkCore.Relational.1.0.1.nupkg.sha512",
+        "Microsoft.EntityFrameworkCore.Relational.1.1.0.nupkg.sha512",
         "Microsoft.EntityFrameworkCore.Relational.nuspec",
         "lib/net451/Microsoft.EntityFrameworkCore.Relational.dll",
         "lib/net451/Microsoft.EntityFrameworkCore.Relational.xml",
@@ -3348,12 +3312,12 @@
         "lib/netstandard1.3/Microsoft.EntityFrameworkCore.Relational.xml"
       ]
     },
-    "Microsoft.EntityFrameworkCore.Sqlite/1.0.1": {
-      "sha512": "SN9soLyb/ogaX89jmdjzwLzCA18rJtb4OGlcI+WdVIG25ISWIkYAP787LJ/RinRj5huzzVYaedTpGWJ0jx1vrQ==",
+    "Microsoft.EntityFrameworkCore.Sqlite/1.1.0": {
+      "sha512": "hfbLTqGyGui9ZkvrE7BYjSMOWMLTwINqhg7yU0h13/SG1crLkf2rbH9lSpi17fRlcygasuJXJFgONqHTRFknQQ==",
       "type": "package",
-      "path": "Microsoft.EntityFrameworkCore.Sqlite/1.0.1",
+      "path": "Microsoft.EntityFrameworkCore.Sqlite/1.1.0",
       "files": [
-        "Microsoft.EntityFrameworkCore.Sqlite.1.0.1.nupkg.sha512",
+        "Microsoft.EntityFrameworkCore.Sqlite.1.1.0.nupkg.sha512",
         "Microsoft.EntityFrameworkCore.Sqlite.nuspec",
         "lib/net451/Microsoft.EntityFrameworkCore.Sqlite.dll",
         "lib/net451/Microsoft.EntityFrameworkCore.Sqlite.xml",
@@ -4143,27 +4107,23 @@
         "runtimes/ubuntu.16.10-x64/native/System.Security.Cryptography.Native.OpenSsl.so"
       ]
     },
-    "SQLite/3.12.2": {
-      "sha512": "XYNQJt2eFqGluWP+fDaiNrV1v3kA+VsU2ygUjLx7zqzhIZKlAjSYMZLldmbGNnlNC5rKR+0LTrN0IA9dZkDyFw==",
+    "SQLite/3.13.0": {
+      "sha512": "MJfRiz2p6aMVOxrxGMdVzhpzI0oxTgZSwC8eVuOpV8L7yYaFUu8q/OFYwv9P0/aZ/pdEu24O6gma6wZJMTun9A==",
       "type": "package",
-      "path": "SQLite/3.12.2",
+      "path": "SQLite/3.13.0",
       "files": [
-        "SQLite.3.12.2.nupkg.sha512",
-        "SQLite.nuspec"
-      ]
-    },
-    "SQLite.Native/3.12.2": {
-      "sha512": "/5BdEFTaCziE6K5OG0bjSUhPo+LRmFcmyriFWEZNSuHaiqSp69sVngTb/Yo8mH6JykMA79BFdCBLMW+2E3pnuA==",
-      "type": "package",
-      "path": "SQLite.Native/3.12.2",
-      "files": [
-        "SQLite.Native.3.12.2.nupkg.sha512",
-        "SQLite.Native.nuspec",
-        "build/net45/SQLite.Native.props",
+        "SQLite.3.13.0.nupkg.sha512",
+        "SQLite.nuspec",
+        "build/net45/SQLite.props",
+        "lib/netstandard1.0/_._",
         "runtimes/linux-x64/native/libsqlite3.so",
         "runtimes/osx-x64/native/libsqlite3.dylib",
+        "runtimes/win10-arm/nativeassets/uap10.0/sqlite3.dll",
+        "runtimes/win10-x64/nativeassets/uap10.0/sqlite3.dll",
+        "runtimes/win10-x86/nativeassets/uap10.0/sqlite3.dll",
         "runtimes/win7-x64/native/sqlite3.dll",
-        "runtimes/win7-x86/native/sqlite3.dll"
+        "runtimes/win7-x86/native/sqlite3.dll",
+        "sqlite-version.txt"
       ]
     },
     "System.AppContext/4.3.0": {
@@ -4549,12 +4509,12 @@
         "ref/xamarinwatchos10/_._"
       ]
     },
-    "System.Data.Common/4.1.0": {
-      "sha512": "epU8jeTe7aE7RqGHq9rZ8b0Q4Ah7DgubzHQblgZMSqgW1saW868WmooSyC5ywf8upLBkcVLDu93W9GPWUYsU2Q==",
+    "System.Data.Common/4.3.0": {
+      "sha512": "lm6E3T5u7BOuEH0u18JpbJHxBfOJPuCyl4Kg1RH10ktYLp5uEEE1xKrHW56/We4SnZpGAuCc9N0MJpSDhTHZGQ==",
       "type": "package",
-      "path": "System.Data.Common/4.1.0",
+      "path": "System.Data.Common/4.3.0",
       "files": [
-        "System.Data.Common.4.1.0.nupkg.sha512",
+        "System.Data.Common.4.3.0.nupkg.sha512",
         "System.Data.Common.nuspec",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
@@ -8520,120 +8480,75 @@
         "ref/xamarinwatchos10/_._"
       ]
     },
-    "xunit/2.1.0": {
-      "sha512": "u/7VQSOSXa7kSG4iK6Lcn7RqKZQ3hk7cnyMNVMpXHSP0RI5VQEtc44hvkG3LyWOVsx1dhUDD3rPAHAxyOUDQJw==",
+    "xunit/2.2.0": {
+      "sha512": "DoB9o+x3erv1DGP+pSvrIC1pWg+23LeeG8nOGVldoF+qeWNqQbabc5jLfUWW4zLOsNZfvgHcmJIKuRcZMgoV+w==",
       "type": "package",
-      "path": "xunit/2.1.0",
+      "path": "xunit/2.2.0",
       "files": [
-        "xunit.2.1.0.nupkg.sha512",
+        "xunit.2.2.0.nupkg.sha512",
         "xunit.nuspec"
       ]
     },
-    "xunit.abstractions/2.0.0": {
-      "sha512": "NAdxKQRzuLnCZ0g++x6i87/8rMBpQoRiRlRNLAqfODm2zJPbteHRoSER3DXfxnqrHXyBJT8rFaZ8uveBeQyaMA==",
+    "xunit.abstractions/2.0.1": {
+      "sha512": "bDm/zdG5rnRDsobKuKwrvL4HccBdC0uvT12be6fG12P3d1U7u9Wkvfoq/PM2GeyIeb0Dtcmm/7k2oaawiqQ2Dg==",
       "type": "package",
-      "path": "xunit.abstractions/2.0.0",
+      "path": "xunit.abstractions/2.0.1",
       "files": [
         "lib/net35/xunit.abstractions.dll",
         "lib/net35/xunit.abstractions.xml",
-        "lib/portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS/xunit.abstractions.dll",
-        "lib/portable-net45+win+wpa81+wp80+monotouch+monoandroid+Xamarin.iOS/xunit.abstractions.xml",
-        "xunit.abstractions.2.0.0.nupkg.sha512",
+        "lib/netstandard1.0/xunit.abstractions.dll",
+        "lib/netstandard1.0/xunit.abstractions.xml",
+        "xunit.abstractions.2.0.1.nupkg.sha512",
         "xunit.abstractions.nuspec"
       ]
     },
-    "xunit.assert/2.1.0": {
-      "sha512": "Hhhw+YaTe+BGhbr57dxVE+6VJk8BfThqFFii1XIsSZ4qx+SSCixprJC10JkiLRVSTfWyT8W/4nAf6NQgIrmBxA==",
+    "xunit.assert/2.2.0": {
+      "sha512": "OZ1HADp3tv48wK+mPxdOr4kYPn3Y1RACYCWkX0IogKIyZ8fwLeLspVk9KdHfhqXGITnTvlMcOw6PmdRAwrUreQ==",
       "type": "package",
-      "path": "xunit.assert/2.1.0",
+      "path": "xunit.assert/2.2.0",
       "files": [
-        "lib/dotnet/xunit.assert.dll",
-        "lib/dotnet/xunit.assert.pdb",
-        "lib/dotnet/xunit.assert.xml",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.assert.dll",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.assert.pdb",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.assert.xml",
-        "xunit.assert.2.1.0.nupkg.sha512",
+        "lib/netstandard1.1/xunit.assert.dll",
+        "lib/netstandard1.1/xunit.assert.xml",
+        "xunit.assert.2.2.0.nupkg.sha512",
         "xunit.assert.nuspec"
       ]
     },
-    "xunit.core/2.1.0": {
-      "sha512": "jlbYdPbnkPIRwJllcT/tQZCNsSElVDEymdpJfH79uTUrPARkELVYw9o/zhAjKZXmeikGqGK5C2Yny4gTNoEu0Q==",
+    "xunit.core/2.2.0": {
+      "sha512": "wuGOHofSt4sR/ros6N6S8FI2L9uuP5YsbcxM2kXpcRplMoY1pSgfEZaIRZm3NqDL/JJ/FHEksTEYkvxpc9H4Rw==",
       "type": "package",
-      "path": "xunit.core/2.1.0",
+      "path": "xunit.core/2.2.0",
       "files": [
         "build/_desktop/xunit.execution.desktop.dll",
-        "build/dnx451/_._",
-        "build/monoandroid/_._",
-        "build/monotouch/_._",
-        "build/net45/_._",
-        "build/portable-net45+win8+wp8+wpa81/xunit.core.props",
-        "build/win8/_._",
-        "build/win81/xunit.core.props",
-        "build/wp8/_._",
-        "build/wpa81/xunit.core.props",
-        "build/xamarinios/_._",
-        "xunit.core.2.1.0.nupkg.sha512",
+        "build/netstandard1.0/_._",
+        "build/uap10.0/xunit.core.props",
+        "xunit.core.2.2.0.nupkg.sha512",
         "xunit.core.nuspec"
       ]
     },
-    "xunit.extensibility.core/2.1.0": {
-      "sha512": "ANWM3WxeaeHjACLRlmrv+xOc0WAcr3cvIiJE+gqbdzTv1NCH4p1VDyT+8WmmdCc9db0WFiJLaDy4YTYsL1wWXw==",
+    "xunit.extensibility.core/2.2.0": {
+      "sha512": "2bT3sG8obWbRm45NewcV+Sr2K1whj88LnjQT7szJx1DcydgKR86ggV5rIZ5NccCWo2ctZMRb0QMYttVrhrG9Gw==",
       "type": "package",
-      "path": "xunit.extensibility.core/2.1.0",
+      "path": "xunit.extensibility.core/2.2.0",
       "files": [
-        "lib/dotnet/xunit.core.dll",
-        "lib/dotnet/xunit.core.dll.tdnet",
-        "lib/dotnet/xunit.core.pdb",
-        "lib/dotnet/xunit.core.xml",
-        "lib/dotnet/xunit.runner.tdnet.dll",
-        "lib/dotnet/xunit.runner.utility.desktop.dll",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.core.dll",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.core.dll.tdnet",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.core.pdb",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.core.xml",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.runner.tdnet.dll",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.runner.utility.desktop.dll",
-        "xunit.extensibility.core.2.1.0.nupkg.sha512",
+        "lib/netstandard1.1/xunit.core.dll",
+        "lib/netstandard1.1/xunit.core.dll.tdnet",
+        "lib/netstandard1.1/xunit.core.xml",
+        "lib/netstandard1.1/xunit.runner.tdnet.dll",
+        "lib/netstandard1.1/xunit.runner.utility.net452.dll",
+        "xunit.extensibility.core.2.2.0.nupkg.sha512",
         "xunit.extensibility.core.nuspec"
       ]
     },
-    "xunit.extensibility.execution/2.1.0": {
-      "sha512": "tAoNafoVknKa3sZJPMvtZRnhOSk3gasEGeceSm7w/gyGwsR/OXFxndWJB1xSHeoy33d3Z6jFqn4A3j+pWCF0Ew==",
+    "xunit.extensibility.execution/2.2.0": {
+      "sha512": "4gjTrSUd/F6/pdsMsf+a1f1tcaUQnr59JvZQulmF8VwQbCh34ifie3iqriYyKyLmTQDUEJ/ZTPeZEDh0pxpTLA==",
       "type": "package",
-      "path": "xunit.extensibility.execution/2.1.0",
+      "path": "xunit.extensibility.execution/2.2.0",
       "files": [
-        "lib/dnx451/xunit.execution.dotnet.dll",
-        "lib/dnx451/xunit.execution.dotnet.pdb",
-        "lib/dnx451/xunit.execution.dotnet.xml",
-        "lib/dotnet/xunit.execution.dotnet.dll",
-        "lib/dotnet/xunit.execution.dotnet.pdb",
-        "lib/dotnet/xunit.execution.dotnet.xml",
-        "lib/monoandroid/xunit.execution.dotnet.dll",
-        "lib/monoandroid/xunit.execution.dotnet.pdb",
-        "lib/monoandroid/xunit.execution.dotnet.xml",
-        "lib/monotouch/xunit.execution.dotnet.dll",
-        "lib/monotouch/xunit.execution.dotnet.pdb",
-        "lib/monotouch/xunit.execution.dotnet.xml",
-        "lib/net45/xunit.execution.desktop.dll",
-        "lib/net45/xunit.execution.desktop.pdb",
-        "lib/net45/xunit.execution.desktop.xml",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.execution.dotnet.dll",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.execution.dotnet.pdb",
-        "lib/portable-net45+win8+wp8+wpa81/xunit.execution.dotnet.xml",
-        "lib/win8/xunit.execution.dotnet.dll",
-        "lib/win8/xunit.execution.dotnet.pdb",
-        "lib/win8/xunit.execution.dotnet.xml",
-        "lib/wp8/xunit.execution.dotnet.dll",
-        "lib/wp8/xunit.execution.dotnet.pdb",
-        "lib/wp8/xunit.execution.dotnet.xml",
-        "lib/wpa81/xunit.execution.dotnet.dll",
-        "lib/wpa81/xunit.execution.dotnet.pdb",
-        "lib/wpa81/xunit.execution.dotnet.xml",
-        "lib/xamarinios/xunit.execution.dotnet.dll",
-        "lib/xamarinios/xunit.execution.dotnet.pdb",
-        "lib/xamarinios/xunit.execution.dotnet.xml",
-        "xunit.extensibility.execution.2.1.0.nupkg.sha512",
+        "lib/net452/xunit.execution.desktop.dll",
+        "lib/net452/xunit.execution.desktop.xml",
+        "lib/netstandard1.1/xunit.execution.dotnet.dll",
+        "lib/netstandard1.1/xunit.execution.dotnet.xml",
+        "xunit.extensibility.execution.2.2.0.nupkg.sha512",
         "xunit.extensibility.execution.nuspec"
       ]
     },
@@ -8687,7 +8602,7 @@
       "Microsoft.EntityFrameworkCore.InMemory >= 1.1.0",
       "System.Runtime.Serialization.Primitives >= 4.3.0",
       "dotnet-test-xunit >= 1.0.0-*",
-      "xunit >= 2.1.0"
+      "xunit >= 2.2.0"
     ],
     ".NETCoreApp,Version=v1.1": [
       "Microsoft.FSharp.Core.netcore >= 1.0.0-alpha-160629",

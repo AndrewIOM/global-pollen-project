@@ -15,7 +15,7 @@ type RootAggregate<'TState, 'TCommand, 'TEvent> = {
 // Identities
 type UserId = UserId of RootAggregateId
 type ClubId = ClubId of RootAggregateId
-type CollectionId = CollectionId of int
+type CollectionId = CollectionId of RootAggregateId
 type SlideId = SlideId of CollectionId * string
 type GrainId = GrainId of RootAggregateId
 type TaxonId = TaxonId of RootAggregateId
