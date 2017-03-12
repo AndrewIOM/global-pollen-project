@@ -1,0 +1,21 @@
+{
+  "name": "globalpollenproject",
+  "description": "Website for Global Pollen Project",
+  "version": "1.0.0",
+  "main": "./dist/umd/Main.js",
+  "devDependencies": {
+    "babel-polyfill": "^6.22.0",
+    "babel-preset-env": "^1.1.8",
+    "fable-compiler": "^0.7.7",
+    "fable-core": "^0.7.6",
+    "fable-plugins-nunit": "^0.7.1",
+    "fable-powerpack": "^0.0.19",
+    "mocha": "^3.1.2"
+  },
+  "scripts": {
+    "prepublish": "",
+    "build": "env BABEL_ENV=build fable --target umd",
+    "watch": "env BABEL_ENV=build fable --target umd --watch",
+    "test": "env BABEL_ENV=test fable --target test"
+  }
+}

@@ -1,7 +1,6 @@
 namespace GlobalPollenProject.WebUI.Controllers
 
 open System
-open System.Linq
 open System.Collections.Generic
 open System.Security.Claims
 open System.Threading.Tasks
@@ -51,6 +50,19 @@ type TaxonomyController () =
             TaxonomyAppService.import result.LatinName
             this.RedirectToAction "Index" :> IActionResult
 
+type DigitiseController() =
+    inherit Controller()
+
+    [<HttpGet>]
+    member this.Index () =
+        this.View()
+
+type CollectionController() =
+    inherit Controller()
+
+    [<HttpGet>]
+    member this.Index () =
+        this.View()
 
 type AdminController() =
     inherit Controller()

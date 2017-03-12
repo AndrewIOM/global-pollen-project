@@ -6,7 +6,7 @@
     "compile": {
       "includeFiles": [
         "Types.fs",
-        "Services.fs",
+        "Dependencies.fs",
         "Taxonomy.fs",
         "Grain.fs",
         "User.fs",

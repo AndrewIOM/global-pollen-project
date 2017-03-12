@@ -189,6 +189,6 @@ type State with
 
         | GrainIdentityChanged event ->
             state
-        
+
         | GrainIdentityUnconfirmed event ->
             state

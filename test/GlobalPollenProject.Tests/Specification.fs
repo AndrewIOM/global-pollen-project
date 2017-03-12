@@ -10,7 +10,12 @@ open GlobalPollenProject.Core
 
 let defaultDependencies = 
     let generateGuid() = Guid.NewGuid()
-    {GenerateId = generateGuid}
+    let logger message = printfn "Logged message"
+    let calcIdentity taxon = None
+
+    {GenerateId         = generateGuid;
+    Log                 = logger;
+    CalculateIdentity   = calcIdentity}
 
 let Given aggregate dep (events: 'a list) = aggregate, events, dep
 let When command (aggregate, events, dep) = aggregate, events, dep, command

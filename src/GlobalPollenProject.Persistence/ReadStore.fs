@@ -27,6 +27,15 @@ type TaxonSummary = {
 }
 
 [<CLIMutable>]
+type ReferenceCollectionSummary = {
+    [<Key>]
+    Id:Guid;
+    Name:string;
+    Description:string;
+    SlideCount:int;
+}
+
+[<CLIMutable>]
 type PublicProfile = {
     [<Key>]
     UserId:Guid

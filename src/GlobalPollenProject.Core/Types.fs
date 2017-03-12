@@ -3,14 +3,11 @@ module GlobalPollenProject.Core.Types
 
 open System
 
-type Dependencies = {GenerateId: unit -> Guid}
+type LogMessage =
+| Error of string
+| Info of string
 
 type RootAggregateId = System.Guid
-type RootAggregate<'TState, 'TCommand, 'TEvent> = {
-    initial : 'TState
-    evolve : 'TState -> 'TEvent -> 'TState
-    handle : Dependencies -> 'TCommand -> 'TState -> 'TEvent list
-    getId: 'TCommand -> RootAggregateId }
 
 // Identities
 type UserId = UserId of RootAggregateId
@@ -32,9 +29,6 @@ type Rank =
 | Subspecies
 
 type LatinName = LatinName of string
-
-// Services
-type TaxonomicBackbone = TaxonomicBackbone of string
 
 // Images
 type FileUpload =
@@ -86,8 +80,6 @@ type ChemicalTreatments =
 type MountingMedium =
     | Glycerol
 
-type Staining = bool
-
 
 type SampleType =
     | Palaeopalynology 
@@ -97,6 +89,19 @@ type SampleType =
     | ReferenceMaterial
     | Forensic
 
+type PalaeoSiteType =
+    | Lake
+
+// Taxonomic Identity
+type TaxonIdentification =
+    | Botanical of TaxonId
+    | Environmental of TaxonId
+    | Morphological of TaxonId
+
+type IdentificationStatus =
+    | Unidentified
+    | Partial of TaxonIdentification list
+    | Confirmed of TaxonIdentification list * TaxonId
 
 // Pollen Traits
 [<Measure>]
@@ -106,20 +111,35 @@ type GrainDiameter = float<um>
 type WallThickness = float<um>
 
 type GrainShape =
+    | Bisacchate
     | Circular
+    | Ovular
     | Triangular
+    | Trilobate
+    | Pentagon
+    | Hexagon
     | Unsure
 
 type Patterning =
-    | Regular
-    | No
+    | Patterned
+    | Clean
     | Unsure
-
-type Sculpturing =
-    | Spikes
-    | No
 
 type Pores =
     | Pore
-    | PoreWithFurrow
+    | Furrow
+    | PoreAndFurrow
     | No
+    | Unsure
+
+// Infrastructure
+type Dependencies = 
+    {GenerateId:        unit -> Guid; 
+     Log:               LogMessage -> unit
+     CalculateIdentity: TaxonIdentification list -> TaxonId option }
+
+type RootAggregate<'TState, 'TCommand, 'TEvent> = {
+    initial:    'TState
+    evolve:     'TState -> 'TEvent -> 'TState
+    handle:     Dependencies -> 'TCommand -> 'TState -> 'TEvent list
+    getId:      'TCommand -> RootAggregateId }
