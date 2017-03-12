@@ -15,7 +15,11 @@ module Config =
     let eventStream = eventStore.SaveEvent :> IObservable<string*obj>
     let readModelHandler = eventStream |> EventHandlers.projectionEventHandler
     let projections = new ReadContext()
-    let deps = {GenerateId = Guid.NewGuid}
+    let deps = 
+        let calcIdentity taxon = None
+        {GenerateId = Guid.NewGuid
+         Log = fun x -> ()
+         CalculateIdentity = calcIdentity }
 
 module GrainAppService =
 

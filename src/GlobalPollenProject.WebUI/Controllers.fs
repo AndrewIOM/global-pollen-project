@@ -7,6 +7,7 @@ open System.Threading.Tasks
 open Microsoft.AspNetCore.Authorization
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Mvc
+open System.Linq
 open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.Extensions.Logging
 open Microsoft.AspNetCore.Http
