@@ -12,6 +12,7 @@ type RootAggregateId = System.Guid
 // Identities
 type UserId = UserId of RootAggregateId
 type ClubId = ClubId of RootAggregateId
+type CalibrationId = CalibrationId of RootAggregateId
 type CollectionId = CollectionId of RootAggregateId
 type SlideId = SlideId of CollectionId * string
 type GrainId = GrainId of RootAggregateId
@@ -19,7 +20,6 @@ type TaxonId = TaxonId of RootAggregateId
 
 // Specialist Types
 type Url = Url of string
-type Base64Image = Base64Image of string
 
 // Taxonomy
 type Rank =
@@ -31,12 +31,24 @@ type Rank =
 type LatinName = LatinName of string
 
 // Images
-type FileUpload =
-    | WaitingForUpload of Base64Image
-    | Uploaded of Url
+[<Measure>] type um
+type Base64Image = Base64Image of string
 
-type Image = 
-    | FocusImage of Url list
+type ImageUpload =
+    | WaitingForUpload of ImageForUpload
+    | Success of Image
+    | Fail of LogMessage
+
+and Stepping =
+| Fixed of float<um>
+| Variable
+
+and ImageForUpload =
+    | FocusImage of Base64Image list * Stepping * CalibrationId
+    | SingleImage of Base64Image
+
+and Image = 
+    | FocusImage of Url list * Stepping * CalibrationId
     | SingleImage of Url
 
 // Sample Collection (Space + Time)
@@ -104,9 +116,6 @@ type IdentificationStatus =
     | Confirmed of TaxonIdentification list * TaxonId
 
 // Pollen Traits
-[<Measure>]
-type um // Micrometre
-
 type GrainDiameter = float<um>
 type WallThickness = float<um>
 
@@ -136,6 +145,7 @@ type Pores =
 type Dependencies = 
     {GenerateId:        unit -> Guid; 
      Log:               LogMessage -> unit
+     UploadImage:       ImageUpload -> Image
      CalculateIdentity: TaxonIdentification list -> TaxonId option }
 
 type RootAggregate<'TState, 'TCommand, 'TEvent> = {

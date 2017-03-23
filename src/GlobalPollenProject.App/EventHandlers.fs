@@ -25,7 +25,7 @@ let projectionEventHandler (eventStream:IObservable<string*obj>) =
             let thumbUrl = 
                 match event.Images.Head with
                 | SingleImage x -> x
-                | FocusImage x -> x.Head
+                | FocusImage (u,s,c) -> u.Head
 
             readStore.GrainSummaries.Add { Id= unwrapId event.Id; Thumbnail= unwrapUrl thumbUrl } |> ignore
             readStore.SaveChanges() |> ignore

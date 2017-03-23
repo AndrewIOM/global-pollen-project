@@ -5,4 +5,3 @@ open System
 
 let calculateTaxonomicIdentity (ids:TaxonIdentification list) backbone =
     None
-

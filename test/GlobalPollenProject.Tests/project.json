@@ -11,6 +11,7 @@
         "Taxonomy.fs",
         "ReferenceCollection.fs",
         "Grain.fs",
+        "Calibration.fs",
         "Empty.fs"
       ]
     }

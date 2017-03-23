@@ -19,6 +19,7 @@ module Config =
         let calcIdentity taxon = None
         {GenerateId = Guid.NewGuid
          Log = fun x -> ()
+         UploadImage = fun x -> SingleImage (Url "https://sometestimage.sometestimage/test.jpg")
          CalculateIdentity = calcIdentity }
 
 module GrainAppService =
@@ -90,3 +91,19 @@ module TaxonomyAppService =
 
     let list() =
         Config.projections.TaxonSummaries |> Seq.toList
+
+
+module DigitiseAppService =
+
+    open GlobalPollenProject.Core.Aggregates.ReferenceCollection
+
+    let handle =
+        let aggregate = {
+            initial = State.Initial
+            evolve = State.Evolve
+            handle = handle
+            getId = getId
+        }
+        GlobalPollenProject.Core.CommandHandlers.create aggregate "ReferenceCollection" Config.deps Config.eventStore.ReadStream<Event> Config.eventStore.Save
+
+    

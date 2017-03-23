@@ -5,20 +5,12 @@ open System
 
 type Command =
 | CreateCollection of CreateCollection
-| Calibrate of Calibrate
 | AddSlide of AddSlide
 | UploadSlideImage of UploadSlideImage
 | Publish of CollectionId
 
 and CreateCollection = {Id:CollectionId; Name:string; Owner:UserId}
 and UploadSlideImage = {Id:SlideId; Image:Image}
-and Calibrate = 
-    {Id:CollectionId; 
-     Focus:int; 
-     Image: Url; 
-     StartPoint: int * int
-     EndPoint: int * int
-     MeasureLength: float<um>}
 and AddSlide = 
     {Id:        CollectionId
      Taxon:     TaxonIdentification
@@ -28,14 +20,12 @@ and AddSlide =
 type Event =
 | DigitisationStarted of DigitisationStarted
 | CollectionPublished of CollectionId
-| Calibrated of Calibrated
 | SlideRecorded of SlideRecorded
 | SlideImageUploaded of SlideId * Image
 | SlideFullyDigitised of SlideId
 
 and DigitisationStarted = {Id: CollectionId; Name: string; Owner: UserId}
 and SlideRecorded = {Id: SlideId; Taxon: TaxonIdentification}
-and Calibrated = {Id: CollectionId; FocusLevel: int; Image: Url; PixelWidth: float<um>}
 
 type State =
 | Initial
@@ -47,17 +37,23 @@ and RefState = {
     Curators: UserId list
     Name: string
     Description: string option
-    Calibrations: Calibration list 
     Slides: SlideState list}
 and SlideState = {
     Identification: IdentificationStatus
     Images: Image list
 }
-and Calibration = {FocusLevel: int; Image: Url; PixelWidth: float<um>}
-
 
 let create (command:CreateCollection) state =
     [DigitisationStarted {Id = command.Id; Name = command.Name; Owner = command.Owner}]
+
+let publish command state =
+    match state with
+    | Complete c -> invalidOp "Cannot publish an already published collection"
+    | Initial -> invalidOp "This collection does not exist"
+    | Draft c ->
+        match c.Slides.Length with
+        | 0 -> invalidOp "Cannot publish an empty collection"
+        | _ -> [CollectionPublished command]
 
 let addSlide (command:AddSlide) calcIdentity state =
     match state with
@@ -72,27 +68,16 @@ let addSlide (command:AddSlide) calcIdentity state =
             [SlideRecorded {Id = SlideId (command.Id,slideId); Taxon = command.Taxon};]
     | Complete c -> invalidOp "Cannot publish an already published collection"
 
-let publish command state =
+let uploadImage (command:UploadSlideImage) state =
     match state with
     | Complete c -> invalidOp "Cannot publish an already published collection"
     | Initial -> invalidOp "This collection does not exist"
-    | Draft c ->
-        match c.Slides.Length with
-        | 0 -> invalidOp "Cannot publish an empty collection"
-        | _ -> [CollectionPublished command]
-
-let uploadImage (command:UploadSlideImage) state =
-    [SlideImageUploaded (command.Id, command.Image)]
+    | Draft c -> [SlideImageUploaded (command.Id, command.Image)]
  
-let calibrate (command:Calibrate) state =
-    []
-
 let handle deps = 
     function
     | CreateCollection c -> create c
     | Publish c -> publish c
-
-    | Calibrate c -> calibrate c
     | AddSlide c -> addSlide c deps.CalculateIdentity
     | UploadSlideImage c -> uploadImage c
 
@@ -112,7 +97,6 @@ type State with
                     Description = None
                     Slides = []
                     Curators = []
-                    Calibrations = []
                 }
             | _ -> invalidOp "Digitisation has already started for this collection"
         
@@ -130,6 +114,9 @@ type State with
         | SlideFullyDigitised event ->
             state
 
+        | SlideImageUploaded (e,x) ->
+            state
+
 
 let getId = 
     let unwrap (CollectionId e) = e
@@ -137,3 +124,4 @@ let getId =
     | CreateCollection c -> unwrap c.Id
     | AddSlide c -> unwrap c.Id
     | Publish c -> unwrap c
+    //| UploadSlideImage c -> unwrap (fst c.Id)

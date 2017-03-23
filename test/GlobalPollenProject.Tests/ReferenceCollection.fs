@@ -41,11 +41,11 @@ module ``When digitising reference material`` =
         |> When (Publish collection)
         |> Expect [ CollectionPublished collection ]
 
-
+    
 module ``When uploading a slide`` =
 
     let image = Url "https://sometesturl"
-    let focusImage = FocusImage [image; image; image; image; image]
+    let focusImage = FocusImage ([image; image; image; image; image],Fixed 2.3<um>,(CalibrationId Guid.Empty))
     let singleImage = SingleImage (Url "https://sometesturl")
 
     [<Fact>]
@@ -54,15 +54,15 @@ module ``When uploading a slide`` =
         |> When (AddSlide {Id = collection; Taxon = id; Place = Some place; Time = Some age})
         |> Expect [ SlideRecorded {Id = SlideId (collection,"GPP1"); Taxon = id }]
 
-    // [<Fact>]
-    // let ``Focus images require a calibration set`` () =
-    //     Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser}
-    //             SlideRecorded {Id = SlideId (collection,"GPP1"); Taxon = id } ]
-    //     |> When ( UploadSlideImage {Id = SlideId (collection, "GPP1"); Image = focusImage })
-    //     |> ExpectInvalidOp
+    [<Fact>]
+    let ``Focus images can be uploaded after calibration`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser}
+                SlideRecorded {Id = SlideId (collection,"GPP1"); Taxon = id } ]
+        |> When ( UploadSlideImage {Id = SlideId (collection, "GPP1"); Image = focusImage })
+        |> Expect [ SlideImageUploaded ((SlideId (collection, "GPP1")), focusImage)  ]
 
     [<Fact>]
-    let ``Images can be added seperately at a later date`` () =
+    let ``Single images do not require a calibration set`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser}
                 SlideRecorded {Id = SlideId (collection,"GPP1"); Taxon = id } ]
         |> When ( UploadSlideImage {Id = SlideId (collection, "GPP1"); Image = singleImage })
