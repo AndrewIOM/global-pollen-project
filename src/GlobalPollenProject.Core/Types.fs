@@ -34,22 +34,16 @@ type LatinName = LatinName of string
 [<Measure>] type um
 type Base64Image = Base64Image of string
 
-type ImageUpload =
-    | WaitingForUpload of ImageForUpload
-    | Success of Image
-    | Fail of LogMessage
+type ImageForUpload =
+    | Focus of Base64Image list * Stepping * CalibrationId
+    | Single of Base64Image
+and Image = 
+    | FocusImage of Url list * Stepping * CalibrationId
+    | SingleImage of Url
 
 and Stepping =
 | Fixed of float<um>
 | Variable
-
-and ImageForUpload =
-    | FocusImage of Base64Image list * Stepping * CalibrationId
-    | SingleImage of Base64Image
-
-and Image = 
-    | FocusImage of Url list * Stepping * CalibrationId
-    | SingleImage of Url
 
 // Sample Collection (Space + Time)
 [<Measure>]
@@ -145,7 +139,7 @@ type Pores =
 type Dependencies = 
     {GenerateId:        unit -> Guid; 
      Log:               LogMessage -> unit
-     UploadImage:       ImageUpload -> Image
+     UploadImage:       ImageForUpload -> Image
      CalculateIdentity: TaxonIdentification list -> TaxonId option }
 
 type RootAggregate<'TState, 'TCommand, 'TEvent> = {

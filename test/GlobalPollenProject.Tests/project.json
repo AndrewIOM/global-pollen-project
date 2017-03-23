@@ -12,6 +12,8 @@
         "ReferenceCollection.fs",
         "Grain.fs",
         "Calibration.fs",
+
+        "AzureImageService.fs", 
         "Empty.fs"
       ]
     }
