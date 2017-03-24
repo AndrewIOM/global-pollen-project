@@ -19,16 +19,14 @@ type GrainId = GrainId of RootAggregateId
 type TaxonId = TaxonId of RootAggregateId
 
 // Specialist Types
-type Url = Url of string
+//type Url = Url of string
 
-// Taxonomy
-type Rank =
-| Family
-| Genus
-| Species
-| Subspecies
-
-type LatinName = LatinName of string
+[<AutoOpen>]
+module Url =
+    type Url = private Url of string
+    let create surl =
+        Url surl
+    let unwrap (Url u) = u
 
 // Images
 [<Measure>] type um
@@ -98,6 +96,28 @@ type SampleType =
 type PalaeoSiteType =
     | Lake
 
+// Taxonomy
+type LatinName = LatinName of string
+type SpecificEphitet = SpecificEphitet of string
+type Authorship = Scientific of string
+
+type TaxonomicGroup =
+| Angiosperm
+| Gymnosperm
+| Pteridophyte
+| Bryophyte
+
+type TaxonomicIdentity =
+| Family of LatinName
+| Genus of LatinName
+| Species of LatinName * SpecificEphitet * Authorship
+
+type TaxonomicStatus =
+| Accepted
+| Doubtful
+| Misapplied of TaxonId
+| Synonym of TaxonId
+
 // Taxonomic Identity
 type TaxonIdentification =
     | Botanical of TaxonId
@@ -135,11 +155,21 @@ type Pores =
     | No
     | Unsure
 
+// Taxonomic Backbone
+type BackboneQuery =
+| Validate of TaxonomicIdentity
+| ValidateById of TaxonId
+
+type LinkRequest = {Family:string;Genus:string option;Species:string option;Identity:TaxonomicIdentity}
+
 // Infrastructure
 type Dependencies = 
     {GenerateId:        unit -> Guid; 
      Log:               LogMessage -> unit
      UploadImage:       ImageForUpload -> Image
+     ValidateTaxon:     BackboneQuery -> TaxonId option
+     GetGbifId:         LinkRequest -> int option
+     GetNeotomaId:      LinkRequest -> int option
      CalculateIdentity: TaxonIdentification list -> TaxonId option }
 
 type RootAggregate<'TState, 'TCommand, 'TEvent> = {

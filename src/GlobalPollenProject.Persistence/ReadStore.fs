@@ -27,6 +27,19 @@ type TaxonSummary = {
 }
 
 [<CLIMutable>]
+type BackboneTaxon = {
+    [<Key>]
+    Id:Guid;
+    Family:string
+    Genus:string
+    Species:string
+    LatinName:string
+    Rank:string
+    ReferenceName:string
+    ReferenceUrl:string
+}
+
+[<CLIMutable>]
 type ReferenceCollectionSummary = {
     [<Key>]
     Id:Guid;
@@ -52,10 +65,9 @@ type ReadContext =
     new(options: DbContextOptions<ReadContext>) = { inherit DbContext(options) }
 
     // Unknown Grains Index View
-    [<DefaultValue>]
-    val mutable grainSummaries:DbSet<GrainSummary>
-    [<DefaultValue>]
-    val mutable taxonSummaries:DbSet<TaxonSummary>
+    [<DefaultValue>] val mutable grainSummaries:DbSet<GrainSummary>
+    [<DefaultValue>] val mutable taxonSummaries:DbSet<TaxonSummary>
+    [<DefaultValue>] val mutable backboneTaxon:DbSet<BackboneTaxon>
     member x.GrainSummaries
         with get() = x.grainSummaries
         and set v = x.grainSummaries <- v
@@ -63,6 +75,10 @@ type ReadContext =
     member x.TaxonSummaries
         with get() = x.taxonSummaries
         and set v = x.taxonSummaries <- v
+
+    member x.BackboneTaxa
+        with get() = x.backboneTaxon
+        and set v = x.backboneTaxon <- v
 
     override this.OnConfiguring optionsBuilder = 
         optionsBuilder.UseSqlite "Filename=./projections.db" |> ignore

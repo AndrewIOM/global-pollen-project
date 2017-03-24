@@ -26,7 +26,7 @@ module ``When creating a calibration set`` =
                             Device = "Nikon"
                             Ocular = 10
                             Objective = 40
-                            Image = Url "someurl"
+                            Image = Url.create "someurl"
                             StartPoint = 20,43
                             EndPoint = 20,43
                             MeasureLength = 23.2<um> } )
@@ -41,8 +41,8 @@ module ``When creating a calibration set`` =
                             Device = "Nikon"
                             Ocular = 10
                             Objective = 40
-                            Image = Url "someurl"
+                            Image = Url.create "someurl"
                             StartPoint = 20,40;
                             EndPoint = 20,440;
                             MeasureLength = 50.1<um> } )
-        |> Expect [ Calibrated {Id = calId; User = currentUser; Device = "Nikon"; Ocular = 10; Objective = 40; Image = Url "someurl"; PixelWidth = 0.12525<um>} ]
+        |> Expect [ Calibrated {Id = calId; User = currentUser; Device = "Nikon"; Ocular = 10; Objective = 40; Image = Url.create "someurl"; PixelWidth = 0.12525<um>} ]

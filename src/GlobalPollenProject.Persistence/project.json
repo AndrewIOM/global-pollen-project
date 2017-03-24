@@ -11,7 +11,8 @@
         "EventStore.fs",
         "ReadStore.fs",
         "Migrations.fs",
-        "AzureImageService.fs"
+        "AzureImageService.fs",
+        "ExternalLink.fs"
       ]
     }
   },
