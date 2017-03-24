@@ -18,7 +18,8 @@ and Calibrate =
 
 type Event =
 | Calibrated of Calibrated
-and Calibrated = {Id: CalibrationId; User: UserId; Device: string; Ocular:int; Objective:int; Image: Url; PixelWidth: float<um>}
+and Calibrated = {Id: CalibrationId; User: UserId; Device: string; 
+                  Ocular:int; Objective:int; Image: Url; PixelWidth: float<um>}
 
 type State =
 | Initial
@@ -43,7 +44,8 @@ let calibrate (command:Calibrate) state =
             let pixelDistance = sqrt ((((float x2)-(float x1))**2.) + (((float y2)-(float y1))**2.))
             let scale (actual:float<_>) image = actual / image
             let mag = scale command.MeasureLength pixelDistance
-            [ Calibrated { Id = command.Id; User = command.User; Device = command.Device; Ocular = command.Ocular; Objective = command.Objective; Image = command.Image; PixelWidth = mag} ]
+            [ Calibrated { Id = command.Id; User = command.User; Device = command.Device; 
+                           Ocular = command.Ocular; Objective = command.Objective; Image = command.Image; PixelWidth = mag} ]
     | Complete c -> invalidOp "The calibration already exists"
  
 let handle deps = 

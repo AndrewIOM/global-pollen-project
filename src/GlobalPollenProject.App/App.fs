@@ -9,18 +9,31 @@ open System.Threading
 open ReadStore
 open EventStore
 
+open AzureImageService
+open GlobalPollenProject.Core.Dependencies
+
 module Config =
 
     let eventStore = EventStore.SqlEventStore()
-    let eventStream = eventStore.SaveEvent :> IObservable<string*obj>
-    let readModelHandler = eventStream |> EventHandlers.projectionEventHandler
+    eventStore.SaveEvent 
+    :> IObservable<string*obj>
+    |> EventHandlers.projectionEventHandler 
+    |> ignore
+
     let projections = new ReadContext()
-    let deps = 
-        let calcIdentity taxon = None
-        {GenerateId = Guid.NewGuid
-         Log = fun x -> ()
-         UploadImage = fun x -> SingleImage (Url "https://sometestimage.sometestimage/test.jpg")
-         CalculateIdentity = calcIdentity }
+
+    let dependencies = 
+        let generateId = Guid.NewGuid
+        let log = ignore
+        let uploadImage = AzureImageService.uploadToAzure "Development" "connectionString" (fun x -> Guid.NewGuid().ToString())
+
+        let taxonomicBackbbone = "doesn't exist yet"
+        let calculateIdentity = calculateTaxonomicIdentity taxonomicBackbbone
+    
+        { GenerateId = generateId
+          Log = log
+          UploadImage = uploadImage
+          CalculateIdentity = calculateIdentity }
 
 module GrainAppService =
 
@@ -33,7 +46,7 @@ module GrainAppService =
         getId = getId 
     }
 
-    let handle = create aggregate "Grain" Config.deps Config.eventStore.ReadStream<Event> Config.eventStore.Save
+    let handle = create aggregate "Grain" Config.dependencies Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
     let submitUnknownGrain grainId (images:string list) age (lat:float) lon =
         let id = GrainId grainId
@@ -65,7 +78,7 @@ module UserAppService =
             handle = handle
             getId = getId
         }
-        create aggregate "User" Config.deps Config.eventStore.ReadStream<Event> Config.eventStore.Save
+        create aggregate "User" Config.dependencies Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
     let register userId title firstName lastName =
         handle ( Register { Id = UserId userId; Title = title; FirstName = firstName; LastName = lastName })
@@ -82,7 +95,7 @@ module TaxonomyAppService =
             handle = handle
             getId = getId
         }
-        create aggregate "Taxon" Config.deps Config.eventStore.ReadStream<Event> Config.eventStore.Save
+        create aggregate "Taxon" Config.dependencies Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
     let import name =
         let domainName = LatinName name
@@ -104,6 +117,6 @@ module DigitiseAppService =
             handle = handle
             getId = getId
         }
-        GlobalPollenProject.Core.CommandHandlers.create aggregate "ReferenceCollection" Config.deps Config.eventStore.ReadStream<Event> Config.eventStore.Save
+        GlobalPollenProject.Core.CommandHandlers.create aggregate "ReferenceCollection" Config.dependencies Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
     
