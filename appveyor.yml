@@ -11,11 +11,11 @@ init:
 before_build:
 - appveyor-retry dotnet restore -v Minimal
 build_script:
-- dotnet build "src\GlobalPollenProject.WebUI" -c %CONFIGURATION% --version-suffix %LABEL%
+- dotnet build "src\GlobalPollenProject.WebUI\GlobalPollenProject.WebUI.fsproj" -c %CONFIGURATION% --version-suffix %LABEL%
 # after_build:
 # - dotnet publish "src\GlobalPollenProject.WebUI" -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts\GlobalPollenProject.WebUI
 test_script:
-- dotnet test "test\GlobalPollenProject.Tests" -c %CONFIGURATION%
+- dotnet test "test\GlobalPollenProject.Tests\GlobalPollenProject.Tests.fsproj" -c %CONFIGURATION%
 artifacts:
 - path: artifacts\**\*.*
 cache:
