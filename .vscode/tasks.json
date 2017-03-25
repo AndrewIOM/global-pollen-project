@@ -6,7 +6,9 @@
     "tasks": [
         {
             "taskName": "build",
-            "args": [ "/src/GlobalPollenProject.WebUI/project.json" ],
+            "args": [
+                "src/GlobalPollenProject.WebUI/GlobalPollenProject.WebUI.fsproj"
+            ],
             "isBuildCommand": true,
             "showOutput": "silent",
             "problemMatcher": "$msCompile"
@@ -14,7 +16,7 @@
         {
             "taskName": "test",
             "args": [
-                "test/GlobalPollenProject.Tests/project.json"
+                "test/GlobalPollenProject.Tests/GlobalPollenProject.Tests.fsproj"
             ],
             "isTestCommand": true,
             "showOutput": "always",

@@ -4,5 +4,5 @@ open Xunit
 
 module ``When calculating the scaling factor for image uploads`` =
 
-    [<Theory>]
+    [<Fact>]
     let ``Hello`` () = 2.

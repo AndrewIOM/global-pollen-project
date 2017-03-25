@@ -15,10 +15,12 @@ let defaultDependencies =
     let upload image = SingleImage (Url.create "https://globalpollenproject.org/sometesturl.jpg")
     let validate = fun unit -> Some (TaxonId (generateGuid()))
 
-    {GenerateId         = generateGuid;
+    {GenerateId          = generateGuid;
      Log                 = logger;
      UploadImage         = upload;
      ValidateTaxon       = validate;
+     GetGbifId           = fun unit -> None;
+     GetNeotomaId        = fun unit -> None;
      CalculateIdentity   = calcIdentity }
 
 let Given aggregate dep (events: 'a list) = aggregate, events, dep

@@ -1,0 +1,32 @@
+﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.6</TargetFramework>
+    <DebugType>portable</DebugType>
+    <AssemblyName>GlobalPollenProject.Core</AssemblyName>
+    <PackageId>GlobalPollenProject.Core</PackageId>
+    <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Types.fs" />
+    <Compile Include="Dependencies.fs" />
+    <Compile Include="Taxonomy.fs" />
+    <Compile Include="Grain.fs" />
+    <Compile Include="User.fs" />
+    <Compile Include="Calibration.fs" />
+    <Compile Include="ReferenceCollection.fs" />
+    <Compile Include="CommandHandlers.fs" />
+  </ItemGroup>
+
+  <ItemGroup Condition=" '$(TargetFramework)' == 'netstandard1.6' ">
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.0-beta-*" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.FSharp.Core.netcore" Version="1.0.0-alpha-160629" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <DotNetCliToolReference Include="dotnet-compile-fsc" Version="1.0.0-preview2.1-*" />
+  </ItemGroup>
+
+</Project>
