@@ -3,6 +3,35 @@
   "version": 2,
   "targets": {
     ".NETStandard,Version=v1.6": {
+      "ImageSharp/1.0.0-alpha4-00046": {
+        "type": "package",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "System.Buffers": "4.3.0",
+          "System.Numerics.Vectors": "4.3.0",
+          "System.Runtime.CompilerServices.Unsafe": "4.3.0",
+          "System.Threading.Tasks.Parallel": "4.3.0"
+        },
+        "compile": {
+          "lib/netstandard1.3/ImageSharp.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/ImageSharp.dll": {}
+        }
+      },
+      "Microsoft.AspNet.WebApi.Client/5.2.3": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Net.Http": "2.2.22",
+          "Newtonsoft.Json": "6.0.4"
+        },
+        "compile": {
+          "lib/portable-wp8+netcore45+net45+wp81+wpa81/System.Net.Http.Formatting.dll": {}
+        },
+        "runtime": {
+          "lib/portable-wp8+netcore45+net45+wp81+wpa81/System.Net.Http.Formatting.dll": {}
+        }
+      },
       "Microsoft.AspNetCore.Antiforgery/1.1.0": {
         "type": "package",
         "dependencies": {
@@ -447,6 +476,21 @@
           "lib/netstandard1.3/Microsoft.AspNetCore.WebUtilities.dll": {}
         }
       },
+      "Microsoft.Bcl/1.1.9": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Bcl.Build": "1.0.14"
+        },
+        "compile": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
+        }
+      },
+      "Microsoft.Bcl.Build/1.0.14": {
+        "type": "package"
+      },
       "Microsoft.CSharp/4.3.0": {
         "type": "package",
         "dependencies": {
@@ -472,6 +516,131 @@
         },
         "runtime": {
           "lib/netstandard1.3/Microsoft.CSharp.dll": {}
+        }
+      },
+      "Microsoft.Data.Edm/5.8.2": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.1/Microsoft.Data.Edm.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/Microsoft.Data.Edm.dll": {}
+        },
+        "resource": {
+          "lib/netstandard1.1/de/Microsoft.Data.Edm.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard1.1/es/Microsoft.Data.Edm.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard1.1/fr/Microsoft.Data.Edm.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard1.1/it/Microsoft.Data.Edm.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard1.1/ja/Microsoft.Data.Edm.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard1.1/ko/Microsoft.Data.Edm.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard1.1/ru/Microsoft.Data.Edm.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard1.1/zh-Hans/Microsoft.Data.Edm.resources.dll": {
+            "locale": "zh-Hans"
+          },
+          "lib/netstandard1.1/zh-Hant/Microsoft.Data.Edm.resources.dll": {
+            "locale": "zh-Hant"
+          }
+        }
+      },
+      "Microsoft.Data.OData/5.8.2": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Data.Edm": "[5.8.2]",
+          "System.Spatial": "[5.8.2]"
+        },
+        "compile": {
+          "lib/netstandard1.1/Microsoft.Data.OData.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/Microsoft.Data.OData.dll": {}
+        },
+        "resource": {
+          "lib/netstandard1.1/de/Microsoft.Data.OData.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard1.1/es/Microsoft.Data.OData.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard1.1/fr/Microsoft.Data.OData.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard1.1/it/Microsoft.Data.OData.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard1.1/ja/Microsoft.Data.OData.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard1.1/ko/Microsoft.Data.OData.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard1.1/ru/Microsoft.Data.OData.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard1.1/zh-Hans/Microsoft.Data.OData.resources.dll": {
+            "locale": "zh-Hans"
+          },
+          "lib/netstandard1.1/zh-Hant/Microsoft.Data.OData.resources.dll": {
+            "locale": "zh-Hant"
+          }
+        }
+      },
+      "Microsoft.Data.Services.Client/5.8.2": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Data.OData": "[5.8.2]",
+          "System.ComponentModel.EventBasedAsync": "4.0.11",
+          "System.Dynamic.Runtime": "4.0.0",
+          "System.Linq.Queryable": "4.0.0",
+          "System.Net.Requests": "4.0.11"
+        },
+        "compile": {
+          "lib/netstandard1.1/Microsoft.Data.Services.Client.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/Microsoft.Data.Services.Client.dll": {}
+        },
+        "resource": {
+          "lib/netstandard1.1/de/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard1.1/es/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard1.1/fr/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard1.1/it/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard1.1/ja/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard1.1/ko/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard1.1/ru/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard1.1/zh-Hans/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "zh-Hans"
+          },
+          "lib/netstandard1.1/zh-Hant/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "zh-Hant"
+          }
         }
       },
       "Microsoft.Data.Sqlite/1.1.0": {
@@ -934,6 +1103,23 @@
           }
         }
       },
+      "Microsoft.Net.Http/2.2.22": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Bcl": "1.1.9",
+          "Microsoft.Bcl.Build": "1.0.14"
+        },
+        "compile": {
+          "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Extensions.dll": {},
+          "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Primitives.dll": {},
+          "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Extensions.dll": {},
+          "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Primitives.dll": {},
+          "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.dll": {}
+        }
+      },
       "Microsoft.Net.Http.Headers/1.1.0": {
         "type": "package",
         "dependencies": {
@@ -1327,6 +1513,23 @@
           }
         }
       },
+      "SendGrid.NetCore/1.0.0-rtm-00002": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNet.WebApi.Client": "5.2.3",
+          "Microsoft.AspNetCore.WebUtilities": "1.0.0",
+          "Microsoft.NETCore.Platforms": "1.0.1",
+          "NETStandard.Library": "1.6.0",
+          "Newtonsoft.Json": "9.0.1",
+          "System.Net.Mail": "1.0.0-rtm-00002"
+        },
+        "compile": {
+          "lib/netstandard1.3/SendGrid.NetCore.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/SendGrid.NetCore.dll": {}
+        }
+      },
       "SQLite/3.13.0": {
         "type": "package",
         "compile": {
@@ -1391,6 +1594,9 @@
         },
         "compile": {
           "ref/netstandard1.3/System.Collections.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Collections.Concurrent/4.3.0": {
@@ -1462,7 +1668,7 @@
           "System.Threading": "4.3.0"
         },
         "compile": {
-          "ref/netstandard1.3/_._": {}
+          "ref/netstandard1.3/System.Collections.Specialized.dll": {}
         },
         "runtime": {
           "lib/netstandard1.3/System.Collections.Specialized.dll": {}
@@ -1500,6 +1706,21 @@
         },
         "runtime": {
           "lib/netstandard1.4/System.ComponentModel.Annotations.dll": {}
+        }
+      },
+      "System.ComponentModel.EventBasedAsync/4.0.11": {
+        "type": "package",
+        "dependencies": {
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Threading": "4.0.11",
+          "System.Threading.Tasks": "4.0.11"
+        },
+        "compile": {
+          "ref/netstandard1.3/System.ComponentModel.EventBasedAsync.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/System.ComponentModel.EventBasedAsync.dll": {}
         }
       },
       "System.ComponentModel.Primitives/4.3.0": {
@@ -1595,6 +1816,9 @@
         },
         "compile": {
           "ref/netstandard1.3/System.Diagnostics.Debug.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Diagnostics.DiagnosticSource/4.3.0": {
@@ -1622,6 +1846,9 @@
         },
         "compile": {
           "ref/netstandard1.0/System.Diagnostics.Tools.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Diagnostics.Tracing/4.3.0": {
@@ -1669,6 +1896,9 @@
         },
         "compile": {
           "ref/netstandard1.3/System.Globalization.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Globalization.Calendars/4.3.0": {
@@ -1737,6 +1967,9 @@
         },
         "compile": {
           "ref/netstandard1.5/System.IO.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.IO.Compression/4.3.0": {
@@ -1965,6 +2198,32 @@
           }
         }
       },
+      "System.Net.Mail/1.0.0-rtm-00002": {
+        "type": "package",
+        "dependencies": {
+          "Newtonsoft.Json": "8.0.3",
+          "System.Collections": "4.0.11",
+          "System.Collections.Specialized": "4.0.1",
+          "System.Data.Common": "4.0.1",
+          "System.Diagnostics.Debug": "4.0.11",
+          "System.Globalization": "4.0.11",
+          "System.Globalization.Extensions": "4.0.1",
+          "System.IO.FileSystem": "4.0.1",
+          "System.Net.Primitives": "4.0.11",
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Extensions": "4.1.0",
+          "System.Text.Encoding.Extensions": "4.0.11",
+          "System.Threading": "4.0.11",
+          "System.Threading.Thread": "4.0.0",
+          "System.Threading.ThreadPool": "4.0.10"
+        },
+        "compile": {
+          "lib/netstandard1.3/System.Net.Mail.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/System.Net.Mail.dll": {}
+        }
+      },
       "System.Net.Primitives/4.3.0": {
         "type": "package",
         "dependencies": {
@@ -1975,6 +2234,9 @@
         },
         "compile": {
           "ref/netstandard1.3/System.Net.Primitives.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Net.Requests/4.0.11": {
@@ -1996,6 +2258,9 @@
         },
         "compile": {
           "ref/netstandard1.3/System.Net.Requests.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         },
         "runtimeTargets": {
           "runtimes/unix/lib/netstandard1.3/System.Net.Requests.dll": {
@@ -2052,6 +2317,21 @@
           "lib/netstandard1.3/System.Net.WebSockets.dll": {}
         }
       },
+      "System.Numerics.Vectors/4.3.0": {
+        "type": "package",
+        "dependencies": {
+          "System.Globalization": "4.3.0",
+          "System.Resources.ResourceManager": "4.3.0",
+          "System.Runtime": "4.3.0",
+          "System.Runtime.Extensions": "4.3.0"
+        },
+        "compile": {
+          "ref/netstandard1.0/System.Numerics.Vectors.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/System.Numerics.Vectors.dll": {}
+        }
+      },
       "System.ObjectModel/4.3.0": {
         "type": "package",
         "dependencies": {
@@ -2079,6 +2359,9 @@
         },
         "compile": {
           "ref/netstandard1.5/System.Reflection.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Reflection.Emit/4.3.0": {
@@ -2136,6 +2419,9 @@
         },
         "compile": {
           "ref/netstandard1.0/System.Reflection.Extensions.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Reflection.Primitives/4.3.0": {
@@ -2147,6 +2433,9 @@
         },
         "compile": {
           "ref/netstandard1.0/System.Reflection.Primitives.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Reflection.TypeExtensions/4.3.0": {
@@ -2189,6 +2478,9 @@
         },
         "compile": {
           "ref/netstandard1.0/System.Resources.ResourceManager.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Runtime/4.3.0": {
@@ -2199,6 +2491,9 @@
         },
         "compile": {
           "ref/netstandard1.5/System.Runtime.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp80+wpa81/_._": {}
         }
       },
       "System.Runtime.CompilerServices.Unsafe/4.3.0": {
@@ -2222,6 +2517,9 @@
         },
         "compile": {
           "ref/netstandard1.5/System.Runtime.Extensions.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Runtime.Handles/4.3.0": {
@@ -2598,6 +2896,44 @@
           }
         }
       },
+      "System.Spatial/5.8.2": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.1/System.Spatial.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/System.Spatial.dll": {}
+        },
+        "resource": {
+          "lib/netstandard1.1/de/System.Spatial.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard1.1/es/System.Spatial.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard1.1/fr/System.Spatial.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard1.1/it/System.Spatial.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard1.1/ja/System.Spatial.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard1.1/ko/System.Spatial.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard1.1/ru/System.Spatial.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard1.1/zh-Hans/System.Spatial.resources.dll": {
+            "locale": "zh-Hans"
+          },
+          "lib/netstandard1.1/zh-Hant/System.Spatial.resources.dll": {
+            "locale": "zh-Hant"
+          }
+        }
+      },
       "System.Text.Encoding/4.3.0": {
         "type": "package",
         "dependencies": {
@@ -2607,6 +2943,9 @@
         },
         "compile": {
           "ref/netstandard1.3/System.Text.Encoding.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Text.Encoding.Extensions/4.3.0": {
@@ -2619,6 +2958,9 @@
         },
         "compile": {
           "ref/netstandard1.3/System.Text.Encoding.Extensions.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Text.Encodings.Web/4.3.0": {
@@ -2700,6 +3042,9 @@
         },
         "compile": {
           "ref/netstandard1.3/System.Threading.Tasks.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wp8+wpa81/_._": {}
         }
       },
       "System.Threading.Tasks.Extensions/4.3.0": {
@@ -2716,17 +3061,17 @@
           "lib/netstandard1.0/System.Threading.Tasks.Extensions.dll": {}
         }
       },
-      "System.Threading.Tasks.Parallel/4.0.1": {
+      "System.Threading.Tasks.Parallel/4.3.0": {
         "type": "package",
         "dependencies": {
-          "System.Collections.Concurrent": "4.0.12",
-          "System.Diagnostics.Debug": "4.0.11",
-          "System.Diagnostics.Tracing": "4.1.0",
-          "System.Resources.ResourceManager": "4.0.1",
-          "System.Runtime": "4.1.0",
-          "System.Runtime.Extensions": "4.1.0",
-          "System.Threading": "4.0.11",
-          "System.Threading.Tasks": "4.0.11"
+          "System.Collections.Concurrent": "4.3.0",
+          "System.Diagnostics.Debug": "4.3.0",
+          "System.Diagnostics.Tracing": "4.3.0",
+          "System.Resources.ResourceManager": "4.3.0",
+          "System.Runtime": "4.3.0",
+          "System.Runtime.Extensions": "4.3.0",
+          "System.Threading": "4.3.0",
+          "System.Threading.Tasks": "4.3.0"
         },
         "compile": {
           "ref/netstandard1.1/System.Threading.Tasks.Parallel.dll": {}
@@ -2820,6 +3165,22 @@
           "lib/netstandard1.3/System.Xml.XDocument.dll": {}
         }
       },
+      "WindowsAzure.Storage/8.1.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Data.OData": "5.8.2",
+          "Microsoft.Data.Services.Client": "5.8.2",
+          "NETStandard.Library": "1.6.0",
+          "Newtonsoft.Json": "9.0.1",
+          "System.Spatial": "5.8.2"
+        },
+        "compile": {
+          "lib/netstandard1.3/Microsoft.WindowsAzure.Storage.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/Microsoft.WindowsAzure.Storage.dll": {}
+        }
+      },
       "GlobalPollenProject.Core/1.0.0": {
         "type": "project",
         "framework": ".NETStandard,Version=v1.6",
@@ -2833,13 +3194,16 @@
         "framework": ".NETStandard,Version=v1.6",
         "dependencies": {
           "GlobalPollenProject.Core": "(, )",
+          "ImageSharp": "1.0.0-alpha4-00046",
           "Microsoft.EntityFrameworkCore": "1.1.0",
           "Microsoft.EntityFrameworkCore.InMemory": "1.1.0",
           "Microsoft.EntityFrameworkCore.Sqlite": "1.1.0",
           "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160629",
           "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
           "NETStandard.Library": "1.6.1",
-          "Newtonsoft.Json": "9.0.1"
+          "Newtonsoft.Json": "9.0.1",
+          "SendGrid.NetCore": "1.0.0-rtm-00002",
+          "WindowsAzure.Storage": "8.1.0"
         }
       },
       "GlobalPollenProject.Shared.Identity/1.0.0": {
@@ -2864,6 +3228,32 @@
     }
   },
   "libraries": {
+    "ImageSharp/1.0.0-alpha4-00046": {
+      "sha512": "tDehvTreVr5xsWk9jh67k95w4OZ4wa/696RFPmxV/Cgh+WRGPI22EMqpfBRCAxy6XOfmGPyhk96J7C9Bo+rh+A==",
+      "type": "package",
+      "path": "ImageSharp/1.0.0-alpha4-00046",
+      "files": [
+        "ImageSharp.1.0.0-alpha4-00046.nupkg.sha512",
+        "ImageSharp.nuspec",
+        "lib/netstandard1.1/ImageSharp.dll",
+        "lib/netstandard1.1/ImageSharp.xml",
+        "lib/netstandard1.3/ImageSharp.dll",
+        "lib/netstandard1.3/ImageSharp.xml"
+      ]
+    },
+    "Microsoft.AspNet.WebApi.Client/5.2.3": {
+      "sha512": "3kiI8peSXbXHDDrRuo+QaX0iCEVRe0nvn2dBDRw656uPX32UalbBlSIDUDlJxu05eau4tnuhsikiUuugvvoUoQ==",
+      "type": "package",
+      "path": "Microsoft.AspNet.WebApi.Client/5.2.3",
+      "files": [
+        "Microsoft.AspNet.WebApi.Client.5.2.3.nupkg.sha512",
+        "Microsoft.AspNet.WebApi.Client.nuspec",
+        "lib/net45/System.Net.Http.Formatting.dll",
+        "lib/net45/System.Net.Http.Formatting.xml",
+        "lib/portable-wp8+netcore45+net45+wp81+wpa81/System.Net.Http.Formatting.dll",
+        "lib/portable-wp8+netcore45+net45+wp81+wpa81/System.Net.Http.Formatting.xml"
+      ]
+    },
     "Microsoft.AspNetCore.Antiforgery/1.1.0": {
       "sha512": "6HM8/rsSGAQybSZ9sNP2f0Xqh507OJu3kvqRksXeHUXV72yuwFpnauGkfIMSt+gwPSvyk8qGqZB2m4sKCUomhA==",
       "type": "package",
@@ -3224,6 +3614,127 @@
         "lib/netstandard1.3/Microsoft.AspNetCore.WebUtilities.xml"
       ]
     },
+    "Microsoft.Bcl/1.1.9": {
+      "sha512": "USQ55innJy8K+tAXvVa1O8dUTp2s7pmJ5cJj6Tl02HtGc2xBDj0P2QH5620HbGXIWKWYhydoeQF8Rm/JRDBGhw==",
+      "type": "package",
+      "path": "Microsoft.Bcl/1.1.9",
+      "files": [
+        "License-Stable.rtf",
+        "Microsoft.Bcl.1.1.9.nupkg.sha512",
+        "Microsoft.Bcl.nuspec",
+        "content/monoandroid/_._",
+        "content/monotouch/_._",
+        "content/net45/_._",
+        "content/portable-net45+win8+wp8+wpa81/_._",
+        "content/portable-net45+win8+wpa81/_._",
+        "content/portable-net451+win81+wpa81/_._",
+        "content/portable-net451+win81/_._",
+        "content/portable-win81+wp81+wpa81/_._",
+        "content/sl4/_._",
+        "content/sl5/_._",
+        "content/win8/_._",
+        "content/wp8/_._",
+        "content/wpa81/_._",
+        "lib/monoandroid/_._",
+        "lib/monotouch/_._",
+        "lib/net40/System.IO.dll",
+        "lib/net40/System.IO.xml",
+        "lib/net40/System.Runtime.dll",
+        "lib/net40/System.Runtime.xml",
+        "lib/net40/System.Threading.Tasks.dll",
+        "lib/net40/System.Threading.Tasks.xml",
+        "lib/net40/ensureRedirect.xml",
+        "lib/net45/_._",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.IO.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.IO.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Runtime.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Runtime.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Threading.Tasks.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Threading.Tasks.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/ensureRedirect.xml",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.IO.dll",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.IO.xml",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.Runtime.dll",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.Runtime.xml",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.Threading.Tasks.dll",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.Threading.Tasks.xml",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/ensureRedirect.xml",
+        "lib/portable-net40+sl4+win8/System.IO.dll",
+        "lib/portable-net40+sl4+win8/System.IO.xml",
+        "lib/portable-net40+sl4+win8/System.Runtime.dll",
+        "lib/portable-net40+sl4+win8/System.Runtime.xml",
+        "lib/portable-net40+sl4+win8/System.Threading.Tasks.dll",
+        "lib/portable-net40+sl4+win8/System.Threading.Tasks.xml",
+        "lib/portable-net40+sl4+win8/ensureRedirect.xml",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.IO.dll",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.IO.xml",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.Runtime.dll",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.Runtime.xml",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.Threading.Tasks.dll",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.Threading.Tasks.xml",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/ensureRedirect.xml",
+        "lib/portable-net40+win8+wp8+wpa81/System.IO.dll",
+        "lib/portable-net40+win8+wp8+wpa81/System.IO.xml",
+        "lib/portable-net40+win8+wp8+wpa81/System.Runtime.dll",
+        "lib/portable-net40+win8+wp8+wpa81/System.Runtime.xml",
+        "lib/portable-net40+win8+wp8+wpa81/System.Threading.Tasks.dll",
+        "lib/portable-net40+win8+wp8+wpa81/System.Threading.Tasks.xml",
+        "lib/portable-net40+win8+wp8+wpa81/ensureRedirect.xml",
+        "lib/portable-net40+win8/System.IO.dll",
+        "lib/portable-net40+win8/System.IO.xml",
+        "lib/portable-net40+win8/System.Runtime.dll",
+        "lib/portable-net40+win8/System.Runtime.xml",
+        "lib/portable-net40+win8/System.Threading.Tasks.dll",
+        "lib/portable-net40+win8/System.Threading.Tasks.xml",
+        "lib/portable-net40+win8/ensureRedirect.xml",
+        "lib/portable-net45+win8+wp8+wpa81/_._",
+        "lib/portable-net45+win8+wpa81/_._",
+        "lib/portable-net451+win81+wpa81/_._",
+        "lib/portable-net451+win81/_._",
+        "lib/portable-win81+wp81+wpa81/_._",
+        "lib/sl4-windowsphone71/System.IO.dll",
+        "lib/sl4-windowsphone71/System.IO.xml",
+        "lib/sl4-windowsphone71/System.Runtime.dll",
+        "lib/sl4-windowsphone71/System.Runtime.xml",
+        "lib/sl4-windowsphone71/System.Threading.Tasks.dll",
+        "lib/sl4-windowsphone71/System.Threading.Tasks.xml",
+        "lib/sl4-windowsphone71/ensureRedirect.xml",
+        "lib/sl4/System.IO.dll",
+        "lib/sl4/System.IO.xml",
+        "lib/sl4/System.Runtime.dll",
+        "lib/sl4/System.Runtime.xml",
+        "lib/sl4/System.Threading.Tasks.dll",
+        "lib/sl4/System.Threading.Tasks.xml",
+        "lib/sl5/System.IO.dll",
+        "lib/sl5/System.IO.xml",
+        "lib/sl5/System.Runtime.dll",
+        "lib/sl5/System.Runtime.xml",
+        "lib/sl5/System.Threading.Tasks.dll",
+        "lib/sl5/System.Threading.Tasks.xml",
+        "lib/win8/_._",
+        "lib/wp8/_._",
+        "lib/wpa81/_._"
+      ]
+    },
+    "Microsoft.Bcl.Build/1.0.14": {
+      "sha512": "cDLKSvNvRa519hplsbSoYqO69TjdDIhfjtKUM0g20/nVROoWsGav9KCI9HtnGjLmdV1+TcUUDhbotcllibjPEA==",
+      "type": "package",
+      "path": "Microsoft.Bcl.Build/1.0.14",
+      "files": [
+        "License-Stable.rtf",
+        "Microsoft.Bcl.Build.1.0.14.nupkg.sha512",
+        "Microsoft.Bcl.Build.nuspec",
+        "content/net40/_._",
+        "content/netcore45/_._",
+        "content/portable-net40+win8+sl4+wp71+wpa81/_._",
+        "content/sl4-windowsphone71/_._",
+        "content/sl4/_._",
+        "tools/Install.ps1",
+        "tools/Microsoft.Bcl.Build.Tasks.dll",
+        "tools/Microsoft.Bcl.Build.targets",
+        "tools/Uninstall.ps1"
+      ]
+    },
     "Microsoft.CSharp/4.3.0": {
       "sha512": "UT9nmcYyBvDDn8ukPYCDplupvANpKHG+b2VGsmjNWoNrFps6u7l1DAp32Nr1qNNkq79ngJalnyaEjI0N75q6eQ==",
       "type": "package",
@@ -3279,6 +3790,187 @@
         "ref/xamarinmac20/_._",
         "ref/xamarintvos10/_._",
         "ref/xamarinwatchos10/_._"
+      ]
+    },
+    "Microsoft.Data.Edm/5.8.2": {
+      "sha512": "P/d8DxA6MFHroBEn/jW0LMQSIKnsRRibrZtRCLfov2boQfrQ1R1BVgkJ5oIhcQsOm0l4POv+I2ny6RBsclNbOw==",
+      "type": "package",
+      "path": "Microsoft.Data.Edm/5.8.2",
+      "files": [
+        "Microsoft.Data.Edm.5.8.2.nupkg.sha512",
+        "Microsoft.Data.Edm.nuspec",
+        "lib/net40/Microsoft.Data.Edm.dll",
+        "lib/net40/Microsoft.Data.Edm.xml",
+        "lib/net40/de/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/es/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/it/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/zh-Hant/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/Microsoft.Data.Edm.dll",
+        "lib/netstandard1.1/Microsoft.Data.Edm.xml",
+        "lib/netstandard1.1/de/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/es/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/it/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/zh-Hant/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/Microsoft.Data.Edm.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/Microsoft.Data.Edm.xml",
+        "lib/portable-net40+sl5+wp8+win8+wpa/de/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/es/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/it/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hant/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.Edm.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.Edm.xml",
+        "lib/portable-net45+wp8+win8+wpa/de/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/es/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/it/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hant/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/Microsoft.Data.Edm.dll",
+        "lib/sl4/Microsoft.Data.Edm.xml",
+        "lib/sl4/de/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/es/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/it/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/zh-Hant/Microsoft.Data.Edm.resources.dll"
+      ]
+    },
+    "Microsoft.Data.OData/5.8.2": {
+      "sha512": "oEIUtXcRiKogF0yZxA+QdgxoBJ34989qL/5xOSrTfxAhzNJV5Hw6DRdWgUCpeXFMoJUQx7ptbHCN+My/LCQfsg==",
+      "type": "package",
+      "path": "Microsoft.Data.OData/5.8.2",
+      "files": [
+        "Microsoft.Data.OData.5.8.2.nupkg.sha512",
+        "Microsoft.Data.OData.nuspec",
+        "lib/net40/Microsoft.Data.OData.dll",
+        "lib/net40/Microsoft.Data.OData.xml",
+        "lib/net40/de/Microsoft.Data.OData.resources.dll",
+        "lib/net40/es/Microsoft.Data.OData.resources.dll",
+        "lib/net40/fr/Microsoft.Data.OData.resources.dll",
+        "lib/net40/it/Microsoft.Data.OData.resources.dll",
+        "lib/net40/ja/Microsoft.Data.OData.resources.dll",
+        "lib/net40/ko/Microsoft.Data.OData.resources.dll",
+        "lib/net40/ru/Microsoft.Data.OData.resources.dll",
+        "lib/net40/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/net40/zh-Hant/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/Microsoft.Data.OData.dll",
+        "lib/netstandard1.1/Microsoft.Data.OData.xml",
+        "lib/netstandard1.1/de/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/es/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/fr/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/it/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/ja/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/ko/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/ru/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/zh-Hant/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/Microsoft.Data.OData.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/Microsoft.Data.OData.xml",
+        "lib/portable-net40+sl5+wp8+win8+wpa/de/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/es/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/fr/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/it/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ja/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ko/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ru/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hant/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.OData.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.OData.xml",
+        "lib/portable-net45+wp8+win8+wpa/de/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/es/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/fr/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/it/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ja/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ko/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ru/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hant/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/Microsoft.Data.OData.dll",
+        "lib/sl4/Microsoft.Data.OData.xml",
+        "lib/sl4/de/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/es/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/fr/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/it/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/ja/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/ko/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/ru/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/zh-Hant/Microsoft.Data.OData.resources.dll"
+      ]
+    },
+    "Microsoft.Data.Services.Client/5.8.2": {
+      "sha512": "RtTMj1EOQa9nzJGZEb13Z7hW3gjqLsPoeHHD/8PEZ/b+8Wb+UHMxvS7llg0TUki1nwiwcaBfGeQE3zN5IQNYPA==",
+      "type": "package",
+      "path": "Microsoft.Data.Services.Client/5.8.2",
+      "files": [
+        "Microsoft.Data.Services.Client.5.8.2.nupkg.sha512",
+        "Microsoft.Data.Services.Client.nuspec",
+        "lib/net40/Microsoft.Data.Services.Client.dll",
+        "lib/net40/Microsoft.Data.Services.Client.xml",
+        "lib/net40/de/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/es/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/fr/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/it/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/ja/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/ko/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/ru/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/zh-Hans/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/zh-Hant/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/Microsoft.Data.Services.Client.dll",
+        "lib/netstandard1.1/Microsoft.Data.Services.Client.xml",
+        "lib/netstandard1.1/de/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/es/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/fr/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/it/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/ja/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/ko/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/ru/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/zh-Hans/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/zh-Hant/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.Services.Client.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.Services.Client.xml",
+        "lib/portable-net45+wp8+win8+wpa/de/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/es/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/fr/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/it/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ja/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ko/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ru/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hans/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hant/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/Microsoft.Data.Services.Client.dll",
+        "lib/sl4/Microsoft.Data.Services.Client.xml",
+        "lib/sl4/de/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/es/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/fr/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/it/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/ja/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/ko/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/ru/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/zh-Hans/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/zh-Hant/Microsoft.Data.Services.Client.resources.dll"
       ]
     },
     "Microsoft.Data.Sqlite/1.1.0": {
@@ -3669,6 +4361,69 @@
         "lib/netstandard1.6/FSharp.Core.sigdata",
         "runtimes/any/native/FSharp.Core.optdata",
         "runtimes/any/native/FSharp.Core.sigdata"
+      ]
+    },
+    "Microsoft.Net.Http/2.2.22": {
+      "sha512": "bqVLJ2UimlAEs2bn3y28lB1pmFRxuysv9pFyB0A86WEMYGYTfDyfjAGjm0fiaSRjlMNU1jVnp8Mxt8qe4OmpXQ==",
+      "type": "package",
+      "path": "Microsoft.Net.Http/2.2.22",
+      "files": [
+        "License-Stable.rtf",
+        "Microsoft.Net.Http.2.2.22.nupkg.sha512",
+        "Microsoft.Net.Http.nuspec",
+        "lib/monoandroid/System.Net.Http.Extensions.XML",
+        "lib/monoandroid/System.Net.Http.Extensions.dll",
+        "lib/monoandroid/System.Net.Http.Primitives.dll",
+        "lib/monoandroid/System.Net.Http.Primitives.xml",
+        "lib/monotouch/System.Net.Http.Extensions.XML",
+        "lib/monotouch/System.Net.Http.Extensions.dll",
+        "lib/monotouch/System.Net.Http.Primitives.dll",
+        "lib/monotouch/System.Net.Http.Primitives.xml",
+        "lib/net40/System.Net.Http.Extensions.XML",
+        "lib/net40/System.Net.Http.Extensions.dll",
+        "lib/net40/System.Net.Http.Primitives.dll",
+        "lib/net40/System.Net.Http.Primitives.xml",
+        "lib/net40/System.Net.Http.WebRequest.dll",
+        "lib/net40/System.Net.Http.WebRequest.xml",
+        "lib/net40/System.Net.Http.dll",
+        "lib/net40/System.Net.Http.xml",
+        "lib/net40/ensureRedirect.xml",
+        "lib/net45/System.Net.Http.Extensions.XML",
+        "lib/net45/System.Net.Http.Extensions.dll",
+        "lib/net45/System.Net.Http.Primitives.dll",
+        "lib/net45/System.Net.Http.Primitives.xml",
+        "lib/net45/ensureRedirect.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Extensions.XML",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Extensions.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Primitives.XML",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Primitives.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/ensureRedirect.xml",
+        "lib/portable-net45+win8+wpa81/System.Net.Http.Extensions.XML",
+        "lib/portable-net45+win8+wpa81/System.Net.Http.Extensions.dll",
+        "lib/portable-net45+win8+wpa81/System.Net.Http.Primitives.dll",
+        "lib/portable-net45+win8+wpa81/System.Net.Http.Primitives.xml",
+        "lib/portable-net45+win8+wpa81/ensureRedirect.xml",
+        "lib/portable-net45+win8/System.Net.Http.Extensions.XML",
+        "lib/portable-net45+win8/System.Net.Http.Extensions.dll",
+        "lib/portable-net45+win8/System.Net.Http.Primitives.dll",
+        "lib/portable-net45+win8/System.Net.Http.Primitives.xml",
+        "lib/portable-net45+win8/ensureRedirect.xml",
+        "lib/sl4-windowsphone71/System.Net.Http.Extensions.XML",
+        "lib/sl4-windowsphone71/System.Net.Http.Extensions.dll",
+        "lib/sl4-windowsphone71/System.Net.Http.Primitives.XML",
+        "lib/sl4-windowsphone71/System.Net.Http.Primitives.dll",
+        "lib/sl4-windowsphone71/System.Net.Http.dll",
+        "lib/sl4-windowsphone71/System.Net.Http.xml",
+        "lib/win8/System.Net.Http.Extensions.XML",
+        "lib/win8/System.Net.Http.Extensions.dll",
+        "lib/win8/System.Net.Http.Primitives.dll",
+        "lib/win8/System.Net.Http.Primitives.xml",
+        "lib/wpa81/System.Net.Http.Extensions.XML",
+        "lib/wpa81/System.Net.Http.Extensions.dll",
+        "lib/wpa81/System.Net.Http.Primitives.dll",
+        "lib/wpa81/System.Net.Http.Primitives.xml"
       ]
     },
     "Microsoft.Net.Http.Headers/1.1.0": {
@@ -4136,6 +4891,17 @@
         "runtimes/ubuntu.16.10-x64/native/System.Security.Cryptography.Native.OpenSsl.so"
       ]
     },
+    "SendGrid.NetCore/1.0.0-rtm-00002": {
+      "sha512": "nV9VH1z+QaQHGL2HAuPsz0Wi5+j28ECi7KJetR/CWQLekgknTvcLnVyifX9ti35jwU6vPwnqydn381Kf+6IKcA==",
+      "type": "package",
+      "path": "SendGrid.NetCore/1.0.0-rtm-00002",
+      "files": [
+        "SendGrid.NetCore.1.0.0-rtm-00002.nupkg.sha512",
+        "SendGrid.NetCore.nuspec",
+        "lib/net451/SendGrid.NetCore.dll",
+        "lib/netstandard1.3/SendGrid.NetCore.dll"
+      ]
+    },
     "SQLite/3.13.0": {
       "sha512": "MJfRiz2p6aMVOxrxGMdVzhpzI0oxTgZSwC8eVuOpV8L7yYaFUu8q/OFYwv9P0/aZ/pdEu24O6gma6wZJMTun9A==",
       "type": "package",
@@ -4570,6 +5336,74 @@
         "ref/netstandard1.4/zh-hant/System.ComponentModel.Annotations.xml",
         "ref/portable-net45+win8/_._",
         "ref/win8/_._",
+        "ref/xamarinios10/_._",
+        "ref/xamarinmac20/_._",
+        "ref/xamarintvos10/_._",
+        "ref/xamarinwatchos10/_._"
+      ]
+    },
+    "System.ComponentModel.EventBasedAsync/4.0.11": {
+      "sha512": "Z7SO6vvQIR84daPE4uhaNdef9CjgjDMGYkas8epUhf0U3WGuaGgZ0Mm4QuNycMdbHUY8KEdZrtgxonkAiJaAlA==",
+      "type": "package",
+      "path": "System.ComponentModel.EventBasedAsync/4.0.11",
+      "files": [
+        "System.ComponentModel.EventBasedAsync.4.0.11.nupkg.sha512",
+        "System.ComponentModel.EventBasedAsync.nuspec",
+        "ThirdPartyNotices.txt",
+        "dotnet_library_license.txt",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net45/_._",
+        "lib/netcore50/System.ComponentModel.EventBasedAsync.dll",
+        "lib/netstandard1.3/System.ComponentModel.EventBasedAsync.dll",
+        "lib/portable-net45+win8+wp8+wpa81/_._",
+        "lib/win8/_._",
+        "lib/wp80/_._",
+        "lib/wpa81/_._",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "ref/MonoAndroid10/_._",
+        "ref/MonoTouch10/_._",
+        "ref/net45/_._",
+        "ref/netcore50/System.ComponentModel.EventBasedAsync.dll",
+        "ref/netcore50/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/de/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/es/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/fr/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/it/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/ja/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/ko/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/ru/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/zh-hans/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/zh-hant/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/System.ComponentModel.EventBasedAsync.dll",
+        "ref/netstandard1.0/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/de/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/es/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/fr/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/it/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/ja/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/ko/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/ru/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/zh-hans/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/zh-hant/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/System.ComponentModel.EventBasedAsync.dll",
+        "ref/netstandard1.3/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/de/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/es/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/fr/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/it/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/ja/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/ko/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/ru/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/zh-hans/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/zh-hant/System.ComponentModel.EventBasedAsync.xml",
+        "ref/portable-net45+win8+wp8+wpa81/_._",
+        "ref/win8/_._",
+        "ref/wp80/_._",
+        "ref/wpa81/_._",
         "ref/xamarinios10/_._",
         "ref/xamarinmac20/_._",
         "ref/xamarintvos10/_._",
@@ -5846,6 +6680,17 @@
         "runtimes/win/lib/netstandard1.3/System.Net.Http.dll"
       ]
     },
+    "System.Net.Mail/1.0.0-rtm-00002": {
+      "sha512": "6OynwcCzHtBDDF2H7WvzXvbD8yldel7KQWhQtr7jBPrszH16hHkg6IDsSZNWgSofI4Jk1szMZvtUG9l6B5aWow==",
+      "type": "package",
+      "path": "System.Net.Mail/1.0.0-rtm-00002",
+      "files": [
+        "System.Net.Mail.1.0.0-rtm-00002.nupkg.sha512",
+        "System.Net.Mail.nuspec",
+        "lib/net451/System.Net.Mail.dll",
+        "lib/netstandard1.3/System.Net.Mail.dll"
+      ]
+    },
     "System.Net.Primitives/4.3.0": {
       "sha512": "SciPkUnolv4VmMX3j2ukJwizvVD44xUmAmgvVMztGY0Jcmoqsx7L+p8zN+Z427j0VBRC6M56oZJVLfJAIe4GuQ==",
       "type": "package",
@@ -6108,6 +6953,39 @@
         "ref/netstandard1.3/ru/System.Net.WebSockets.xml",
         "ref/netstandard1.3/zh-hans/System.Net.WebSockets.xml",
         "ref/netstandard1.3/zh-hant/System.Net.WebSockets.xml",
+        "ref/xamarinios10/_._",
+        "ref/xamarinmac20/_._",
+        "ref/xamarintvos10/_._",
+        "ref/xamarinwatchos10/_._"
+      ]
+    },
+    "System.Numerics.Vectors/4.3.0": {
+      "sha512": "Y4f0wXWiroOXS2WA0iXhLjxKKgief6HOpuM81S+6x3FC4zkXfqeamvM1Lh7fVgLFQcmJ7XCuK38mEtGEhlK4mQ==",
+      "type": "package",
+      "path": "System.Numerics.Vectors/4.3.0",
+      "files": [
+        "System.Numerics.Vectors.4.3.0.nupkg.sha512",
+        "System.Numerics.Vectors.nuspec",
+        "ThirdPartyNotices.txt",
+        "dotnet_library_license.txt",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net46/System.Numerics.Vectors.dll",
+        "lib/net46/System.Numerics.Vectors.xml",
+        "lib/netstandard1.0/System.Numerics.Vectors.dll",
+        "lib/netstandard1.0/System.Numerics.Vectors.xml",
+        "lib/portable-net45+win8+wp8+wpa81/System.Numerics.Vectors.dll",
+        "lib/portable-net45+win8+wp8+wpa81/System.Numerics.Vectors.xml",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "ref/MonoAndroid10/_._",
+        "ref/MonoTouch10/_._",
+        "ref/net46/System.Numerics.Vectors.dll",
+        "ref/net46/System.Numerics.Vectors.xml",
+        "ref/netstandard1.0/System.Numerics.Vectors.dll",
+        "ref/netstandard1.0/System.Numerics.Vectors.xml",
         "ref/xamarinios10/_._",
         "ref/xamarinmac20/_._",
         "ref/xamarintvos10/_._",
@@ -7452,6 +8330,70 @@
         "runtimes/win/lib/netstandard1.3/System.Security.Principal.Windows.dll"
       ]
     },
+    "System.Spatial/5.8.2": {
+      "sha512": "0RfZZJ8RlrfjoBPAF6pczX4Nd2kyLM8EX1PCP5Rqs/jOhJBUPYhpXjIsVAYN7kocj9IJ9XoJWAxWgXIDtJY2Ag==",
+      "type": "package",
+      "path": "System.Spatial/5.8.2",
+      "files": [
+        "System.Spatial.5.8.2.nupkg.sha512",
+        "System.Spatial.nuspec",
+        "lib/net40/System.Spatial.dll",
+        "lib/net40/System.Spatial.xml",
+        "lib/net40/de/System.Spatial.resources.dll",
+        "lib/net40/es/System.Spatial.resources.dll",
+        "lib/net40/fr/System.Spatial.resources.dll",
+        "lib/net40/it/System.Spatial.resources.dll",
+        "lib/net40/ja/System.Spatial.resources.dll",
+        "lib/net40/ko/System.Spatial.resources.dll",
+        "lib/net40/ru/System.Spatial.resources.dll",
+        "lib/net40/zh-Hans/System.Spatial.resources.dll",
+        "lib/net40/zh-Hant/System.Spatial.resources.dll",
+        "lib/netstandard1.1/System.Spatial.dll",
+        "lib/netstandard1.1/System.Spatial.xml",
+        "lib/netstandard1.1/de/System.Spatial.resources.dll",
+        "lib/netstandard1.1/es/System.Spatial.resources.dll",
+        "lib/netstandard1.1/fr/System.Spatial.resources.dll",
+        "lib/netstandard1.1/it/System.Spatial.resources.dll",
+        "lib/netstandard1.1/ja/System.Spatial.resources.dll",
+        "lib/netstandard1.1/ko/System.Spatial.resources.dll",
+        "lib/netstandard1.1/ru/System.Spatial.resources.dll",
+        "lib/netstandard1.1/zh-Hans/System.Spatial.resources.dll",
+        "lib/netstandard1.1/zh-Hant/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/System.Spatial.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/System.Spatial.xml",
+        "lib/portable-net40+sl5+wp8+win8+wpa/de/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/es/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/fr/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/it/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ja/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ko/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ru/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hans/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hant/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/System.Spatial.dll",
+        "lib/portable-net45+wp8+win8+wpa/System.Spatial.xml",
+        "lib/portable-net45+wp8+win8+wpa/de/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/es/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/fr/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/it/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ja/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ko/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ru/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hans/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hant/System.Spatial.resources.dll",
+        "lib/sl4/System.Spatial.dll",
+        "lib/sl4/System.Spatial.xml",
+        "lib/sl4/de/System.Spatial.resources.dll",
+        "lib/sl4/es/System.Spatial.resources.dll",
+        "lib/sl4/fr/System.Spatial.resources.dll",
+        "lib/sl4/it/System.Spatial.resources.dll",
+        "lib/sl4/ja/System.Spatial.resources.dll",
+        "lib/sl4/ko/System.Spatial.resources.dll",
+        "lib/sl4/ru/System.Spatial.resources.dll",
+        "lib/sl4/zh-Hans/System.Spatial.resources.dll",
+        "lib/sl4/zh-Hant/System.Spatial.resources.dll"
+      ]
+    },
     "System.Text.Encoding/4.3.0": {
       "sha512": "z6u45ZBgSKnqdwqRvoeBm80P6zwhVsymFp9T9p6rZJoubq8R9dqMQe1rg72lbruKAqCCYkOMgwNE/SpkPj+X2w==",
       "type": "package",
@@ -7857,12 +8799,12 @@
         "lib/portable-net45+win8+wp8+wpa81/System.Threading.Tasks.Extensions.xml"
       ]
     },
-    "System.Threading.Tasks.Parallel/4.0.1": {
-      "sha512": "7Pc9t25bcynT9FpMvkUw4ZjYwUiGup/5cJFW72/5MgCG+np2cfVUMdh29u8d7onxX7d8PS3J+wL73zQRqkdrSA==",
+    "System.Threading.Tasks.Parallel/4.3.0": {
+      "sha512": "9xvqbGl5RyHsbXxeFKRoBufoh4YiLAFRFEBtYmoow2TqyTRg8jizQpPKCCpliJbWcBJ4NSgeixswNa6eWg+Mtg==",
       "type": "package",
-      "path": "System.Threading.Tasks.Parallel/4.0.1",
+      "path": "System.Threading.Tasks.Parallel/4.3.0",
       "files": [
-        "System.Threading.Tasks.Parallel.4.0.1.nupkg.sha512",
+        "System.Threading.Tasks.Parallel.4.3.0.nupkg.sha512",
         "System.Threading.Tasks.Parallel.nuspec",
         "ThirdPartyNotices.txt",
         "dotnet_library_license.txt",
@@ -8179,6 +9121,28 @@
         "ref/xamarinwatchos10/_._"
       ]
     },
+    "WindowsAzure.Storage/8.1.0": {
+      "sha512": "nXjgm+egV7KeRQmTAnfpLLkCXYdvLrcC4WCHFmxpWq0HG+w4cNr8Uq8zD3wsCEawnIPv6LGVzmBBKJg2GIbmJQ==",
+      "type": "package",
+      "path": "WindowsAzure.Storage/8.1.0",
+      "files": [
+        "WindowsAzure.Storage.8.1.0.nupkg.sha512",
+        "WindowsAzure.Storage.nuspec",
+        "lib/net45/Microsoft.WindowsAzure.Storage.dll",
+        "lib/net45/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/net45/Microsoft.WindowsAzure.Storage.xml",
+        "lib/netstandard1.0/Microsoft.WindowsAzure.Storage.dll",
+        "lib/netstandard1.0/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/netstandard1.3/Microsoft.WindowsAzure.Storage.dll",
+        "lib/netstandard1.3/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/win8/Microsoft.WindowsAzure.Storage.dll",
+        "lib/win8/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/wp8/Microsoft.WindowsAzure.Storage.dll",
+        "lib/wp8/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/wpa/Microsoft.WindowsAzure.Storage.dll",
+        "lib/wpa/Microsoft.WindowsAzure.Storage.pdb"
+      ]
+    },
     "GlobalPollenProject.Core/1.0.0": {
       "type": "project",
       "path": "../GlobalPollenProject.Core/project.json"
@@ -8196,7 +9160,8 @@
     "": [
       "GlobalPollenProject.Core",
       "GlobalPollenProject.Persistence",
-      "GlobalPollenProject.Shared.Identity"
+      "GlobalPollenProject.Shared.Identity",
+      "Microsoft.Extensions.Configuration >= 1.1.0"
     ],
     ".NETStandard,Version=v1.6": [
       "Microsoft.FSharp.Core.netcore >= 1.0.0-alpha-160629",

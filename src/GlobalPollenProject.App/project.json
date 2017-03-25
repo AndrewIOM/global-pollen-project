@@ -19,7 +19,8 @@
     },
     "GlobalPollenProject.Shared.Identity": {
       "target": "project"
-    }
+    },
+    "Microsoft.Extensions.Configuration": "1.1.0"
   },
   "tools": {
     "dotnet-compile-fsc": "1.0.0-preview2.1-*"
@@ -29,7 +30,8 @@
       "dependencies": {
         "NETStandard.Library": "1.6.1",
         "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160629"
-      }
+      },
+      "imports": "portable-net45+netcore45+wp8+wp81+wpa81"
     }
   }
 }

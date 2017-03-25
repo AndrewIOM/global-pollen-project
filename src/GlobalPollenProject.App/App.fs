@@ -1,6 +1,9 @@
 namespace GlobalPollenProject.App
 
 open System
+open System.IO
+open Microsoft.Extensions.Configuration
+
 open GlobalPollenProject.Core.Types
 open GlobalPollenProject.Core.CommandHandlers
 open GlobalPollenProject.Shared.Identity.Models
@@ -14,6 +17,7 @@ open GlobalPollenProject.Core.Dependencies
 
 module Config =
 
+    let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build()
     let eventStore = EventStore.SqlEventStore()
     eventStore.SaveEvent 
     :> IObservable<string*obj>
@@ -25,7 +29,7 @@ module Config =
     let dependencies = 
         let generateId = Guid.NewGuid
         let log = ignore
-        let uploadImage = AzureImageService.uploadToAzure "Development" "connectionString" (fun x -> Guid.NewGuid().ToString())
+        let uploadImage = AzureImageService.uploadToAzure "Development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
 
         let taxonomicBackbbone = "doesn't exist yet"
         let calculateIdentity = calculateTaxonomicIdentity taxonomicBackbbone
