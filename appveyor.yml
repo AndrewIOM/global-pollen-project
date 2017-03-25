@@ -10,6 +10,7 @@ init:
 - npm install -g bower
 before_build:
 - appveyor-retry dotnet restore "src\GlobalPollenProject.WebUI\GlobalPollenProject.WebUI.fsproj" -v Minimal
+- appveyor-retry dotnet restore "test\GlobalPollenProject.Tests\GlobalPollenProject.Tests.fsproj" -v Minimal
 build_script:
 - dotnet build "src\GlobalPollenProject.WebUI\GlobalPollenProject.WebUI.fsproj" -c %CONFIGURATION% --version-suffix %LABEL%
 # after_build:
