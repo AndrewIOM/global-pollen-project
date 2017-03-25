@@ -12,12 +12,14 @@ let defaultDependencies =
     let generateGuid() = Guid.NewGuid()
     let logger message = printfn "Logged message"
     let calcIdentity taxon = None
-    let upload image = SingleImage (Url "https://globalpollenproject.org/sometesturl.jpg")
+    let upload image = SingleImage (Url.create "https://globalpollenproject.org/sometesturl.jpg")
+    let validate = fun unit -> Some (TaxonId (generateGuid()))
 
     {GenerateId         = generateGuid;
-    Log                 = logger;
-    UploadImage         = upload;
-    CalculateIdentity   = calcIdentity}
+     Log                 = logger;
+     UploadImage         = upload;
+     ValidateTaxon       = validate;
+     CalculateIdentity   = calcIdentity }
 
 let Given aggregate dep (events: 'a list) = aggregate, events, dep
 let When command (aggregate, events, dep) = aggregate, events, dep, command

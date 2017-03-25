@@ -48,7 +48,7 @@ type TaxonomyController () =
     member this.Import (result:ImportTaxonViewModel) =
         if not this.ModelState.IsValid then this.View(result) :> IActionResult
         else
-            TaxonomyAppService.import result.LatinName
+            //TaxonomyAppService.import result.LatinName
             this.RedirectToAction "Index" :> IActionResult
 
 type DigitiseController() =

@@ -27,6 +27,7 @@
   },
   "frameworks": {
     "netstandard1.6": {
+      "imports": ["portable-wp8+netcore45+net45+wp81+wpa81"],
       "dependencies": {
         "NETStandard.Library": "1.6.1",
         "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160629"

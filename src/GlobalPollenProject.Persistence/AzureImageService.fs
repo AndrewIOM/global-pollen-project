@@ -28,7 +28,7 @@ let upload (blob:CloudBlockBlob) memoryStream = async {
     let! exists = blob.ExistsAsync() |> Async.AwaitIAsyncResult
     if exists then invalidOp "Blob already exists" 
     blob.UploadFromStreamAsync(memoryStream) |> Async.AwaitIAsyncResult |> ignore
-    return Url blob.Uri.AbsoluteUri
+    return Url.create blob.Uri.AbsoluteUri
 }
 
 let uploadImage (container:CloudBlobContainer) fileName (stream:Stream) = 

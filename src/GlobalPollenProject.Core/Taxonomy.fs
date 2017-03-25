@@ -4,149 +4,106 @@ open GlobalPollenProject.Core.Types
 open System
 
 type Command =
-    | Import of Import
-    // | Split of Split
-    // | Clump of Clump
-    // | DesignateAsSynonym of DesignateAsSynonym
-    // | ConnectToNeotoma of ConnectToService
-    // | ConnectToGbif of ConnectToService
+| ImportFromBackbone of Import
+| ConnectToNeotoma of TaxonId * ThirdParty
+| ConnectToGbif of TaxonId * ThirdParty
 
 and Import = {
     Id: TaxonId
-    Name: LatinName
-    Rank: Rank
+    Group: TaxonomicGroup
+    Identity: TaxonomicIdentity
     Parent: TaxonId option
+    Status: TaxonomicStatus
+    Reference: (string * Url option) option
 }
 
-// and Split = {
-//     Id: TaxonId
-// }
-
-// and Clump = {
-//     Id: TaxonId
-// }
-
-// and DesignateAsSynonym = {
-//     Id: TaxonId
-//     SynonymOf: string
-// }
-
-// and ConnectToService = {
-//     Id: TaxonId
-// }
+and ThirdParty =
+| Neotoma
+| GlobalBiodiversityInformationFacility
 
 type Event =
-    | Created of Created
-    | GainedChild of GainedChild
-    // | ConnectedToExternalService of ConnectedToExternalService
+| Imported of Imported
+| EstablishedConnection of EstablishedConnection
 
-and Created = {
+and Imported = {
     Id: TaxonId
-    Name: LatinName
+    Group: TaxonomicGroup
+    Identity: TaxonomicIdentity
     Parent: TaxonId option
-    Rank: Rank
+    Status: TaxonomicStatus
+    Reference: (string * Url option) option
 }
 
-and GainedChild = {
+and EstablishedConnection = {
     Id: TaxonId
-    Child: TaxonId
+    LinkTo: ThirdParty
+    ForeignId: string
 }
 
-// and ConnectedToExternalService = {
-//     Id: TaxonId
-//     ServiceName: string
-//     ServiceId: string
-// }
-
-// State Tracking
 type State =
-    | InitialState
-    | ValidatedByBackbone of TaxonState
+| InitialState
+| ValidatedByBackbone of TaxonState
 
 and TaxonState = {
-    Name: LatinName
+    Identity: TaxonomicIdentity
     Parent: TaxonId option
+    Status: TaxonomicStatus
     Children: TaxonId list
-    Rank: Rank
     Links: ExternalLink list
+    Reference: (string * Url option) option
+    ValidatedAt: DateTime
 }
 
 and ExternalLink = {
     ServiceName: string
     ServiceId: string
+    LastChecked: DateTime
 }
 
 
-// Descisions
-type ValidateTaxon = LatinName * Rank -> bool
-let import (command:Import) state =
+let import (command:Import) validateInBackbone state =
+    match command.Identity with
+    | Family l ->
+        match command.Parent with
+        | None -> printfn "Parent validation successful"
+        | Some parent -> invalidArg "A family cannot have a parent" "parent"
+    | Genus l
+    | Species (l,_,_) ->
+        match command.Parent with
+        | None -> invalidArg "Must specify a parent taxon for a genus" "parent"
+        | Some parent ->
+            match validateInBackbone (ValidateById parent) with
+            | Some result -> printfn "Validation Successful"
+            | None -> invalidArg "Parent was not valid" "parent"
 
-    match command.Parent with
-    | Some x when command.Rank = Family -> invalidArg "parent" "a family cannot have a parent taxon"
-    | None when command.Rank <> Family -> invalidArg "parent" "you must specify a parent for taxa of this rank"
-    | _ -> printfn "Taxon validation successful"
+    [Imported { Id = command.Id
+                Group = command.Group
+                Identity = command.Identity
+                Parent = command.Parent
+                Status = command.Status
+                Reference = command.Reference } ]
 
-    [Created { Id = command.Id
-               Name = command.Name
-               Rank = command.Rank
-               Parent = command.Parent }]
+let connectDatabase id database connector state =
+    []
 
-// let split command state = 
-//     [Created { Id = TaxonId 4
-//                Name = LatinName "Freddius"
-//                Rank = Rank.Family
-//                Parent = None }]
-
-// let clump command state =
-//     [Created { Id = TaxonId 4
-//                Name = LatinName "Freddius"
-//                Rank = Rank.Family
-//                Parent = None }]
-
-// let synonym command state = 
-//     [Created { Id = TaxonId (Guid.NewGuid())
-//                Name = LatinName "Freddius"
-//                Rank = Rank.Family
-//                Parent = None }]
-
-// let connect command state =
-//     [Created { Id = TaxonId (Guid.NewGuid())
-//                Name = LatinName "Freddius"
-//                Rank = Rank.Family
-//                Parent = None }]
-
-// Handle Commands to make Decisions.
-// NB We can use 'Domain services' in this function, 
-// as their decision will be saved in the resulting event
 let handle deps = 
     function
-    | Import command -> import command
-    // | Split command -> split command
-    // | Clump command -> clump command
-    // | DesignateAsSynonym command -> synonym command
-    // | ConnectToNeotoma command -> connect command
-    // | ConnectToGbif command -> connect command
+    | ImportFromBackbone c -> import c deps.ValidateTaxon
+    | ConnectToGbif (id,db) -> connectDatabase id db deps.GetGbifId
+    | ConnectToNeotoma (id,db) -> connectDatabase id db deps.GetNeotomaId
 
-// Apply decisions already taken (rebuild)
 type State with
     static member Evolve state = function
-
-        | Created event ->
+        | Imported event ->
             ValidatedByBackbone {
-                Name = event.Name
+                ValidatedAt = DateTime.UtcNow
+                Identity = event.Identity
                 Parent = event.Parent
+                Status = event.Status
+                Reference = event.Reference
                 Children = []
-                Rank = event.Rank
-                Links = []
-            }
-
-        | _ -> 
-            printfn "Not handled"
-            state
+                Links = [] }
 
 let private unwrap (TaxonId e) = e
 let getId = function
-    | Import c -> unwrap c.Id
-    // | DesignateAsSynonym c -> unwrap c.Id
-    // | ConnectToNeotoma c -> unwrap c.Id
-    // | ConnectToGbif c -> unwrap c.Id
+    | ImportFromBackbone c -> unwrap c.Id

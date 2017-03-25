@@ -44,9 +44,9 @@ module ``When digitising reference material`` =
     
 module ``When uploading a slide`` =
 
-    let image = Url "https://sometesturl"
+    let image = Url.create "https://sometesturl"
     let focusImage = FocusImage ([image; image; image; image; image],Fixed 2.3<um>,(CalibrationId Guid.Empty))
-    let singleImage = SingleImage (Url "https://sometesturl")
+    let singleImage = SingleImage (Url.create "https://sometesturl")
 
     [<Fact>]
     let ``A slide is added to the reference collection`` () =

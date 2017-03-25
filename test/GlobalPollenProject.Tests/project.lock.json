@@ -17,6 +17,22 @@
           "lib/netcoreapp1.0/dotnet-test-xunit.dll": {}
         }
       },
+      "ImageSharp/1.0.0-alpha4-00046": {
+        "type": "package",
+        "dependencies": {
+          "NETStandard.Library": "1.6.1",
+          "System.Buffers": "4.3.0",
+          "System.Numerics.Vectors": "4.3.0",
+          "System.Runtime.CompilerServices.Unsafe": "4.3.0",
+          "System.Threading.Tasks.Parallel": "4.3.0"
+        },
+        "compile": {
+          "lib/netstandard1.3/ImageSharp.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/ImageSharp.dll": {}
+        }
+      },
       "Libuv/1.9.1": {
         "type": "package",
         "dependencies": {
@@ -56,6 +72,51 @@
             "rid": "win7-x86"
           }
         }
+      },
+      "Microsoft.AspNet.WebApi.Client/5.2.3": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Net.Http": "2.2.22",
+          "Newtonsoft.Json": "6.0.4"
+        },
+        "compile": {
+          "lib/portable-wp8+netcore45+net45+wp81+wpa81/System.Net.Http.Formatting.dll": {}
+        },
+        "runtime": {
+          "lib/portable-wp8+netcore45+net45+wp81+wpa81/System.Net.Http.Formatting.dll": {}
+        }
+      },
+      "Microsoft.AspNetCore.WebUtilities/1.0.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Extensions.Primitives": "1.0.0",
+          "System.Buffers": "4.0.0",
+          "System.Collections": "4.0.11",
+          "System.IO": "4.1.0",
+          "System.IO.FileSystem": "4.0.1",
+          "System.Text.Encodings.Web": "4.0.0"
+        },
+        "compile": {
+          "lib/netstandard1.3/Microsoft.AspNetCore.WebUtilities.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/Microsoft.AspNetCore.WebUtilities.dll": {}
+        }
+      },
+      "Microsoft.Bcl/1.1.9": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Bcl.Build": "1.0.14"
+        },
+        "compile": {
+          "lib/portable-net45+win8+wpa81/_._": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8+wpa81/_._": {}
+        }
+      },
+      "Microsoft.Bcl.Build/1.0.14": {
+        "type": "package"
       },
       "Microsoft.CodeAnalysis.Analyzers/1.1.0": {
         "type": "package"
@@ -159,6 +220,131 @@
         },
         "runtime": {
           "lib/netstandard1.3/Microsoft.CSharp.dll": {}
+        }
+      },
+      "Microsoft.Data.Edm/5.8.2": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.1/Microsoft.Data.Edm.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/Microsoft.Data.Edm.dll": {}
+        },
+        "resource": {
+          "lib/netstandard1.1/de/Microsoft.Data.Edm.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard1.1/es/Microsoft.Data.Edm.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard1.1/fr/Microsoft.Data.Edm.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard1.1/it/Microsoft.Data.Edm.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard1.1/ja/Microsoft.Data.Edm.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard1.1/ko/Microsoft.Data.Edm.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard1.1/ru/Microsoft.Data.Edm.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard1.1/zh-Hans/Microsoft.Data.Edm.resources.dll": {
+            "locale": "zh-Hans"
+          },
+          "lib/netstandard1.1/zh-Hant/Microsoft.Data.Edm.resources.dll": {
+            "locale": "zh-Hant"
+          }
+        }
+      },
+      "Microsoft.Data.OData/5.8.2": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Data.Edm": "[5.8.2]",
+          "System.Spatial": "[5.8.2]"
+        },
+        "compile": {
+          "lib/netstandard1.1/Microsoft.Data.OData.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/Microsoft.Data.OData.dll": {}
+        },
+        "resource": {
+          "lib/netstandard1.1/de/Microsoft.Data.OData.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard1.1/es/Microsoft.Data.OData.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard1.1/fr/Microsoft.Data.OData.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard1.1/it/Microsoft.Data.OData.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard1.1/ja/Microsoft.Data.OData.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard1.1/ko/Microsoft.Data.OData.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard1.1/ru/Microsoft.Data.OData.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard1.1/zh-Hans/Microsoft.Data.OData.resources.dll": {
+            "locale": "zh-Hans"
+          },
+          "lib/netstandard1.1/zh-Hant/Microsoft.Data.OData.resources.dll": {
+            "locale": "zh-Hant"
+          }
+        }
+      },
+      "Microsoft.Data.Services.Client/5.8.2": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Data.OData": "[5.8.2]",
+          "System.ComponentModel.EventBasedAsync": "4.0.11",
+          "System.Dynamic.Runtime": "4.0.0",
+          "System.Linq.Queryable": "4.0.0",
+          "System.Net.Requests": "4.0.11"
+        },
+        "compile": {
+          "lib/netstandard1.1/Microsoft.Data.Services.Client.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/Microsoft.Data.Services.Client.dll": {}
+        },
+        "resource": {
+          "lib/netstandard1.1/de/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard1.1/es/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard1.1/fr/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard1.1/it/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard1.1/ja/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard1.1/ko/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard1.1/ru/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard1.1/zh-Hans/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "zh-Hans"
+          },
+          "lib/netstandard1.1/zh-Hant/Microsoft.Data.Services.Client.resources.dll": {
+            "locale": "zh-Hant"
+          }
         }
       },
       "Microsoft.Data.Sqlite/1.1.0": {
@@ -489,6 +675,21 @@
             "assetType": "native",
             "rid": "any"
           }
+        }
+      },
+      "Microsoft.Net.Http/2.2.22": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Bcl": "1.1.9",
+          "Microsoft.Bcl.Build": "1.0.14"
+        },
+        "compile": {
+          "lib/portable-net45+win8/System.Net.Http.Extensions.dll": {},
+          "lib/portable-net45+win8/System.Net.Http.Primitives.dll": {}
+        },
+        "runtime": {
+          "lib/portable-net45+win8/System.Net.Http.Extensions.dll": {},
+          "lib/portable-net45+win8/System.Net.Http.Primitives.dll": {}
         }
       },
       "Microsoft.NETCore.App/1.1.0": {
@@ -1076,6 +1277,23 @@
           }
         }
       },
+      "SendGrid.NetCore/1.0.0-rtm-00002": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.AspNet.WebApi.Client": "5.2.3",
+          "Microsoft.AspNetCore.WebUtilities": "1.0.0",
+          "Microsoft.NETCore.Platforms": "1.0.1",
+          "NETStandard.Library": "1.6.0",
+          "Newtonsoft.Json": "9.0.1",
+          "System.Net.Mail": "1.0.0-rtm-00002"
+        },
+        "compile": {
+          "lib/netstandard1.3/SendGrid.NetCore.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/SendGrid.NetCore.dll": {}
+        }
+      },
       "SQLite/3.13.0": {
         "type": "package",
         "compile": {
@@ -1185,6 +1403,41 @@
           "lib/netstandard1.0/System.Collections.Immutable.dll": {}
         }
       },
+      "System.Collections.NonGeneric/4.0.1": {
+        "type": "package",
+        "dependencies": {
+          "System.Diagnostics.Debug": "4.0.11",
+          "System.Globalization": "4.0.11",
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Extensions": "4.1.0",
+          "System.Threading": "4.0.11"
+        },
+        "compile": {
+          "ref/netstandard1.3/_._": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/System.Collections.NonGeneric.dll": {}
+        }
+      },
+      "System.Collections.Specialized/4.0.1": {
+        "type": "package",
+        "dependencies": {
+          "System.Collections.NonGeneric": "4.0.1",
+          "System.Globalization": "4.0.11",
+          "System.Globalization.Extensions": "4.0.1",
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Extensions": "4.1.0",
+          "System.Threading": "4.0.11"
+        },
+        "compile": {
+          "ref/netstandard1.3/System.Collections.Specialized.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/System.Collections.Specialized.dll": {}
+        }
+      },
       "System.ComponentModel/4.3.0": {
         "type": "package",
         "dependencies": {
@@ -1217,6 +1470,21 @@
         },
         "runtime": {
           "lib/netstandard1.4/System.ComponentModel.Annotations.dll": {}
+        }
+      },
+      "System.ComponentModel.EventBasedAsync/4.0.11": {
+        "type": "package",
+        "dependencies": {
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Threading": "4.0.11",
+          "System.Threading.Tasks": "4.0.11"
+        },
+        "compile": {
+          "ref/netstandard1.3/System.ComponentModel.EventBasedAsync.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/System.ComponentModel.EventBasedAsync.dll": {}
         }
       },
       "System.Console/4.3.0": {
@@ -1808,6 +2076,32 @@
             "assetType": "runtime",
             "rid": "win"
           }
+        }
+      },
+      "System.Net.Mail/1.0.0-rtm-00002": {
+        "type": "package",
+        "dependencies": {
+          "Newtonsoft.Json": "8.0.3",
+          "System.Collections": "4.0.11",
+          "System.Collections.Specialized": "4.0.1",
+          "System.Data.Common": "4.0.1",
+          "System.Diagnostics.Debug": "4.0.11",
+          "System.Globalization": "4.0.11",
+          "System.Globalization.Extensions": "4.0.1",
+          "System.IO.FileSystem": "4.0.1",
+          "System.Net.Primitives": "4.0.11",
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Extensions": "4.1.0",
+          "System.Text.Encoding.Extensions": "4.0.11",
+          "System.Threading": "4.0.11",
+          "System.Threading.Thread": "4.0.0",
+          "System.Threading.ThreadPool": "4.0.10"
+        },
+        "compile": {
+          "lib/netstandard1.3/System.Net.Mail.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/System.Net.Mail.dll": {}
         }
       },
       "System.Net.NameResolution/4.3.0": {
@@ -2596,6 +2890,44 @@
           }
         }
       },
+      "System.Spatial/5.8.2": {
+        "type": "package",
+        "compile": {
+          "lib/netstandard1.1/System.Spatial.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.1/System.Spatial.dll": {}
+        },
+        "resource": {
+          "lib/netstandard1.1/de/System.Spatial.resources.dll": {
+            "locale": "de"
+          },
+          "lib/netstandard1.1/es/System.Spatial.resources.dll": {
+            "locale": "es"
+          },
+          "lib/netstandard1.1/fr/System.Spatial.resources.dll": {
+            "locale": "fr"
+          },
+          "lib/netstandard1.1/it/System.Spatial.resources.dll": {
+            "locale": "it"
+          },
+          "lib/netstandard1.1/ja/System.Spatial.resources.dll": {
+            "locale": "ja"
+          },
+          "lib/netstandard1.1/ko/System.Spatial.resources.dll": {
+            "locale": "ko"
+          },
+          "lib/netstandard1.1/ru/System.Spatial.resources.dll": {
+            "locale": "ru"
+          },
+          "lib/netstandard1.1/zh-Hans/System.Spatial.resources.dll": {
+            "locale": "zh-Hans"
+          },
+          "lib/netstandard1.1/zh-Hant/System.Spatial.resources.dll": {
+            "locale": "zh-Hant"
+          }
+        }
+      },
       "System.Text.Encoding/4.3.0": {
         "type": "package",
         "dependencies": {
@@ -2653,6 +2985,24 @@
         },
         "runtime": {
           "lib/portable-net45+win8+wp8+wpa81/_._": {}
+        }
+      },
+      "System.Text.Encodings.Web/4.0.0": {
+        "type": "package",
+        "dependencies": {
+          "System.Diagnostics.Debug": "4.0.11",
+          "System.IO": "4.1.0",
+          "System.Reflection": "4.1.0",
+          "System.Resources.ResourceManager": "4.0.1",
+          "System.Runtime": "4.1.0",
+          "System.Runtime.Extensions": "4.1.0",
+          "System.Threading": "4.0.11"
+        },
+        "compile": {
+          "lib/netstandard1.0/System.Text.Encodings.Web.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.0/System.Text.Encodings.Web.dll": {}
         }
       },
       "System.Text.RegularExpressions/4.3.0": {
@@ -2917,6 +3267,22 @@
           "lib/netstandard1.3/System.Xml.XPath.XDocument.dll": {}
         }
       },
+      "WindowsAzure.Storage/8.1.0": {
+        "type": "package",
+        "dependencies": {
+          "Microsoft.Data.OData": "5.8.2",
+          "Microsoft.Data.Services.Client": "5.8.2",
+          "NETStandard.Library": "1.6.0",
+          "Newtonsoft.Json": "9.0.1",
+          "System.Spatial": "5.8.2"
+        },
+        "compile": {
+          "lib/netstandard1.3/Microsoft.WindowsAzure.Storage.dll": {}
+        },
+        "runtime": {
+          "lib/netstandard1.3/Microsoft.WindowsAzure.Storage.dll": {}
+        }
+      },
       "xunit/2.2.0": {
         "type": "package",
         "dependencies": {
@@ -3043,13 +3409,16 @@
         "framework": ".NETStandard,Version=v1.6",
         "dependencies": {
           "GlobalPollenProject.Core": "(, )",
+          "ImageSharp": "1.0.0-alpha4-00046",
           "Microsoft.EntityFrameworkCore": "1.1.0",
           "Microsoft.EntityFrameworkCore.InMemory": "1.1.0",
           "Microsoft.EntityFrameworkCore.Sqlite": "1.1.0",
           "Microsoft.FSharp.Core.netcore": "1.0.0-alpha-160629",
           "Microsoft.NETCore.Portable.Compatibility": "1.0.1",
           "NETStandard.Library": "1.6.1",
-          "Newtonsoft.Json": "9.0.1"
+          "Newtonsoft.Json": "9.0.1",
+          "SendGrid.NetCore": "1.0.0-rtm-00002",
+          "WindowsAzure.Storage": "8.1.0"
         }
       }
     }
@@ -3070,8 +3439,21 @@
         "runtimes/win7-x86/lib/net451/dotnet-test-xunit.exe"
       ]
     },
+    "ImageSharp/1.0.0-alpha4-00046": {
+      "sha512": "tDehvTreVr5xsWk9jh67k95w4OZ4wa/696RFPmxV/Cgh+WRGPI22EMqpfBRCAxy6XOfmGPyhk96J7C9Bo+rh+A==",
+      "type": "package",
+      "path": "ImageSharp/1.0.0-alpha4-00046",
+      "files": [
+        "ImageSharp.1.0.0-alpha4-00046.nupkg.sha512",
+        "ImageSharp.nuspec",
+        "lib/netstandard1.1/ImageSharp.dll",
+        "lib/netstandard1.1/ImageSharp.xml",
+        "lib/netstandard1.3/ImageSharp.dll",
+        "lib/netstandard1.3/ImageSharp.xml"
+      ]
+    },
     "Libuv/1.9.1": {
-      "sha512": "xemYfz0ckHq6qblOf0hsIfRb/ilHlOJPaYI02HnSz8IFFCpjdxnlNsllYIzE+Ob4CHkE8HdPeZG1pQXKvkI0/Q==",
+      "sha512": "EvKND+/FXWop630n8gyzlWpFSgOfLv9vwWZPVsf/nW+zf1Y9HBz+hxnrcHoNrk8EKd3piudpljW9pz8IoOa5Tw==",
       "type": "package",
       "path": "Libuv/1.9.1",
       "files": [
@@ -3088,8 +3470,155 @@
         "runtimes/win7-x86/native/libuv.dll"
       ]
     },
+    "Microsoft.AspNet.WebApi.Client/5.2.3": {
+      "sha512": "3kiI8peSXbXHDDrRuo+QaX0iCEVRe0nvn2dBDRw656uPX32UalbBlSIDUDlJxu05eau4tnuhsikiUuugvvoUoQ==",
+      "type": "package",
+      "path": "Microsoft.AspNet.WebApi.Client/5.2.3",
+      "files": [
+        "Microsoft.AspNet.WebApi.Client.5.2.3.nupkg.sha512",
+        "Microsoft.AspNet.WebApi.Client.nuspec",
+        "lib/net45/System.Net.Http.Formatting.dll",
+        "lib/net45/System.Net.Http.Formatting.xml",
+        "lib/portable-wp8+netcore45+net45+wp81+wpa81/System.Net.Http.Formatting.dll",
+        "lib/portable-wp8+netcore45+net45+wp81+wpa81/System.Net.Http.Formatting.xml"
+      ]
+    },
+    "Microsoft.AspNetCore.WebUtilities/1.0.0": {
+      "sha512": "D0licSnS1JgqQ/gYlN41wXbeYG3dFIdjY781YzMHZ5gBB7kczacshW+H6plZkXRr/cCnAJWGa31o1R8c5GEy/A==",
+      "type": "package",
+      "path": "Microsoft.AspNetCore.WebUtilities/1.0.0",
+      "files": [
+        "Microsoft.AspNetCore.WebUtilities.1.0.0.nupkg.sha512",
+        "Microsoft.AspNetCore.WebUtilities.nuspec",
+        "lib/net451/Microsoft.AspNetCore.WebUtilities.dll",
+        "lib/net451/Microsoft.AspNetCore.WebUtilities.xml",
+        "lib/netstandard1.3/Microsoft.AspNetCore.WebUtilities.dll",
+        "lib/netstandard1.3/Microsoft.AspNetCore.WebUtilities.xml"
+      ]
+    },
+    "Microsoft.Bcl/1.1.9": {
+      "sha512": "USQ55innJy8K+tAXvVa1O8dUTp2s7pmJ5cJj6Tl02HtGc2xBDj0P2QH5620HbGXIWKWYhydoeQF8Rm/JRDBGhw==",
+      "type": "package",
+      "path": "Microsoft.Bcl/1.1.9",
+      "files": [
+        "License-Stable.rtf",
+        "Microsoft.Bcl.1.1.9.nupkg.sha512",
+        "Microsoft.Bcl.nuspec",
+        "content/monoandroid/_._",
+        "content/monotouch/_._",
+        "content/net45/_._",
+        "content/portable-net45+win8+wp8+wpa81/_._",
+        "content/portable-net45+win8+wpa81/_._",
+        "content/portable-net451+win81+wpa81/_._",
+        "content/portable-net451+win81/_._",
+        "content/portable-win81+wp81+wpa81/_._",
+        "content/sl4/_._",
+        "content/sl5/_._",
+        "content/win8/_._",
+        "content/wp8/_._",
+        "content/wpa81/_._",
+        "lib/monoandroid/_._",
+        "lib/monotouch/_._",
+        "lib/net40/System.IO.dll",
+        "lib/net40/System.IO.xml",
+        "lib/net40/System.Runtime.dll",
+        "lib/net40/System.Runtime.xml",
+        "lib/net40/System.Threading.Tasks.dll",
+        "lib/net40/System.Threading.Tasks.xml",
+        "lib/net40/ensureRedirect.xml",
+        "lib/net45/_._",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.IO.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.IO.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Runtime.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Runtime.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Threading.Tasks.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Threading.Tasks.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/ensureRedirect.xml",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.IO.dll",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.IO.xml",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.Runtime.dll",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.Runtime.xml",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.Threading.Tasks.dll",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/System.Threading.Tasks.xml",
+        "lib/portable-net40+sl4+win8+wp8+wpa81/ensureRedirect.xml",
+        "lib/portable-net40+sl4+win8/System.IO.dll",
+        "lib/portable-net40+sl4+win8/System.IO.xml",
+        "lib/portable-net40+sl4+win8/System.Runtime.dll",
+        "lib/portable-net40+sl4+win8/System.Runtime.xml",
+        "lib/portable-net40+sl4+win8/System.Threading.Tasks.dll",
+        "lib/portable-net40+sl4+win8/System.Threading.Tasks.xml",
+        "lib/portable-net40+sl4+win8/ensureRedirect.xml",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.IO.dll",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.IO.xml",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.Runtime.dll",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.Runtime.xml",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.Threading.Tasks.dll",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/System.Threading.Tasks.xml",
+        "lib/portable-net40+sl5+win8+wp8+wpa81/ensureRedirect.xml",
+        "lib/portable-net40+win8+wp8+wpa81/System.IO.dll",
+        "lib/portable-net40+win8+wp8+wpa81/System.IO.xml",
+        "lib/portable-net40+win8+wp8+wpa81/System.Runtime.dll",
+        "lib/portable-net40+win8+wp8+wpa81/System.Runtime.xml",
+        "lib/portable-net40+win8+wp8+wpa81/System.Threading.Tasks.dll",
+        "lib/portable-net40+win8+wp8+wpa81/System.Threading.Tasks.xml",
+        "lib/portable-net40+win8+wp8+wpa81/ensureRedirect.xml",
+        "lib/portable-net40+win8/System.IO.dll",
+        "lib/portable-net40+win8/System.IO.xml",
+        "lib/portable-net40+win8/System.Runtime.dll",
+        "lib/portable-net40+win8/System.Runtime.xml",
+        "lib/portable-net40+win8/System.Threading.Tasks.dll",
+        "lib/portable-net40+win8/System.Threading.Tasks.xml",
+        "lib/portable-net40+win8/ensureRedirect.xml",
+        "lib/portable-net45+win8+wp8+wpa81/_._",
+        "lib/portable-net45+win8+wpa81/_._",
+        "lib/portable-net451+win81+wpa81/_._",
+        "lib/portable-net451+win81/_._",
+        "lib/portable-win81+wp81+wpa81/_._",
+        "lib/sl4-windowsphone71/System.IO.dll",
+        "lib/sl4-windowsphone71/System.IO.xml",
+        "lib/sl4-windowsphone71/System.Runtime.dll",
+        "lib/sl4-windowsphone71/System.Runtime.xml",
+        "lib/sl4-windowsphone71/System.Threading.Tasks.dll",
+        "lib/sl4-windowsphone71/System.Threading.Tasks.xml",
+        "lib/sl4-windowsphone71/ensureRedirect.xml",
+        "lib/sl4/System.IO.dll",
+        "lib/sl4/System.IO.xml",
+        "lib/sl4/System.Runtime.dll",
+        "lib/sl4/System.Runtime.xml",
+        "lib/sl4/System.Threading.Tasks.dll",
+        "lib/sl4/System.Threading.Tasks.xml",
+        "lib/sl5/System.IO.dll",
+        "lib/sl5/System.IO.xml",
+        "lib/sl5/System.Runtime.dll",
+        "lib/sl5/System.Runtime.xml",
+        "lib/sl5/System.Threading.Tasks.dll",
+        "lib/sl5/System.Threading.Tasks.xml",
+        "lib/win8/_._",
+        "lib/wp8/_._",
+        "lib/wpa81/_._"
+      ]
+    },
+    "Microsoft.Bcl.Build/1.0.14": {
+      "sha512": "cDLKSvNvRa519hplsbSoYqO69TjdDIhfjtKUM0g20/nVROoWsGav9KCI9HtnGjLmdV1+TcUUDhbotcllibjPEA==",
+      "type": "package",
+      "path": "Microsoft.Bcl.Build/1.0.14",
+      "files": [
+        "License-Stable.rtf",
+        "Microsoft.Bcl.Build.1.0.14.nupkg.sha512",
+        "Microsoft.Bcl.Build.nuspec",
+        "content/net40/_._",
+        "content/netcore45/_._",
+        "content/portable-net40+win8+sl4+wp71+wpa81/_._",
+        "content/sl4-windowsphone71/_._",
+        "content/sl4/_._",
+        "tools/Install.ps1",
+        "tools/Microsoft.Bcl.Build.Tasks.dll",
+        "tools/Microsoft.Bcl.Build.targets",
+        "tools/Uninstall.ps1"
+      ]
+    },
     "Microsoft.CodeAnalysis.Analyzers/1.1.0": {
-      "sha512": "HS3iRWZKcUw/8eZ/08GXKY2Bn7xNzQPzf8gRPHGSowX7u7XXu9i9YEaBeBNKUXWfI7qjvT2zXtLUvbN0hds8vg==",
+      "sha512": "+pjMN/JZnK8OXfctfHNMdvqYP7znPhu+3TZTpp33yhI+m5WxjNMBqYa9nG50YgBe/IJTa84nw+3k4D01Vrq7RQ==",
       "type": "package",
       "path": "Microsoft.CodeAnalysis.Analyzers/1.1.0",
       "files": [
@@ -3105,7 +3634,7 @@
       ]
     },
     "Microsoft.CodeAnalysis.Common/1.3.0": {
-      "sha512": "V09G35cs0CT1C4Dr1IEOh8IGfnWALEVAOO5JXsqagxXwmYR012TlorQ+vx2eXxfZRKs3gAS/r92gN9kRBLba5A==",
+      "sha512": "5V9VN4RQJwVPuf1+8wxu0O/9jiv3iJDm2VnBc1CVvywQXmlLSjG4x3mfpy4hEPOAZ3Ji6ht3XelyicTwC50Ctw==",
       "type": "package",
       "path": "Microsoft.CodeAnalysis.Common/1.3.0",
       "files": [
@@ -3121,7 +3650,7 @@
       ]
     },
     "Microsoft.CodeAnalysis.CSharp/1.3.0": {
-      "sha512": "BgWDIAbSFsHuGeLSn/rljLi51nXqkSo4DZ0qEIrHyPVasrhxEVq7aV8KKZ3HEfSFB+GIhBmOogE+mlOLYg19eg==",
+      "sha512": "vKVIcdRUrcZED6DKxOowDDSD++s4EPJcpD6jEI4AEUau46mrmOMXSY1RQDHsLnliMvubsa9vXepCXcfosSyCtw==",
       "type": "package",
       "path": "Microsoft.CodeAnalysis.CSharp/1.3.0",
       "files": [
@@ -3137,7 +3666,7 @@
       ]
     },
     "Microsoft.CodeAnalysis.VisualBasic/1.3.0": {
-      "sha512": "Sf3k8PkTkWqBmXnnblJbvb7ewO6mJzX6WO2t7m04BmOY5qBq6yhhyXnn/BMM+QCec3Arw3X35Zd8f9eBql0qgg==",
+      "sha512": "WHtVWUkNBa3/Uc55gunoyHeXUUfv4OAvcGMIghg6X/kZDJIQCDV+YvWlmlT6x4LAozNPgM2v7ugVEoOQ6A51Hw==",
       "type": "package",
       "path": "Microsoft.CodeAnalysis.VisualBasic/1.3.0",
       "files": [
@@ -3153,7 +3682,7 @@
       ]
     },
     "Microsoft.CSharp/4.3.0": {
-      "sha512": "UT9nmcYyBvDDn8ukPYCDplupvANpKHG+b2VGsmjNWoNrFps6u7l1DAp32Nr1qNNkq79ngJalnyaEjI0N75q6eQ==",
+      "sha512": "n5nnDHvatFvfYhUlvlgkgPJJ5WhMTdkz7DxoRARaxEkwLU9BYGj3i8iZpUAfP9M+fZhh/poG0TA+HF8GNNMKZA==",
       "type": "package",
       "path": "Microsoft.CSharp/4.3.0",
       "files": [
@@ -3209,6 +3738,187 @@
         "ref/xamarinwatchos10/_._"
       ]
     },
+    "Microsoft.Data.Edm/5.8.2": {
+      "sha512": "P/d8DxA6MFHroBEn/jW0LMQSIKnsRRibrZtRCLfov2boQfrQ1R1BVgkJ5oIhcQsOm0l4POv+I2ny6RBsclNbOw==",
+      "type": "package",
+      "path": "Microsoft.Data.Edm/5.8.2",
+      "files": [
+        "Microsoft.Data.Edm.5.8.2.nupkg.sha512",
+        "Microsoft.Data.Edm.nuspec",
+        "lib/net40/Microsoft.Data.Edm.dll",
+        "lib/net40/Microsoft.Data.Edm.xml",
+        "lib/net40/de/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/es/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/it/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/net40/zh-Hant/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/Microsoft.Data.Edm.dll",
+        "lib/netstandard1.1/Microsoft.Data.Edm.xml",
+        "lib/netstandard1.1/de/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/es/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/it/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/netstandard1.1/zh-Hant/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/Microsoft.Data.Edm.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/Microsoft.Data.Edm.xml",
+        "lib/portable-net40+sl5+wp8+win8+wpa/de/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/es/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/it/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hant/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.Edm.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.Edm.xml",
+        "lib/portable-net45+wp8+win8+wpa/de/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/es/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/it/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hant/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/Microsoft.Data.Edm.dll",
+        "lib/sl4/Microsoft.Data.Edm.xml",
+        "lib/sl4/de/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/es/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/fr/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/it/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/ja/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/ko/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/ru/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/zh-Hans/Microsoft.Data.Edm.resources.dll",
+        "lib/sl4/zh-Hant/Microsoft.Data.Edm.resources.dll"
+      ]
+    },
+    "Microsoft.Data.OData/5.8.2": {
+      "sha512": "oEIUtXcRiKogF0yZxA+QdgxoBJ34989qL/5xOSrTfxAhzNJV5Hw6DRdWgUCpeXFMoJUQx7ptbHCN+My/LCQfsg==",
+      "type": "package",
+      "path": "Microsoft.Data.OData/5.8.2",
+      "files": [
+        "Microsoft.Data.OData.5.8.2.nupkg.sha512",
+        "Microsoft.Data.OData.nuspec",
+        "lib/net40/Microsoft.Data.OData.dll",
+        "lib/net40/Microsoft.Data.OData.xml",
+        "lib/net40/de/Microsoft.Data.OData.resources.dll",
+        "lib/net40/es/Microsoft.Data.OData.resources.dll",
+        "lib/net40/fr/Microsoft.Data.OData.resources.dll",
+        "lib/net40/it/Microsoft.Data.OData.resources.dll",
+        "lib/net40/ja/Microsoft.Data.OData.resources.dll",
+        "lib/net40/ko/Microsoft.Data.OData.resources.dll",
+        "lib/net40/ru/Microsoft.Data.OData.resources.dll",
+        "lib/net40/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/net40/zh-Hant/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/Microsoft.Data.OData.dll",
+        "lib/netstandard1.1/Microsoft.Data.OData.xml",
+        "lib/netstandard1.1/de/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/es/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/fr/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/it/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/ja/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/ko/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/ru/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/netstandard1.1/zh-Hant/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/Microsoft.Data.OData.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/Microsoft.Data.OData.xml",
+        "lib/portable-net40+sl5+wp8+win8+wpa/de/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/es/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/fr/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/it/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ja/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ko/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ru/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hant/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.OData.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.OData.xml",
+        "lib/portable-net45+wp8+win8+wpa/de/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/es/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/fr/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/it/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ja/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ko/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ru/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hant/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/Microsoft.Data.OData.dll",
+        "lib/sl4/Microsoft.Data.OData.xml",
+        "lib/sl4/de/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/es/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/fr/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/it/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/ja/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/ko/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/ru/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/zh-Hans/Microsoft.Data.OData.resources.dll",
+        "lib/sl4/zh-Hant/Microsoft.Data.OData.resources.dll"
+      ]
+    },
+    "Microsoft.Data.Services.Client/5.8.2": {
+      "sha512": "RtTMj1EOQa9nzJGZEb13Z7hW3gjqLsPoeHHD/8PEZ/b+8Wb+UHMxvS7llg0TUki1nwiwcaBfGeQE3zN5IQNYPA==",
+      "type": "package",
+      "path": "Microsoft.Data.Services.Client/5.8.2",
+      "files": [
+        "Microsoft.Data.Services.Client.5.8.2.nupkg.sha512",
+        "Microsoft.Data.Services.Client.nuspec",
+        "lib/net40/Microsoft.Data.Services.Client.dll",
+        "lib/net40/Microsoft.Data.Services.Client.xml",
+        "lib/net40/de/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/es/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/fr/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/it/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/ja/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/ko/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/ru/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/zh-Hans/Microsoft.Data.Services.Client.resources.dll",
+        "lib/net40/zh-Hant/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/Microsoft.Data.Services.Client.dll",
+        "lib/netstandard1.1/Microsoft.Data.Services.Client.xml",
+        "lib/netstandard1.1/de/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/es/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/fr/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/it/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/ja/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/ko/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/ru/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/zh-Hans/Microsoft.Data.Services.Client.resources.dll",
+        "lib/netstandard1.1/zh-Hant/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.Services.Client.dll",
+        "lib/portable-net45+wp8+win8+wpa/Microsoft.Data.Services.Client.xml",
+        "lib/portable-net45+wp8+win8+wpa/de/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/es/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/fr/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/it/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ja/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ko/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ru/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hans/Microsoft.Data.Services.Client.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hant/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/Microsoft.Data.Services.Client.dll",
+        "lib/sl4/Microsoft.Data.Services.Client.xml",
+        "lib/sl4/de/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/es/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/fr/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/it/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/ja/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/ko/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/ru/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/zh-Hans/Microsoft.Data.Services.Client.resources.dll",
+        "lib/sl4/zh-Hant/Microsoft.Data.Services.Client.resources.dll"
+      ]
+    },
     "Microsoft.Data.Sqlite/1.1.0": {
       "sha512": "T09U31d2uBe9bvECrz/5cgMPR3256D8SY/+bVDD+KqpX9kbLQuyunm8pR9aUDlsRrVOlSq5Gbg2vMOnBMRbJRQ==",
       "type": "package",
@@ -3236,7 +3946,7 @@
       ]
     },
     "Microsoft.DiaSymReader.Native/1.4.0": {
-      "sha512": "KiBC/myr9+PmQd39RN04ThyYlgNpWEkYuG+WUuei052ODWN+SfT21GOXVl9lJ6BJWaDk8yFYiUqP6CI94Xxa4A==",
+      "sha512": "yQqcjKqQMqJfeXVn0zeRsEXG0JkrUJiWcEgczCWoMad97t5pRTtY8UpxOtR3K+t5FccSNqOBMzo2mZtLQJ5Fow==",
       "type": "package",
       "path": "Microsoft.DiaSymReader.Native/1.4.0",
       "files": [
@@ -3454,8 +4164,71 @@
         "runtimes/any/native/FSharp.Core.sigdata"
       ]
     },
+    "Microsoft.Net.Http/2.2.22": {
+      "sha512": "bqVLJ2UimlAEs2bn3y28lB1pmFRxuysv9pFyB0A86WEMYGYTfDyfjAGjm0fiaSRjlMNU1jVnp8Mxt8qe4OmpXQ==",
+      "type": "package",
+      "path": "Microsoft.Net.Http/2.2.22",
+      "files": [
+        "License-Stable.rtf",
+        "Microsoft.Net.Http.2.2.22.nupkg.sha512",
+        "Microsoft.Net.Http.nuspec",
+        "lib/monoandroid/System.Net.Http.Extensions.XML",
+        "lib/monoandroid/System.Net.Http.Extensions.dll",
+        "lib/monoandroid/System.Net.Http.Primitives.dll",
+        "lib/monoandroid/System.Net.Http.Primitives.xml",
+        "lib/monotouch/System.Net.Http.Extensions.XML",
+        "lib/monotouch/System.Net.Http.Extensions.dll",
+        "lib/monotouch/System.Net.Http.Primitives.dll",
+        "lib/monotouch/System.Net.Http.Primitives.xml",
+        "lib/net40/System.Net.Http.Extensions.XML",
+        "lib/net40/System.Net.Http.Extensions.dll",
+        "lib/net40/System.Net.Http.Primitives.dll",
+        "lib/net40/System.Net.Http.Primitives.xml",
+        "lib/net40/System.Net.Http.WebRequest.dll",
+        "lib/net40/System.Net.Http.WebRequest.xml",
+        "lib/net40/System.Net.Http.dll",
+        "lib/net40/System.Net.Http.xml",
+        "lib/net40/ensureRedirect.xml",
+        "lib/net45/System.Net.Http.Extensions.XML",
+        "lib/net45/System.Net.Http.Extensions.dll",
+        "lib/net45/System.Net.Http.Primitives.dll",
+        "lib/net45/System.Net.Http.Primitives.xml",
+        "lib/net45/ensureRedirect.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Extensions.XML",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Extensions.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Primitives.XML",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.Primitives.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.dll",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/System.Net.Http.xml",
+        "lib/portable-net40+sl4+win8+wp71+wpa81/ensureRedirect.xml",
+        "lib/portable-net45+win8+wpa81/System.Net.Http.Extensions.XML",
+        "lib/portable-net45+win8+wpa81/System.Net.Http.Extensions.dll",
+        "lib/portable-net45+win8+wpa81/System.Net.Http.Primitives.dll",
+        "lib/portable-net45+win8+wpa81/System.Net.Http.Primitives.xml",
+        "lib/portable-net45+win8+wpa81/ensureRedirect.xml",
+        "lib/portable-net45+win8/System.Net.Http.Extensions.XML",
+        "lib/portable-net45+win8/System.Net.Http.Extensions.dll",
+        "lib/portable-net45+win8/System.Net.Http.Primitives.dll",
+        "lib/portable-net45+win8/System.Net.Http.Primitives.xml",
+        "lib/portable-net45+win8/ensureRedirect.xml",
+        "lib/sl4-windowsphone71/System.Net.Http.Extensions.XML",
+        "lib/sl4-windowsphone71/System.Net.Http.Extensions.dll",
+        "lib/sl4-windowsphone71/System.Net.Http.Primitives.XML",
+        "lib/sl4-windowsphone71/System.Net.Http.Primitives.dll",
+        "lib/sl4-windowsphone71/System.Net.Http.dll",
+        "lib/sl4-windowsphone71/System.Net.Http.xml",
+        "lib/win8/System.Net.Http.Extensions.XML",
+        "lib/win8/System.Net.Http.Extensions.dll",
+        "lib/win8/System.Net.Http.Primitives.dll",
+        "lib/win8/System.Net.Http.Primitives.xml",
+        "lib/wpa81/System.Net.Http.Extensions.XML",
+        "lib/wpa81/System.Net.Http.Extensions.dll",
+        "lib/wpa81/System.Net.Http.Primitives.dll",
+        "lib/wpa81/System.Net.Http.Primitives.xml"
+      ]
+    },
     "Microsoft.NETCore.App/1.1.0": {
-      "sha512": "n8vjorWPAHQFr4zYA/H9CIu0LGQgOAe5NflurnYnT1Z7nulBWq1muqZBx3xARDF5Va71Sy329vd0/tRlHzZu4g==",
+      "sha512": "xJz3a8mW09QM+sqKO/1SBXcVqo8BceH98RBgrDS1bOa8pTslsSij11s04/ryVcrOM56g07XvZttJPsQaaKm3EA==",
       "type": "package",
       "path": "Microsoft.NETCore.App/1.1.0",
       "files": [
@@ -3467,7 +4240,7 @@
       ]
     },
     "Microsoft.NETCore.DotNetHost/1.1.0": {
-      "sha512": "MU3TN9CB3hsyolAdRxCJHANgvaB1VrQ8wTBD69sPWJtnce4PDWHbS1cCQ/bEiP2RidGy1elJTIV3s3XtekM7dg==",
+      "sha512": "qEroq7wK1jE+6bdOwS3Yw79uDr/QP8PXDBI9WRPac2TW0Sb/Pk1oCDRF9TbRbKTF9GtQDue5qIeH5Esl4K6Pog==",
       "type": "package",
       "path": "Microsoft.NETCore.DotNetHost/1.1.0",
       "files": [
@@ -3479,7 +4252,7 @@
       ]
     },
     "Microsoft.NETCore.DotNetHostPolicy/1.1.0": {
-      "sha512": "le+YWWK/veTIiXi4fPQa+yMxq8hx2yJqrg3enrfGmA7kivuOm8JKqfu4iV0HdDOeXRr/V6ZGJ0qvxx+Xfowt8Q==",
+      "sha512": "m48ZyDcDc0lBh+JdvngBeJfgM4nL8tMv1fJcsMZz79QvHXy5UPl6JhdyOeOjPUH17ul7nzZWZr+xY5IcPSqbpQ==",
       "type": "package",
       "path": "Microsoft.NETCore.DotNetHostPolicy/1.1.0",
       "files": [
@@ -3491,7 +4264,7 @@
       ]
     },
     "Microsoft.NETCore.DotNetHostResolver/1.1.0": {
-      "sha512": "GxcNjlWU8xNP8AJXGFkBa54amewho1jYtUOGWZR35oIM6uKd4pOCA/NB/y4vGiLakb6Irdw6EgSWiYgMM5lmWw==",
+      "sha512": "iFK7MelICEYXWg4H45jLQsLyDdeiQT4kRKdPkTM5OnPXL5MgDta7NLVE54W0QnR25S/T5G3sJleT+rVLCm5j9A==",
       "type": "package",
       "path": "Microsoft.NETCore.DotNetHostResolver/1.1.0",
       "files": [
@@ -3503,7 +4276,7 @@
       ]
     },
     "Microsoft.NETCore.Jit/1.1.0": {
-      "sha512": "0z5UxkOpD/c9rxI6O8KiReU8igTdlSinV/I2LJwmknglIXes0O774ZI82dF3VziLgRIFRKRm5HyJPUCp068hGw==",
+      "sha512": "pLRBJK4rxAYhAfofMMVo2V14GxnKwbLhTKy2YHNpEXMrFBtrid0S+2+zqAHkK89zuyLWQG5bwVXno/sfJPGNaA==",
       "type": "package",
       "path": "Microsoft.NETCore.Jit/1.1.0",
       "files": [
@@ -3515,7 +4288,7 @@
       ]
     },
     "Microsoft.NETCore.Platforms/1.1.0": {
-      "sha512": "zBswfzlzL/8eIKMOc3PS+CWBRaqS19rxLq27XbfeBJJGytoEFLS7PCbjYKo9Pr3qkzVIhiTh2mSa+MLN+Buxxg==",
+      "sha512": "B5ZcKerjkinrLn2r2XahNQHfiN0AjHIMTASB3SP8nRCJzM2/UmjYJ2VRyFBa5jeX3Oy18FBhOMEAmpi93EqqZA==",
       "type": "package",
       "path": "Microsoft.NETCore.Platforms/1.1.0",
       "files": [
@@ -3610,7 +4383,7 @@
       ]
     },
     "Microsoft.NETCore.Runtime.CoreCLR/1.1.0": {
-      "sha512": "WCipcqdYSmdb6GhNXFae2+K4JoW/kMhMzsuIiDO4S4Ra18MkI9rVw+9A0vozlcWv5QHT7ZORc/jnbM9FIEnUVw==",
+      "sha512": "KMJdP/aa4xuvK4rJaSQu+3lBEO99N0kXBQKIDv4ii7XebiZTTvHsuHDEHKA3fahgVkILcJZTCh3SKHU4SFlz6A==",
       "type": "package",
       "path": "Microsoft.NETCore.Runtime.CoreCLR/1.1.0",
       "files": [
@@ -3622,7 +4395,7 @@
       ]
     },
     "Microsoft.NETCore.Targets/1.1.0": {
-      "sha512": "FyULfBU/RI9iP3qPGpMyjQNS2TnBQd17/u/bXDITMPwdouCmVSs4D3ZPcPsZc0XOsgnabbQn26u2s6I5wjrn4g==",
+      "sha512": "L24kqqh73Uvaq9Ya+YWs7hHmh3K4+FSc8dm3xnfxA1tDXqmVXSAFcAXCIRhmULms2M5ohzLhKHzIrzQgAOFmHg==",
       "type": "package",
       "path": "Microsoft.NETCore.Targets/1.1.0",
       "files": [
@@ -3635,7 +4408,7 @@
       ]
     },
     "Microsoft.NETCore.Windows.ApiSets/1.0.1": {
-      "sha512": "SaToCvvsGMxTgtLv/BrFQ5IFMPRE1zpWbnqbpwykJa8W5XiX82CXI6K2o7yf5xS7EP6t/JzFLV0SIDuWpvBZVw==",
+      "sha512": "rlO70BdwRPX4eZ98mF6qldX50wXzMoSsEeddPnjY9YBpAkMdxn0WID78gPpYZLS3xdMPl0isalyhfBbTHgdtYQ==",
       "type": "package",
       "path": "Microsoft.NETCore.Windows.ApiSets/1.0.1",
       "files": [
@@ -3647,7 +4420,7 @@
       ]
     },
     "Microsoft.VisualBasic/10.1.0": {
-      "sha512": "IMFNn1XhHHo8pPLlnQBIwQTKunToO6YmLmJ6cOjdkIxh6eZFILLFTC56NJM7Lo4Fl4IZ6c/3WdVUzl9zxHQiUA==",
+      "sha512": "kG0Axz9O5oG4qdIFsnxK+9VOnVg92FiM3vpGRAEooRQgayqssbM1qCNBNL69l07bQ8qf6FJE2fo9KNEkPaFgyA==",
       "type": "package",
       "path": "Microsoft.VisualBasic/10.1.0",
       "files": [
@@ -3695,7 +4468,7 @@
       ]
     },
     "Microsoft.Win32.Primitives/4.3.0": {
-      "sha512": "7NCIHaNC0C/Wakob/sf+BSaG1VE8rxf3k63wKJaJMJRRbMRWucRBWsXGW20cL76nWyXfEalg1M3n6FZO4P8TGw==",
+      "sha512": "vIv7cOTQKRcoCC9JPzcmw0GrWXMya2N8NLO2VtZKlqoKRZZp/xE8udNYPbABFqD+iOFPNi1NFf2+838qvZDwPg==",
       "type": "package",
       "path": "Microsoft.Win32.Primitives/4.3.0",
       "files": [
@@ -3731,7 +4504,7 @@
       ]
     },
     "Microsoft.Win32.Registry/4.3.0": {
-      "sha512": "uQ8BN4oG2rBn8ikMTIhlh4Dg1CJe/3PT5bdZ/9vEOmwnnSSvcQqnnj9vr4ChPfQpzgrBGky/0bNCdAvZ462fbA==",
+      "sha512": "+U/oyNdejJXSIMjfbZHvLysjjXCfma6hRosiXWbpagLixNYo6k2KK71Oh4eYudwk4lXxebRPE5XDoqQSJ+98Sw==",
       "type": "package",
       "path": "Microsoft.Win32.Registry/4.3.0",
       "files": [
@@ -3759,7 +4532,7 @@
       ]
     },
     "NETStandard.Library/1.6.1": {
-      "sha512": "TToNh8ywV+T3CsyI4wYVSyfhAIfX9QipmT3IsgVO5RUJrTD/FcMAOYmIv4kEsGMKJShKqSw0zT1OykWfmqj4yQ==",
+      "sha512": "2Pz4/7GSJswtrVVKRe9tT1XiPj04bHb4IF5hKewSsjev9Hd1vD13D/1nhGSTHEoY83NpdAD7lGDi4giVWg5Blg==",
       "type": "package",
       "path": "NETStandard.Library/1.6.1",
       "files": [
@@ -3904,7 +4677,7 @@
       ]
     },
     "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "t229tiDVCWG802jBJm/xRc6xT00j4zcuJm9Hhskt5skYpwkJrVPuNCKaFJOyPWX2ICedGkBMd1f+zhGJKRdItA==",
+      "sha512": "zRgAjNQOkT3wWmhd9Y40MFN/WBXvkTVGfi0+0ZWomrOdbv4gwdhfZB8X6zEfRHqAL/3OSh0M3IGdzGFqeKvsHw==",
       "type": "package",
       "path": "runtime.debian.8-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -3916,7 +4689,7 @@
       ]
     },
     "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "gpM7b0wuvWf8U9bPzBqGQ7lK23jN0fsV9p8rSqiJhBi/IUkaCMCXtX8KldBadAqjebZmlf7I/2QfuvDf/kK0pw==",
+      "sha512": "ifC66gMBQMe9fPaZ5F1Lwon8xk0KAqiHEo2vDfh1E5Vz70tbyssduH5HaBDVFmEI5Qb1mwWNlJnlRjEZQYBGWg==",
       "type": "package",
       "path": "runtime.fedora.23-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -3928,7 +4701,7 @@
       ]
     },
     "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "nVsOOexTwKy9mj8RWXeap9zKIGQ+Or8lBjgGgR3acosOvIda+m6r7LNFk8w4bgLQD7VdbEIovp4jpAK/yid2Tw==",
+      "sha512": "Z7EhJz0eHuGX7dU18bwTP7fGAC1+CyGlgE8++WWWy4AHQgwsJp0mfjkoc1Xr+lpD1LRBJf39wnS1rKoWlPYfdg==",
       "type": "package",
       "path": "runtime.fedora.24-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -3940,7 +4713,7 @@
       ]
     },
     "runtime.native.System/4.3.0": {
-      "sha512": "/nrfP1wCplYxEWVD2mDcbuY58F4+YRFpcJ6f2ae+Cn2KwS89S3isEZ+gyhhe0dItwLB0NTNmsv2uEb66yJpgaw==",
+      "sha512": "JGswkYsy5dG/gychc3MPpmp1rbhcmfEU55qId7gYIqDoy9Xp3fX5CI12/AdoEiV52qAjJOT9BkanR6A28TocJw==",
       "type": "package",
       "path": "runtime.native.System/4.3.0",
       "files": [
@@ -3952,7 +4725,7 @@
       ]
     },
     "runtime.native.System.IO.Compression/4.3.0": {
-      "sha512": "eNZJJCTyO9htLD2z8L5yEKtxGGW/6uyCPHE4LyA+fV43VatEUrwQC9f0Sfvohp+1Y0OV50Tlk9l+czGR2sDhsA==",
+      "sha512": "aQNJ7LkCARCqHDgwZOh/g0xDpxzKWj8vtT7NsZhDQUAObzYjXAAJ7FomXFw6cmrT/rG88V5RrLZd2eBImnw/+w==",
       "type": "package",
       "path": "runtime.native.System.IO.Compression/4.3.0",
       "files": [
@@ -3964,7 +4737,7 @@
       ]
     },
     "runtime.native.System.Net.Http/4.3.0": {
-      "sha512": "xBzTkEY1sAmKOrlAPdluiNRs902+F9UL0doU5e+mLUqU0pa+TuBAmCRxRHlIkGxPrfr21QLP/aU+ZTlFx7DN5A==",
+      "sha512": "fRcGyNM+eFMOGzIoqTBRJzb2ZPFLhvGV5i1NYVZ5bS9ANME3T661XCt8lc/huMKipFGZLbGeNA4PVQ3EleD19w==",
       "type": "package",
       "path": "runtime.native.System.Net.Http/4.3.0",
       "files": [
@@ -3976,7 +4749,7 @@
       ]
     },
     "runtime.native.System.Net.Security/4.3.0": {
-      "sha512": "TXo84u9DWjfB+7tDEVxOqnZB+tAUN7SzA3I1TWUuUAcq+ZRPzZBIgV8VyRJaXmemljdvICUzY5VBzv/JmDRNHA==",
+      "sha512": "64fn5oeSy67alGYhyHpT+0h5GqC8Muz9V6Zd7re5dvD1YKyxSmD7FwKJvvJffNo3LbujekkJHR3NaMxadalgVw==",
       "type": "package",
       "path": "runtime.native.System.Net.Security/4.3.0",
       "files": [
@@ -3988,7 +4761,7 @@
       ]
     },
     "runtime.native.System.Security.Cryptography.Apple/4.3.0": {
-      "sha512": "uxcJcRDlhFAQ7dGaDt0tKANq+Yp5iIIHRjq6dsmzEM7RDgKzyEB87h+tWEHrHubnHgB1e01XuHGpPtpoQFw4UA==",
+      "sha512": "y3hcvs3qLqKt2RyB81CF3M7BYBhvpKKkCupwXExWvIgPLfzsdC5CQfC0QmYn9nNA7AyfCqH7nPM6HnQ/BvKwyQ==",
       "type": "package",
       "path": "runtime.native.System.Security.Cryptography.Apple/4.3.0",
       "files": [
@@ -4000,7 +4773,7 @@
       ]
     },
     "runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "leC74qKEAiVy2m/vH7Uhzyh+rh1+1AJEuqsZbvzZ/VIuQ40SvOyzWkLHePOKYs4xJJuqrO087ZcxNCzZ2C/2Gw==",
+      "sha512": "wAG76mWRVIKEKhAl1kSQQjVN0yLRAyaXYsYg4h/+1JFr3EQy5mnO/MwPFengUycNi24sQ3PvRhVw51XHJ7wHwA==",
       "type": "package",
       "path": "runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -4012,7 +4785,7 @@
       ]
     },
     "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "3XcCAB/J6mY66UTu8TJ0YKNJXUdDtPR0tiMJ//lBCsonULNdku+FdLxCVSVh+LsRP7TKcdHgRXy2VuR4gICC/w==",
+      "sha512": "7LpMUl4d1SXRMbxjb4YpOA40pSAy8iAYjMaeecwIWLtXy25VPtwFZhoYwoKMu4GRZFlu+JuaZY87Th7hHAIpbw==",
       "type": "package",
       "path": "runtime.opensuse.13.2-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -4024,7 +4797,7 @@
       ]
     },
     "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "aNGdPUXH33l9s5eCyuuezeHVOSVXBayQzAM//n9TFmq+6NCFK4UDK3fboD+3Kk/MeblaEWMcvZCCrC4h2g4JZw==",
+      "sha512": "Wrc/5k5zisChTD3sQ8o7jx2jouj1L1eCjnq1mKoS2Ev2RdwwDWNH1/nO4dfBlUgT8x7FmKMBAB1oz1WvWkGyQw==",
       "type": "package",
       "path": "runtime.opensuse.42.1-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -4036,7 +4809,7 @@
       ]
     },
     "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple/4.3.0": {
-      "sha512": "/YtzCdK96SjCUibKr/M+lQm8PUKUKLYbPrxgeAgN7RGWSPTarTX8Ck5g62eX9VEGla57R5PjNkT6+QnFV1pwfQ==",
+      "sha512": "VDBeN+VzudJkB6fIgGv/YxnVmRz0SSRVQVF5Yp4tO5NRdYrz06ZBeH+UlaySooR186wGLzW9mYGQSRsT0v6kew==",
       "type": "package",
       "path": "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.Apple/4.3.0",
       "files": [
@@ -4048,7 +4821,7 @@
       ]
     },
     "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "DELPbZpdmJ/Pckldw4WIVF1yuIroelxuewwNy6FDC/6dIJHVgPEwE9vyo5VRV00yT1+VGpQG9qQOWX8+IQhYMA==",
+      "sha512": "mH18gixgHZVrGN6GK7mIh5MG4J3N2/HuxCXp8WWnvppMVbuVoHHhFV4bLatox/cos+WGnLeVgEiH3KXryR7M8A==",
       "type": "package",
       "path": "runtime.osx.10.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -4060,7 +4833,7 @@
       ]
     },
     "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "HgXBRfKEBmZIvzNwuHQp5oqehB/pEDYBxLmyiIuLYUXwuWB665FI9r+ADTDeUPCc927puWcHOy3E6bWQacqM2g==",
+      "sha512": "Sy7WnzXLnz8qXTeCgi5cdKoE+ifhpBRqivy0bxYHibNZCsPlNfI31/7cT68tLNtX59JfSSmGt8a0vqXxd1BHjA==",
       "type": "package",
       "path": "runtime.rhel.7-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -4072,7 +4845,7 @@
       ]
     },
     "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "QsXo63hDr5VkLvCFiwFSL8+5yplVyazZNb//qy2tKOhBnevyi1KNHipeP/l6zVXOLz25K4FyjrhFrQwkC7BTuw==",
+      "sha512": "O4+hriCxqzJF7YUHuLUg0se73ZrrSsKTmNnr8tizXREvf2Tev5u4aA3wcKLouGRJM61PXoWTtLRvv0qH8uSHjg==",
       "type": "package",
       "path": "runtime.ubuntu.14.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -4084,7 +4857,7 @@
       ]
     },
     "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "pCJz+189+TiGTGtrK+7qjVJj46xXR0su0n3sGU+tVaBiZWOpb7k9/AGqKl0+DFRdT/mOR5Jif6s9EVOBVGTOBQ==",
+      "sha512": "vBjm0Io918LfX7y3iplo50zSoBZMfbWJMF4ueMVpO9uk25BwvOvW00Z/x/3X9jViJR9IA7LnaoTWDHU82eTKYg==",
       "type": "package",
       "path": "runtime.ubuntu.16.04-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -4096,7 +4869,7 @@
       ]
     },
     "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "mqEpm9srSNsxxnpiosKBvcWc1csZZ3tK5r2LN0uD7IpAj7Dlz6bxpSfTiWVA3ozJD1qt81WkEg3i8bznXYXUmw==",
+      "sha512": "RF/tFLRRT+5HkCJC7DlQouLUahxDdOtiTYP0ZRKnSwl0JF+x/e6lvX2GXY4hJhFe7MAz9ClG1YKXg1URc6r7ZQ==",
       "type": "package",
       "path": "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -4105,6 +4878,17 @@
         "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl.4.3.0.nupkg.sha512",
         "runtime.ubuntu.16.10-x64.runtime.native.System.Security.Cryptography.OpenSsl.nuspec",
         "runtimes/ubuntu.16.10-x64/native/System.Security.Cryptography.Native.OpenSsl.so"
+      ]
+    },
+    "SendGrid.NetCore/1.0.0-rtm-00002": {
+      "sha512": "nV9VH1z+QaQHGL2HAuPsz0Wi5+j28ECi7KJetR/CWQLekgknTvcLnVyifX9ti35jwU6vPwnqydn381Kf+6IKcA==",
+      "type": "package",
+      "path": "SendGrid.NetCore/1.0.0-rtm-00002",
+      "files": [
+        "SendGrid.NetCore.1.0.0-rtm-00002.nupkg.sha512",
+        "SendGrid.NetCore.nuspec",
+        "lib/net451/SendGrid.NetCore.dll",
+        "lib/netstandard1.3/SendGrid.NetCore.dll"
       ]
     },
     "SQLite/3.13.0": {
@@ -4127,7 +4911,7 @@
       ]
     },
     "System.AppContext/4.3.0": {
-      "sha512": "6FFCB4TfSFek3qYDi8Ym7NRkw/dXdUzJ/q3JhhnTni1eVN8DH+Jh9sv3AWfF7bBwjLULu6OHOMjBOoUANGcuhg==",
+      "sha512": "apgDi6G/EAQkScrRqJ5apGCJlyJP0qOKy45LsWtmfUHSaSDdLYaGLZ+OItcoskUgCTjMGmYCLzedxROJcvVfEQ==",
       "type": "package",
       "path": "System.AppContext/4.3.0",
       "files": [
@@ -4180,7 +4964,7 @@
       ]
     },
     "System.Buffers/4.3.0": {
-      "sha512": "7FPB07eMmIWBx6E5zV/F28vOd1Og7oWbee4uc832NKxzQzIGk0e0t1S1bmXw3RrQwOweuU4QF197RkSSMU73vw==",
+      "sha512": "jRP4OtvYkyyz25XssiiCQltaJsPLDGd2/kufZiQtmIU5NbEegVVUe7JizqoMYq2uASP6xceB8XVtyNtFKO4z6g==",
       "type": "package",
       "path": "System.Buffers/4.3.0",
       "files": [
@@ -4193,7 +4977,7 @@
       ]
     },
     "System.Collections/4.3.0": {
-      "sha512": "NlqvSZz73Xwq707mGW8oeoE81eLwBQuYqERIO0m9BT/FfH8RET9PteMZl828z2y8CzRgtj7eE5FtqsMLA1FCug==",
+      "sha512": "zfSPkc2YelV3PBIWS++Rj8qLrGz4jEbfBCH+agga4HOp3ZgNkqVHVkYowv0kYpAprpAatOUwGy/MRS+e/mvOTw==",
       "type": "package",
       "path": "System.Collections/4.3.0",
       "files": [
@@ -4259,7 +5043,7 @@
       ]
     },
     "System.Collections.Concurrent/4.3.0": {
-      "sha512": "rFQM7y6rbKnj7WMnvboKsXXFI+jf49PUjr+h3sVnPIC483/vmiLGUCf+de9nsM2HVOFOFGpmh+VGexeZG35+2g==",
+      "sha512": "q0Z4EFW7qwojUGGRpVWxyfx2nKh9ZkM1NveI17uKxc5kA3lR1NL+DGCJ+SlDGtNGG8rrtij3grF2/2yltcBzsA==",
       "type": "package",
       "path": "System.Collections.Concurrent/4.3.0",
       "files": [
@@ -4325,7 +5109,7 @@
       ]
     },
     "System.Collections.Immutable/1.3.0": {
-      "sha512": "vrnKysNhul6T77+dgqkcxFiGZIb+xtx6spo6shSwyL8rl36p4hOPRiJgA6G5gsds/MJZ+1Lp5j8qPWhjExQrwg==",
+      "sha512": "u/RW7MUFzSsDRX1TkroH4FJZVdwogdA7GmbslrENGOFOHgNHtBA+HCkP/EwVlRltom+AdsaTxge0Rz0stXeTKA==",
       "type": "package",
       "path": "System.Collections.Immutable/1.3.0",
       "files": [
@@ -4339,8 +5123,82 @@
         "lib/portable-net45+win8+wp8+wpa81/System.Collections.Immutable.xml"
       ]
     },
+    "System.Collections.NonGeneric/4.0.1": {
+      "sha512": "hMxFT2RhhlffyCdKLDXjx8WEC5JfCvNozAZxCablAuFRH74SCV4AgzE8yJCh/73bFnEoZgJ9MJmkjQ0dJmnKqA==",
+      "type": "package",
+      "path": "System.Collections.NonGeneric/4.0.1",
+      "files": [
+        "System.Collections.NonGeneric.4.0.1.nupkg.sha512",
+        "System.Collections.NonGeneric.nuspec",
+        "ThirdPartyNotices.txt",
+        "dotnet_library_license.txt",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net46/System.Collections.NonGeneric.dll",
+        "lib/netstandard1.3/System.Collections.NonGeneric.dll",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "ref/MonoAndroid10/_._",
+        "ref/MonoTouch10/_._",
+        "ref/net46/System.Collections.NonGeneric.dll",
+        "ref/netstandard1.3/System.Collections.NonGeneric.dll",
+        "ref/netstandard1.3/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/de/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/es/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/fr/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/it/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/ja/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/ko/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/ru/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/zh-hans/System.Collections.NonGeneric.xml",
+        "ref/netstandard1.3/zh-hant/System.Collections.NonGeneric.xml",
+        "ref/xamarinios10/_._",
+        "ref/xamarinmac20/_._",
+        "ref/xamarintvos10/_._",
+        "ref/xamarinwatchos10/_._"
+      ]
+    },
+    "System.Collections.Specialized/4.0.1": {
+      "sha512": "/HKQyVP0yH1I0YtK7KJL/28snxHNH/bi+0lgk/+MbURF6ULhAE31MDI+NZDerNWu264YbxklXCCygISgm+HMug==",
+      "type": "package",
+      "path": "System.Collections.Specialized/4.0.1",
+      "files": [
+        "System.Collections.Specialized.4.0.1.nupkg.sha512",
+        "System.Collections.Specialized.nuspec",
+        "ThirdPartyNotices.txt",
+        "dotnet_library_license.txt",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net46/System.Collections.Specialized.dll",
+        "lib/netstandard1.3/System.Collections.Specialized.dll",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "ref/MonoAndroid10/_._",
+        "ref/MonoTouch10/_._",
+        "ref/net46/System.Collections.Specialized.dll",
+        "ref/netstandard1.3/System.Collections.Specialized.dll",
+        "ref/netstandard1.3/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/de/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/es/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/fr/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/it/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/ja/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/ko/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/ru/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/zh-hans/System.Collections.Specialized.xml",
+        "ref/netstandard1.3/zh-hant/System.Collections.Specialized.xml",
+        "ref/xamarinios10/_._",
+        "ref/xamarinmac20/_._",
+        "ref/xamarintvos10/_._",
+        "ref/xamarinwatchos10/_._"
+      ]
+    },
     "System.ComponentModel/4.3.0": {
-      "sha512": "i9ptEEbGo6r+9UvHLo8VapiCtkAnuipz3NvGm5ac9CmSg9/YTZsYNplJuNlVUm9M6PItOFAIWUHL9XD8twDApA==",
+      "sha512": "i4u5BSr5r5leaOLWV7p5BxQkKxJ5nQw9K0Aw01qBlhu3PSdr8BkU00KoLWS/t6pQ5mYx4a7/fAAUZVkK6BKfNg==",
       "type": "package",
       "path": "System.ComponentModel/4.3.0",
       "files": [
@@ -4397,7 +5255,7 @@
       ]
     },
     "System.ComponentModel.Annotations/4.3.0": {
-      "sha512": "c8Da9jj9eTgFdGHOmKaP7hCblCXerN+WGKQnQ05hRItFoMpghO8hF3GtttF9pK1uvYMtnj2cGgZnW84ZratD1g==",
+      "sha512": "FI+Hu7yHoKdBJddt0mz+X/wL/quWmLf9kkukXg48qG4ET3NX0420rhYpWLqQl9rJzmjkOwDqpvMWZjAz4ikysA==",
       "type": "package",
       "path": "System.ComponentModel.Annotations/4.3.0",
       "files": [
@@ -4473,8 +5331,76 @@
         "ref/xamarinwatchos10/_._"
       ]
     },
+    "System.ComponentModel.EventBasedAsync/4.0.11": {
+      "sha512": "Z7SO6vvQIR84daPE4uhaNdef9CjgjDMGYkas8epUhf0U3WGuaGgZ0Mm4QuNycMdbHUY8KEdZrtgxonkAiJaAlA==",
+      "type": "package",
+      "path": "System.ComponentModel.EventBasedAsync/4.0.11",
+      "files": [
+        "System.ComponentModel.EventBasedAsync.4.0.11.nupkg.sha512",
+        "System.ComponentModel.EventBasedAsync.nuspec",
+        "ThirdPartyNotices.txt",
+        "dotnet_library_license.txt",
+        "lib/MonoAndroid10/_._",
+        "lib/MonoTouch10/_._",
+        "lib/net45/_._",
+        "lib/netcore50/System.ComponentModel.EventBasedAsync.dll",
+        "lib/netstandard1.3/System.ComponentModel.EventBasedAsync.dll",
+        "lib/portable-net45+win8+wp8+wpa81/_._",
+        "lib/win8/_._",
+        "lib/wp80/_._",
+        "lib/wpa81/_._",
+        "lib/xamarinios10/_._",
+        "lib/xamarinmac20/_._",
+        "lib/xamarintvos10/_._",
+        "lib/xamarinwatchos10/_._",
+        "ref/MonoAndroid10/_._",
+        "ref/MonoTouch10/_._",
+        "ref/net45/_._",
+        "ref/netcore50/System.ComponentModel.EventBasedAsync.dll",
+        "ref/netcore50/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/de/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/es/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/fr/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/it/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/ja/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/ko/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/ru/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/zh-hans/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netcore50/zh-hant/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/System.ComponentModel.EventBasedAsync.dll",
+        "ref/netstandard1.0/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/de/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/es/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/fr/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/it/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/ja/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/ko/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/ru/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/zh-hans/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.0/zh-hant/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/System.ComponentModel.EventBasedAsync.dll",
+        "ref/netstandard1.3/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/de/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/es/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/fr/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/it/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/ja/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/ko/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/ru/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/zh-hans/System.ComponentModel.EventBasedAsync.xml",
+        "ref/netstandard1.3/zh-hant/System.ComponentModel.EventBasedAsync.xml",
+        "ref/portable-net45+win8+wp8+wpa81/_._",
+        "ref/win8/_._",
+        "ref/wp80/_._",
+        "ref/wpa81/_._",
+        "ref/xamarinios10/_._",
+        "ref/xamarinmac20/_._",
+        "ref/xamarintvos10/_._",
+        "ref/xamarinwatchos10/_._"
+      ]
+    },
     "System.Console/4.3.0": {
-      "sha512": "UnyOUsC8JhbAEmCzxWayEI2PvspZgnlkO7Crpa6tbMAFOPkDxsr5+IpRUvM4irV99vLEqx5a7vgu46PTThHtHw==",
+      "sha512": "guSh2lWDi0Us5AMSgqwccJia9xlheMljwNZdd9CjGtuRthnbL0/NgBGfNSvF0B+8TTtuSlsMI7y27f/wrSthzQ==",
       "type": "package",
       "path": "System.Console/4.3.0",
       "files": [
@@ -4559,7 +5485,7 @@
       ]
     },
     "System.Diagnostics.Debug/4.3.0": {
-      "sha512": "N4a19uZFk77sYDJOM5uNvQvhwjohR2Kc/JexeIgdxu9DKuInWPE9Het1Ug5fIht89lf6jpdyqz6ySB9GT+4Tzw==",
+      "sha512": "GGkWWeQc8eToDU4HoZymZHHB0CATC/ZVclWV4iTejikz4ajAQrErO/mDSMzuzIvmnbhex2UNIVn4JfzFSNa/RA==",
       "type": "package",
       "path": "System.Diagnostics.Debug/4.3.0",
       "files": [
@@ -4625,7 +5551,7 @@
       ]
     },
     "System.Diagnostics.DiagnosticSource/4.3.0": {
-      "sha512": "74TAGO74MKZfQuxi9fPpZGKVMXs5N97Brqtp2QJqnDj5L0aL9HI9LVCF8Mz5e2ow4qmp7adF39jerH8dDYVyXg==",
+      "sha512": "qGt2ruXOuBL3IlAod7bGic/eDeWub1EHby9rIuD0rM4/kvtn3SrvKc/vRZAtoJNPU/fQl5gp39vyj08FgDXZGQ==",
       "type": "package",
       "path": "System.Diagnostics.DiagnosticSource/4.3.0",
       "files": [
@@ -4644,7 +5570,7 @@
       ]
     },
     "System.Diagnostics.FileVersionInfo/4.0.0": {
-      "sha512": "qjF74OTAU+mRhLaL4YSfiWy3vj6T3AOz8AW37l5zCwfbBfj0k7E94XnEsRaf2TnhE/7QaV6Hvqakoy2LoV8MVg==",
+      "sha512": "cUV+4/3sIv4X8oX7X87qWsBzs2fHrVk+ZPk3NJ0a8cb46cWo+ATLuc3ZDJtgHkU1ooeky6G7cScpla6XoFFPCA==",
       "type": "package",
       "path": "System.Diagnostics.FileVersionInfo/4.0.0",
       "files": [
@@ -4684,7 +5610,7 @@
       ]
     },
     "System.Diagnostics.Process/4.3.0": {
-      "sha512": "X6H2iv/CV4nAjFy+ybPMo4Z5ULnexdkKUOkf5Tl0YozAcsnPqkfHyDtmeA1PbMBrh4x2xzxQbHXL9iajo2cJag==",
+      "sha512": "Q5NcAzOlkwuMMVMfdapSN5uNfPzTUnn6PMaps8kKcjnZ95mVcRzlCE9lGy+DrCj7Kg2dTHzeffeGPCYg/JD89A==",
       "type": "package",
       "path": "System.Diagnostics.Process/4.3.0",
       "files": [
@@ -4739,7 +5665,7 @@
       ]
     },
     "System.Diagnostics.StackTrace/4.0.1": {
-      "sha512": "6i2EbRq0lgGfiZ+FDf0gVaw9qeEU+7IS2+wbZJmFVpvVzVOgZEt0ScZtyenuBvs6iDYbGiF51bMAa0oDP/tujQ==",
+      "sha512": "+vxoXKfT3/TXfVOYL9cwd9Wjv5h07ZgKDMoGuz2irBdDZVoaABmwDDT5MFJB4/z1XV5eVHYBUQsje6DfaorMpA==",
       "type": "package",
       "path": "System.Diagnostics.StackTrace/4.0.1",
       "files": [
@@ -4777,7 +5703,7 @@
       ]
     },
     "System.Diagnostics.Tools/4.3.0": {
-      "sha512": "GqzeBGuES6VE2DfJiytzr9n7EStaTz2jCL4jMe0KVkE0NveGDXd7gs0wUWtV9m9WvJb1aZylWHe7HhicF961mw==",
+      "sha512": "rX2E0s9NG8Apf5KUbwL9eBeUeneOQGGY8NW7oft/D6mkd7fG7sn9pOpuYHxwgpoodPWiy0U0kx1LhmmCrSITTA==",
       "type": "package",
       "path": "System.Diagnostics.Tools/4.3.0",
       "files": [
@@ -4832,7 +5758,7 @@
       ]
     },
     "System.Diagnostics.Tracing/4.3.0": {
-      "sha512": "S4VGw9aCs5fFpkU6BLUcuTYg/xKV1q5jclXkDpouK0WMMypQfI32NHKWKCviKT0DqgC2kmtRnC+t3CGy5F8CWA==",
+      "sha512": "mrS+5Ftl6upGyF4ZQD1RtLa4nXNLBcyYuk8B0tTg0PRIlgdW91MtLk+QdxRZnS8QtbfCcYaItUOzVK2il9fNmg==",
       "type": "package",
       "path": "System.Diagnostics.Tracing/4.3.0",
       "files": [
@@ -4920,7 +5846,7 @@
       ]
     },
     "System.Dynamic.Runtime/4.3.0": {
-      "sha512": "D/abvCLFovipgtTjZ3pC8HG2tcR42HM6aeeTtxDWci5NMaNQCvhnMkapqDdp3mjtSXpZ1bDEj3WF562j1b4Gcg==",
+      "sha512": "RQtrfNXmE5DgLc0349fRdk4Ef25VlRHKBl3Wbi1vTpTrKLCx/Gu4pVqi5iEYsHFwgsGpaasjcFcLUTfID5lDQg==",
       "type": "package",
       "path": "System.Dynamic.Runtime/4.3.0",
       "files": [
@@ -4989,7 +5915,7 @@
       ]
     },
     "System.Globalization/4.3.0": {
-      "sha512": "QFrX1wp2aEtO7Fq3Ubz8xkX/tQeCfiB9D0oZCh7YZeUoNgtDcd+0QTxmSX0EWrtFPBkFtzUo755QM0lQTXsHDQ==",
+      "sha512": "rbULdSgwNE6BDZFb1/bAcRSorCNkXYviDRfR7JT4+9xOE4RcYPtpApv6bBlAjrDXE75pmHAoBiMQh0TSqjSsvA==",
       "type": "package",
       "path": "System.Globalization/4.3.0",
       "files": [
@@ -5055,7 +5981,7 @@
       ]
     },
     "System.Globalization.Calendars/4.3.0": {
-      "sha512": "lFIFDbSN/C+8uXczUilpvTYxP6BJVFidkzggroSflEcCGbAXEIiQutH7xC8U7zoZMJBer4Yxf7PQKUV9kXoC/A==",
+      "sha512": "c7xoLRAmNoobpKQEhI3T5lfpJJu6A2Z45ZZDMfBL2qVBpqXQ8bGhuCTZ3+HAB4Sn4csEwhKSyGgIZhbMIdYlzA==",
       "type": "package",
       "path": "System.Globalization.Calendars/4.3.0",
       "files": [
@@ -5091,7 +6017,7 @@
       ]
     },
     "System.Globalization.Extensions/4.3.0": {
-      "sha512": "R9dHPKWVMnRXy620eKKyYKzfenzIIOACiIk/fNH24EKH/GMg0RRDjJK3QpblBDulOXs3inaUGXeA0aqy5OWLxg==",
+      "sha512": "4yhU+5Z1oqkkg7UXTF9A6GpSOIHHKx5bH/vBR2iz6p6+jtis1d2YjmoOvi0f/EA+0Lwjf8pFp+7+7C3s4vUmXA==",
       "type": "package",
       "path": "System.Globalization.Extensions/4.3.0",
       "files": [
@@ -5130,7 +6056,7 @@
       ]
     },
     "System.Interactive.Async/3.0.0": {
-      "sha512": "UEM+WmG1Oq0bNbPx/E1jaIQ83QOrPfVDUyuYBtG6D6DpB77ytv9flPterMujumpHuoRjSc0ilSB8w41fQc05dw==",
+      "sha512": "iyrgkZz9Dzm0fiPouQszFC3SO/46k6AYd/jG9bu+/o0AoDMaRXtlo3TIuWVNtOuJFd1noL963QouroJ0T3rImw==",
       "type": "package",
       "path": "System.Interactive.Async/3.0.0",
       "files": [
@@ -5143,7 +6069,7 @@
       ]
     },
     "System.IO/4.3.0": {
-      "sha512": "dqK0JCykz8AKxAQ+YUXf1hr65LWZOgaSVOqDwGZj8P0HkhUHrg1TJA865cO6gW0qXMzjRJy8aJo5ZmbgUwBQBQ==",
+      "sha512": "SQ7kJ/oN7htmMItcY95M4zsP9bu3xPeIX/uDkHd0ss6HyfKyXdS+MnzrtfVbbPoIz7Op3uMLHQVcWMgRjpYLLg==",
       "type": "package",
       "path": "System.IO/4.3.0",
       "files": [
@@ -5222,7 +6148,7 @@
       ]
     },
     "System.IO.Compression/4.3.0": {
-      "sha512": "K8VZCsmvghrh41PDuUSvPUpZJDGur7nvmbgw4ilKZUaXGMwuSKG9tjFid4q4tI6NHlxJaN7v6fg8bvN/NHr8dA==",
+      "sha512": "+N15rdu/iqUx0PvSis0/vJgfocPy68KuI3GPr8RKYqtU91VO6zkVVoERb+SNIsZk0gbLtr1tmzBs8dFNXKN1xg==",
       "type": "package",
       "path": "System.IO.Compression/4.3.0",
       "files": [
@@ -5291,7 +6217,7 @@
       ]
     },
     "System.IO.Compression.ZipFile/4.3.0": {
-      "sha512": "2ixoin5yCPntPCUAjtYnOZgsHzd04kthxTtP3H4tgsN6MMMZKt2241UA1K5Q9A+uiNUn8dMmUrz05CxG1sv7UA==",
+      "sha512": "z6mwx+/6m0WaKXGW45W6fDhkLJiXHXR/4WDE8v2ZE7WGe1Q2HawtSZ6FBEC9xaCKwV1R/Ih6rhAFjQVIfwvvxQ==",
       "type": "package",
       "path": "System.IO.Compression.ZipFile/4.3.0",
       "files": [
@@ -5328,7 +6254,7 @@
       ]
     },
     "System.IO.FileSystem/4.3.0": {
-      "sha512": "w88r5tf5IXWuBcBw/bXgWmVm3t4sWqIIHPOcHt52B+Z875CMDeVIe8xFhIPpq5WxL4RBNN/8RvlUE6ZNMsiKLw==",
+      "sha512": "mi3HfVzmt6KorD1rFlfFEHTOZwBOLxOd5cUsfF3jtAhaXW4T7tgHHpQ1Zoq43h6PsdFmq6g0y8PFpw/qgdXEJw==",
       "type": "package",
       "path": "System.IO.FileSystem/4.3.0",
       "files": [
@@ -5364,7 +6290,7 @@
       ]
     },
     "System.IO.FileSystem.Primitives/4.3.0": {
-      "sha512": "Pn91ZkD27wTF39rMf+054boXR6o82KjAYgiIHOIqRPuxHU98ch3nkcrSCsP/ZHWjt1iVBGur8CHlGVGHorPTAw==",
+      "sha512": "lvQey/h9g/R3UkEphOVy31+RJJYYN3V9NO0HPg/rtwhE7+KgEja/ZJ3VlJQZwma/UnQQAsOX9BBcVhZyedIn4Q==",
       "type": "package",
       "path": "System.IO.FileSystem.Primitives/4.3.0",
       "files": [
@@ -5401,7 +6327,7 @@
       ]
     },
     "System.IO.FileSystem.Watcher/4.3.0": {
-      "sha512": "js6Sx5XuHeqB7ZU3bNjejkzQdHAw+RvvnIIMZo6B6aqHLD5Oq0xFmryQWubmsn8DtGOISHfrjLpR+1tZbUFbjg==",
+      "sha512": "JWoRqnYreQ9Gz7+7WZ5LFxEP5EkIWCR4P80jawvQGtQJXdRDmMcxChMMT1rYxadX9jO0BsncsPrIyk+QuTa66Q==",
       "type": "package",
       "path": "System.IO.FileSystem.Watcher/4.3.0",
       "files": [
@@ -5442,7 +6368,7 @@
       ]
     },
     "System.IO.MemoryMappedFiles/4.3.0": {
-      "sha512": "LIzo4Pxm17F4PLpP31iVgqqvTrwNed1xq59uicNeu44ayImk7bLo3rMLexGp07n6UJEHdr73vWPjYBzuJ+Ys0w==",
+      "sha512": "FsVCTI6txRxSeSYN1LfZE+/UFzB8U3c2G2Mfzeo9lMNkHi0A1ihK4VagBauj8iQVhvN6bTTQq0MOEJXDQtnLKg==",
       "type": "package",
       "path": "System.IO.MemoryMappedFiles/4.3.0",
       "files": [
@@ -5482,7 +6408,7 @@
       ]
     },
     "System.IO.UnmanagedMemoryStream/4.3.0": {
-      "sha512": "3EI5kggQQZouZgW7oo9hP/FviJ8hX+9Gb8h02JJmtZFDCsc79r9sW7XqKvpfuG1j4m/la+RQYu+cFf7yFwNfkw==",
+      "sha512": "NDlzBj3uTVUXNpnYiYItdODIz6M3nIQHBC+jHoDQe1meZRZBma1iHdXuumyNAU721zFJMuSI+QTU3t371jGR6w==",
       "type": "package",
       "path": "System.IO.UnmanagedMemoryStream/4.3.0",
       "files": [
@@ -5519,7 +6445,7 @@
       ]
     },
     "System.Linq/4.3.0": {
-      "sha512": "bKM3VL0CZGrB159vwzhQ5nnsR3Rm1nZzpUJGEFmg4f1kAmBKb5INRhY7Fb5BIugPudpl8GR2tkNiTmuRxdtz0g==",
+      "sha512": "BEgnT2nlFMtQrrMTvgkQl7eNRZeaqfeBxwa34AK61R0F+FAk+17FgOe+F0EdqxlMpmkoFBf6r/e2g8z7jJMRcQ==",
       "type": "package",
       "path": "System.Linq/4.3.0",
       "files": [
@@ -5589,7 +6515,7 @@
       ]
     },
     "System.Linq.Expressions/4.3.0": {
-      "sha512": "N4SaA/92cH2iE63Hxp1FRXG1paunvavApWtNzriXMvNh1s+bqqdUk9viXO8mdCAvpgju3yiZwJsYz1o3TLWEzA==",
+      "sha512": "1DcnBJRCau8Adx/1KaqP0tndo44el19gr5w2pW5vQjyonHcJ11clxzpT6ooRd7nxURLJXXeARFqW8IfiiLMqVg==",
       "type": "package",
       "path": "System.Linq.Expressions/4.3.0",
       "files": [
@@ -5671,7 +6597,7 @@
       ]
     },
     "System.Linq.Parallel/4.3.0": {
-      "sha512": "xrvLGHaiqOPW5rsebnOcW3EI8MNmkjLvLXFeduocboBAE8Dd7X/yQORjgUNeDF85lbkckRLeU1hTTy7n36FP+w==",
+      "sha512": "WD21/TIxHPQcs0bbr/uh63N276RV11h9yfRYQc2ddCFRd4xhL7EWvAEgajEI2WTEQkJwv1lBUYL0WbnLQVgGYQ==",
       "type": "package",
       "path": "System.Linq.Parallel/4.3.0",
       "files": [
@@ -5726,7 +6652,7 @@
       ]
     },
     "System.Linq.Queryable/4.3.0": {
-      "sha512": "T7qGQyVoPDlhSNeKIs2rvmZvISLKReapbWeTdA1mrA/RC0+Kzc/Eghs8rFAlxxy7QpiuGtkKuTjyiIBauw0N3Q==",
+      "sha512": "/lLlv02VqE5PYto+ydltmkUiTHSaBJVW8cDbkr+faEsVHryDum8qu9RSDmRHSHm8etr3zO/0qzC/EeoA+x4zrQ==",
       "type": "package",
       "path": "System.Linq.Queryable/4.3.0",
       "files": [
@@ -5783,7 +6709,7 @@
       ]
     },
     "System.Net.Http/4.3.0": {
-      "sha512": "UNKlXhoa/dipQPnApIFlZflcV7wVgJkvMhuO2L/kiEi+OiYDTminBNjiI77qX7gDggwq9eJGb8yYKkLRz6E04g==",
+      "sha512": "Dl1IWLmDpDWX/p/642wTxmJ0zJKPJlW0Yew+dcInOu6d0ZAEmEQgiGqcKsDyOL+vc2qpDONdKEwbYOGEobH4Hw==",
       "type": "package",
       "path": "System.Net.Http/4.3.0",
       "files": [
@@ -5862,8 +6788,19 @@
         "runtimes/win/lib/netstandard1.3/System.Net.Http.dll"
       ]
     },
+    "System.Net.Mail/1.0.0-rtm-00002": {
+      "sha512": "6OynwcCzHtBDDF2H7WvzXvbD8yldel7KQWhQtr7jBPrszH16hHkg6IDsSZNWgSofI4Jk1szMZvtUG9l6B5aWow==",
+      "type": "package",
+      "path": "System.Net.Mail/1.0.0-rtm-00002",
+      "files": [
+        "System.Net.Mail.1.0.0-rtm-00002.nupkg.sha512",
+        "System.Net.Mail.nuspec",
+        "lib/net451/System.Net.Mail.dll",
+        "lib/netstandard1.3/System.Net.Mail.dll"
+      ]
+    },
     "System.Net.NameResolution/4.3.0": {
-      "sha512": "5Waaw/Jx1gsbWE2zVnzCdGwYO/fts3c1rNcCgPJ9L1zbM7EcTfiQznUntqX2xe9NeITHTnyoZfDcaPPeaw8tcg==",
+      "sha512": "uiHnRkZW6kW2wA4ApGeZnRxwSUEeXexc7iWn8PahsMLRYE/T8wCufet2QseYB/O5++FVyec6h8NcBgncBjePJQ==",
       "type": "package",
       "path": "System.Net.NameResolution/4.3.0",
       "files": [
@@ -5903,7 +6840,7 @@
       ]
     },
     "System.Net.Primitives/4.3.0": {
-      "sha512": "SciPkUnolv4VmMX3j2ukJwizvVD44xUmAmgvVMztGY0Jcmoqsx7L+p8zN+Z427j0VBRC6M56oZJVLfJAIe4GuQ==",
+      "sha512": "S8hO5pPjvLWLPwJgGdDdt+BVt/8ZIxL7FtyqNJDSAN/IoPHHrNnGrvgesspw2/Cek1TVTYSCbCHiAXvhoDqg2g==",
       "type": "package",
       "path": "System.Net.Primitives/4.3.0",
       "files": [
@@ -5980,7 +6917,7 @@
       ]
     },
     "System.Net.Requests/4.3.0": {
-      "sha512": "OwG6aHfsiE44CJx5FT5bLuVuuEKkHUMQM1efJ4GKYDHiXYL0CN7xfcpbhRyhLkcIzUUd/zpo9N0vXQ5OkmVNgA==",
+      "sha512": "1Eg26txgt/NTYXOqG3QWvXhGwmbmUQSD3otTxBvaOwxZiXSIrhFtDdY31JJ55y4OPbqlbaUI0vb4Cj6P+YZy4g==",
       "type": "package",
       "path": "System.Net.Requests/4.3.0",
       "files": [
@@ -6061,7 +6998,7 @@
       ]
     },
     "System.Net.Security/4.3.0": {
-      "sha512": "Io3/Q1nNOqscxxmj1/JVWEU8XIrHPaTgdoUGlrrbfHx6+FrZkfuN6ltfJnHufhIFD6V3ACE09EuchW2RlNm9Rw==",
+      "sha512": "Q0oSYWNlJC/49yWnJdtkoYPEDEP6Oq5HtG8RW5Snj9HKcDMru33FUnBILDpM4tGodGek/mK3kwsO06P0BQPqHw==",
       "type": "package",
       "path": "System.Net.Security/4.3.0",
       "files": [
@@ -6101,7 +7038,7 @@
       ]
     },
     "System.Net.Sockets/4.3.0": {
-      "sha512": "jejXlFIlQHsL3SEmpb2C38/BzdvmcGUbqm7tT1q5PNP9R7VU7l4WtMn4EIOonIpEE+3aS6M99yalkRR8F2T++w==",
+      "sha512": "f1qfKp34Pp5WFr1Fj1xmuMUPl5TJ/3XhpK8P0V+ezij5Py/M38iZ5gR7pTNBA/nYavrvuPXPSG5VJwfYvY/EMA==",
       "type": "package",
       "path": "System.Net.Sockets/4.3.0",
       "files": [
@@ -6137,7 +7074,7 @@
       ]
     },
     "System.Net.WebHeaderCollection/4.3.0": {
-      "sha512": "MR2OJx/53ZvI+mNH46wSNWbCIoZcrQtqA3/CeF0vcJ1c1AQ/aD/4RQ6ItTX6CXC6DjPv0WtItezfR3xsEnvwnQ==",
+      "sha512": "+M46dQ0PibKx1JuCRrd7OQFChufzoSeykRGs7OxaHTJSoWg6VlWHXXmd9vcnSY/JDXkoca1HAzNmwYuj4UB/Eg==",
       "type": "package",
       "path": "System.Net.WebHeaderCollection/4.3.0",
       "files": [
@@ -6174,7 +7111,7 @@
       ]
     },
     "System.Numerics.Vectors/4.3.0": {
-      "sha512": "Y4f0wXWiroOXS2WA0iXhLjxKKgief6HOpuM81S+6x3FC4zkXfqeamvM1Lh7fVgLFQcmJ7XCuK38mEtGEhlK4mQ==",
+      "sha512": "1qku4ATEXe8aOYhXnaW7MfzKEdjMc9T/9iv85t1dCqYd44FmBOiKFgQJQZsLoSbAcvy6ENJpCMvCPhnKBupQAQ==",
       "type": "package",
       "path": "System.Numerics.Vectors/4.3.0",
       "files": [
@@ -6207,7 +7144,7 @@
       ]
     },
     "System.ObjectModel/4.3.0": {
-      "sha512": "aBmlhSWHnHU67yfMUVAUurQtO0UrIphUhqpo+j067W7/cOc30fKcAUj2SvIGiySOuZNdwXxzZ1PZZ+72wCOB4g==",
+      "sha512": "0uezAmiRtyWkmT0NZBMWUBgXI9I3p6PFZtXC7xmPeyNcDf7TQ63OHJNAAp/uab10vY7vl47AuxQuQN9NQSX/wg==",
       "type": "package",
       "path": "System.ObjectModel/4.3.0",
       "files": [
@@ -6275,7 +7212,7 @@
       ]
     },
     "System.Reflection/4.3.0": {
-      "sha512": "/OMJ+SX+EBryN5/DTmq0LIFqGwnbt4mc1Diu39/EAElZC9jpTX5qiCWrnIS7EF8sa16Ww1ZKkW9eSlzXpWWUzQ==",
+      "sha512": "/98bSu/osLMRETG9xgVz5zIyMORBYEWZbTk3erKhKe+DM3O94ev8rXneLDf7PwtybWIQwc/bPHVwS1nW+50Apg==",
       "type": "package",
       "path": "System.Reflection/4.3.0",
       "files": [
@@ -6354,7 +7291,7 @@
       ]
     },
     "System.Reflection.DispatchProxy/4.3.0": {
-      "sha512": "P6P0vvK4OL9fkWpRNzf/oo/xgnmDw2U3QSjYYb51in8jAfh5t3ujU99IzCVfAh2XKkgQZAitKxukSy6vrBstNQ==",
+      "sha512": "QpFxwxlROoDqZ8whixijAaDZjD0JuWvTzQPBkKwCsic9n4nsgb7HCcu536pulbYU/6+MnmCxSArcTqKjnHqUwQ==",
       "type": "package",
       "path": "System.Reflection.DispatchProxy/4.3.0",
       "files": [
@@ -6390,7 +7327,7 @@
       ]
     },
     "System.Reflection.Emit/4.3.0": {
-      "sha512": "ZeaSjO5IBajPbyqDde0MIOKCrKale2Ed/FzRvdZla4/hfR44u0LTBXpjqTB8mxx4sM4+chPLxWdtOhWiqZRUqA==",
+      "sha512": "rkWTriutCq0ovri0reWeSr2cpEe3TfFnVA7+ikA0wUmyt8z5SQHVjdprjQdRq1xlD9QLUadfUx9d+l+FvXWaDA==",
       "type": "package",
       "path": "System.Reflection.Emit/4.3.0",
       "files": [
@@ -6424,7 +7361,7 @@
       ]
     },
     "System.Reflection.Emit.ILGeneration/4.3.0": {
-      "sha512": "dOsrlArvpMbXrm/+3FAv0RdX2puXrYrY1G0NNI/T+mH5litdPm5A4WN6UW+rt0gfxpPimSA4COAYByyA2xn6jw==",
+      "sha512": "NqWoIqYrsaqN7RUr3G6l+AqQ7Wv/iLMQPqiEhTSNVCGa46m2zHOZqp0bVIq+MBIiEHzzXOWq4ye+APudLoNCKg==",
       "type": "package",
       "path": "System.Reflection.Emit.ILGeneration/4.3.0",
       "files": [
@@ -6467,7 +7404,7 @@
       ]
     },
     "System.Reflection.Emit.Lightweight/4.3.0": {
-      "sha512": "Ifu8xh6da4w2JxV92e92vMcUTBTcceTh2yhrneYJExZxhBjJqineaC0aGwkNdA0rxeGU8YIVj7hwyaOS110boA==",
+      "sha512": "9Jc0e2HsoSe5si95oKJM37+U5HnOy4pDBKpU3M4dDqtoH54+Rll4yMG722urDDSbFyEHNSrwyf8jUZ8QivcrGg==",
       "type": "package",
       "path": "System.Reflection.Emit.Lightweight/4.3.0",
       "files": [
@@ -6510,7 +7447,7 @@
       ]
     },
     "System.Reflection.Extensions/4.3.0": {
-      "sha512": "Q6J2Ss+VNphWQUp3z5fubOw8R2M3fEcBYBwUH3juRHdLGxtp5VolxNL5LNyk1lywMGtSZzlApMFOD9wRud7PMA==",
+      "sha512": "BxctX8Kr2k840R6w8bk63M1dyIPbfwyV7oAuHzSxIiOqJgu9KZx7XbJn7TiEl32CBcjkKUpoF9L6cE1recS0Xg==",
       "type": "package",
       "path": "System.Reflection.Extensions/4.3.0",
       "files": [
@@ -6565,7 +7502,7 @@
       ]
     },
     "System.Reflection.Metadata/1.4.1": {
-      "sha512": "RlXvhUlBBG4cE1kPO5b+2JGcTsWZdsy+zoRzdADeU3lQW1u08PHvvVnDsqGTjMtU3DOiArkMuyhPAN2HLPKAYQ==",
+      "sha512": "2msnuugXHMxQEMlXZH8F8GQFMVfPfl18iDjxkJRjbm1/Hrn0C8ULwJ/oErOMeIn+p3CmKUZCtdmngd5e9ktNwA==",
       "type": "package",
       "path": "System.Reflection.Metadata/1.4.1",
       "files": [
@@ -6580,7 +7517,7 @@
       ]
     },
     "System.Reflection.Primitives/4.3.0": {
-      "sha512": "F65h8OqdHU6OtFnGjUBdEk/Gl7mDRAjuhIcsW2MYPRcQahpf2t2LuFAMB85iqXHvN4g4q7vKClxS0UtRN4PuaQ==",
+      "sha512": "a0mWIKQ0psdvgRhywYtR9H/JTS1nsh2LMwkZrgq3zP6PKk3Rl5MhGpKPoBN5uOp/GnuD4AQdbU/Uwz6qbhsV1g==",
       "type": "package",
       "path": "System.Reflection.Primitives/4.3.0",
       "files": [
@@ -6635,7 +7572,7 @@
       ]
     },
     "System.Reflection.TypeExtensions/4.3.0": {
-      "sha512": "H0rSNER7JAVNGW6WACv2q4fHIClI7I1EFSOyiccZb9fMGwFAX2ZxquuqUKdGf+DHOQcDd4CZztkD7MQxP7bqlw==",
+      "sha512": "Yt5V/QVJSGWn6FUwTts1GZ2Ru9OfLZaW2cle+AgOPT7vNIUDweUd5sX7qBsqBDx7sD8RiXpzeH1QoQ/oGO7cWA==",
       "type": "package",
       "path": "System.Reflection.TypeExtensions/4.3.0",
       "files": [
@@ -6687,7 +7624,7 @@
       ]
     },
     "System.Resources.Reader/4.3.0": {
-      "sha512": "XrmiorJC6GWIMLuEe/RnVFSqwRcLr48Dj/sNLm0tbFtySIMTOH5oskrkehAJKfqzJ+9FqmnMg6x5mB+wdj489g==",
+      "sha512": "+qFWAiC3cjXxh18AWvrKz9p7QLVn6h+nNn3ARw+v7nC2gghnVX4tK8v9yWIe8jdqR+CmYvP5BRsEBbntTSephg==",
       "type": "package",
       "path": "System.Resources.Reader/4.3.0",
       "files": [
@@ -6699,7 +7636,7 @@
       ]
     },
     "System.Resources.ResourceManager/4.3.0": {
-      "sha512": "ywLWYDJ2S9N56/558e0rxWgO67kL9egRuLMoZNmsdeSxqbB08UgNvrpC8Mg5pAAiM7TvrIDVDzP+onrL0quqDA==",
+      "sha512": "aUkij7rLALoqPv5bQK5JaqwzyKVkkA09elbrdVD7j7+nQll/MJTrhg/clRAuRLkLDHE4qXIruyUaL0qDuKeVPQ==",
       "type": "package",
       "path": "System.Resources.ResourceManager/4.3.0",
       "files": [
@@ -6754,7 +7691,7 @@
       ]
     },
     "System.Runtime/4.3.0": {
-      "sha512": "3oQaJqrWPJYYjD5kqh5c1iFAC4WKzH6FVDWfZBSo9tzffRutkaWekp9vgdy+ckWqC5oo+RTOuaahmCyLidy+Ag==",
+      "sha512": "KghiIUoymC7EGmNYEHdnpZrcazey2Z15q9SfVbnIGYngyOR3f6mXzTJ3wOwsby+J+JGtPrs+0Be6rJzlxiF/3w==",
       "type": "package",
       "path": "System.Runtime/4.3.0",
       "files": [
@@ -6857,7 +7794,7 @@
       ]
     },
     "System.Runtime.Extensions/4.3.0": {
-      "sha512": "WJmYAVNWWguYWE41gJ8fizWkJ0Ulkst0WUu4HhbdDitpxGwEsoRjf+0AlY0V9LXnhioCJZxW1F5Ic7Eokh0W9w==",
+      "sha512": "wZpbVTsTy0tiqF3z3e12jppdiKMBuGgBzNMaJpzCvXVliYt/KdJKkQ69QOmY3W8oP3G4ChuIpaovRUPP3htAaA==",
       "type": "package",
       "path": "System.Runtime.Extensions/4.3.0",
       "files": [
@@ -6936,7 +7873,7 @@
       ]
     },
     "System.Runtime.Handles/4.3.0": {
-      "sha512": "evw4HR8eY29M/EpoWY0i8JlKjQzTf+w6DLdk6FvBbSF0Y9ly43wk95iXoQ0D3D+YW377c6/pTwQu7tDf0FwLuQ==",
+      "sha512": "7xJ7NvQd1qe9DtIkmL7q3sCXQHtNe6mfnHrQ+1FFC1TFJe6paV9iohwUw4Qjm8u6j17Px48vb7vjrOjw2yNqtg==",
       "type": "package",
       "path": "System.Runtime.Handles/4.3.0",
       "files": [
@@ -6972,7 +7909,7 @@
       ]
     },
     "System.Runtime.InteropServices/4.3.0": {
-      "sha512": "mOOoYTtqBFUL3VmpfP5MpXLFEdd0OTfKQz22qEPE6ySynxn6y5hF1/pYYi2TiebEr8cazaKpwURvmG9zCJaIPA==",
+      "sha512": "oM+Kb+p4bpMC+41GTLJFVSkrTkjFTtcgMntzRr5YuYFpjKqrOzBD1VxQFmHG+LmXWQt5KWOUFAAXJJbsqLZZbQ==",
       "type": "package",
       "path": "System.Runtime.InteropServices/4.3.0",
       "files": [
@@ -7063,7 +8000,7 @@
       ]
     },
     "System.Runtime.InteropServices.RuntimeInformation/4.3.0": {
-      "sha512": "P8GpOGja+ldOjk+KehaNLUj5FyFYU+qGS8e2j/7dtYAs3FZC6v8qDle2k73R4qmTHS4enMP7n86ZOXwiUTnP6A==",
+      "sha512": "BZy6OPDCEASgP3XfFsuzQerVacUyzPM4k/H93BNQL1kv9AxYlFqpyS3ohIxYNWSbNy85M9e6iKTLIAWiKoB83w==",
       "type": "package",
       "path": "System.Runtime.InteropServices.RuntimeInformation/4.3.0",
       "files": [
@@ -7096,7 +8033,7 @@
       ]
     },
     "System.Runtime.Loader/4.3.0": {
-      "sha512": "UXPylry7HJZ64w9luaMsXa6oy03Qp26JQYAJsfiYH3/UCSg1XoEFtPjYV071kHR0ByFaT3VR6sF8rwmA3BJAUA==",
+      "sha512": "833iHKrqH1WtLEZ48vu0zmOpaldDs9VVP4lSSU2STgLmx5DS87nGYTjI8KvAUhkfhCrcooAmCDGIXUKV5wvk5g==",
       "type": "package",
       "path": "System.Runtime.Loader/4.3.0",
       "files": [
@@ -7126,7 +8063,7 @@
       ]
     },
     "System.Runtime.Numerics/4.3.0": {
-      "sha512": "7wWhPRZ74SBBaAWkdBOml+wfbaajd8ieC0zHaipjIN+B6jmKLz0jAcTqFJ4NiVs4Rjey7UI7FpMpvoCp5ZqvXQ==",
+      "sha512": "GiOz3oKSnHZ5wIA+2WaYTn1SjhMu/RlADAjvrIy56gBnNomwgAecTRpQoNDoGh/gS3Im0ZV/IqCEMfDYibxy2A==",
       "type": "package",
       "path": "System.Runtime.Numerics/4.3.0",
       "files": [
@@ -7252,7 +8189,7 @@
       ]
     },
     "System.Security.Claims/4.3.0": {
-      "sha512": "QEU6/FOecJieWeKf9MPhZrShBUpZsFIadYNMcmli0D1lzvzgTQg5T56pYT/4aB97EiNmiDlQWZDCouc9aN95Zw==",
+      "sha512": "xQetcThaGE7jAK5jT3e3xnCuddgRF5XYso0GVdJh1H2SSbboSrX5DrDhX81cFlRY/lTHH1Yr+BXZqSvIzvX2cw==",
       "type": "package",
       "path": "System.Security.Claims/4.3.0",
       "files": [
@@ -7289,7 +8226,7 @@
       ]
     },
     "System.Security.Cryptography.Algorithms/4.3.0": {
-      "sha512": "4wx/dVDkyOWIIpdTHRQn8Mgkam6fzG3i1X2B24sFNRkPERb72hx496mlKtX7l6nrUnrUW+uK3U+MUeTu0Zkjcg==",
+      "sha512": "4+oZIYm7T5BX1rVYJb6WKZV/yJu1v9hus6eqfO1urhzYV3sfibMx+n0qynL7xHvfjH7PJGTritMteXZqXn4CfA==",
       "type": "package",
       "path": "System.Security.Cryptography.Algorithms/4.3.0",
       "files": [
@@ -7328,7 +8265,7 @@
       ]
     },
     "System.Security.Cryptography.Cng/4.3.0": {
-      "sha512": "cdemARULEKFpKtXt+7vdGnTXhGdCNy54RYilug5S9wPz1h9yQXSVUhDrg7D2R/4sl3NAZEQ24U+55CKWNO20ew==",
+      "sha512": "6p/CHxVX44VyvGFWV32F01syQLyogW355e4X8w3UjkZM7Mt+35a6aSOVSuEaculSKXCriq/7QBhyJhQN0t/JZw==",
       "type": "package",
       "path": "System.Security.Cryptography.Cng/4.3.0",
       "files": [
@@ -7354,7 +8291,7 @@
       ]
     },
     "System.Security.Cryptography.Csp/4.3.0": {
-      "sha512": "RN8qpfHW6LyfiVMXARd8dbDdR6EeQaIWPXOvmQ6o/GCyEx7+oi3u6rENu6aJ8I+7yG2yclKbvtrIcWT+MWQJQQ==",
+      "sha512": "BdwddKNVenBmzPKSa7kyHaPKASt2l2qCbu5WG2qKoReI20HW4fBhy0ORrCNu9GfCbqaM3v5HpHL70Iy5pJ2W4g==",
       "type": "package",
       "path": "System.Security.Cryptography.Csp/4.3.0",
       "files": [
@@ -7384,7 +8321,7 @@
       ]
     },
     "System.Security.Cryptography.Encoding/4.3.0": {
-      "sha512": "/gxha4aRsiOE9PheFM343F82Kdpe03ZwyqaEzXgJ9sIbDGg7FfPdPYnxnhRkaGPWzB9gIhRGf6A2Q62NcHAxLw==",
+      "sha512": "SRn1LXcMz0x64wxgCat0t9Y80KFIpOEgM4xlpO5JI5ic+4/lWkwAaWJ5Hjdm59iFH5xaPlyrtaNJ3aNgm7F0YQ==",
       "type": "package",
       "path": "System.Security.Cryptography.Encoding/4.3.0",
       "files": [
@@ -7423,7 +8360,7 @@
       ]
     },
     "System.Security.Cryptography.OpenSsl/4.3.0": {
-      "sha512": "kAlxdNdLU8oe9xSm1L1O1gNAgzbuALESx5aVGyCpqJrBMM2iRhIPrHWTypropzeN7EHY3Ku5WozOqCwXi/oInw==",
+      "sha512": "cr36TNDGyOZlr0MOdp1M9d8sblzBjKBomvnmDa1V5UXcDNikaGqswMvLGoEJMe49hUCB4yWxMxCo24P6QqTzEg==",
       "type": "package",
       "path": "System.Security.Cryptography.OpenSsl/4.3.0",
       "files": [
@@ -7437,7 +8374,7 @@
       ]
     },
     "System.Security.Cryptography.Primitives/4.3.0": {
-      "sha512": "BvyvnpnjHggtTysK246YUEXX46nKg7mBE1w0kbDTAoGjOI75PuZv+2SkCezU94EBUfOSofhDEhtiawPX0nq+bA==",
+      "sha512": "vFYEAGxcP59CSkmtkxrXNyYBonDVpqwBaKVZTCVaZ2VbgUqNagOZeZ5VzCC3zbK/mU6OfWa19BGBtfuZ+Hwbog==",
       "type": "package",
       "path": "System.Security.Cryptography.Primitives/4.3.0",
       "files": [
@@ -7464,7 +8401,7 @@
       ]
     },
     "System.Security.Cryptography.X509Certificates/4.3.0": {
-      "sha512": "QHiRU5q3Po2Qzps20e0GkrWrMRfmd0Y7o26WTnb/Ncoe/rgZP1QBxV1/7AGNAnIymkaaiMwnR9rMUOTlZtzZ4A==",
+      "sha512": "6nD0NVabfH/vVQ2uULbEikdqUjKB8eaobTZzmF82SgpqpG1+w9aDuOuAS3sYxoRhlXOjg4MYeiYySHnFpBD1qQ==",
       "type": "package",
       "path": "System.Security.Cryptography.X509Certificates/4.3.0",
       "files": [
@@ -7518,7 +8455,7 @@
       ]
     },
     "System.Security.Principal/4.3.0": {
-      "sha512": "bAse7DVW2R6OVGvVSYZM9Yhy786Jo8FngDdDYIfMhM8378SeSi/RnpEeHy9uCfHy/UDqAOH7zKAAPgynzWTnMw==",
+      "sha512": "qpt8uyEsr5TujJa+MhIBtyeR6jmogojAeLDxcJ2/YdgSP2tn/BrnlMhaMD3ikWLmATIrHT+NmLOYE0tpkJd26w==",
       "type": "package",
       "path": "System.Security.Principal/4.3.0",
       "files": [
@@ -7575,7 +8512,7 @@
       ]
     },
     "System.Security.Principal.Windows/4.3.0": {
-      "sha512": "1iB6veA1YUefTddSw6awzgl5x2MO3YVXSEjPRZ43+eCvsbNghCKOqcr6zmjxXlxRo0/9dYmRX4sI1R9r6kBP0w==",
+      "sha512": "dSgLj/eBBI6nIdVogjjBLsMVFlp+KsesDEMJ5KLAFpJRc/SPsbDP8sDh1hF3PamRnLIunZD/3fuBt2HcLV66Kw==",
       "type": "package",
       "path": "System.Security.Principal.Windows/4.3.0",
       "files": [
@@ -7601,8 +8538,72 @@
         "runtimes/win/lib/netstandard1.3/System.Security.Principal.Windows.dll"
       ]
     },
+    "System.Spatial/5.8.2": {
+      "sha512": "0RfZZJ8RlrfjoBPAF6pczX4Nd2kyLM8EX1PCP5Rqs/jOhJBUPYhpXjIsVAYN7kocj9IJ9XoJWAxWgXIDtJY2Ag==",
+      "type": "package",
+      "path": "System.Spatial/5.8.2",
+      "files": [
+        "System.Spatial.5.8.2.nupkg.sha512",
+        "System.Spatial.nuspec",
+        "lib/net40/System.Spatial.dll",
+        "lib/net40/System.Spatial.xml",
+        "lib/net40/de/System.Spatial.resources.dll",
+        "lib/net40/es/System.Spatial.resources.dll",
+        "lib/net40/fr/System.Spatial.resources.dll",
+        "lib/net40/it/System.Spatial.resources.dll",
+        "lib/net40/ja/System.Spatial.resources.dll",
+        "lib/net40/ko/System.Spatial.resources.dll",
+        "lib/net40/ru/System.Spatial.resources.dll",
+        "lib/net40/zh-Hans/System.Spatial.resources.dll",
+        "lib/net40/zh-Hant/System.Spatial.resources.dll",
+        "lib/netstandard1.1/System.Spatial.dll",
+        "lib/netstandard1.1/System.Spatial.xml",
+        "lib/netstandard1.1/de/System.Spatial.resources.dll",
+        "lib/netstandard1.1/es/System.Spatial.resources.dll",
+        "lib/netstandard1.1/fr/System.Spatial.resources.dll",
+        "lib/netstandard1.1/it/System.Spatial.resources.dll",
+        "lib/netstandard1.1/ja/System.Spatial.resources.dll",
+        "lib/netstandard1.1/ko/System.Spatial.resources.dll",
+        "lib/netstandard1.1/ru/System.Spatial.resources.dll",
+        "lib/netstandard1.1/zh-Hans/System.Spatial.resources.dll",
+        "lib/netstandard1.1/zh-Hant/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/System.Spatial.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/System.Spatial.xml",
+        "lib/portable-net40+sl5+wp8+win8+wpa/de/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/es/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/fr/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/it/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ja/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ko/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/ru/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hans/System.Spatial.resources.dll",
+        "lib/portable-net40+sl5+wp8+win8+wpa/zh-Hant/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/System.Spatial.dll",
+        "lib/portable-net45+wp8+win8+wpa/System.Spatial.xml",
+        "lib/portable-net45+wp8+win8+wpa/de/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/es/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/fr/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/it/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ja/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ko/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/ru/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hans/System.Spatial.resources.dll",
+        "lib/portable-net45+wp8+win8+wpa/zh-Hant/System.Spatial.resources.dll",
+        "lib/sl4/System.Spatial.dll",
+        "lib/sl4/System.Spatial.xml",
+        "lib/sl4/de/System.Spatial.resources.dll",
+        "lib/sl4/es/System.Spatial.resources.dll",
+        "lib/sl4/fr/System.Spatial.resources.dll",
+        "lib/sl4/it/System.Spatial.resources.dll",
+        "lib/sl4/ja/System.Spatial.resources.dll",
+        "lib/sl4/ko/System.Spatial.resources.dll",
+        "lib/sl4/ru/System.Spatial.resources.dll",
+        "lib/sl4/zh-Hans/System.Spatial.resources.dll",
+        "lib/sl4/zh-Hant/System.Spatial.resources.dll"
+      ]
+    },
     "System.Text.Encoding/4.3.0": {
-      "sha512": "z6u45ZBgSKnqdwqRvoeBm80P6zwhVsymFp9T9p6rZJoubq8R9dqMQe1rg72lbruKAqCCYkOMgwNE/SpkPj+X2w==",
+      "sha512": "O3rltjTQtxsqNGyk1PGkmFCBjgWlFACvDtmVyJtztKjd3fFhCaUbajrHiFpobgD4x3qo9392jeCksySoyhynZA==",
       "type": "package",
       "path": "System.Text.Encoding/4.3.0",
       "files": [
@@ -7668,7 +8669,7 @@
       ]
     },
     "System.Text.Encoding.CodePages/4.0.1": {
-      "sha512": "h4z6rrA/hxWf4655D18IIZ0eaLRa3tQC/j+e26W+VinIHY0l07iEXaAvO0YSYq3MvCjMYy8Zs5AdC1sxNQOB7Q==",
+      "sha512": "AcIg9uCbTYsozY7FeNKMPLa2geFp9W0IINDLq2HN4k/PIosoaDxzyXNU+xiGQfQLfZNXEm23Cp6zsGd/4B0Hgg==",
       "type": "package",
       "path": "System.Text.Encoding.CodePages/4.0.1",
       "files": [
@@ -7705,7 +8706,7 @@
       ]
     },
     "System.Text.Encoding.Extensions/4.3.0": {
-      "sha512": "auzocJVfXWATjKx6LkDlALIOLP6qvIWGByjmfyUPZkeDBnhmYozd/DK/pOxGLcCSWtMjDYlwuAjci4+w4DYliA==",
+      "sha512": "6zIvZtCZw0m/1JvvYtKWIt3PCdF8LWMzlwf5XfPW+jSM72Jnn+DVrEm9X6ggyt5J9LSMBXhFEl+CW+HbIDsgzw==",
       "type": "package",
       "path": "System.Text.Encoding.Extensions/4.3.0",
       "files": [
@@ -7770,8 +8771,21 @@
         "ref/xamarinwatchos10/_._"
       ]
     },
+    "System.Text.Encodings.Web/4.0.0": {
+      "sha512": "TWZnuiJgPDAEEUfobD7njXvSVR2Toz+jvKWds6yL4oSztmKQfnWzucczjzA+6Dv1bktBdY71sZW1YN0X6m9chQ==",
+      "type": "package",
+      "path": "System.Text.Encodings.Web/4.0.0",
+      "files": [
+        "System.Text.Encodings.Web.4.0.0.nupkg.sha512",
+        "System.Text.Encodings.Web.nuspec",
+        "ThirdPartyNotices.txt",
+        "dotnet_library_license.txt",
+        "lib/netstandard1.0/System.Text.Encodings.Web.dll",
+        "lib/netstandard1.0/System.Text.Encodings.Web.xml"
+      ]
+    },
     "System.Text.RegularExpressions/4.3.0": {
-      "sha512": "514KDpmLUdYkJVdZNrJDcsqaqFuprkOW8uxN4CTBW6BZVEXvuShqR/yLK04RQokguBD0xZxdmO6KIKI/dzEYVg==",
+      "sha512": "9VYdz7Zaye/y7oJqwQx+gF/tNGQwwCVcD8ysDMUNCJF50HM/KGXI7eCu4edojYhMk/1EMLk4jF3wfw6h20Kerg==",
       "type": "package",
       "path": "System.Text.RegularExpressions/4.3.0",
       "files": [
@@ -7853,7 +8867,7 @@
       ]
     },
     "System.Threading/4.3.0": {
-      "sha512": "SIlDoLC1QJMg4deD9dOILmpxKFBYmQO8leU5dAK3DH+xXoWFzDawJn4e52jrS537BQzLDTYeT1+1syP89+Ikrw==",
+      "sha512": "zyksxbRsH7wv6FRZrsC0z2bRLkAysodPBU+aD9lqM/01/N2sWNR5kO7Qm4bfoQ31Dnbw6x87m+ax80lbdiXHSg==",
       "type": "package",
       "path": "System.Threading/4.3.0",
       "files": [
@@ -7922,7 +8936,7 @@
       ]
     },
     "System.Threading.Overlapped/4.3.0": {
-      "sha512": "lIojXdfNz6C8iTTSB9Dy2TWQ2eS4lbSMk+Q2ms3kLTROxSYdJF8AjdWb9oaQhfX4yFEYrZyVN6tlJaoSFFnwbw==",
+      "sha512": "iIwO70et/XBVdEk8FgzqY0J89D8PfZ36jdOfU/nwa/1Br262WLbLbh2739HRIr2vDFXtKRJvVlKh0q31HRjxAg==",
       "type": "package",
       "path": "System.Threading.Overlapped/4.3.0",
       "files": [
@@ -7950,7 +8964,7 @@
       ]
     },
     "System.Threading.Tasks/4.3.0": {
-      "sha512": "VOu+SGWnaauihCx2EZzZjKikDeKLuzTFePNLXrxjN9Q1P3HA07kZh3DP91mFioUiGphEK+JdgzGPN8yDP7vXlw==",
+      "sha512": "3v3cIQbUBo0rk5saPFBe27/mRFUQ7dWpl5xDIOYtFtk3ObWIGDlSe5VHx1dpWjLRMbU1lCmwOCir7UXYrN2P+A==",
       "type": "package",
       "path": "System.Threading.Tasks/4.3.0",
       "files": [
@@ -8016,7 +9030,7 @@
       ]
     },
     "System.Threading.Tasks.Dataflow/4.7.0": {
-      "sha512": "DMuztEjEhzTRRIUJkDppa4rckKNhCx7+vNrnyOQePoLTASGz4q4sIWFkZXuR5wpEFsKUhNWMgQ76Mg072CsN+A==",
+      "sha512": "s9Ho3nFiF2zzjCg32A7x7rd2PVKFG6RpQVehR4uv7kosEg4/3qrNRaoCfisKVaD1M8P86F7wQoQQwi96gflgHA==",
       "type": "package",
       "path": "System.Threading.Tasks.Dataflow/4.7.0",
       "files": [
@@ -8033,7 +9047,7 @@
       ]
     },
     "System.Threading.Tasks.Extensions/4.3.0": {
-      "sha512": "yiVJrdOLH3+2whEAxAUOVd8wEYD31dRr6NYUv8094HUeeyeUhfgiCjsK2gd/KvjHPI5c712Jpo83hne++xmvrw==",
+      "sha512": "In2028g0rMgDTWAmBQbFq8QBjLMxjv2LFsulQPve7sYHI27mK9UIxVjY7/ifbxiCitWUz+C0q8prJSriiUzKOw==",
       "type": "package",
       "path": "System.Threading.Tasks.Extensions/4.3.0",
       "files": [
@@ -8048,7 +9062,7 @@
       ]
     },
     "System.Threading.Tasks.Parallel/4.3.0": {
-      "sha512": "9xvqbGl5RyHsbXxeFKRoBufoh4YiLAFRFEBtYmoow2TqyTRg8jizQpPKCCpliJbWcBJ4NSgeixswNa6eWg+Mtg==",
+      "sha512": "ZCP2K4xjQ8Fdrwx0/JlI15eejljxR88rrfzvQZqBUlL4C9NT0kI14Utf1bUisr4C9tN5d44JmKH/p+mYbpC95w==",
       "type": "package",
       "path": "System.Threading.Tasks.Parallel/4.3.0",
       "files": [
@@ -8103,7 +9117,7 @@
       ]
     },
     "System.Threading.Thread/4.3.0": {
-      "sha512": "eKaUmQu0tYSPsIlYgPoml1t1qzpK0tvqwJnN+D5++hqugbehFFefa9DsZHTFlbmKj3I8k97vOGKuNCCOItAj6A==",
+      "sha512": "wUP1C2xNxvuLbKLDvVW8GygwfeukP3resUvDouYdrFYsCiLV40E6mGOX1lVQYierM5UIAgBDzJsepfuuRMWMfg==",
       "type": "package",
       "path": "System.Threading.Thread/4.3.0",
       "files": [
@@ -8141,7 +9155,7 @@
       ]
     },
     "System.Threading.ThreadPool/4.3.0": {
-      "sha512": "XafKp62avoW3RgIyrL98Tr/1Jnj9bIkX8JJWn7IxLX4SzJimF+c7jWu6RzlwnNqzcFRGseARRR8Y/YrDL1Uhyg==",
+      "sha512": "O6nTIKhY7PmyxW+h3lRq0j9/ySdmafS1oE/sq1MYlPnNBgW+09wz5CXd+eofPQ3g7NFWVieRgLbdkh5G2mRuCw==",
       "type": "package",
       "path": "System.Threading.ThreadPool/4.3.0",
       "files": [
@@ -8179,7 +9193,7 @@
       ]
     },
     "System.Threading.Timer/4.3.0": {
-      "sha512": "1IQq02f6hJWzSRpS60DMTDBhWNLU5dpXrd+vtd9x4WGRIgmLEcoWBOI5c40rDOYJm5B0WWgnaEYy3ULjYbAWeg==",
+      "sha512": "FM5NZ2fSGbZnN0Tk90N98QLPwGhpo5mnQ82rMVNhI+smEf3moDN4nWQ40RKHIly8ZauixAZZVJp0shLrSI7dcA==",
       "type": "package",
       "path": "System.Threading.Timer/4.3.0",
       "files": [
@@ -8232,7 +9246,7 @@
       ]
     },
     "System.Xml.ReaderWriter/4.3.0": {
-      "sha512": "pAf7h4BUYfAgI3WGesNSSJJjSO6U4RyYlpbV+if1Ob4Is9FeTwXjP3MZPPHTDu28Z9kS0MK42OoS+M7o1wKhqw==",
+      "sha512": "DJYa0Bqia7/Y4UFw7/SdN1hAahMa8frBJlVKEAS/7o9oapJH5P1C0n7WsWR0VT32ri4i+w07Zv8aetkofoSFow==",
       "type": "package",
       "path": "System.Xml.ReaderWriter/4.3.0",
       "files": [
@@ -8302,7 +9316,7 @@
       ]
     },
     "System.Xml.XDocument/4.3.0": {
-      "sha512": "MENneuILJzBdfo6KD9weu6gxK8ij50DrqdgCC5HJtielOKMEVZzbNPpG3Jz8Sq8r903+TR/SFjRwegT+nGcA8A==",
+      "sha512": "607KD93xzUD+b1+fFwAMDg6nDb3ogbCaoF2wUbdp/Xu9CjdvdBOsHWBSmCc+/EPCQ31A5wqa8ewTAJJ2T8VcnQ==",
       "type": "package",
       "path": "System.Xml.XDocument/4.3.0",
       "files": [
@@ -8370,7 +9384,7 @@
       ]
     },
     "System.Xml.XmlDocument/4.0.1": {
-      "sha512": "2eZu6IP+etFVBBFUFzw2w6J21DqIN5eL9Y8r8JfJWUmV28Z5P0SNU01oCisVHQgHsDhHPnmq2s1hJrJCFZWloQ==",
+      "sha512": "4eVzLisC4KlATeJOkToEg4L/P0Ik9lQMwNhJyx63dud66rQotxZbB8GoIrEMaTlROaOVvk+kzlEGRsoHTA2JEQ==",
       "type": "package",
       "path": "System.Xml.XmlDocument/4.0.1",
       "files": [
@@ -8407,7 +9421,7 @@
       ]
     },
     "System.Xml.XPath/4.0.1": {
-      "sha512": "UWd1H+1IJ9Wlq5nognZ/XJdyj8qPE4XufBUkAW59ijsCPjZkZe0MUzKKJFBr+ZWBe5Wq1u1d5f2CYgE93uH7DA==",
+      "sha512": "ofg/dCfvcPoQJJwh0bxLmZ1cOLZY5NhbVWiveMZVxU4W1E0N4x2MuPOXQkNnPZ7wZYNd4newfcoFI20R4pmFpA==",
       "type": "package",
       "path": "System.Xml.XPath/4.0.1",
       "files": [
@@ -8444,7 +9458,7 @@
       ]
     },
     "System.Xml.XPath.XDocument/4.0.1": {
-      "sha512": "FLhdYJx4331oGovQypQ8JIw2kEmNzCsjVOVYY/16kZTUoquZG85oVn7yUhBE2OZt1yGPSXAL0HTEfzjlbNpM7Q==",
+      "sha512": "4aSOtOroGfwLmYkFouc1XqV3Oy8ml4GyCIqtRgQtdDVZnmIdax6tQLba1kGGLfucq+khxqJRS+zQ+Bp9vAdvMQ==",
       "type": "package",
       "path": "System.Xml.XPath.XDocument/4.0.1",
       "files": [
@@ -8478,6 +9492,28 @@
         "ref/xamarinmac20/_._",
         "ref/xamarintvos10/_._",
         "ref/xamarinwatchos10/_._"
+      ]
+    },
+    "WindowsAzure.Storage/8.1.0": {
+      "sha512": "nXjgm+egV7KeRQmTAnfpLLkCXYdvLrcC4WCHFmxpWq0HG+w4cNr8Uq8zD3wsCEawnIPv6LGVzmBBKJg2GIbmJQ==",
+      "type": "package",
+      "path": "WindowsAzure.Storage/8.1.0",
+      "files": [
+        "WindowsAzure.Storage.8.1.0.nupkg.sha512",
+        "WindowsAzure.Storage.nuspec",
+        "lib/net45/Microsoft.WindowsAzure.Storage.dll",
+        "lib/net45/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/net45/Microsoft.WindowsAzure.Storage.xml",
+        "lib/netstandard1.0/Microsoft.WindowsAzure.Storage.dll",
+        "lib/netstandard1.0/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/netstandard1.3/Microsoft.WindowsAzure.Storage.dll",
+        "lib/netstandard1.3/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/win8/Microsoft.WindowsAzure.Storage.dll",
+        "lib/win8/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/wp8/Microsoft.WindowsAzure.Storage.dll",
+        "lib/wp8/Microsoft.WindowsAzure.Storage.pdb",
+        "lib/wpa/Microsoft.WindowsAzure.Storage.dll",
+        "lib/wpa/Microsoft.WindowsAzure.Storage.pdb"
       ]
     },
     "xunit/2.2.0": {

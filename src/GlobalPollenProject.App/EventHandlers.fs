@@ -17,7 +17,6 @@ let projectionEventHandler (eventStream:IObservable<string*obj>) =
     let readStore = new ReadContext()
 
     let unwrapId (GrainId e) = e
-    let unwrapUrl (Url e) = e
 
     let grainProjections = function
         | GrainSubmitted event ->
@@ -27,7 +26,7 @@ let projectionEventHandler (eventStream:IObservable<string*obj>) =
                 | SingleImage x -> x
                 | FocusImage (u,s,c) -> u.Head
 
-            readStore.GrainSummaries.Add { Id= unwrapId event.Id; Thumbnail= unwrapUrl thumbUrl } |> ignore
+            readStore.GrainSummaries.Add { Id= unwrapId event.Id; Thumbnail= Url.unwrap thumbUrl } |> ignore
             readStore.SaveChanges() |> ignore
             printfn "Unknown grain submitted! It has %i images" event.Images.Length
 

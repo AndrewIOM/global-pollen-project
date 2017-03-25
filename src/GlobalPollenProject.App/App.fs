@@ -30,13 +30,18 @@ module Config =
         let generateId = Guid.NewGuid
         let log = ignore
         let uploadImage = AzureImageService.uploadToAzure "Development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
+        let gbifLink = ExternalLink.getGbifId
+        let neotomaLink = ExternalLink.getNeotomaId
 
-        let taxonomicBackbbone = "doesn't exist yet"
-        let calculateIdentity = calculateTaxonomicIdentity taxonomicBackbbone
+        let taxonomicBackbone a = None
+        let calculateIdentity = calculateTaxonomicIdentity taxonomicBackbone
     
-        { GenerateId = generateId
-          Log = log
-          UploadImage = uploadImage
+        { GenerateId        = generateId
+          Log               = log
+          UploadImage       = uploadImage
+          GetGbifId         = gbifLink
+          GetNeotomaId      = neotomaLink
+          ValidateTaxon     = taxonomicBackbone
           CalculateIdentity = calculateIdentity }
 
 module GrainAppService =
@@ -54,7 +59,7 @@ module GrainAppService =
 
     let submitUnknownGrain grainId (images:string list) age (lat:float) lon =
         let id = GrainId grainId
-        let uploadedImages = images |> List.map (fun x -> SingleImage (Url x))
+        let uploadedImages = images |> List.map (fun x -> SingleImage (Url.create x))
         let spatial = Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>)
         let temporal = CollectionDate (age * 1<CalYr>)
         let userId = UserId (Guid.NewGuid())
@@ -101,10 +106,10 @@ module TaxonomyAppService =
         }
         create aggregate "Taxon" Config.dependencies Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
-    let import name =
-        let domainName = LatinName name
-        let id = Guid.NewGuid()
-        handle ( Import { Id = TaxonId id; Name = domainName; Rank = Family; Parent = None })
+    // let import name =
+    //     let domainName = LatinName name
+    //     let id = Guid.NewGuid()
+    //     handle ( Import { Id = TaxonId id; Name = domainName; Rank = Family; Parent = None })
 
     let list() =
         Config.projections.TaxonSummaries |> Seq.toList
