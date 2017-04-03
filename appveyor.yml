@@ -9,10 +9,10 @@ init:
 - npm install -g gulp
 - npm install -g bower
 before_build:
-- appveyor-retry dotnet restore "src\GlobalPollenProject.WebUI\GlobalPollenProject.WebUI.fsproj" -v Minimal
+- appveyor-retry dotnet restore "src\GlobalPollenProject.Web\GlobalPollenProject.Web.fsproj" -v Minimal
 - appveyor-retry dotnet restore "test\GlobalPollenProject.Tests\GlobalPollenProject.Tests.fsproj" -v Minimal
 build_script:
-- dotnet build "src\GlobalPollenProject.WebUI\GlobalPollenProject.WebUI.fsproj" -c %CONFIGURATION% --version-suffix %LABEL%
+- dotnet build "src\GlobalPollenProject.Web\GlobalPollenProject.Web.fsproj" -c %CONFIGURATION% --version-suffix %LABEL%
 # after_build:
 # - dotnet publish "src\GlobalPollenProject.WebUI" -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts\GlobalPollenProject.WebUI
 test_script:
