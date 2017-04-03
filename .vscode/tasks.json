@@ -7,7 +7,7 @@
         {
             "taskName": "build",
             "args": [
-                "src/GlobalPollenProject.WebUI/GlobalPollenProject.WebUI.fsproj"
+                "src/GlobalPollenProject.Web/GlobalPollenProject.Web.fsproj"
             ],
             "isBuildCommand": true,
             "showOutput": "silent",

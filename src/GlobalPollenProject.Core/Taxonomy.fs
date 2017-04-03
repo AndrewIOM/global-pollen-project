@@ -5,8 +5,7 @@ open System
 
 type Command =
 | ImportFromBackbone of Import
-| ConnectToNeotoma of TaxonId * ThirdParty
-| ConnectToGbif of TaxonId * ThirdParty
+| ConnectToExternalDatabase of TaxonId * ThirdParty
 
 and Import = {
     Id: TaxonId
@@ -89,8 +88,7 @@ let connectDatabase id database connector state =
 let handle deps = 
     function
     | ImportFromBackbone c -> import c deps.ValidateTaxon
-    | ConnectToGbif (id,db) -> connectDatabase id db deps.GetGbifId
-    | ConnectToNeotoma (id,db) -> connectDatabase id db deps.GetNeotomaId
+    | ConnectToExternalDatabase (id,db) -> connectDatabase id db deps.GetGbifId
 
 type State with
     static member Evolve state = function

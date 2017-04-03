@@ -1,0 +1,24 @@
+@inject SignInManager<ApplicationUser> SignInManager
+@inject UserManager<ApplicationUser> UserManager
+
+@if (SignInManager.IsSignedIn(User))
+{
+    <form asp-area="" href="/Account/LogOff" method="post" id="logoutForm" class="navbar-right">
+
+    <ul class="navbar-nav">
+      <li class="nav-item">
+        <a class="nav-link" href="/Manage">Hello @UserManager.GetUserName(User)!</a>
+      </li>
+      <li class="nav-item">
+        <button type="submit" class="btn btn-link navbar-btn navbar-link">Log off</button>
+      </li>
+    </ul>
+    </form>
+}
+else
+{
+    <ul class="nav navbar-nav">
+        <li class="nav-item"><a class="nav-link" href="/Account/Register">Register</a></li>
+        <li class="nav-item"><a class="nav-link" href="/Account/Login">Log in</a></li>
+    </ul>
+}

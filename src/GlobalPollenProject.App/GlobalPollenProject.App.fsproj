@@ -7,6 +7,7 @@
     <PackageId>GlobalPollenProject.App</PackageId>
     <PackageTargetFallback>$(PackageTargetFallback);portable-wp8+netcore45+net45+wp81+wpa81</PackageTargetFallback>
     <NetStandardImplicitPackageVersion>1.6.1</NetStandardImplicitPackageVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,13 +19,9 @@
     <ProjectReference Include="..\GlobalPollenProject.Core\GlobalPollenProject.Core.fsproj" />
     <ProjectReference Include="..\GlobalPollenProject.Persistence\GlobalPollenProject.Persistence.fsproj" />
     <ProjectReference Include="..\GlobalPollenProject.Shared.Identity\GlobalPollenProject.Shared.Identity.csproj" />
-    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.0-beta-*" PrivateAssets="All" />
-    <PackageReference Include="Microsoft.FSharp.Core.netcore" Version="1.0.0-alpha-160629" />
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="1.1.1" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="dotnet-compile-fsc" Version="1.0.0-preview2.1-*" />
+    <PackageReference Include="FSharp.Core" Version="4.1.*" />
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
   </ItemGroup>
 
 </Project>

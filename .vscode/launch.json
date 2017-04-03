@@ -6,9 +6,9 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceRoot}/src/GlobalPollenProject.WebUI/bin/Debug/netcoreapp1.1/GlobalPollenProject.WebUI.dll",
+            "program": "${workspaceRoot}/src/GlobalPollenProject.Web/bin/Debug/netcoreapp1.1/GlobalPollenProject.Web.dll",
             "args": [],
-            "cwd": "${workspaceRoot}/src/GlobalPollenProject.WebUI",
+            "cwd": "${workspaceRoot}/src/GlobalPollenProject.Web",
             "stopAtEntry": false,
             "launchBrowser": {
                 "enabled": true,

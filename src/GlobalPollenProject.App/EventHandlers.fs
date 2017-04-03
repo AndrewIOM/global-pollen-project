@@ -3,6 +3,7 @@ module EventHandlers
 
 open GlobalPollenProject.Core.Types
 open GlobalPollenProject.Core.Aggregates.Grain
+open GlobalPollenProject.Core.Aggregates.Taxonomy
 open ReadStore
 
 open System
@@ -12,7 +13,7 @@ let private filter<'TEvent> ev =
     | :? 'TEvent as tev -> Some tev
     | _ -> None
 
-let projectionEventHandler (eventStream:IObservable<string*obj>) =
+let grainProjections (eventStream:IObservable<string*obj>) =
 
     let readStore = new ReadContext()
 
@@ -42,7 +43,22 @@ let projectionEventHandler (eventStream:IObservable<string*obj>) =
         | GrainIdentityUnconfirmed event ->
             printfn "This grain lost its ID!"
 
-
     eventStream
     |> Observable.choose (function (id,ev) -> filter<GlobalPollenProject.Core.Aggregates.Grain.Event> ev)
     |> Observable.subscribe grainProjections
+
+let taxonomyProjections (eventStream:IObservable<string*obj>) =
+
+    let readStore = new ReadContext()
+
+    let unwrapId (TaxonId e) = e
+
+    let taxonomyProjections = function
+        | Imported event ->
+            printfn "Taxon imported"
+        | EstablishedConnection event ->
+            printfn "Taxon connected to Neotoma and GBIF"
+
+    eventStream
+    |> Observable.choose (function (id,ev) -> filter<GlobalPollenProject.Core.Aggregates.Taxonomy.Event> ev)
+    |> Observable.subscribe taxonomyProjections
