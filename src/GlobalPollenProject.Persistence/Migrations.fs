@@ -33,7 +33,7 @@ type BackboneTaxonTable = {
     Id: OperationBuilder<AddColumnOperation>
     Family: OperationBuilder<AddColumnOperation>
     Genus: OperationBuilder<AddColumnOperation>
-    GrainCount: OperationBuilder<AddColumnOperation>
+    Species: OperationBuilder<AddColumnOperation>
     LatinName: OperationBuilder<AddColumnOperation>
     Rank: OperationBuilder<AddColumnOperation>
     ReferenceName: OperationBuilder<AddColumnOperation>
@@ -81,7 +81,7 @@ type Init() =
                     { Id = table.Column<Guid>(nullable = false)
                       Family = table.Column<string>(nullable = true)
                       Genus = table.Column<string>(nullable = true)
-                      GrainCount = table.Column<int>(nullable = false)
+                      Species = table.Column<string>(nullable = true)
                       LatinName = table.Column<string>(nullable = true)
                       Rank = table.Column<string>(nullable = true)
                       ReferenceName = table.Column<int>(nullable = false)

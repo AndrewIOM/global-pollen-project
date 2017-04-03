@@ -58,8 +58,8 @@ let userHandler =
 
 let importFromBackboneHandler =
     fun ctx ->
-        BackboneAppService.CsvImport.importAll "/Users/andrewmartin/Documents/Global Pollen Project/Plant List Offline/taxa.txt"
-        text ctx.HttpContext.User.Identity.Name ctx
+        BackboneAppService.importAll "/Users/andrewmartin/Documents/Global Pollen Project/Plant List Offline/taxa.txt"
+        text "Import successful" ctx
 
 let showUserHandler id =
     fun ctx ->
@@ -73,6 +73,8 @@ let webApp =
             choose [
                 route  "/"           >=> text "index"
                 route  "/ping"       >=> importFromBackboneHandler >=> text "pong"
+                route  "/Backbone"   >=> razorHtmlView "Taxonomy/Index" (BackboneAppService.list())
+                route  "/Events"     >=> razorHtmlView "Admin/Events" (GrainAppService.listEvents())
                 route  "/error"      >=> (fun _ -> failwith "Something went wrong!")
                 route  "/login"      >=> loginHandler
                 route  "/logout"     >=> signOff authScheme >=> text "Successfully logged out."

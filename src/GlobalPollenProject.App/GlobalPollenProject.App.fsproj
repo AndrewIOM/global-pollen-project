@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Compile Include="EventHandlers.fs" />
+    <Compile Include="ImportTaxonomy.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
 

@@ -1,11 +1,15 @@
-@model FSharpList<TaxonSummary>
+@model FSharpList<BackboneTaxon>
+
+@{
+    Layout = "_Layout";
+}
 
 <h2>Master Reference Collection</h2>
 
 <ul>
     @foreach (var taxon in Model) {
         <li>
-            @taxon.LatinName @taxon.Rank
+            @taxon.Rank: @taxon.Family @taxon.Genus @taxon.Species (@taxon.LatinName)
         </li>
     }
 </ul>
