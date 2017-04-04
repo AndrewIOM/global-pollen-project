@@ -2,6 +2,7 @@ namespace GlobalPollenProject.App
 
 open System
 open System.IO
+open System.Linq
 open Microsoft.Extensions.Configuration
 
 open GlobalPollenProject.Core.Types
@@ -29,6 +30,15 @@ module Config =
             then Some result 
             else None
 
+    let getTaxonByName latinName rank parent =
+        let result = match rank with
+                     | "Species" -> projections.BackboneTaxa.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Species" && t.Genus = parent)
+                     | "Genus" -> projections.BackboneTaxa.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Genus" && t.Family = parent)
+                     | "Family" -> projections.BackboneTaxa.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Family")
+        if not (isNull result)
+            then Some result
+            else None
+
     eventStore.SaveEvent 
     :> IObservable<string*obj>
     |> EventHandlers.grainProjections 
@@ -36,7 +46,7 @@ module Config =
 
     eventStore.SaveEvent 
     :> IObservable<string*obj>
-    |> EventHandlers.taxonomyProjections getTaxon
+    |> EventHandlers.taxonomyProjections getTaxon getTaxonByName
     |> ignore
 
     let dependencies = 

@@ -34,6 +34,7 @@ type BackboneTaxonTable = {
     Family: OperationBuilder<AddColumnOperation>
     Genus: OperationBuilder<AddColumnOperation>
     Species: OperationBuilder<AddColumnOperation>
+    NamedBy: OperationBuilder<AddColumnOperation>
     LatinName: OperationBuilder<AddColumnOperation>
     Rank: OperationBuilder<AddColumnOperation>
     ReferenceName: OperationBuilder<AddColumnOperation>
@@ -82,6 +83,7 @@ type Init() =
                       Family = table.Column<string>(nullable = true)
                       Genus = table.Column<string>(nullable = true)
                       Species = table.Column<string>(nullable = true)
+                      NamedBy = table.Column<string>(nullable = true)
                       LatinName = table.Column<string>(nullable = true)
                       Rank = table.Column<string>(nullable = true)
                       ReferenceName = table.Column<int>(nullable = false)
@@ -128,6 +130,7 @@ type Init() =
                 b.Property<string>("Family") |> ignore
                 b.Property<string>("Genus") |> ignore
                 b.Property<string>("LatinName") |> ignore
+                b.Property<string>("NamedBy") |> ignore
                 b.Property<string>("Rank") |> ignore
                 b.Property<string>("Species") |> ignore
                 b.Property<string>("Reference") |> ignore

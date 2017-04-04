@@ -47,7 +47,7 @@ let grainProjections (eventStream:IObservable<string*obj>) =
     |> Observable.choose (function (id,ev) -> filter<GlobalPollenProject.Core.Aggregates.Grain.Event> ev)
     |> Observable.subscribe grainProjections
 
-let taxonomyProjections getTaxon (eventStream:IObservable<string*obj>) =
+let taxonomyProjections getTaxon getTaxonByName (eventStream:IObservable<string*obj>) =
 
     let readStore = new ReadContext()
 
@@ -66,18 +66,23 @@ let taxonomyProjections getTaxon (eventStream:IObservable<string*obj>) =
 
             let unwrapLatin (LatinName ln) = ln
             let unwrapId (TaxonId id) = id
+            let unwrapEph (SpecificEphitet e) = e
+            let unwrapAuthor (Scientific a) = a
 
-            let family,genus,species,rank,ln =
+            let family,genus,species,rank,ln,namedBy =
                 match event.Identity with
                 | Family ln -> 
-                    unwrapLatin ln,"","", "Family", unwrapLatin ln
+                    unwrapLatin ln,"","", "Family", unwrapLatin ln,""
                 | Genus ln ->
                     let family = getParent getTaxon event.Parent
-                    family.LatinName,unwrapLatin ln,"", "Genus", unwrapLatin ln
-                | Species (ln,_,_) -> 
+                    family.LatinName,unwrapLatin ln,"", "Genus", unwrapLatin ln,""
+                | Species (g,s,n) -> 
+                    let species = sprintf "%s %s" (unwrapLatin g) (unwrapEph s)
                     let genus = getParent getTaxon event.Parent
-                    let family = getParent getTaxon (Some (TaxonId genus.Id) )
-                    family.LatinName, genus.LatinName, unwrapLatin ln,"Species", unwrapLatin ln
+                    let family = getTaxonByName genus.Family "Family" ""
+                    match family with
+                    | Some f -> f.LatinName, genus.LatinName, species,"Species", species,unwrapAuthor n
+                    | None -> invalidOp "The backbone taxonomy is corrupted. Rebuild required."
             
             let reference, referenceUrl =
                 match event.Reference with
@@ -92,6 +97,7 @@ let taxonomyProjections getTaxon (eventStream:IObservable<string*obj>) =
                                 Genus = genus
                                 Species = species
                                 LatinName = ln
+                                NamedBy = namedBy
                                 Rank = rank
                                 ReferenceName = reference
                                 ReferenceUrl = referenceUrl }

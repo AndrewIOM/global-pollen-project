@@ -33,6 +33,7 @@ type BackboneTaxon = {
     Family:string
     Genus:string
     Species:string
+    NamedBy:string
     LatinName:string
     Rank:string
     ReferenceName:string
