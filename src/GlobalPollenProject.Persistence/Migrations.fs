@@ -41,7 +41,7 @@ type BackboneTaxonTable = {
     ReferenceUrl: OperationBuilder<AddColumnOperation> }
 
 // Migrations
-[<DbContext(typeof<ReadContext>)>]
+[<DbContext(typeof<EntityFramework.ReadContext>)>]
 [<Migration("20170105185538_Initial")>]
 type Init() =
     inherit Migration()

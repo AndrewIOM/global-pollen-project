@@ -4,7 +4,8 @@ const path = require('path')
 var config = {
   context: __dirname + '/temp',
   entry: {
-    taxonomy: './Scripts/taxonomy'
+    taxonomy: './Scripts/taxonomy',
+    digitise: './Scripts/digitise'
   },
   output: {
     path: __dirname + '/wwwroot/js',

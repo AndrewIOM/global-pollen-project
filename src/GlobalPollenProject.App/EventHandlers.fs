@@ -13,9 +13,7 @@ let private filter<'TEvent> ev =
     | :? 'TEvent as tev -> Some tev
     | _ -> None
 
-let grainProjections (eventStream:IObservable<string*obj>) =
-
-    let readStore = new ReadContext()
+let grainProjections (readStore:EntityFramework.ReadContext) (eventStream:IObservable<string*obj>) =
 
     let unwrapId (GrainId e) = e
 
@@ -47,9 +45,7 @@ let grainProjections (eventStream:IObservable<string*obj>) =
     |> Observable.choose (function (id,ev) -> filter<GlobalPollenProject.Core.Aggregates.Grain.Event> ev)
     |> Observable.subscribe grainProjections
 
-let taxonomyProjections getTaxon getTaxonByName (eventStream:IObservable<string*obj>) =
-
-    let readStore = new ReadContext()
+let taxonomyProjections (readStore:EntityFramework.ReadContext) getTaxon getTaxonByName (eventStream:IObservable<string*obj>) =
 
     let unwrapId (TaxonId e) = e
 

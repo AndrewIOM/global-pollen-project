@@ -3,8 +3,7 @@
 #r "../node_modules/fable-elmish/Fable.Elmish.dll"
 #r "../node_modules/fable-elmish-react/Fable.Elmish.React.dll"
 #load "../node_modules/fable-import-d3/Fable.Import.D3.fs"
-#load "../node_modules/fable-import-fetch/Fable.Import.Fetch.fs"
-#load "../node_modules/fable-import-fetch/Fable.Helpers.Fetch.fs"
+// #load "../node_modules/fable-import-fetch/Fable.Helpers.Fetch.fs"
 
 open Elmish
 open Elmish.React
@@ -13,8 +12,8 @@ open Fable.Import.Browser
 open Fable.Core
 open Fable.Core.JsInterop
 open Fable.React
-open Fable.Import.Fetch
-open Fable.Helpers.Fetch
+// open Fable.Import.Fetch
+// open Fable.Helpers.Fetch
 let sass = importAll<obj> "../Styles/main.scss"
 
 type TaxonSummary = {
@@ -31,17 +30,17 @@ type TaxonSummary = {
 
 // Infrastructure
 
-let fetch =
-  let baseUrl = "http://localhost:5000"
-  async { 
-      try 
-          let! records = fetchAs<TaxonSummary[]> ( sprintf "%s/api/taxon" baseUrl, [] )
-          return Some records
-      with
-      | error -> 
-        printfn "Error downloading taxonomy"
-        return None
-  }
+// let fetch =
+//   let baseUrl = "http://localhost:5000"
+//   async { 
+//       try 
+//           let! records = fetchAs<TaxonSummary[]> ( sprintf "%s/api/taxon" baseUrl, [] )
+//           return Some records
+//       with
+//       | error -> 
+//         printfn "Error downloading taxonomy"
+//         return None
+//   }
 
 // Types
 type Msg =
@@ -74,5 +73,5 @@ let view count dispatch =
 // App
 Program.mkSimple init update view
 |> Program.withConsoleTrace
-|> Program.withReact "elmish-app"
+|> Program.withReact "digitise-app"
 |> Program.run
