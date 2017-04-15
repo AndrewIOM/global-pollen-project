@@ -1,3 +1,22 @@
-body {
-    font-family: Arial;
-}
+/* 
+    Global Pollen Project Styles
+    Copyright Andrew Martin, University of Oxford 2015
+*/
+
+@import '_Palette';
+@import '_BootstrapMods';
+@import '_Structure';
+
+//Components
+@import 'Components/_Autocomplete';
+@import 'Components/_Footer';
+@import 'Components/_GrainGrid';
+@import 'Components/_GuideSidebar';
+@import 'Components/_MapFilter';
+@import 'Components/_MapTemporalDistribution';
+@import 'Components/_PreviewRibbon';
+@import 'Components/_Panels';
+@import 'Components/_RefCollectionList';
+@import 'Components/_Sidebar';
+@import 'Components/_Traits';
+@import 'Components/_TaxonGrid';

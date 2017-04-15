@@ -1,0 +1,22 @@
+#traits-size-mean {
+    font-size:2em;
+    display:block;
+}
+
+#focusSlider.noUi-target {
+    margin: 0 2em 3em;
+    border-radius:0;
+    background-color:black;
+
+    .noUi-background{
+        background-color:black;
+        box-shadow: none;
+    }
+
+    .noUi-handle {
+        box-shadow: none;
+        border-radius:5em;
+        background-color:#808080;
+        border: none;
+    }
+}

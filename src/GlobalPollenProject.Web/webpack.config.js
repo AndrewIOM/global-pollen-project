@@ -1,16 +1,18 @@
 const webpack = require('webpack')
 const path = require('path')
+const ExtractTextPlugin = require("extract-text-webpack-plugin");
 
 var config = {
   context: __dirname + '/temp',
   entry: {
     taxonomy: './Scripts/taxonomy',
-    digitise: './Scripts/digitise'
+    digitise: './Scripts/digitise',
+    styles: [ './../Styles/main.scss' ]
   },
   output: {
     path: __dirname + '/wwwroot/js',
     filename: '[name].bundle.js',
-    libraryTarget: "commonjs2"
+    libraryTarget: "var"
   },
   target: "web",
   devtool: "source-map",
@@ -29,13 +31,23 @@ var config = {
     },
     {
       test: /\.scss$/,
-      use: [
-        'style-loader',
-        'css-loader',
-        'sass-loader'
-      ]
-    }]
-  }
+        use: ExtractTextPlugin.extract({
+            use: [{
+                loader: "css-loader"
+            }, {
+                loader: "sass-loader"
+            }],
+            fallback: "style-loader"
+        })
+    },
+    { test: /\.png$/, loader: 'ignore-loader' }]
+  },
+  plugins: [
+    new ExtractTextPlugin({
+        filename: "./../css/[name].css",
+        allChunks: true
+    })
+  ]
 };
 
 module.exports = config;

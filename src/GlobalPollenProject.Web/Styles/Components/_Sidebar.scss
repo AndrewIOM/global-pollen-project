@@ -1,0 +1,11 @@
+﻿/* Sidebar */
+#sidebar.affix-top {
+    position: static;
+    width: 228px;
+}
+
+#sidebar.affix {
+    position: fixed;
+    top: 150px;
+    width: 228px;
+}

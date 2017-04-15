@@ -2,10 +2,11 @@
 @using Microsoft.AspNetCore.Http
 @using Microsoft.AspNetCore.Http.Authentication
 @using GlobalPollenProject.Shared.Identity.Models
-@model GlobalPollenProject.WebUI.ViewModels.LoginViewModel
 @inject SignInManager<ApplicationUser> SignInManager
+@model Requests.LoginRequest
 
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "Log in";
     ViewData["Subtitle"] = "Use your existing Global Pollen Project account, Facebook or Twitter";
 }
@@ -21,10 +22,17 @@
     </div>
     <br />
 
+<form action="/Account/Login" method="post" class="form-horizontal" role="form">
+
+@Html.EditorForModel()
+<div asp-validation-summary="All" class="text-danger"></div>
+<button type="submit" class="btn btn-primary">Log in</button>
+</form>
+@*
 <div class="row">
     <div class="col-md-8">
         <section>
-            <form asp-controller="Account" asp-action="Login" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal" role="form">
+            <form action="/Login" method="post" class="form-horizontal" role="form">
                 <div asp-validation-summary="All" class="text-danger"></div>
                 <div class="form-group">
                     <label asp-for="Email" class="col-md-2 control-label"></label>
@@ -51,7 +59,7 @@
                 <div class="form-group">
                     <div class="col-md-offset-2 col-md-10">
                         <button type="submit" class="btn btn-primary">Log in</button>
-                        <a class="btn btn-default" asp-action="ForgotPassword">Forgotten Password</a>
+                        <a class="btn btn-default" href="/Account/ForgotPassword">Forgotten Password</a>
                     </div>
                 </div>
             </form>
@@ -59,28 +67,25 @@
     </div>
     <div class="col-md-4">
         <section>
-            <form asp-controller="Account" asp-action="ExternalLogin" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal" role="form">
+            <form href="/Login/ExternalLogin" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal" role="form">
                 <button name="provider" class="btn btn-block btn-social btn-facebook" type="submit" value="Facebook">
                     <span class="fa fa-facebook"></span> Sign in with Facebook
                 </button>
                 <button name="provider" class="btn btn-block btn-social btn-twitter" type="submit" value="Twitter">
                     <span class="fa fa-twitter"></span> Sign in with Twitter
                 </button>
-                @*<button name="provider" class="btn btn-block btn-social btn-microsoft" type="submit" value="Microsoft">
-                    <span class="fa fa-windows"></span> Sign in with a Microsoft Account
-                </button>*@
             </form>
             <br />
             <div class="panel panel-primary">
                 <div class="panel-heading"><span class="glyphicon glyphicon-pencil"></span> Sign Up Today!</div>
                 <div class="panel-body">
                     <p>Register to submit your pollen and exchange identifications.</p>
-                    <a class="btn btn-default" asp-action="Register">Register</a>
+                    <a class="btn btn-default" href="/Register">Register</a>
                 </div>
             </div>
         </section>
     </div>
-</div>
+</div>*@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }

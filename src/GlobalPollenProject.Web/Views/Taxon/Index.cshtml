@@ -1,0 +1,56 @@
+@model GlobalPollenProject.App.PagedResult<ReadStore.TaxonSummary>
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Reference Collection";
+}
+
+@* Header *@
+@section headerSection {
+    <header><div class="container">
+    <h1>@ViewData["Title"]</h1>
+    </div></header>
+}
+
+@* Breadcrumb *@
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li><a href="/">Home</a></li>
+            <li>Pollen Reference Collection</li>
+        </ol>
+    </div>
+</div>
+
+@* Key *@
+<p>
+    <strong>Key: </strong>
+    <span class="glyphicon glyphicon-user">  </span> = User Submissions with Confirmed Identity;
+    <span class="glyphicon glyphicon-globe">  </span> = Digitised Reference Slides;
+</p>
+
+@* Taxonomy Grid *@
+<div class="row">
+    @foreach (var taxon in Model.Items)
+    {
+        <div class="col-md-6">
+            <div class="taxon-list-item">
+                <div class="img-container">
+                    @if (!string.IsNullOrEmpty(taxon.ThumbnailUrl))
+                    {
+                        <img src="@taxon.ThumbnailUrl" alt="Pollen from the plant @taxon.Rank @taxon.LatinName." />
+                    }
+                </div>
+                <div class="taxon-details">
+                    <a href="/">
+                        <h3>@taxon.LatinName</h3>
+                    </a>
+                    <ul class="list-inline">
+                        <li><span class="glyphicon glyphicon-user"></span>  @taxon.GrainCount</li>
+                        <li><span class="glyphicon glyphicon-globe"></span> @taxon.SlideCount</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    }
+</div>

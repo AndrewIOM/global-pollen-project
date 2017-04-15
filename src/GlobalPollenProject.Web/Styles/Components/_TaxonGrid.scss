@@ -1,0 +1,66 @@
+﻿.taxon-list-item {
+    background-color: #f5f5f5;
+    margin-bottom: 0.5em;
+    border: 1px solid transparent;
+    border-radius: 0.2em;
+    overflow: hidden;
+    -webkit-box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 1px rgba(0,0,0,0.05);
+    border-color: #dddddd;
+}
+
+.taxon-toggle {
+    float: right;
+    display: inline-block;
+    width: 4em;
+    height: 6em;
+    vertical-align: top;
+    background-color: #a8699a;
+    transition: .25s;
+}
+
+.taxon-toggle:hover, .taxon-toggle:focus {
+    background-color: #83296f;
+}
+
+.taxon-toggle span {
+    width: 100%;
+    height: 100%;
+    color: white;
+    font-size: 1em;
+    text-align: center;
+    padding-top: 2.3em;
+}
+
+.taxon-list-item .col-md-11 {
+    padding-left: 0;
+}
+
+.taxon-list-item .img-container {
+    height: 6em;
+    width: 6em;
+    background-color: black;
+    vertical-align: top;
+    display: inline-block;
+}
+
+.taxon-list-item .taxon-details {
+    padding: 0.2em;
+    display: inline-block;
+}
+
+.taxon-list-item .taxon-details h3 {
+    font-size: 1.25em;
+    margin-top: 0.2em;
+}
+
+.taxon-list-item .taxon-details h3:hover {
+    text-decoration: none !important;
+}
+
+.taxon-list-item ul.panel-collapse {
+    list-style: none;
+    padding-left: 9em;
+    padding-top: 0.75em;
+    border-top: 0.2px dotted #9b538b;
+}

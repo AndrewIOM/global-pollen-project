@@ -1,0 +1,32 @@
+﻿/* Corner Ribbon */
+.corner-ribbon {
+    width: 200px;
+    background: #83296F;
+    position: absolute;
+    text-align: center;
+    line-height: 50px;
+    letter-spacing: 1px;
+    color: #f0f0f0;
+    top: 25px;
+    right: -50px;
+    left: auto;
+    transform: rotate(45deg);
+    -webkit-transform: rotate(45deg);
+    z-index: 9999;
+    opacity:0.75;
+}
+
+    .corner-ribbon.sticky {
+        position: fixed;
+    }
+
+    .corner-ribbon.shadow {
+        box-shadow: 0 0 3px rgba(0,0,0,.3);
+    }
+
+@media (max-width: 480px) {
+    .corner-ribbon {
+        right: -40px;
+        line-height: 30px;
+    }
+}

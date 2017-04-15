@@ -1,22 +1,16 @@
 @{
     Layout = "_Layout";
+    ViewData["Title"] = "Digitise Tool";
+    ViewData["Subtitle"] = "Use this tool to digitise your collections. A digitised slide contains two components: (1) metadata, and (2) images.";
 }
 
-<h1>Digitisation Tool</h1>
-<p>Use this tool to digitise your collections.</p>
+@* Header *@
+@section headerSection {
+    <header><div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>@ViewData["Subtitle"]</p>
+    </div></header>
+}
 
 <div id="digitise-app"></div>
 <script src="/js/digitise.bundle.js" />
-
-<div class="row">
-    @* Master *@
-    <div class="col-md-3">
-        <label>My Collections</label>
-        <p>None</p>
-    </div>
-
-    @* Detail *@
-    <div class="col-md-9">
-
-    </div>
-</div>

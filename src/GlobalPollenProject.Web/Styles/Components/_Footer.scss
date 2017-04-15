@@ -1,0 +1,56 @@
+﻿/*
+    Sticky Footer
+*/
+
+html {
+    position: relative;
+    min-height: 100%;
+}
+
+body {
+    margin-bottom: 20em;
+}
+
+footer {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 20em;
+    background-color: #f5f5f5;
+    border-top: 0.5em solid #83296F;
+    margin-top: 5em;
+}
+
+.page-content {
+    padding-bottom: 5em;
+}
+
+footer .container {
+    padding: 30px 0 0;
+}
+
+footer ul {
+    list-style: none;
+    line-height: 2em;
+    padding-left: 0;
+}
+
+.footer-images img {
+    height: 5em;
+    width: auto;
+}
+
+@media(max-width:992px) {
+    footer {
+        position: relative;
+        height: auto;
+    }
+
+    footer .container {
+        padding: 30px 10% 0;
+    }
+
+    body {
+        margin-bottom: 0;
+    }
+}

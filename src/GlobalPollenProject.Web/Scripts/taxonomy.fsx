@@ -12,8 +12,6 @@ open Fable.Core
 open Fable.Core.JsInterop
 open Fable.React
 
-let sass = importAll<obj> "../Styles/main.scss"
-
 type Msg =
   | Increment
   | Decrement

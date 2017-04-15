@@ -1,0 +1,269 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Guide";
+    ViewData["Subtitle"] = "Find out about the project and how it works";
+    ViewData["Description"] = "The Global Pollen Project is a user-driven, open reference library of plant pollen. Exchange identifications with other users for collaborative science. Upload your reference material or unknown grains today.";
+}
+
+@section headerSection {
+    <header>
+        <div class="container">
+            <h2 id="about">@ViewData["Title"]</h2>
+            <p>@ViewData["Subtitle"]</p>
+        </div>
+    </header>
+}
+
+<div class="row">
+    <div class="col-sm-9">
+
+        <h3 id="about">What is the Global Pollen Project?</h3>
+        <hr />
+        <p>
+            The Global Pollen Project aims to enable people to share and identify pollen grains, and create an open, free and accessible reference library for pollen identification.
+            All data, whether individual grains or digitised reference collections, is available free for non-commercial use.
+        </p>
+        <p>
+            The project has been designed and created by Andrew Martin and William J. Harvey to improve the struggles of palynologists the world over.
+            From trying to identify those elusive grains, to finding reference material for which to compare your grains to, the project aims to educate and incite growth in this scientific field as well as to reduce “stresses” associated with the discipline.
+        </p>
+        <p>The main goal of the Global Pollen Project is to aid in the identification of pollen grains in palynological research. We hope that this tool will promote increased research and help share expertise to encourage people to tackle palynological research in more challenging parts of the world producing higher resolution taxonomic identifications and studies. In doing so we also hope to bridge the gap between the modern and palaeo scientific spheres.</p>
+
+        <br />
+        <h3 id="how-it-works">How it Works</h3>
+        <hr />
+
+        <h4 id="taxonomic-backbone">Taxonomic Backbone</h4>
+        <p>
+            Taxonomic organisation has been implemented through a hierarchical system to relate submitted pollen images to their corresponding species, genera and families. The taxonomy is constrained such that the higher taxonomic ranks are required for a genus or species. New taxa are created automatically when a new user-submitted grain becomes identified, or a slide is digitised for a new taxon. To overcome taxonomic conflicts between collections, we implemented a dynamic taxonomic backbone. This is linked directly to The Plant List (2013), requiring that any new taxon generated in the Global Pollen Project must exist on The Plant List as an accepted taxon. Synonyms will not be accepted and must be inputted in accordance with current convention. This ensures that our taxonomic hierarchy is rigorous and up to date with the global authority on plant nomenclature (The Plant List, 2013).
+        </p>
+        <br />
+
+        <h3 id="reference-collection">Master Reference Collection</h3>
+        <hr />
+        <div class="row">
+            <div class="col-md-6">
+                <h4 id="reference-search">Searching the Collection</h4>
+                <p>
+                    The reference collection is a dynamic library of all taxonomically-verified pollen images held by the pollen project, including:
+                    <ol>
+                        <li><strong>Digitised Reference Slides.</strong> These have been uploaded by a contributing institution. If you use these images, please include the full attribution given on the page.</li>
+                        <li><strong>User Grains that have been Identified.</strong> The analysis is currently running, with data being computed. The report is also compiled during this process. </li>
+                    </ol>
+                </p>
+                <p>
+                    You can browse the collection by family, genera, and species, and navigate between taxa using the taxonomic heirarchy.
+                </p>
+            </div>
+            <div class="col-md-6">
+                <img src="/images/guide/reference-collection.png" class="img-responsive" alt="The global pollen project reference collection" />
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col-md-6">
+                <h4 id="reference-taxon">The Taxon View</h4>
+                <p>
+                    The taxon view displays all reference slides for the taxon selected. This includes slides that belong to taxa that are children of the current selection, for example all species within a genera.
+                </p>
+            </div>
+            <div class="col-md-6">
+                <img src="/images/guide/taxon-view.png" class="img-responsive" alt="The global pollen project reference collection" />
+            </div>
+        </div>
+
+        <h4 id="reference-definition">Distributions and Botanical Description</h4>
+        <p>
+            To help to distinguish between taxa that may or may not occur within your area of interest, we present past and present occurrences of taxa within the taxon view.
+            <ol>
+                <li><strong>Present-Day Occurrences.</strong> We link dynamically to the Global Biodiversity Information Facility (GBIF) to retrieve occurrences between 1990 and the present day. </li>
+                <li><strong>Past Occurrences.</strong> <a href="http://neotomadb.org">Neotoma</a> is accessed to present past occurrences (determined from pollen and plant macrofossils) from 1,000 years before present to 50,000 years before present. Use the horizontal scrollbar to filter the data to a particular temporal extent. </li>
+            </ol>
+        </p>
+        <p>We also display an image and description, if available, from the Global Biodiversity Information Facility.</p>
+
+        <br />
+
+        <h3 id="submit">Submit Pollen for Identification</h3>
+        <hr />
+
+        <p>If you have pollen grains that you are having trouble identifying, whether modern or fossil, submit them to the global pollen project to crowd-source identifications. </p>
+        <a class="btn btn-default" href="/Grain/Add"><span class="glyphicon glyphicon-plus"></span> Add an unidenfied grain now</a>
+
+        <br />
+        <h4 id="submit-prepare">Preparing your Images</h4>
+        <p>Taking photographs of your pollen grains and preparing them for submission is a simple task made easier than ever before! There are a number of ways to photograph your grains, many of which require the acquisition of expensive cameras and or software; however, with just your mobile phone you can create high quality images of your chosen pollen grains in just a matter of seconds.</p>
+        <label>I. Position</label>
+        <p>Prepare your pollen grain in the centre of the microscopes field of view with an ocular micrometre positioned just below.</p>
+        <label>II. Calibrate</label>
+        <p>Adjust the lighting and focus of the microscope to highlight the most prominent features of the selected pollen grain.</p>
+        <label>III. Magnification</label>
+        <p>Take note of the optical magnification. If you are using a light microscope this is the magnification of the eyepiece (usually 10x) multiplied by the magnification of the objective (usually 10x; 20x; 40x; 100x). For example, if the magnification of the eyepiece is 10x and the objective being used is 40x, the total magnification is 400x.</p>
+        <label>IV. Measure</label>
+        <p>Measure the diameter of your pollen grain using the ocular micrometre taking into account any conversions that need to be made for total optical magnification.</p>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Total optical magnification</th>
+                    <th>Number of micrometre divisions</th>
+                    <th>Size (um)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>100x</td>
+                    <td>1</td>
+                    <td>10</td>
+                </tr>
+                <tr>
+                    <td>200x</td>
+                    <td>1</td>
+                    <td>5</td>
+                </tr>
+                <tr>
+                    <td>400x</td>
+                    <td>1</td>
+                    <td>2.5</td>
+                </tr>
+                <tr>
+                    <td>1000x</td>
+                    <td>1</td>
+                    <td>1</td>
+                </tr>
+            </tbody>
+        </table>
+        <label>V. Photograph</label>
+        <p>Hold the camera on your phone up to the eyepiece of the microscope until the pollen grain comes into the field of view and capture the image. This will require a steady hand!</p>
+        <label>VI. Focus</label>
+        <p>Change the focus of the microscope to outline any other important features of the grain that may have been out of focus in previous images and repeat Steps II though V.</p>
+        <label>VII. Rotation</label>
+        <p>If mounted in silicone then rotate your grain to capture both polar and equatorial views encapsulating as good a representation as you can of the entire (3D) grain. This will help others in the fast and accurate identification of your pollen grain.</p>
+        <label>VIII. Enhance (Optional)</label>
+        <p>If you have access to photographic editing software then you can adapt the image to best portray the most prominent features of your pollen grain. This can be achieved, for example, with software such as Photoshop on a computer or Instagram on a smartphone. </p>
+        <label>IX. Upload</label>
+        <p>Upload your image(s) and wait for them to be identified by other palynologist around the world!</p>
+        <br />
+
+        <h3 id="identify">Identify Pollen Grains</h3>
+        <hr />
+        <div class="row">
+            <div class="col-md-8">
+                <p>
+                    Have expertise in pollen identification? Help others, and score on the leaderboard, by identifying some pollen grains.
+                </p>
+                <p>
+                    The taxonomic backbone actively helps to fill in the family for any valid genera that you enter. Any identifications are checked against the backbone for validity.
+                </p>
+                <a href="/Grain">Identify grains now</a>.
+            </div>
+            <div class="col-md-4">
+                <img src="/images/guide/identify.png" class="img-responsive" alt="The global pollen project reference collection" />
+            </div>
+        </div>
+        <br />
+
+        <h3 id="digitise">Digitise Existing Reference Material</h3>
+        <hr />
+        <img src="~/images/guide/digitise-slide.png" class="img-responsive" alt="The global pollen project reference collection" />
+        <p>
+            The Global Pollen Project aims to provide a home for digital pollen reference collections.
+            We provide tools for easy digitisation of reference collection slides. These have the following advantages:
+            <ul>
+                <li><strong>Taxonomy</strong>: we provide a taxonomic backbone to verify taxonomic information, and provide quick data entry,</li>
+                <li><strong>Focus Images</strong>: images can be stacked and presented as focusable images, just like using a microscope.</li>
+                <li><strong>Integration</strong>: your slides will appear alongside slides from other collections, and user uploaded grains.</li>
+            </ul>
+        </p>
+        <a class="btn btn-default" href="/Digitise">Get started with digitisation online now.</a>
+
+        <br />
+        <h3 id="cite">How To Cite</h3>
+        <hr />
+        <p>
+            The Global Pollen Project was developed by Andrew C Martin and William J Harvey. Please use a citation similar to the following in your work:
+        </p>
+        <div class="row">
+            <div class="col-md-6">
+                <blockquote>
+                    <p>Martin, AC. and Harvey, WJ. (2016). [online] The Global Pollen Project. Available at: http://globalpollenproject.org [Accessed 27 Feb. 2016].</p>
+                    <h6>Harvard</h6>
+                </blockquote>
+            </div>
+            <div class="col-md-6">
+                <blockquote>
+                    <p>Martin, A.C., & Harvey, W. J. (2016). <em>The Global Pollen Project</em>. Retrieved 27 February 2016, from http://globalpollenproject.org</p>
+                    <h6>APA (6th Edition)</h6>
+                </blockquote>
+
+            </div>
+        </div>
+        <p>
+            The data available in the Global Pollen Project has been kindly contributed by individuals and organisations around the world.
+            The image library and metadata is available under a Creative Commons License (<a href="/Terms">see terms</a>). When using this data in your work, please
+            attribute both the contributors of the information you use and the Global Pollen Project itself. Please acknowledge any digitised reference collections that you use heavily.
+            <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">The Global Pollen Project Reference Collection</span> by
+            <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Contributors to The Global Pollen Project</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>
+        </p>
+        <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
+    </div>
+
+    <nav class="col-sm-3 guide-sidebar">
+        <ul id="sidebar" class="nav nav-stacked">
+            <li>
+                <a href="#about">What is the Global Pollen Project?</a>
+
+            </li>
+            <li>
+                <a href="#how-it-works">How it Works</a>
+                <ul class="nav nav-stacked">
+                    <li><a href="#taxonomic-backbone">Taxonomic Backbone</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#reference-collection">Master Reference Collection</a>
+                <ul class="nav nav-stacked">
+                    <li><a href="#reference-search">Searching the Collection</a></li>
+                    <li><a href="#reference-taxon">The Taxon View</a></li>
+                    <li><a href="#reference-definition">Distributions and Botanical Descriptions</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#submit">Submit Pollen for Identification</a>
+                <ul class="nav nav-stacked">
+                    <li><a href="#submit-prepare">Preparing your Images</a></li>
+                </ul>
+            </li>
+            <li>
+                <a href="#identify">Identify Pollen Grains</a>
+            </li>
+            <li>
+                <a href="#digitise">Digitise Existing Reference Material</a>
+            </li>
+            <li>
+                <a href="#cite">How to Cite</a>
+            </li>
+        </ul>
+    </nav>
+
+</div>
+
+<style>
+    h2:before, h3:before, h4:before {
+        display: block;
+        content: " ";
+        margin-top: -5em;
+        height: 5em;
+        visibility: hidden;
+    }
+</style>
+
+@section Scripts {
+    <script type="text/javascript">
+        $(document).ready(function () {
+            $('body').scrollspy({
+                target: '.guide-sidebar',
+                offset: 0
+            });
+        });
+    </script>
+}

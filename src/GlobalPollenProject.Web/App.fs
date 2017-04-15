@@ -8,11 +8,13 @@ open System.Collections.Generic
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
+open Giraffe.ModelBinding
 open Newtonsoft.Json
 
 open GlobalPollenProject.App
@@ -27,32 +29,9 @@ let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
     ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
-(* JSON Model Binding *)
-
-type BindingError =
-    | InvalidModel
-    | ValidationError
-    | SecurityError
-
-let readAllBytes (s : Stream) = 
-    let ms = new MemoryStream()
-    s.CopyTo(ms)
-    ms.ToArray()
-
-let modelFromJson<'TResult, 'TError> (request : HttpRequest) (error: 'TError) =
-    try
-        let model =
-            request.Body
-            |> readAllBytes
-            |> Encoding.UTF8.GetString
-            |> JsonConvert.DeserializeObject<'TResult>
-        Ok model
-    with
-        | _ -> Error error
-
 (* App *)
 
-let authScheme = "Cookie"
+let authScheme = "Identity.Application"
 
 let accessDenied = setStatusCode 401 >=> text "Access Denied"
 
@@ -65,6 +44,12 @@ let mustBeAdmin =
 let loginHandler =
     fun ctx ->
         async {
+            // let! model = bindForm<LoginRequest> ctx
+            // let userManager = ctx.Services.GetRequiredService<UserManager<ApplicationUser>>()
+            // let signInManager = ctx.Services.GetRequiredService<SignInManager<ApplicationUser>>()
+            
+            // let! result = Async.AwaitTask(signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false))            
+
             let issuer = "http://localhost:5000"
             let claims =
                 [
@@ -74,7 +59,6 @@ let loginHandler =
                 ]
             let identity = ClaimsIdentity(claims, authScheme)
             let user     = ClaimsPrincipal(identity)
-
             do! ctx.HttpContext.Authentication.SignInAsync(authScheme, user) |> Async.AwaitTask
             
             return! text "Successfully logged in" ctx
@@ -110,6 +94,12 @@ let taxonListHandler =
         let appResult = app.Taxonomy.List {Page = 1; PageSize = 20}
         json appResult ctx
 
+let pagedTaxonomyHandler =
+    fun ctx ->
+        let app = ctx.Services.GetRequiredService<AppServices>()
+        let appResult = app.Taxonomy.List {Page = 1; PageSize = 20}
+        razorHtmlView "Taxon/Index" appResult ctx
+
 let api =
     choose [
         route   "/backbone/search"    >=> backboneSearchHandler
@@ -119,23 +109,25 @@ let api =
 
 let webApp = 
     choose [
-        subRoute                "/api/v1"       api
-        GET >=>
-            route               "/"             >=> razorHtmlView "Home/Index" None
-            route               "/Digitise"     >=> razorHtmlView "Digitise/Index" None
-            subRoute            "/Taxon"
-                (choose [
-                    routef      "/%s"           (fun (family) -> text "Family")
-                    routef      "/%s/%s"        (fun (family,genus) -> text "Genus")
-                    routef      "/%s/%s/%s"     (fun (family,genus,species) -> text "Species") ])
-            subRoute            "/Admin"
-                (choose [
-                    route       "/EventLog"     >=> razorHtmlView "Admin/Events" "MODEL" ])
-            route               "/login"        >=> loginHandler
-            route               "/logout"       >=> signOff authScheme >=> text "Successfully logged out."
-            route               "/user"         >=> mustBeUser >=> userHandler
-            routef              "/user/%i"      showUserHandler
-        setStatusCode 404 >=> text "Not Found" ]
+        subRoute                "/api/v1"           api
+        POST >=>    
+            route               "/Account/Login"    >=> loginHandler
+        GET >=> 
+            route               "/"                 >=> razorHtmlView "Home/Index" None
+            route               "/Guide"            >=> razorHtmlView "Home/Guide" None
+            route               "/Digitise"         >=> razorHtmlView "Digitise/Index" None
+            subRoute            "/Taxon"    
+                (choose [   
+                    route       ""                  >=> pagedTaxonomyHandler
+                    routef      "/%s"               (fun (family) -> text family)
+                    routef      "/%s/%s"            (fun (family,genus) -> text genus)
+                    routef      "/%s/%s/%s"         (fun (family,genus,species) -> text species) ])
+            route               "/Account/Login"    >=> razorHtmlView "Account/Login" None
+            route               "/logout"           >=> signOff authScheme >=> text "Successfully logged out."
+            route               "/user"             >=> mustBeUser >=> userHandler
+            routef              "/user/%i"          showUserHandler
+            
+        setStatusCode 404 >=> razorHtmlView "NotFound" None ]
 
 
 let configureApp (app : IApplicationBuilder) = 
