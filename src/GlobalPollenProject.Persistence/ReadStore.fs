@@ -5,7 +5,6 @@ open Microsoft.EntityFrameworkCore
 open System
 open System.ComponentModel.DataAnnotations
 
-// Read Models
 [<CLIMutable>]
 type GrainSummary = {
     [<Key>]
@@ -44,9 +43,22 @@ type BackboneTaxon = {
 type ReferenceCollectionSummary = {
     [<Key>]
     Id:Guid;
+    User:Guid;
     Name:string;
     Description:string;
     SlideCount:int;
+}
+
+[<CLIMutable>]
+type Calibration = {
+    [<Key>]
+    Id: Guid
+    User: Guid
+    Device: string
+    Ocular: int
+    Objective: int
+    Image: string
+    PixelWidth: float
 }
 
 [<CLIMutable>]
@@ -58,7 +70,6 @@ type PublicProfile = {
     LastName:string
 }
 
-// Read Model Repositories
 type ListRequest =
 | All 
 | Paged of PagedRequest
@@ -88,10 +99,11 @@ module EntityFramework =
         new() = { inherit DbContext() }
         new(options: DbContextOptions<ReadContext>) = { inherit DbContext(options) }
 
-        // Unknown Grains Index View
         [<DefaultValue>] val mutable grainSummaries:DbSet<GrainSummary>
         [<DefaultValue>] val mutable taxonSummaries:DbSet<TaxonSummary>
         [<DefaultValue>] val mutable backboneTaxon:DbSet<BackboneTaxon>
+        [<DefaultValue>] val mutable referenceCollectionSummaries:DbSet<ReferenceCollectionSummary>
+        [<DefaultValue>] val mutable calibrations:DbSet<Calibration>
         member x.GrainSummaries
             with get() = x.grainSummaries
             and set v = x.grainSummaries <- v
@@ -104,6 +116,13 @@ module EntityFramework =
             with get() = x.backboneTaxon
             and set v = x.backboneTaxon <- v
 
+        member x.ReferenceCollectionSummaries
+            with get() = x.referenceCollectionSummaries
+            and set v = x.referenceCollectionSummaries <- v
+
+        member x.Calibrations
+            with get() = x.calibrations
+            and set v = x.calibrations <- v
         override this.OnConfiguring optionsBuilder = 
             optionsBuilder.UseSqlite "Filename=./projections.db" |> ignore
             printfn "Starting ReadStore with Entity Framework"

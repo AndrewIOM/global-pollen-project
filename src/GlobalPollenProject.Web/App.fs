@@ -31,11 +31,18 @@ let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
 
 (* App *)
 
-let authScheme = "Identity.Application"
+let authScheme = "Cookie"
 
 let accessDenied = setStatusCode 401 >=> text "Access Denied"
+let currentUserId ctx () =
+    async {
+        let manager = ctx.Services.GetRequiredService<UserManager<ApplicationUser>>()
+        let! user = manager.GetUserAsync(ctx.HttpContext.User) |> Async.AwaitTask
+        return Guid.Parse user.Id
+    } |> Async.RunSynchronously
 
 let mustBeUser = requiresAuthentication accessDenied
+let mustBeLoggedIn = requiresAuthentication (challenge authScheme)
 
 let mustBeAdmin = 
     requiresAuthentication accessDenied 
@@ -44,25 +51,41 @@ let mustBeAdmin =
 let loginHandler =
     fun ctx ->
         async {
-            // let! model = bindForm<LoginRequest> ctx
-            // let userManager = ctx.Services.GetRequiredService<UserManager<ApplicationUser>>()
-            // let signInManager = ctx.Services.GetRequiredService<SignInManager<ApplicationUser>>()
+            let! loginRequest = bindForm<LoginRequest> ctx
+            let userManager = ctx.Services.GetRequiredService<UserManager<ApplicationUser>>()
+            let signInManager = ctx.Services.GetRequiredService<SignInManager<ApplicationUser>>()
             
-            // let! result = Async.AwaitTask(signInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, false))            
-
-            let issuer = "http://localhost:5000"
-            let claims =
-                [
-                    Claim(ClaimTypes.Name,      "John",  ClaimValueTypes.String, issuer)
-                    Claim(ClaimTypes.Surname,   "Doe",   ClaimValueTypes.String, issuer)
-                    Claim(ClaimTypes.Role,      "Admin", ClaimValueTypes.String, issuer)
-                ]
-            let identity = ClaimsIdentity(claims, authScheme)
-            let user     = ClaimsPrincipal(identity)
-            do! ctx.HttpContext.Authentication.SignInAsync(authScheme, user) |> Async.AwaitTask
-            
-            return! text "Successfully logged in" ctx
+            let! result = signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, lockoutOnFailure = false) |> Async.AwaitTask
+            if result.Succeeded then
+               ctx.Logger.LogInformation "User logged in."
+               ctx.HttpContext.Response.Redirect "/"
+               return! text "Couldn't log in" ctx
+           else
+               return! razorHtmlView "/Account/Login" loginRequest ctx
         }
+
+let registerHandler ctx =
+    async {
+        let! model = bindForm<NewAppUserRequest> ctx
+        let userManager = ctx.Services.GetRequiredService<UserManager<ApplicationUser>>()
+        let signInManager = ctx.Services.GetRequiredService<SignInManager<ApplicationUser>>()
+        let app = ctx.Services.GetRequiredService<AppServices>()
+
+        let user = ApplicationUser(UserName = model.Email, Email = model.Email)
+        let! result = userManager.CreateAsync(user, model.Password) |> Async.AwaitTask
+        match result.Succeeded with
+        | true ->
+            let id() = Guid.Parse user.Id
+            match app.User.RegisterProfile model id with
+            | Failure msg -> return! razorHtmlView "/Account/Register" model ctx
+            | Success r -> 
+                do! signInManager.SignInAsync(user, isPersistent = false) |> Async.AwaitTask
+                ctx.Logger.LogInformation "User created a new account with password."
+                // Redirect to another route here...
+                return! text "Account successfully registered" ctx
+        | false -> 
+            return! razorHtmlView "/Account/Register" model ctx
+    }
 
 let userHandler =
     fun ctx ->
@@ -87,48 +110,69 @@ let backboneSearchHandler =
         let appResult = app.Backbone.Search name
         json appResult ctx
 
-let taxonListHandler =
-    fun ctx ->
-        let name = ctx.HttpContext.Request.Query.["name"].ToString()
-        let app = ctx.Services.GetRequiredService<AppServices>()
-        let appResult = app.Taxonomy.List {Page = 1; PageSize = 20}
-        json appResult ctx
+let taxonListHandler ctx =
+    let name = ctx.HttpContext.Request.Query.["name"].ToString()
+    let app = ctx.Services.GetRequiredService<AppServices>()
+    let appResult = app.Taxonomy.List {Page = 1; PageSize = 20}
+    json appResult ctx
 
-let pagedTaxonomyHandler =
-    fun ctx ->
+let pagedTaxonomyHandler ctx =
+    let app = ctx.Services.GetRequiredService<AppServices>()
+    let appResult = app.Taxonomy.List {Page = 1; PageSize = 20}
+    razorHtmlView "Taxon/Index" appResult ctx
+
+let listCollectionsHandler ctx =
+    let app = ctx.Services.GetRequiredService<AppServices>()
+    let result = app.Digitise.GetMyCollections (Guid.NewGuid)
+    match result with
+    | Success clist -> json clist ctx
+    | Failure error -> text "Error" ctx
+
+let startCollectionHandler ctx =
+    async {
+        let! model = bindJson<StartCollectionRequest> ctx
         let app = ctx.Services.GetRequiredService<AppServices>()
-        let appResult = app.Taxonomy.List {Page = 1; PageSize = 20}
-        razorHtmlView "Taxon/Index" appResult ctx
+        let result = app.Digitise.StartNewCollection model (currentUserId ctx)
+        match result with
+        | Success id -> return! json id ctx
+        | Failure error -> return! text "Error" ctx
+    }
 
 let api =
     choose [
         route   "/backbone/search"    >=> backboneSearchHandler
       //route   "/backbone/import"    >=> importFromBackboneHandler
         route   "/taxa"               >=> taxonListHandler
+        route   "/collection/list"    >=> listCollectionsHandler
+        route   "/collection/start"   >=> mustBeUser >=> startCollectionHandler
     ]
 
 let webApp = 
     choose [
         subRoute                "/api/v1"           api
-        POST >=>    
-            route               "/Account/Login"    >=> loginHandler
+        POST >=>
+            choose [
+                route               "/Account/Login"    >=> loginHandler
+                route               "/Account/Register" >=> registerHandler
+            ]    
         GET >=> 
-            route               "/"                 >=> razorHtmlView "Home/Index" None
-            route               "/Guide"            >=> razorHtmlView "Home/Guide" None
-            route               "/Digitise"         >=> razorHtmlView "Digitise/Index" None
-            subRoute            "/Taxon"    
-                (choose [   
-                    route       ""                  >=> pagedTaxonomyHandler
-                    routef      "/%s"               (fun (family) -> text family)
-                    routef      "/%s/%s"            (fun (family,genus) -> text genus)
-                    routef      "/%s/%s/%s"         (fun (family,genus,species) -> text species) ])
-            route               "/Account/Login"    >=> razorHtmlView "Account/Login" None
-            route               "/logout"           >=> signOff authScheme >=> text "Successfully logged out."
-            route               "/user"             >=> mustBeUser >=> userHandler
-            routef              "/user/%i"          showUserHandler
-            
+            choose [
+                route               "/"                 >=> razorHtmlView "Home/Index" None
+                route               "/Guide"            >=> razorHtmlView "Home/Guide" None
+                route               "/Digitise"         >=> razorHtmlView "Digitise/Index" None
+                subRoute            "/Taxon"    
+                    (choose [   
+                        route       ""                  >=> pagedTaxonomyHandler
+                        routef      "/%s/%s/%s"         (fun (family,genus,species) -> text (sprintf "%s (Family); %s (Genus); %s (Species)" family genus species))
+                        routef      "/%s/%s"            (fun (family,genus) -> text (sprintf "%s (Family); %s (Genus)" family genus))
+                        routef      "/%s"               (fun (family) -> text (sprintf "%s (Family)" family)) ])
+                route               "/Account/Login"    >=> razorHtmlView "Account/Login" None
+                route               "/Account/Register" >=> razorHtmlView "Account/Register" None
+                route               "/Account/LogOff"   >=> signOff authScheme >=> text "Logged Out"
+                route               "/user"             >=> mustBeUser >=> userHandler
+                routef              "/user/%i"          showUserHandler
+            ]
         setStatusCode 404 >=> razorHtmlView "NotFound" None ]
-
 
 let configureApp (app : IApplicationBuilder) = 
     app.UseGiraffeErrorHandler(errorHandler)
@@ -142,7 +186,11 @@ let configureServices (services : IServiceCollection) =
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
 
     services.AddSingleton<UserDbContext>() |> ignore
-    services.AddIdentity<ApplicationUser, IdentityRole>()
+
+    services.AddIdentity<ApplicationUser, IdentityRole>(fun opt -> 
+        opt.Cookies.ApplicationCookie.LoginPath <- PathString "/Account/Login"
+        opt.Cookies.ApplicationCookie.AuthenticationScheme <- "Cookie"
+        opt.Cookies.ApplicationCookie.AutomaticAuthenticate <- true)
         .AddEntityFrameworkStores<UserDbContext>()
         .AddDefaultTokenProviders() |> ignore
 

@@ -1,20 +1,22 @@
-﻿@model GlobalPollenProject.WebUI.ViewModels.RegisterViewModel
+﻿@model Requests.NewAppUserRequest
 @{
+    Layout = "_Layout";
     ViewData["Title"] = "Register";
     ViewData["Subtitle"] = "Create a new account.";
 }
 
-    <div class="addgrain-section headsection">
+@section headerSection {
+    <header>
         <div class="container">
             <h2>@ViewBag.Title</h2>
             <p>@ViewBag.Subtitle</p>
         </div>
-    </div>
-    <br />
+    </header>
+}
 
-<form asp-controller="Account" asp-action="Register" method="post" class="form-horizontal" role="form">
+<form action="/Account/Register" method="post" class="form-horizontal" role="form">
     <p>An account will enable you to submit your own unknown pollen grains and identify others. You can also request access to our digitisation features.</p>
-    <p>You can also alternatively <a asp-action="Login">sign in with your Facebook or Twitter account.</a></p>
+    <p>You can also alternatively <a href="/Account/Login">sign in with your Facebook or Twitter account.</a></p>
     <hr />
     <div asp-validation-summary="All" class="text-danger"></div>
     <h4>About You</h4>
@@ -80,7 +82,7 @@
     </div>
     <div class="form-group">
         <div class="col-md-offset-2 col-md-10">
-            <p>By registering, you agree to the Global Pollen Project <a asp-action="Terms" asp-controller="Home" target="_blank">terms and conditions</a>.</p>
+            <p>By registering, you agree to the Global Pollen Project <a href="/Terms" target="_blank">terms and conditions</a>.</p>
             <button type="submit" class="btn btn-primary">Register</button>
         </div>
     </div>

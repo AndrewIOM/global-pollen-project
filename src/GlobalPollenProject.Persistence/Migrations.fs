@@ -40,6 +40,25 @@ type BackboneTaxonTable = {
     ReferenceName: OperationBuilder<AddColumnOperation>
     ReferenceUrl: OperationBuilder<AddColumnOperation> }
 
+type CalibrationTable = {
+    Id: OperationBuilder<AddColumnOperation>
+    User: OperationBuilder<AddColumnOperation>
+    Device: OperationBuilder<AddColumnOperation>
+    Ocular: OperationBuilder<AddColumnOperation>
+    Objective: OperationBuilder<AddColumnOperation>
+    Image: OperationBuilder<AddColumnOperation>
+    PixelWidth: OperationBuilder<AddColumnOperation>
+}
+
+type ReferenceCollectionSummaryTable = {
+    Id: OperationBuilder<AddColumnOperation>
+    User: OperationBuilder<AddColumnOperation>
+    Name: OperationBuilder<AddColumnOperation>
+    Description: OperationBuilder<AddColumnOperation>
+    SlideCount: OperationBuilder<AddColumnOperation>
+}
+
+
 // Migrations
 [<DbContext(typeof<EntityFramework.ReadContext>)>]
 [<Migration("20170105185538_Initial")>]
@@ -92,11 +111,40 @@ type Init() =
                 fun table ->
                     table.PrimaryKey("PK_BackboneTaxa", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
 
+        migrationBuilder.CreateTable(
+            name = "ReferenceCollectionSummaries",
+            columns =
+                (fun table ->
+                    { Id = table.Column<Guid>(nullable = false)
+                      User = table.Column<Guid>(nullable = false)
+                      Name = table.Column<string>(nullable = true)
+                      Description = table.Column<string>(nullable = true)
+                      SlideCount = table.Column<int>(nullable = true) }),
+            constraints =
+                fun table ->
+                    table.PrimaryKey("PK_ReferenceCollectionSummaries", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
+
+        migrationBuilder.CreateTable(
+            name = "Calibrations",
+            columns =
+                (fun table ->
+                    {   Id = table.Column<Guid>(nullable=false)
+                        User = table.Column<Guid>(nullable=false)
+                        Device = table.Column<string>(nullable=false)
+                        Ocular = table.Column<int>(nullable=false)
+                        Objective = table.Column<int>(nullable=false)
+                        Image = table.Column<string>(nullable=false)
+                        PixelWidth = table.Column<float>(nullable=false) }),
+            constraints =
+                fun table ->
+                    table.PrimaryKey("PK_Calibrations", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
 
     override this.Down(migrationBuilder: MigrationBuilder) = 
         migrationBuilder.DropTable(name = "GrainSummaries") |> ignore
         migrationBuilder.DropTable(name = "TaxonSummaries") |> ignore
         migrationBuilder.DropTable(name = "BackboneTaxa") |> ignore
+        migrationBuilder.DropTable(name = "ReferenceCollectionSummaries") |> ignore
+        migrationBuilder.DropTable(name = "Calibrations") |> ignore
 
     override this.BuildTargetModel(modelBuilder: ModelBuilder) =
         modelBuilder
@@ -137,6 +185,28 @@ type Init() =
                 b.Property<string>("ReferenceUrl") |> ignore
                 b.HasKey("Id") |> ignore
                 b.ToTable("BackboneTaxa") |> ignore) |> ignore
+
+        modelBuilder.Entity("ReadStore.ReferenceCollectionSummaries",
+            fun b ->
+                b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
+                b.Property<Guid>("User") |> ignore
+                b.Property<string>("Name") |> ignore
+                b.Property<string>("Description") |> ignore
+                b.Property<int>("SlideCount") |> ignore
+                b.HasKey("Id") |> ignore
+                b.ToTable("ReferenceCollectionSummaries") |> ignore) |> ignore
+
+        modelBuilder.Entity("ReadStore.Calibrations",
+            fun b ->
+                b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
+                b.Property<Guid>("User") |> ignore
+                b.Property<string>("Device") |> ignore
+                b.Property<int>("Ocular") |> ignore
+                b.Property<int>("Objective") |> ignore
+                b.Property<string>("Image") |> ignore
+                b.Property<float>("PixelWidth") |> ignore
+                b.HasKey("Id") |> ignore
+                b.ToTable("Calibrations") |> ignore) |> ignore
 
 open EventStore
 

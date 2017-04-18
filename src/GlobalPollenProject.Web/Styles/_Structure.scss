@@ -5,15 +5,22 @@
 }
 
 //A: Home Page
+@keyframes scroll {
+  100%{
+    background-position:-3000px 0px;
+  }
+}
+
 .homepage-header {
     position: relative;
-    padding: 120px 15px;
-    height: 20em;    
+    padding: 160px 0 75px;
     color: rgba(255, 255, 255, .8);
     background-color: $primary-color;
     background-image: url(/images/pollen-tiles-white.png);
     margin-bottom: 40px;
     font-size: 20px;
+    animation: 300s scroll linear infinite;
+    animation-fill-mode: forwards;
 }
 
 @media(max-width:992px) {
@@ -48,12 +55,6 @@
         button {
             display: inline-block;
         }
-    }
-}
-
-@media(max-width:992px) {
-    .homepage-header {
-        height: 17em;
     }
 }
 

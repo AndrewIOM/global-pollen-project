@@ -27,7 +27,14 @@ type PagedResult<'TProjection> = {
     ItemsPerPage: int
 }
 
-// Definition: User Use Cases
+// Definitions
+type ServiceError =
+| CoreError
+| ValidationError
+| PersistenceError
+
+type GetCurrentUser = unit -> Guid
+
 type BackboneService = {
     Search: string -> PagedResult<BackboneTaxon>
     Import: string -> unit
@@ -41,14 +48,68 @@ type GrainService = {
     SubmitUnknownGrain: Guid -> string list -> int -> float -> float -> unit
 }
 
+type DigitiseService = {
+    StartNewCollection:     StartCollectionRequest      -> GetCurrentUser -> Result<CollectionId,ServiceError>
+    AddSlideRecord:         SlideRecordRequest          -> Result<SlideId,ServiceError>
+    AddSlideImage:          SlideImageRequest           -> Result<unit,ServiceError>
+    GetMyCollections:       GetCurrentUser              -> Result<ReferenceCollectionSummary list,ServiceError>
+}
+
+type UserService = {
+    RegisterProfile: NewAppUserRequest -> GetCurrentUser -> Result<unit,ServiceError>
+}
+
 type AppServices = {
     Backbone: BackboneService
     Grain: GrainService
     Taxonomy: TaxonomyService
+    User: UserService
+    Digitise: DigitiseService
 }
 
 
-// Responsible for setting up app service for grain use cases
+module Digitise =
+
+    open GlobalPollenProject.Core.Aggregates.ReferenceCollection
+
+    let appService (deps:Dependencies) (eventStore: EventStore) (projections: EntityFramework.ReadContext) =
+        let aggregate = {
+            initial = State.Initial
+            evolve = State.Evolve
+            handle = handle
+            getId = getId 
+        }
+        let handle = GlobalPollenProject.Core.CommandHandlers.create aggregate "ReferenceCollection" deps eventStore.ReadStream<Event> eventStore.Save
+
+        let startNewCollection (request:StartCollectionRequest) getCurrentUser =
+            let id = CollectionId (deps.GenerateId())
+            handle (CreateCollection { Id = id; Name = request.Name; Owner = UserId (getCurrentUser()) })
+            Success id
+        
+        let addMeta request = 
+            let identification = Botanical (TaxonId request.BackboneTaxonId)
+            handle (AddSlide { Id = CollectionId request.Collection; Taxon = identification; Place = None; Time = None })
+            Success (SlideId (CollectionId request.Collection,"SL001"))
+
+        let addImage request = 
+            let base64 = Base64Image request.ImageBase64
+            let toUpload = Single base64
+            let uploaded = deps.UploadImage toUpload
+            let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId)
+            handle (UploadSlideImage { Id = slideId; Image = uploaded })
+            Success()
+
+        let myCollections getCurrentUser = 
+            let userId = getCurrentUser()
+            let readModel = projections.ReferenceCollectionSummaries |> Seq.filter (fun rc -> rc.User = userId) |> Seq.toList
+            Success readModel
+
+        { StartNewCollection    = startNewCollection
+          AddSlideRecord        = addMeta
+          AddSlideImage         = addImage
+          GetMyCollections      = myCollections }
+
+
 module Grain =
 
     open GlobalPollenProject.Core.Aggregates.Grain
@@ -82,24 +143,6 @@ module Grain =
         {SubmitUnknownGrain = submitUnknownGrain }
 
 
-// module User =
-
-//     open GlobalPollenProject.Core.Aggregates.User
-//     open GlobalPollenProject.Shared.Identity
-
-//     let handle =
-//         let aggregate = {
-//             initial = State.InitialState
-//             evolve = State.Evolve
-//             handle = handle
-//             getId = getId
-//         }
-//         create aggregate "User" Config.dependencies Config.eventStore.ReadStream<Event> Config.eventStore.Save
-
-//     let register userId title firstName lastName =
-//         handle ( Register { Id = UserId userId; Title = title; FirstName = firstName; LastName = lastName })
-
-
 module Taxonomy =
 
     open GlobalPollenProject.Core.Aggregates.Taxonomy
@@ -119,20 +162,6 @@ module Taxonomy =
             { Items = result; CurrentPage = request.Page; TotalPages = 2; ItemsPerPage = request.PageSize }
 
         {List = list}
-
-
-// module Digitise =
-
-//     open GlobalPollenProject.Core.Aggregates.ReferenceCollection
-
-//     let handle =
-//         let aggregate = {
-//             initial = State.Initial
-//             evolve = State.Evolve
-//             handle = handle
-//             getId = getId
-//         }
-//         GlobalPollenProject.Core.CommandHandlers.create aggregate "ReferenceCollection" Config.dependencies Config.eventStore.ReadStream<Event> Config.eventStore.Save
 
 
 module Backbone =
@@ -166,6 +195,28 @@ module Backbone =
             { CurrentPage = 1; TotalPages = 1; ItemsPerPage = 9999; Items =  result}
 
         { Search = search; Import = importAll }
+
+
+module User = 
+
+    open GlobalPollenProject.Core.Aggregates.User
+    
+    let appService (deps:Dependencies) (eventStore: EventStore) (projections: EntityFramework.ReadContext) =
+
+        let h = 
+            let aggregate = {
+                initial = State.InitialState
+                evolve = State.Evolve
+                handle = handle
+                getId = getId }
+            GlobalPollenProject.Core.CommandHandlers.create aggregate "User" deps eventStore.ReadStream<Event> eventStore.Save
+        
+        let register (newUser:NewAppUserRequest) (getUserId:GetCurrentUser) : Result<unit,ServiceError> =
+            let id = UserId (getUserId())
+            h (Register { Id = id; Title = newUser.Title; FirstName = newUser.FirstName; LastName = newUser.LastName })
+            Success()
+        
+        { RegisterProfile = register }
 
 
 let composeApp () : AppServices =
@@ -229,4 +280,6 @@ let composeApp () : AppServices =
     // App Services
     { Backbone      = Backbone.appService dependencies eventStore projections
       Taxonomy      = Taxonomy.appService dependencies eventStore projections
-      Grain         = Grain.appService dependencies eventStore projections }
+      Grain         = Grain.appService dependencies eventStore projections
+      Digitise      = Digitise.appService dependencies eventStore projections
+      User          = User.appService dependencies eventStore projections }
