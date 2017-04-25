@@ -7,4 +7,5 @@ type PagedResult<'TProjection> = {
     CurrentPage: int
     TotalPages: int
     ItemsPerPage: int
+    ItemTotal: int
 }

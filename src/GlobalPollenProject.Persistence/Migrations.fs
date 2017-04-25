@@ -40,6 +40,14 @@ type BackboneTaxonTable = {
     ReferenceName: OperationBuilder<AddColumnOperation>
     ReferenceUrl: OperationBuilder<AddColumnOperation> }
 
+type ReferenceCollectionSummaryTable = {
+    Id: OperationBuilder<AddColumnOperation>
+    User: OperationBuilder<AddColumnOperation>
+    Name: OperationBuilder<AddColumnOperation>
+    Description: OperationBuilder<AddColumnOperation>
+    SlideCount: OperationBuilder<AddColumnOperation>
+}
+
 type CalibrationTable = {
     Id: OperationBuilder<AddColumnOperation>
     User: OperationBuilder<AddColumnOperation>
@@ -50,13 +58,48 @@ type CalibrationTable = {
     PixelWidth: OperationBuilder<AddColumnOperation>
 }
 
-type ReferenceCollectionSummaryTable = {
+type SlideTable = {
+    Id: OperationBuilder<AddColumnOperation>
+    CollectionId: OperationBuilder<AddColumnOperation>
+    CollectionSlideId: OperationBuilder<AddColumnOperation>
+    IdentificationMethod: OperationBuilder<AddColumnOperation>
+    FamilyOriginal: OperationBuilder<AddColumnOperation>
+    GenusOriginal: OperationBuilder<AddColumnOperation>
+    SpeciesOriginal: OperationBuilder<AddColumnOperation>
+    IsFullyDigitised: OperationBuilder<AddColumnOperation>
+    ReferenceCollectionId: OperationBuilder<AddColumnOperation>
+    TaxonId: OperationBuilder<AddColumnOperation>
+}
+
+type ReferenceCollectionTable = {
     Id: OperationBuilder<AddColumnOperation>
     User: OperationBuilder<AddColumnOperation>
     Name: OperationBuilder<AddColumnOperation>
+    Status: OperationBuilder<AddColumnOperation>
+    Version: OperationBuilder<AddColumnOperation>
     Description: OperationBuilder<AddColumnOperation>
-    SlideCount: OperationBuilder<AddColumnOperation>
 }
+
+type SlideImageTable = {
+    Id: OperationBuilder<AddColumnOperation>
+    CalibrationImageUrl: OperationBuilder<AddColumnOperation>
+    CalibrationFocusLevel: OperationBuilder<AddColumnOperation>
+    PixelWidth: OperationBuilder<AddColumnOperation>
+    SlideId: OperationBuilder<AddColumnOperation>
+}
+
+type FrameTable = {
+    Id: OperationBuilder<AddColumnOperation>
+    Url: OperationBuilder<AddColumnOperation>
+    SlideImageId: OperationBuilder<AddColumnOperation>
+}
+
+type SlideSummary = {
+    Id: OperationBuilder<AddColumnOperation>
+    ThumbnailUrl: OperationBuilder<AddColumnOperation>
+    TaxonId: OperationBuilder<AddColumnOperation>
+}
+
 
 
 // Migrations
@@ -67,7 +110,7 @@ type Init() =
     
     override this.Up(migrationBuilder: MigrationBuilder) =
         migrationBuilder.CreateTable(
-            name = "GrainSummaries",
+            name = "GrainSummary",
             columns = 
                 (fun table -> 
                     { Id = table.Column<Guid>(nullable = false)
@@ -75,10 +118,10 @@ type Init() =
                       Thumbnail = table.Column<string>(nullable = true) }),
             constraints = 
                 fun table -> 
-                    table.PrimaryKey("PK_GrainSummaries", (fun x -> x.Id2 :> obj))|> ignore ) |> ignore
+                    table.PrimaryKey("PK_GrainSummary", (fun x -> x.Id2 :> obj))|> ignore ) |> ignore
         
         migrationBuilder.CreateTable(
-            name = "TaxonSummaries",
+            name = "TaxonSummary",
             columns =
                 (fun table ->
                     { Id = table.Column<Guid>(nullable = false)
@@ -92,10 +135,10 @@ type Init() =
                       ThumbnailUrl = table.Column<string>(nullable = true) }),
             constraints =
                 fun table ->
-                    table.PrimaryKey("PK_TaxonSummaries", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
+                    table.PrimaryKey("PK_TaxonSummary", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
 
         migrationBuilder.CreateTable(
-            name = "BackboneTaxa",
+            name = "BackboneTaxon",
             columns =
                 (fun table ->
                     { Id = table.Column<Guid>(nullable = false)
@@ -109,10 +152,10 @@ type Init() =
                       ReferenceUrl = table.Column<string>(nullable = true) }),
             constraints =
                 fun table ->
-                    table.PrimaryKey("PK_BackboneTaxa", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
+                    table.PrimaryKey("PK_BackboneTaxon", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
 
         migrationBuilder.CreateTable(
-            name = "ReferenceCollectionSummaries",
+            name = "ReferenceCollectionSummary",
             columns =
                 (fun table ->
                     { Id = table.Column<Guid>(nullable = false)
@@ -122,10 +165,10 @@ type Init() =
                       SlideCount = table.Column<int>(nullable = true) }),
             constraints =
                 fun table ->
-                    table.PrimaryKey("PK_ReferenceCollectionSummaries", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
+                    table.PrimaryKey("PK_ReferenceCollectionSummary", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
 
         migrationBuilder.CreateTable(
-            name = "Calibrations",
+            name = "Calibration",
             columns =
                 (fun table ->
                     {   Id = table.Column<Guid>(nullable=false)
@@ -137,18 +180,109 @@ type Init() =
                         PixelWidth = table.Column<float>(nullable=false) }),
             constraints =
                 fun table ->
-                    table.PrimaryKey("PK_Calibrations", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
+                    table.PrimaryKey("PK_Calibration", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
+
+        migrationBuilder.CreateTable(
+            name = "ReferenceCollection",
+            columns =
+                (fun table ->
+                    { Id = table.Column<Guid>(nullable = false)
+                      User = table.Column<Guid>(nullable = false)
+                      Name = table.Column<string>(nullable = true)
+                      Status = table.Column<string>(nullable = true)
+                      Description = table.Column<string>(nullable = true)
+                      Version = table.Column<int>(nullable = true) }),
+            constraints =
+                fun table ->
+                    table.PrimaryKey("PK_ReferenceCollection", (fun x -> x.Id :> obj)) |> ignore ) |> ignore
+        
+        migrationBuilder.CreateTable(
+            name = "Slide",
+            columns =
+                (fun table ->
+                    { Id = table.Column<Guid>(nullable = false)
+                      CollectionId = table.Column<Guid>(nullable = true)
+                      CollectionSlideId = table.Column<string>(nullable = true)
+                      IdentificationMethod = table.Column<string>(nullable = true)
+                      FamilyOriginal = table.Column<string>(nullable = true)
+                      GenusOriginal = table.Column<string>(nullable = true)
+                      SpeciesOriginal = table.Column<string>(nullable = true)
+                      ReferenceCollectionId = table.Column<Guid>(nullable = true)
+                      TaxonId = table.Column<Guid>(nullable = true)
+                      IsFullyDigitised = table.Column<int>(nullable = true) }),
+            constraints =
+                fun table ->
+                    table.PrimaryKey("PK_Slide", (fun x -> x.Id :> obj)) |> ignore
+                    table.ForeignKey(
+                        name = "FK_Slide_ReferenceCollection_ReferenceCollectionId",
+                        column = (fun x -> x.ReferenceCollectionId :> obj),
+                        principalTable = "ReferenceCollection",
+                        principalColumn = "Id",
+                        onDelete = ReferentialAction.Restrict) |> ignore
+                    table.ForeignKey(
+                        name = "FK_Slide_TaxonSummary_TaxonId",
+                        column = (fun x -> x.TaxonId :> obj),
+                        principalTable = "TaxonSummary",
+                        principalColumn = "Id",
+                        onDelete = ReferentialAction.Restrict) |> ignore ) |> ignore
+
+
+        migrationBuilder.CreateTable(
+            name = "SlideImage",
+            columns =
+                (fun table ->
+                    { Id = table.Column<Guid>(nullable = false)
+                      CalibrationImageUrl = table.Column<string>(nullable = true)
+                      CalibrationFocusLevel = table.Column<string>(nullable = true)
+                      PixelWidth = table.Column<float>(nullable = true)
+                      SlideId = table.Column<Guid>(nullable = true) }),
+            constraints =
+                fun table ->
+                    table.PrimaryKey("PK_SlideImage", (fun x -> x.Id :> obj)) |> ignore
+                    table.ForeignKey(
+                        name = "FK_SlideImage_Slide_SlideId",
+                        column = (fun x -> x.SlideId :> obj),
+                        principalTable = "Slide",
+                        principalColumn = "Id",
+                        onDelete = ReferentialAction.Restrict) |> ignore ) |> ignore
+
+        migrationBuilder.CreateTable(
+            name = "Frame",
+            columns =
+                (fun table ->
+                    { Id = table.Column<Guid>(nullable = false)
+                      Url = table.Column<string>(nullable = true)
+                      SlideImageId = table.Column<Guid>(nullable = true) }),
+            constraints =
+                fun table ->
+                    table.PrimaryKey("PK_Frame", (fun x -> x.Id :> obj)) |> ignore
+                    table.ForeignKey(
+                        name = "FK_Frame_SlideImage_SlideImageId",
+                        column = (fun x -> x.SlideImageId :> obj),
+                        principalTable = "SlideImage",
+                        principalColumn = "Id",
+                        onDelete = ReferentialAction.Restrict) |> ignore ) |> ignore
+
+        migrationBuilder.CreateIndex("IX_Frame_SlideImageId", "Frame", "SlideImageId") |> ignore
+        migrationBuilder.CreateIndex("IX_Slide_ReferenceCollectionId", "Slide", "ReferenceCollectionId") |> ignore
+        migrationBuilder.CreateIndex("IX_Slide_TaxonId","Slide","TaxonId") |> ignore
+        migrationBuilder.CreateIndex("IX_SlideImage_SlideId","SlideImage","SlideId") |> ignore
+
 
     override this.Down(migrationBuilder: MigrationBuilder) = 
-        migrationBuilder.DropTable(name = "GrainSummaries") |> ignore
-        migrationBuilder.DropTable(name = "TaxonSummaries") |> ignore
-        migrationBuilder.DropTable(name = "BackboneTaxa") |> ignore
-        migrationBuilder.DropTable(name = "ReferenceCollectionSummaries") |> ignore
-        migrationBuilder.DropTable(name = "Calibrations") |> ignore
+        migrationBuilder.DropTable(name = "GrainSummary") |> ignore
+        migrationBuilder.DropTable(name = "TaxonSummary") |> ignore
+        migrationBuilder.DropTable(name = "BackboneTaxon") |> ignore
+        migrationBuilder.DropTable(name = "ReferenceCollectionSummary") |> ignore
+        migrationBuilder.DropTable(name = "ReferenceCollection") |> ignore
+        migrationBuilder.DropTable(name = "Slide") |> ignore
+        migrationBuilder.DropTable(name = "SlideImage") |> ignore
+        migrationBuilder.DropTable(name = "Frame") |> ignore
+        migrationBuilder.DropTable(name = "Calibration") |> ignore
 
     override this.BuildTargetModel(modelBuilder: ModelBuilder) =
         modelBuilder
-            .HasAnnotation("ProductVersion", "1.0.1")
+            .HasAnnotation("ProductVersion", "1.1.1")
             |> ignore
 
         modelBuilder.Entity("ReadStore.GrainSummary", 
@@ -156,7 +290,7 @@ type Init() =
                 b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
                 b.Property<string>("Thumbnail") |> ignore
                 b.HasKey("Id") |> ignore
-                b.ToTable("GrainSummaries") |> ignore)|> ignore
+                b.ToTable("GrainSummary") |> ignore)|> ignore
 
         modelBuilder.Entity("ReadStore.TaxonSummary",
             fun b ->
@@ -170,7 +304,7 @@ type Init() =
                 b.Property<string>("Species") |> ignore
                 b.Property<string>("ThumbnailUrl") |> ignore
                 b.HasKey("Id") |> ignore
-                b.ToTable("TaxonSummaries") |> ignore) |> ignore
+                b.ToTable("TaxonSummary") |> ignore) |> ignore
 
         modelBuilder.Entity("ReadStore.BackboneTaxon",
             fun b ->
@@ -184,9 +318,9 @@ type Init() =
                 b.Property<string>("Reference") |> ignore
                 b.Property<string>("ReferenceUrl") |> ignore
                 b.HasKey("Id") |> ignore
-                b.ToTable("BackboneTaxa") |> ignore) |> ignore
+                b.ToTable("BackboneTaxon") |> ignore) |> ignore
 
-        modelBuilder.Entity("ReadStore.ReferenceCollectionSummaries",
+        modelBuilder.Entity("ReadStore.ReferenceCollectionSummary",
             fun b ->
                 b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
                 b.Property<Guid>("User") |> ignore
@@ -194,9 +328,57 @@ type Init() =
                 b.Property<string>("Description") |> ignore
                 b.Property<int>("SlideCount") |> ignore
                 b.HasKey("Id") |> ignore
-                b.ToTable("ReferenceCollectionSummaries") |> ignore) |> ignore
+                b.ToTable("ReferenceCollectionSummary") |> ignore) |> ignore
 
-        modelBuilder.Entity("ReadStore.Calibrations",
+        modelBuilder.Entity("ReadStore.ReferenceCollection",
+            fun b ->
+                b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
+                b.Property<Guid>("User") |> ignore
+                b.Property<string>("Name") |> ignore
+                b.Property<string>("Description") |> ignore
+                b.Property<string>("Status") |> ignore
+                b.Property<int>("Version") |> ignore
+                b.HasKey("Id") |> ignore
+                b.ToTable("ReferenceCollection") |> ignore) |> ignore
+
+        modelBuilder.Entity("ReadStore.Slide",
+            fun b ->
+                b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
+                b.Property<Guid>("CollectionId") |> ignore
+                b.Property<string>("CollectionSlideId") |> ignore
+                b.Property<string>("FamilyOriginal") |> ignore
+                b.Property<string>("GenusOriginal") |> ignore
+                b.Property<string>("IdentificationMethod") |> ignore
+                b.Property<bool>("IsFullyDigitised") |> ignore
+                b.Property<System.Nullable<Guid>>("ReferenceCollectionId") |> ignore
+                b.Property<string>("SpeciesOriginal") |> ignore
+                b.Property<System.Nullable<Guid>>("TaxonId") |> ignore
+                b.HasKey("Id") |> ignore
+                b.HasIndex("ReferenceCollectionId") |> ignore
+                b.HasIndex("TaxonId") |> ignore
+                b.ToTable("Slide") |> ignore) |> ignore
+
+        modelBuilder.Entity("ReadStore.SlideImage",
+            fun b ->
+                b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
+                b.Property<string>("CalibrationImageUrl") |> ignore
+                b.Property<int>("CalibrationFocusLevel") |> ignore
+                b.Property<System.Nullable<Guid>>("SlideId") |> ignore
+                b.Property<float>("PixelWidth") |> ignore
+                b.HasKey("Id") |> ignore
+                b.HasIndex("SlideId") |> ignore
+                b.ToTable("SlideImage") |> ignore) |> ignore
+
+        modelBuilder.Entity("ReadStore.Frame",
+            fun b ->
+                b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
+                b.Property<System.Nullable<int>>("SlideImageId") |> ignore
+                b.Property<string>("Url") |> ignore
+                b.HasKey("Id") |> ignore
+                b.HasIndex("SlideImageId") |> ignore
+                b.ToTable("SlideImage") |> ignore) |> ignore
+
+        modelBuilder.Entity("ReadStore.Calibration",
             fun b ->
                 b.Property<Guid>("Id").ValueGeneratedOnAdd() |> ignore
                 b.Property<Guid>("User") |> ignore
@@ -206,7 +388,30 @@ type Init() =
                 b.Property<string>("Image") |> ignore
                 b.Property<float>("PixelWidth") |> ignore
                 b.HasKey("Id") |> ignore
-                b.ToTable("Calibrations") |> ignore) |> ignore
+                b.ToTable("Calibration") |> ignore) |> ignore
+
+        modelBuilder.Entity("ReadStore.Frame",
+            fun b ->
+                b.HasOne("ReadStore.SlideImage")
+                    .WithMany("Frames")
+                    .HasForeignKey("SlideImageId") |> ignore ) |> ignore
+
+        modelBuilder.Entity("ReadStore.Slide",
+            fun b ->
+                b.HasOne("ReadStore.ReferenceCollection")
+                    .WithMany("Slides")
+                    .HasForeignKey("ReferenceCollectionId") |> ignore
+
+                b.HasOne("ReadStore.TaxonSummary", "Taxon")
+                    .WithMany()
+                    .HasForeignKey("TaxonId") |> ignore ) |> ignore
+
+        modelBuilder.Entity("ReadStore.SlideImage",
+            fun b ->
+                b.HasOne("ReadStore.Slide")
+                    .WithMany("Images")
+                    .HasForeignKey("SlideId") |> ignore ) |> ignore
+
 
 open EventStore
 

@@ -51,3 +51,12 @@ type SlideImageRequest = {
     SlideId: string
     ImageBase64: string
 }
+
+[<CLIMutable>]
+type BackboneSearchRequest = {
+    LatinName: string
+    Rank: string
+    Family: string
+    Genus: string
+    Species: string
+}

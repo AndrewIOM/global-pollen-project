@@ -19,29 +19,27 @@ open ReadStore
 open EventStore
 open AzureImageService
 
+open Microsoft.EntityFrameworkCore
+
 type PageRequest = { Page: int; PageSize: int }
-type PagedResult<'TProjection> = {
-    Items: 'TProjection list
-    CurrentPage: int
-    TotalPages: int
-    ItemsPerPage: int
-}
 
 // Definitions
 type ServiceError =
 | CoreError
 | ValidationError
 | PersistenceError
+| NotFound
 
 type GetCurrentUser = unit -> Guid
 
 type BackboneService = {
-    Search: string -> PagedResult<BackboneTaxon>
+    Search: BackboneSearchRequest -> PagedResult<BackboneTaxon>
     Import: string -> unit
 }
 
 type TaxonomyService = {
     List: PageRequest -> PagedResult<TaxonSummary>
+    GetByName: string -> string -> string -> Result<TaxonSummary,ServiceError>
 }
 
 type GrainService = {
@@ -49,10 +47,11 @@ type GrainService = {
 }
 
 type DigitiseService = {
+    GetMyCollections:       GetCurrentUser              -> Result<ReferenceCollectionSummary list,ServiceError>
+    GetCollectionDetail:    Guid                        -> Result<ReferenceCollection, ServiceError>
     StartNewCollection:     StartCollectionRequest      -> GetCurrentUser -> Result<CollectionId,ServiceError>
     AddSlideRecord:         SlideRecordRequest          -> Result<SlideId,ServiceError>
     AddSlideImage:          SlideImageRequest           -> Result<unit,ServiceError>
-    GetMyCollections:       GetCurrentUser              -> Result<ReferenceCollectionSummary list,ServiceError>
 }
 
 type UserService = {
@@ -83,7 +82,7 @@ module Digitise =
 
         let startNewCollection (request:StartCollectionRequest) getCurrentUser =
             let id = CollectionId (deps.GenerateId())
-            handle (CreateCollection { Id = id; Name = request.Name; Owner = UserId (getCurrentUser()) })
+            handle (CreateCollection { Id = id; Name = request.Name; Owner = UserId (getCurrentUser()); Description = request.Description })
             Success id
         
         let addMeta request = 
@@ -101,13 +100,20 @@ module Digitise =
 
         let myCollections getCurrentUser = 
             let userId = getCurrentUser()
-            let readModel = projections.ReferenceCollectionSummaries |> Seq.filter (fun rc -> rc.User = userId) |> Seq.toList
+            let readModel = projections.ReferenceCollectionSummary |> Seq.filter (fun rc -> rc.User = userId) |> Seq.toList
             Success readModel
+
+        let getCollection id =
+            let result = projections.ReferenceCollection.Include(fun x -> x.Slides) |> Seq.tryFind (fun rc -> rc.Id = id)
+            match result with
+            | Some rc -> Success rc
+            | None -> Failure NotFound
 
         { StartNewCollection    = startNewCollection
           AddSlideRecord        = addMeta
           AddSlideImage         = addImage
-          GetMyCollections      = myCollections }
+          GetMyCollections      = myCollections
+          GetCollectionDetail   = getCollection }
 
 
 module Grain =
@@ -135,7 +141,7 @@ module Grain =
             handle (IdentifyUnknownGrain { Id = GrainId grainId; Taxon = TaxonId taxonId; IdentifiedBy = UserId (Guid.NewGuid()) })
 
         let listUnknownGrains() =
-            projections.GrainSummaries |> Seq.toList
+            projections.GrainSummary |> Seq.toList
 
         let listEvents() =
             eventStore.Events |> Seq.toList
@@ -158,10 +164,17 @@ module Taxonomy =
             create aggregate "Taxon" deps eventStore.ReadStream<Event> eventStore.Save
 
         let list (request:PageRequest) =
-            let result = projections.TaxonSummaries.Skip(request.Page - 1 * request.PageSize).Take(request.PageSize) |> Seq.toList
-            { Items = result; CurrentPage = request.Page; TotalPages = 2; ItemsPerPage = request.PageSize }
+            let result = projections.TaxonSummary.Skip(request.Page - 1 * request.PageSize).Take(request.PageSize) |> Seq.toList
+            { Items = result; CurrentPage = request.Page; TotalPages = 2; ItemsPerPage = request.PageSize; ItemTotal = result.Length }
 
-        {List = list}
+        let getByName family genus species =
+            let taxon = projections.TaxonSummary
+                        |> Seq.tryFind (fun taxon -> taxon.Family = family && taxon.Genus = genus && taxon.Species = species)
+            match taxon with
+            | Some t -> Success t
+            | None -> Failure NotFound
+
+        {List = list; GetByName = getByName }
 
 
 module Backbone =
@@ -181,7 +194,7 @@ module Backbone =
 
         let importAll filePath =
 
-            let taxa = (readPlantListTextFile filePath) |> List.filter (fun x -> x.TaxonomicStatus = "accepted") |> List.take 2000
+            let taxa = (readPlantListTextFile filePath) |> List.filter (fun x -> x.TaxonomicStatus = "accepted") |> List.take 5000
             let mutable commands : Command list = []
             for row in taxa do
                 let additionalCommands = createImportCommands row commands deps.GenerateId
@@ -190,9 +203,19 @@ module Backbone =
             ()
             //commands |> List.map H
 
-        let search name =
-            let result = projections.BackboneTaxa.Where(fun m -> m.LatinName.Contains(name)) |> Seq.toList
-            { CurrentPage = 1; TotalPages = 1; ItemsPerPage = 9999; Items =  result}
+        let search (request:BackboneSearchRequest) =
+
+            let genus = if isNull request.Genus then "" else request.Genus
+            let species = if isNull request.Species then "" else request.Species
+
+            let result = projections.BackboneTaxon.Where(fun m ->
+                m.Rank = request.Rank
+                && m.LatinName.Contains request.LatinName
+                && m.Family.Contains request.Family
+                && m.Genus.Contains genus
+                && m.Species.Contains species ) |> Seq.toList
+            let totalPages = float result.Length / 10. |> Math.Ceiling |> int
+            { CurrentPage = 1; ItemTotal = result.Length; TotalPages = totalPages; ItemsPerPage = 10; Items = if result.Length > 10 then result |> List.take 10 else result }
 
         { Search = search; Import = importAll }
 
@@ -234,11 +257,6 @@ let composeApp () : AppServices =
     let grainRepo = EntityFramework.grainRepo projections
 
     // Setup Event Handlers (Projections)
-    eventStore.SaveEvent 
-    :> IObservable<string*obj>
-    |> EventHandlers.grainProjections projections
-    |> ignore
-
     //TEMP
     let getById id =
         let unwrappedId (TaxonId i) : Guid = i
@@ -246,7 +264,7 @@ let composeApp () : AppServices =
 
     eventStore.SaveEvent 
     :> IObservable<string*obj>
-    |> EventHandlers.taxonomyProjections projections getById backboneRepo.GetTaxonByName
+    |> EventHandlers.projectionHandler projections getById backboneRepo.GetTaxonByName
     |> ignore
 
     // App Core Dependencies

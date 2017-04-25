@@ -54,7 +54,7 @@ and TaxonState = {
 }
 
 and ExternalLink = {
-    ServiceName: string
+    ServiceName: ThirdParty
     ServiceId: string
     LastChecked: DateTime
 }
@@ -102,6 +102,14 @@ type State with
                 Children = []
                 Links = [] }
 
+        | EstablishedConnection e ->
+            match state with
+            | InitialState -> invalidOp "Taxon does not exist"
+            | ValidatedByBackbone vs ->
+                let link = { ServiceName = e.LinkTo; ServiceId = e.ForeignId; LastChecked = DateTime.Now } //TODO remove DateTime from here
+                ValidatedByBackbone { vs with Links = link :: vs.Links }
+
 let private unwrap (TaxonId e) = e
 let getId = function
     | ImportFromBackbone c -> unwrap c.Id
+    | ConnectToExternalDatabase (c,req) -> unwrap c

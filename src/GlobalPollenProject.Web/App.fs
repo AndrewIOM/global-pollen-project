@@ -103,12 +103,22 @@ let showUserHandler id =
         text (sprintf "User ID: %i" id)
         <| ctx
 
+let showTaxonHandler family genus species =
+    fun ctx ->
+        let app = ctx.Services.GetRequiredService<AppServices>()
+        let appResult = app.Taxonomy.GetByName family genus species
+        match appResult with
+        | Success t -> razorHtmlView "Taxon/View" t ctx
+        | Failure e -> text "Not found" ctx
+
 let backboneSearchHandler =
     fun ctx ->
-        let name = ctx.HttpContext.Request.Query.["name"].ToString()
-        let app = ctx.Services.GetRequiredService<AppServices>()
-        let appResult = app.Backbone.Search name
-        json appResult ctx
+        async {
+            let! request = bindQueryString<BackboneSearchRequest> ctx
+            let app = ctx.Services.GetRequiredService<AppServices>()
+            let appResult = app.Backbone.Search request
+            return! json appResult ctx
+        }
 
 let taxonListHandler ctx =
     let name = ctx.HttpContext.Request.Query.["name"].ToString()
@@ -123,7 +133,7 @@ let pagedTaxonomyHandler ctx =
 
 let listCollectionsHandler ctx =
     let app = ctx.Services.GetRequiredService<AppServices>()
-    let result = app.Digitise.GetMyCollections (Guid.NewGuid)
+    let result = app.Digitise.GetMyCollections (currentUserId ctx)
     match result with
     | Success clist -> json clist ctx
     | Failure error -> text "Error" ctx
@@ -138,13 +148,38 @@ let startCollectionHandler ctx =
         | Failure error -> return! text "Error" ctx
     }
 
+let addSlideHandler ctx =
+    async {
+        let! model = bindJson<SlideRecordRequest> ctx
+        let app = ctx.Services.GetRequiredService<AppServices>()
+        let result = app.Digitise.AddSlideRecord model
+        match result with
+        | Success id -> return! json id ctx
+        | Failure error -> return! text "Error" ctx
+    }
+
+[<CLIMutable>] type IdQuery = { Id: Guid }
+
+let getCollectionHandler ctx =
+    async {
+        let! id = bindQueryString<IdQuery> ctx
+        let app = ctx.Services.GetRequiredService<AppServices>()
+        let result = app.Digitise.GetCollectionDetail id.Id
+        match result with
+        | Success rc -> return! json rc ctx
+        | Failure error -> return! text "Error" ctx
+    }
+
 let api =
     choose [
-        route   "/backbone/search"    >=> backboneSearchHandler
-      //route   "/backbone/import"    >=> importFromBackboneHandler
-        route   "/taxa"               >=> taxonListHandler
-        route   "/collection/list"    >=> listCollectionsHandler
-        route   "/collection/start"   >=> mustBeUser >=> startCollectionHandler
+        route   "/backbone/search"        >=> backboneSearchHandler
+        route   "/backbone/import"        >=> importFromBackboneHandler
+        route   "/taxa"                   >=> taxonListHandler
+
+        route   "/collection"             >=> mustBeUser >=> getCollectionHandler
+        route   "/collection/list"        >=> mustBeUser >=> listCollectionsHandler
+        route   "/collection/start"       >=> mustBeUser >=> startCollectionHandler
+        route   "/collection/slide/add"   >=> mustBeUser >=> addSlideHandler
     ]
 
 let webApp = 
@@ -163,12 +198,12 @@ let webApp =
                 subRoute            "/Taxon"    
                     (choose [   
                         route       ""                  >=> pagedTaxonomyHandler
-                        routef      "/%s/%s/%s"         (fun (family,genus,species) -> text (sprintf "%s (Family); %s (Genus); %s (Species)" family genus species))
-                        routef      "/%s/%s"            (fun (family,genus) -> text (sprintf "%s (Family); %s (Genus)" family genus))
-                        routef      "/%s"               (fun (family) -> text (sprintf "%s (Family)" family)) ])
+                        routef      "/%s/%s/%s"         (fun (family,genus,species) -> showTaxonHandler family genus species)
+                        routef      "/%s/%s"            (fun (family,genus) -> showTaxonHandler family genus "")
+                        routef      "/%s"               (fun family -> showTaxonHandler family "" "") ])
                 route               "/Account/Login"    >=> razorHtmlView "Account/Login" None
                 route               "/Account/Register" >=> razorHtmlView "Account/Register" None
-                route               "/Account/LogOff"   >=> signOff authScheme >=> text "Logged Out"
+                route               "/Account/Logoff"   >=> signOff authScheme >=> text "Logged Out"
                 route               "/user"             >=> mustBeUser >=> userHandler
                 routef              "/user/%i"          showUserHandler
             ]
@@ -194,7 +229,7 @@ let configureServices (services : IServiceCollection) =
         .AddEntityFrameworkStores<UserDbContext>()
         .AddDefaultTokenProviders() |> ignore
 
-    services.AddSingleton<AppServices>(composeApp()) |> ignore
+    services.AddTransient<AppServices>(fun x -> composeApp()) |> ignore
     services.AddSingleton<IEmailSender, AuthEmailMessageSender>() |> ignore
 
     services.AddAuthentication() |> ignore

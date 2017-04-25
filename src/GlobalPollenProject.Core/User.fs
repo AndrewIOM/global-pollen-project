@@ -41,9 +41,9 @@ and UserState = {
     Title: string
     FirstName: string
     LastName: string
-    CanDigitise: bool
     PrimaryClub: ClubId option
     OtherClubs: ClubId list
+    IsPubliclyVisible: bool
 }
 
 let register (command:Register) state =
@@ -70,10 +70,10 @@ let deactivateProfile command state =
     | _ -> 
         invalidOp "User does not exist"
 
-let joinClub command state =
+let joinClub userId clubId state =
     match state with
     | Registered s ->
-        [ JoinedClub command ]
+        [ JoinedClub (userId,clubId) ]
     | _ -> 
         invalidOp "User does not exist"
 
@@ -82,24 +82,34 @@ let handle deps =
     | Register command -> register command
     | ActivatePublicProfile command -> activateProfile command
     | DisablePublicProfile command -> deactivateProfile command
-    //| JoinClub c,x -> joinClub c,x
+    | JoinClub (u,c) -> joinClub u c
 
 let private unwrap (UserId e) = e
 let getId = function
     | Register c -> unwrap c.Id
     | ActivatePublicProfile c -> unwrap c
     | DisablePublicProfile c -> unwrap c
-    //| JoinClub c,_ -> unwrap c
+    | JoinClub (c,_) -> unwrap c
 
 type State with
-    static member Evolve state = function
+    static member Evolve state event =
+        match state with
+        | InitialState ->
+            match event with
+            | UserRegistered e ->
+                Registered {
+                    FirstName = e.FirstName
+                    LastName = e.LastName
+                    Title = e.Title
+                    IsPubliclyVisible = false
+                    PrimaryClub = None
+                    OtherClubs = []
+                }
+            | _ -> invalidOp "User is not registered"
+        | Registered regState ->
+            match event with
+            | UserRegistered e -> invalidOp "User is already registered"
+            | ProfileMadePublic user -> Registered { regState with IsPubliclyVisible = true }
+            | ProfileHidden user -> Registered { regState with IsPubliclyVisible = false }
+            | JoinedClub (user,club) -> Registered { regState with IsPubliclyVisible = true }
 
-        | UserRegistered e ->
-            Registered {
-                FirstName = e.FirstName
-                LastName = e.LastName
-                Title = e.Title
-                CanDigitise = false
-                PrimaryClub = None
-                OtherClubs = []
-            }
