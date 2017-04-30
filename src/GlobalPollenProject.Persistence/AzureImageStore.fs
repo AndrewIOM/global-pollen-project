@@ -1,13 +1,11 @@
-module AzureImageService
+module AzureImageStore
 
 open ImageSharp
-open Microsoft.Extensions.Options
 open Microsoft.WindowsAzure.Storage
 open Microsoft.WindowsAzure.Storage.Blob
-open Microsoft.Extensions.Logging
 open System.IO
 open System
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.DomainTypes
 
 let calcScale maxDimension height width =
     let scale = 

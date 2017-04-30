@@ -10,14 +10,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Composition.fs" />
     <Compile Include="Types.fs" />
+    <Compile Include="Aggregate.fs" />
     <Compile Include="Dependencies.fs" />
     <Compile Include="Taxonomy.fs" />
     <Compile Include="Grain.fs" />
     <Compile Include="User.fs" />
     <Compile Include="Calibration.fs" />
     <Compile Include="ReferenceCollection.fs" />
-    <Compile Include="CommandHandlers.fs" />
   </ItemGroup>
 
   <ItemGroup>

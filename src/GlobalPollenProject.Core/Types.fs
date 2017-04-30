@@ -1,5 +1,4 @@
-[<AutoOpen>]
-module GlobalPollenProject.Core.Types
+module GlobalPollenProject.Core.DomainTypes
 
 open System
 
@@ -7,9 +6,8 @@ type LogMessage =
 | Error of string
 | Info of string
 
-type RootAggregateId = System.Guid
-
 // Identities
+type RootAggregateId = System.Guid
 type UserId = UserId of RootAggregateId
 type ClubId = ClubId of RootAggregateId
 type CalibrationId = CalibrationId of RootAggregateId
@@ -18,8 +16,6 @@ type SlideId = SlideId of CollectionId * string
 type GrainId = GrainId of RootAggregateId
 type TaxonId = TaxonId of RootAggregateId
 
-// Specialist Types
-//type Url = Url of string
 
 [<AutoOpen>]
 module Url =
@@ -162,18 +158,5 @@ type BackboneQuery =
 
 type LinkRequest = {Family:string;Genus:string option;Species:string option;Identity:TaxonomicIdentity}
 
-// Infrastructure
-type Dependencies = 
-    {GenerateId:        unit -> Guid; 
-     Log:               LogMessage -> unit
-     UploadImage:       ImageForUpload -> Image
-     ValidateTaxon:     BackboneQuery -> TaxonId option
-     GetGbifId:         LinkRequest -> int option
-     GetNeotomaId:      LinkRequest -> int option
-     CalculateIdentity: TaxonIdentification list -> TaxonId option }
-
-type RootAggregate<'TState, 'TCommand, 'TEvent> = {
-    initial:    'TState
-    evolve:     'TState -> 'TEvent -> 'TState
-    handle:     Dependencies -> 'TCommand -> 'TState -> 'TEvent list
-    getId:      'TCommand -> RootAggregateId }
+// Dependencies
+type ImageStore = (unit -> string) -> ImageForUpload -> Image

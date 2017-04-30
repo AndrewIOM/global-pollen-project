@@ -1,6 +1,7 @@
 module GlobalPollenProject.Core.Aggregates.Taxonomy
 
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.DomainTypes
+open GlobalPollenProject.Core.Aggregate
 open System
 
 type Command =

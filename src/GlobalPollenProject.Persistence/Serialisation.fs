@@ -1,19 +1,12 @@
 module Serialisation
 
-// This module provides Json serialization to store
-// events in the event store 
-
-// It is based on Json.net but provides
-// a specialization for cleaner F# type serialization
-
 open System
 open System.Reflection
 open Newtonsoft.Json
 open Microsoft.FSharp.Reflection
 
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.DomainTypes
 
-// Basic reflection for converters
 module private Reflection = 
     let isGeneric td (t:Type) = 
         t.GetTypeInfo().IsGenericType && t.GetGenericTypeDefinition() = td
@@ -118,8 +111,6 @@ module private Json =
 
 open Reflection
 
-// This converter reads/writes a discriminated union
-// as a record, adding a "_Case" field.
 let unionConverter =
     { new JsonConverter() with
         member __.WriteJson(w,v,s) =
@@ -136,9 +127,6 @@ let unionConverter =
         member __.CanConvert t =
             FSharpType.IsUnion t && not (isList t || isOption t) }
 
-// This converter reads/writes a discriminated union
-// but doesn't serialize the case. It is intended to be
-// stored in the EventType of the event store.
 let private rootUnionConverter<'a> (case: UnionCaseInfo) =
     { new JsonConverter() with
         member __.WriteJson(w,v,s) =
@@ -155,7 +143,6 @@ let private rootUnionConverter<'a> (case: UnionCaseInfo) =
         member __.CanConvert t =
             t = typeof<'a> || t.GetTypeInfo().BaseType = typeof<'a> }
 
-// This converter writes options as value or null
 let private optionConverter =
     { new JsonConverter() with
         member __.WriteJson(w,v,s) = 
@@ -177,8 +164,6 @@ let private optionConverter =
                                 
         member __.CanConvert t = isOption t }
 
-/// Serializes a value type containing a single property
-/// as its inner value. It is used for digit and GameId
 let valueConverter (valueType: Type) =
     let field =
         match valueType.GetProperties() with
@@ -209,7 +194,7 @@ let deserializeUnion<'a> eventType data =
     |> Array.tryFind (fun c -> c.Name = eventType)
     |> function
        | Some case ->  
-            let serializer = new JsonSerializer()
+            let serializer = JsonSerializer()
             rootUnionConverter<'a> case :: converters
             |> List.iter serializer.Converters.Add
             
@@ -222,7 +207,7 @@ let deserializeUnion<'a> eventType data =
 
 let serializeUnion (o:'a)  =
     let case,_ = FSharpValue.GetUnionFields(o, typeof<'a>)
-    let serializer = new JsonSerializer()
+    let serializer = JsonSerializer()
     rootUnionConverter<'a> case :: converters
     |> List.iter serializer.Converters.Add
     use stream = new IO.MemoryStream()
@@ -230,3 +215,9 @@ let serializeUnion (o:'a)  =
     serializer.Serialize(writer, o)
     writer.Flush()
     case.Name, stream.ToArray()
+
+let serialiseCli (o:'a) = JsonConvert.SerializeObject(o)
+let deserialiseCli<'TObj> json = 
+    try Some <| JsonConvert.DeserializeObject<'TObj>(json) 
+    with 
+    | _ -> None

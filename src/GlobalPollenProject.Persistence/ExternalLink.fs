@@ -1,6 +1,6 @@
 module ExternalLink
 
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.DomainTypes
 open System
 open System.IO
 open System.Net.Http

@@ -17,7 +17,8 @@ open Giraffe.Middleware
 open Giraffe.ModelBinding
 open Newtonsoft.Json
 
-open GlobalPollenProject.App
+open GlobalPollenProject.Core.Composition
+open GlobalPollenProject.App.UseCases
 open GlobalPollenProject.Shared.Identity
 open GlobalPollenProject.Shared.Identity.Models
 open GlobalPollenProject.Shared.Identity.Services
@@ -76,7 +77,8 @@ let registerHandler ctx =
         match result.Succeeded with
         | true ->
             let id() = Guid.Parse user.Id
-            match app.User.RegisterProfile model id with
+            let register = app.User.RegisterProfile model id
+            match register with
             | Failure msg -> return! razorHtmlView "/Account/Register" model ctx
             | Success r -> 
                 do! signInManager.SignInAsync(user, isPersistent = false) |> Async.AwaitTask
@@ -220,6 +222,7 @@ let configureServices (services : IServiceCollection) =
     let env = sp.GetService<IHostingEnvironment>()
     let viewsFolderPath = Path.Combine(env.ContentRootPath, "views")
 
+    services.AddSingleton<AppServices>(composeApp()) |> ignore
     services.AddSingleton<UserDbContext>() |> ignore
 
     services.AddIdentity<ApplicationUser, IdentityRole>(fun opt -> 
@@ -229,7 +232,6 @@ let configureServices (services : IServiceCollection) =
         .AddEntityFrameworkStores<UserDbContext>()
         .AddDefaultTokenProviders() |> ignore
 
-    services.AddTransient<AppServices>(fun x -> composeApp()) |> ignore
     services.AddSingleton<IEmailSender, AuthEmailMessageSender>() |> ignore
 
     services.AddAuthentication() |> ignore

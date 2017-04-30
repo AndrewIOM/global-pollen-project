@@ -1,127 +1,9 @@
-namespace ReadStore
+module ReadStore
 
-open GlobalPollenProject.Core.Types
-open Microsoft.EntityFrameworkCore
 open System
-open System.ComponentModel.DataAnnotations
-open System.Collections.Generic
-
-[<CLIMutable>]
-type GrainSummary = {
-    [<Key>]
-    Id:Guid;
-    Thumbnail:string }
-
-[<CLIMutable>]
-type TaxonSummary = {
-    [<Key>]
-    Id:Guid;
-    Family:string
-    Genus:string
-    Species:string
-    LatinName:string
-    Rank:string
-    SlideCount:int
-    GrainCount:int
-    ThumbnailUrl:string
-}
-
-[<CLIMutable>]
-type BackboneTaxon = {
-    [<Key>]
-    Id:Guid;
-    Family:string
-    Genus:string
-    Species:string
-    NamedBy:string
-    LatinName:string
-    Rank:string
-    ReferenceName:string
-    ReferenceUrl:string
-}
-
-[<CLIMutable>]
-type ReferenceCollectionSummary = {
-    [<Key>]
-    Id:Guid;
-    User:Guid;
-    Name:string;
-    Description:string;
-    SlideCount:int;
-}
-
-[<CLIMutable>]
-type Calibration = {
-    [<Key>]
-    Id: Guid
-    User: Guid
-    Device: string
-    Ocular: int
-    Objective: int
-    Image: string
-    PixelWidth: float
-}
-
-[<CLIMutable>]
-type Frame = {
-    [<Key>]
-    Id: Guid
-    Url: string
-}
-
-[<CLIMutable>]
-type SlideImage = {
-    [<Key>]
-    Id: int
-    Frames: List<Frame>
-    CalibrationImageUrl: string
-    CalibrationFocusLevel: int
-    PixelWidth: float
-}
-
-[<CLIMutable>]
-type Slide = {
-    [<Key>]
-    Id:Guid
-    CollectionId: Guid
-    CollectionSlideId: string
-    Taxon: TaxonSummary
-    IdentificationMethod: string
-    FamilyOriginal: string
-    GenusOriginal: string
-    SpeciesOriginal: string
-    IsFullyDigitised: bool
-    Images: List<SlideImage>
-}
-
-[<CLIMutable>]
-type ReferenceCollection = {
-    [<Key>]
-    Id:Guid;
-    User:Guid;
-    Name:string;
-    Status:string; // Draft etc.
-    Version: int;
-    Description:string;
-    Slides: List<Slide>
-}
-
-[<CLIMutable>]
-type SlideSummary = {
-    [<Key>]
-    Id: Guid
-    ThumbnailUrl: string
-    TaxonId: Guid
-}
-
-[<CLIMutable>]
-type PublicProfile = {
-    [<Key>]
-    UserId:Guid
-    IsPublic:bool
-    FirstName:string
-    LastName:string
-}
+open GlobalPollenProject.Core.DomainTypes
+open GlobalPollenProject.Core.Aggregate
+open ReadModels
 
 type ListRequest =
 | All 
@@ -134,8 +16,9 @@ and PagedRequest = {
 
 type ProjectionRepository<'TProjection> = {
     GetById: Guid -> 'TProjection option
-    List: ListRequest -> 'TProjection list
-    Replace: 'TProjection -> unit
+    GetMultiple: ListRequest -> 'TProjection list
+    Exists: Guid -> bool
+    Save: Guid -> 'TProjection -> unit
 }
 
 type BackboneRepository = {
@@ -144,117 +27,130 @@ type BackboneRepository = {
     GetTaxonByName: string -> string -> string -> BackboneTaxon option
 }
 
-module EntityFramework =
+type TaxonRepository = {
+    GetSummary: Guid -> TaxonSummary option
+}
 
-    // EF Context
-    type ReadContext =
-        inherit DbContext
-        
-        new() = { inherit DbContext() }
-        new(options: DbContextOptions<ReadContext>) = { inherit DbContext(options) }
+type IReadStore =
+    abstract member TryCast : string -> obj -> Result<'a,string list>
+    abstract member Get<'a> : obj -> Result<'a,string list>
+    abstract member Set : obj -> obj -> Result<unit,string list>
+    abstract member Connect: unit -> unit
+    inherit IDisposable
 
-        [<DefaultValue>] val mutable grainSummary:DbSet<GrainSummary>
-        [<DefaultValue>] val mutable taxonSummary:DbSet<TaxonSummary>
-        [<DefaultValue>] val mutable backboneTaxon:DbSet<BackboneTaxon>
-        [<DefaultValue>] val mutable referenceCollectionSummary:DbSet<ReferenceCollectionSummary>
-        [<DefaultValue>] val mutable referenceCollection:DbSet<ReferenceCollection>
-        [<DefaultValue>] val mutable calibration:DbSet<Calibration>
-        member x.GrainSummary
-            with get() = x.grainSummary
-            and set v = x.grainSummary <- v
+type ReadStoreAction<'a> = ReadStoreAction of (IReadStore -> 'a)
 
-        member x.TaxonSummary
-            with get() = x.taxonSummary
-            and set v = x.taxonSummary <- v
+// module ReadStoreAction = 
 
-        member x.BackboneTaxon
-            with get() = x.backboneTaxon
-            and set v = x.backboneTaxon <- v
+//     let run api (ReadStoreAction action) = 
+//         let resultOfAction = action api
+//         resultOfAction
 
-        member x.ReferenceCollectionSummary
-            with get() = x.referenceCollectionSummary
-            and set v = x.referenceCollectionSummary <- v
+//     let map f action = 
+//         let newAction api =
+//             let x = run api action 
+//             f x
+//         ReadStoreAction newAction
 
-        member x.ReferenceCollection
-            with get() = x.referenceCollection
-            and set v = x.referenceCollection <- v
+//     let retn x = 
+//         let newAction api =
+//             x
+//         ReadStoreAction newAction
 
-        member x.Calibration
-            with get() = x.calibration
-            and set v = x.calibration <- v
-        override this.OnConfiguring optionsBuilder = 
-            optionsBuilder.UseSqlite "Filename=./projections.db" |> ignore
-            //optionsBuilder.UseQueryTrackingBehavior(QueryTrackingBehavior.NoTracking) |> ignore
-            printfn "Starting ReadStore with Entity Framework"
+//     let apply fAction xAction = 
+//         let newAction api =
+//             let f = run api fAction 
+//             let x = run api xAction 
+//             f x
+//         ReadStoreAction newAction
 
-        // override this.OnModelCreating modelBuilder =
-        //     modelBuilder.Entity<ReferenceCollection>().HasMany<Slide>(fun c -> c.Slides).WithOne() |> ignore
-        //     modelBuilder.Entity<Slide>().HasMany<SlideImage>(fun s -> s.Images) |> ignore
-        //     modelBuilder.Entity<SlideImage>().HasMany<Frame>(fun i -> i.Frames) |> ignore
+//     let bind f xAction = 
+//         let newAction api =
+//             let x = run api xAction 
+//             run api (f x)
+//         ReadStoreAction newAction
 
-    open System.Linq
+//     let execute (client:IReadStore) action = run client action
 
-    // Repositories
-    let isNull x = match box x with null -> true | _ -> false
-    let grainRepo (ctx:ReadContext) =
-        let getById (guid:Guid) =
-            let result = ctx.GrainSummary.Find guid
-            if not (isNull result) then Some result else None
-        let list request =
-            match request with
-            | All -> ctx.GrainSummary |> Seq.toList
-            | Paged pr ->
-                ctx.GrainSummary.Skip(pr.Page - 1 * pr.ItemsPerPage).Take(pr.ItemsPerPage) |> Seq.toList
-        {GetById = getById; List = list; Replace = fun x -> invalidOp "Not implemented yet" }
-    
-    let backboneRepo (ctx:ReadContext) =
-        let getById (id:Guid) =
-            let result = ctx.BackboneTaxon.Find id
-            if not (isNull result) then Some result else None
-        let list request =
-            match request with
-            | All -> ctx.BackboneTaxon |> Seq.toList
-            | Paged pr ->
-                ctx.BackboneTaxon.Skip(pr.Page - 1 * pr.ItemsPerPage).Take(pr.ItemsPerPage) |> Seq.toList
+// module ReadStoreResult = 
 
-        let getTaxonByName latinName rank parent =
-            let result = match rank with
-                         | "Species" -> ctx.BackboneTaxon.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Species" && t.Genus = parent)
-                         | "Genus" -> ctx.BackboneTaxon.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Genus" && t.Family = parent)
-                         | "Family" -> ctx.BackboneTaxon.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Family")
-                         | _ -> invalidOp "Not a valid taxonomic rank"
-            if not (isNull result)
-                then Some result
-                else None
+//     let map f = ReadStoreAction.map (Result.map f)
 
-        {GetById = getById; List = list; GetTaxonByName = getTaxonByName}
+//     let bind f xActionResult = 
+//         let newAction api =
+//             let xResult = ReadStoreAction.run api xActionResult 
+//             let yAction = 
+//                 match xResult with
+//                 | Success x -> 
+//                     f x
+//                 | Failure err -> 
+//                     (Failure err) |> ReadStoreAction.retn
+//             ReadStoreAction.run api yAction  
+//         ReadStoreAction newAction
 
-        // let referenceRepo (ctx:ReadContext) =
-            
-        //     let getById (id:Guid) =
-        //         ctx .ReferenceCollections
-        //             .Include(fun x -> x.Slides)
-        //             .ThenInclude(fun y -> y.Images)
-        //             .ThenInclude(fun z -> z.Frames)
-        //         |> Seq.tryFind (fun col -> col.Id = id)
 
-        //     let list (req:ListRequest) = 
-        //         let all = ctx   .ReferenceCollections
-        //                         .Include(fun x -> x.Slides)
-        //                         .ThenInclude(fun y -> y.Images)
-        //                         .ThenInclude(fun z -> z.Frames)
-        //         match req with
-        //         | All -> all |> Seq.toList
-        //         | Paged req ->
+let generateKey readModelName (id:string) = 
+    if not <| id.StartsWith(readModelName + ":") 
+    then readModelName + ":" + id
+    else id
 
-                
+module RedisReadStore =
 
-        //     let taxonomicBackbone (query:BackboneQuery) : TaxonId option =
-        //         match query with
-        //         | ValidateById id -> 
-        //             let t = getTaxon id
-        //             match t with
-        //             | Some t -> Some (TaxonId t.Id)
-        //             | None -> None
-        //         | Validate identity ->
-        //             None // TODO implement
+    open StackExchange.Redis
+
+    let inline private (~~) (x:^a) : ^b = ((^a or ^b) : (static member op_Implicit: ^a -> ^b) x)
+    let private serialise (event:'a) = Serialisation.serialiseCli event
+    let private deserialise<'TEvent> projection = Serialisation.deserialiseCli<'TEvent> projection
+    let private indexFormat modelType = modelType + ":index"
+
+    let save (id:Guid) (model:'a) (redis:ConnectionMultiplexer) = 
+        let key = generateKey (model.GetType().Name) (id.ToString())
+        let db = redis.GetDatabase()
+        let json = serialise model
+        db.StringSet(~~key, ~~json) |> ignore
+        let indexKey = indexFormat (model.GetType().Name)
+        db.SetAdd(~~indexKey, ~~key) |> ignore
+
+    let load<'TProjection> (id:string) (redis:ConnectionMultiplexer) =
+        let key = generateKey (typeof<'TProjection>.Name) (id.ToString())
+        let db = redis.GetDatabase()
+        let serialised = db.StringGet(~~key)
+        deserialise<'TProjection> ~~serialised
+
+    let loadIndex<'TProjection> (redis:ConnectionMultiplexer) =
+        let db = redis.GetDatabase()
+        let indexKey = indexFormat (typeof<'TProjection>.Name)
+        let allRefColKeys = db.SetMembers(~~indexKey) |> Array.map (fun x -> ~~x.ToString())
+        let model = db.StringGet(allRefColKeys)
+        model |> Array.choose (fun x -> deserialise<'TProjection> (x.ToString())) |> Array.toList
+
+
+module BackboneTaxonomy =
+
+    let listAll () = RedisReadStore.loadIndex<BackboneTaxon>
+    let tryFindByName () = invalidOp "Not yet implemented"
+    let tryFindById = RedisReadStore.load<BackboneTaxon>
+
+
+module Digitisation =
+
+    let getCollectionIds (userId:Guid) =
+        let req (rs:IReadStore) = rs.Get<Guid list> userId
+        ReadStoreAction req
+
+    let getProductInfo (collectionId:Guid) =
+        let action (rs:IReadStore) = rs.Get<ReferenceCollectionSummary> collectionId
+        ReadStoreAction action
+
+
+    let listUserCollections = RedisReadStore.loadIndex<ReferenceCollectionSummary>
+
+
+module Statistics =
+    let getMostWanted () = invalidOp "Not yet implemented"
+
+
+module DataViews =
+
+    let listDigitisedCollections () = invalidOp "Not yet implemented"
+    let listTaxa () = invalidOp "Not yet implemented"

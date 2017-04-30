@@ -1,6 +1,6 @@
 module GlobalPollenProject.Core.Aggregates.Calibration
 
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.DomainTypes
 open System
 
 type Command =

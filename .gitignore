@@ -208,3 +208,5 @@ $RECYCLE.BIN/
 *.msi
 *.msm
 *.msp
+
+appsettings.json

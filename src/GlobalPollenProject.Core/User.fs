@@ -1,7 +1,7 @@
 module GlobalPollenProject.Core.Aggregates.User
 
 open System
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.DomainTypes
 
 // NB The domain user only contains PROFILE-related information
 // No passwords, logins etc. are dealt with here.

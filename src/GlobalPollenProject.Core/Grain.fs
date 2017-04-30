@@ -1,7 +1,7 @@
 module GlobalPollenProject.Core.Aggregates.Grain
 
 open System
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.DomainTypes
 
 // Commands
 type Command =

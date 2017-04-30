@@ -3,6 +3,8 @@ module Requests
 
 open System.ComponentModel.DataAnnotations
 
+type PageRequest = { Page: int; PageSize: int }
+
 [<CLIMutable>]
 type NewAppUserRequest = {
     [<Required>] [<Display(Name ="Title")>] Title: string

@@ -1,142 +1,79 @@
 module EventStore
 
 open System
-open Microsoft.EntityFrameworkCore
+open System.Net
+open EventStore.ClientAPI
 open Serialisation
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.Aggregate
 
-exception WrongExpectedVersionException
+type IEventStoreConnection with
+    member this.AsyncConnect() = this.ConnectAsync() |> Async.AwaitTask
+    member this.AsyncReadStreamEventsForward stream start count resolveLinkTos =
+        this.ReadStreamEventsForwardAsync(stream, start, count, resolveLinkTos)
+        |> Async.AwaitTask
+    member this.AsyncAppendToStream stream expectedVersion events =
+        this.AppendToStreamAsync(stream, expectedVersion, events)
+        |> Async.AwaitTask
 
-let filter<'TEvent> ev = 
-    match box (fst ev) with
-    | :? 'TEvent as tev -> Some (tev,(snd ev))
-    | _ -> None
+let serialise (event:'a) = 
+    let typeName, data = Serialisation.serializeUnion event
+    EventData(Guid.NewGuid(), typeName, true, data, null)
+let deserialise<'TEvent> (event:ResolvedEvent) : 'TEvent option = Serialisation.deserializeUnion event.Event.EventType event.Event.Data
 
-// A POCO representing event data in SQL row
-[<CLIMutable>]
-type EventInfo = {
-    Id: Guid
-    StreamId: string
-    StreamVersion: int
-    OccurredAt: DateTime
-    EventType: string
-    EventPayload: byte[] //Event serialised as json
-}
+let connect ip port username userpass = 
+    async {
+        let ipAddress = IPAddress.Parse(ip)
+        let endpoint = IPEndPoint(ipAddress, port)
+        let esSettings = ConnectionSettings.Create()
+                            .UseConsoleLogger()
+                            .SetDefaultUserCredentials(SystemData.UserCredentials(username, userpass))
+                            .Build()
+        let s = EventStoreConnection.Create(esSettings, endpoint, "GPP Web")
+        do! Async.AwaitTask ( s.ConnectAsync() )
+        return s }
 
-type SerialisedEvent = {
-    Id: Guid
-    Type: string
-    Payload: byte[]
-}
+let subscribe (projection: obj -> unit) (getStore: Async<IEventStoreConnection>) =
+    async {
+    let! store = getStore
+    do! Async.AwaitTask <| store.SubscribeToStreamAsync("$ce-ReferenceCollection", true, (fun s e -> deserialise<GlobalPollenProject.Core.Aggregates.ReferenceCollection.Event> e |> Option.iter projection), (fun s r e -> printfn "Subscription disconnected")) |> Async.Ignore
+    return store }
+    |> Async.RunSynchronously
 
-let serialise (event:'a) : SerialisedEvent = 
-    let typeName, data = serializeUnion event
-    {
-        Id = (Guid.NewGuid())
-        Type = typeName
-        Payload = data 
-    }
+let readStream<'a> (store: IEventStoreConnection) streamId version count = 
+    async {
+        let! slice = store.AsyncReadStreamEventsForward streamId (int64 version) count true
 
-let deserialise<'TEvent> (event:EventInfo) : ('TEvent * int) option = 
-    match deserializeUnion<'TEvent> event.EventType event.EventPayload with
-    | Some x -> Some (x, event.StreamVersion)
-    | None -> None
-
-type SqlEventStoreContext =
-    inherit DbContext
-    
-    new() = { inherit DbContext() }
-    new(options: DbContextOptions<SqlEventStoreContext>) = { inherit DbContext(options) }
-
-    [<DefaultValue>]
-    val mutable events:DbSet<EventInfo>
-    member x.Events
-        with get() = x.events
-        and set v = x.events <- v
-
-    override this.OnConfiguring optionsBuilder = 
-        optionsBuilder.UseSqlite "Filename=./eventstore.db" |> ignore
-        printfn "Connected to Entity Framework EventStore"
-
-type EventStore(context:SqlEventStoreContext) = 
-
-    let saveEvent = new Event<string * obj>()
-
-    member this.Events = context.Events |> Seq.toList
-
-    member this.SaveEvent = 
-        saveEvent.Publish 
-
-    member this.ReadStream<'a> streamId version count = 
-
-        printfn "Type to read: %s" typeof<'a>.Name
-
-        let result = query {
-            for e in context.Events do
-            where (e.StreamId = streamId)
-            select e
-        }
-
-        match result |> Seq.isEmpty with
-        | true -> 
-            [], -1, None
-        | false -> 
-            let events =
-                result
-                |> Seq.sortBy (fun x -> x.StreamVersion)
-                |> Seq.skipWhile (fun x -> x.StreamVersion < version )
-                |> Seq.takeWhile (fun x -> x.StreamVersion <= version + count)
-                |> Seq.toList
-            let lastEventNumber = (events |> Seq.last).StreamVersion 
-            
-            events 
-            |> List.map (fun x -> (deserializeUnion<'a> x.EventType x.EventPayload), x.StreamVersion)
-            |> List.choose (fun x -> match fst x with
-                                     | Some e -> Some (e, (snd x))
-                                     | None -> None),
-            //|> List.choose filter<'a>,
-            lastEventNumber,
-            if lastEventNumber < version + count 
-                then None 
-                else Some (lastEventNumber+1)
-
-    member this.Save stream expectedVersion (events: 'a list) = 
-
-        let eventsWithVersion =
-            events
-            |> List.mapi (fun index event -> (event, expectedVersion + index + 1))
-
-        let convertToEfType (event: 'a * int) =
-            let serialisedEvent = serialise (fst event)
-            {
-                Id = serialisedEvent.Id
-                StreamId = stream
-                StreamVersion = snd event
-                OccurredAt = DateTime.Now
-                EventType = serialisedEvent.Type
-                EventPayload = serialisedEvent.Payload
-            }
-
-        match (this.ReadStream<'a> stream expectedVersion 1) with
-        | (_,v,_) when v = expectedVersion -> 
-            context.Events.AddRange (eventsWithVersion |> List.map convertToEfType)
-            context.SaveChanges() |> ignore
+        let events = 
+            slice.Events 
+            |> Seq.choose deserialise<'a>
+            |> Seq.toList
         
-        | (_,v,_) when expectedVersion = -1 ->
-            context.Events.AddRange (eventsWithVersion |> List.map convertToEfType)
-            context.SaveChanges() |> ignore
+        let nextEventNumber = 
+            if slice.IsEndOfStream 
+            then None 
+            else Some <| int slice.NextEventNumber
 
-        | _ -> raise WrongExpectedVersionException
+        return events, int slice.LastEventNumber, nextEventNumber }
 
-        events |> List.iter (fun e -> saveEvent.Trigger(stream,upcast e))
+let appendToStream (store: IEventStoreConnection) streamId expectedVersion newEvents = 
+    async {
+        let serializedEvents = [| for event in newEvents -> serialise event |]
+        do! Async.Ignore <| store.AsyncAppendToStream streamId (int64 expectedVersion) serializedEvents
+        newEvents |> List.iter (fun e -> savedEvent.Trigger(streamId,upcast e)) }
 
-let SqlEventStore() =
-    let mutable context = new SqlEventStoreContext()
-    EventStore(context)
+let makeCommandHandler (conn:IEventStoreConnection) aggName aggregate deps =
+    let read = readStream<'TEvent> conn
+    let append = appendToStream conn 
+    
+    Aggregate.makeHandler aggregate aggName deps read append
 
-let InMemoryEventStore() =
-    let dbOptions = (new DbContextOptionsBuilder<SqlEventStoreContext>())
-                        .UseInMemoryDatabase()
-                        .Options
-    let inMemory = new SqlEventStoreContext(dbOptions)
-    EventStore(inMemory)
+let makeReadModelGetter (conn:IEventStoreConnection) (deserialize:byte array -> _) =
+    fun streamId -> async {
+        let! eventsSlice = conn.ReadStreamEventsBackwardAsync(streamId, Int64.Parse("-1"), 1, false) |> Async.AwaitTask
+        if eventsSlice.Status <> SliceReadStatus.Success then return None
+        elif eventsSlice.Events.Length = 0 then return None
+        else 
+            let lastEvent = eventsSlice.Events.[0]
+            if lastEvent.Event.EventNumber = Int64.Parse("0") then return None
+            else return Some(deserialize(lastEvent.Event.Data))    
+    }

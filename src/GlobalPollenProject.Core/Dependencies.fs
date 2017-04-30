@@ -1,7 +1,7 @@
 module GlobalPollenProject.Core.Dependencies
 
-open GlobalPollenProject.Core.Types
 open System
+open GlobalPollenProject.Core.DomainTypes
 
 let calculateTaxonomicIdentity backbone (ids:TaxonIdentification list) =
 

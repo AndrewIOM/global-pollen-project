@@ -1,7 +1,7 @@
 module ImportTaxonomy
 
 open System.IO
-open GlobalPollenProject.Core.Types
+open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Aggregates.Taxonomy
 
 type ParsedTaxon = {

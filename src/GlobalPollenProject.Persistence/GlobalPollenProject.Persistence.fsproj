@@ -10,33 +10,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="ErrorHandling.fs" />
-    <Compile Include="AgentHelper.fs" />
     <Compile Include="Serialisation.fs" />
     <Compile Include="EventStore.fs" />
+    <Compile Include="ReadModels.fs" />
     <Compile Include="ReadStore.fs" />
-    <Compile Include="Migrations.fs" />
-    <Compile Include="AzureImageService.fs" />
+    <Compile Include="AzureImageStore.fs" />
     <Compile Include="ExternalLink.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\GlobalPollenProject.Core\GlobalPollenProject.Core.fsproj" />
     <PackageReference Include="Microsoft.NETCore.Portable.Compatibility" Version="1.0.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="1.1.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="1.1.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="1.1.1" />
+    <PackageReference Include="EventStore.ClientAPI.NetCore" Version="4.0.0-alpha-1" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1" />
     <PackageReference Include="SendGrid" Version="9.1.0" />
     <PackageReference Include="WindowsAzure.Storage" Version="8.1.0" />
+    <PackageReference Include="StackExchange.Redis" Version="1.2.1" />
     <PackageReference Include="ImageSharp" Version="1.0.0-alpha4-00046" />
 
-    <PackageReference Include="FSharp.Core" Version="4.0.*" />
+    <PackageReference Include="FSharp.Core" Version="4.1.*" />
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="1.0.0" />
   </ItemGroup>
 
 </Project>
