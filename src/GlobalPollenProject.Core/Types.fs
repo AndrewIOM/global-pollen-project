@@ -3,7 +3,7 @@ module GlobalPollenProject.Core.DomainTypes
 open System
 
 type LogMessage =
-| Error of string
+| DomainError of string
 | Info of string
 
 // Identities

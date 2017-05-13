@@ -1,20 +1,16 @@
 [<AutoOpen>]
 module GlobalPollenProject.Core.Composition
 
-type Result<'TSuccess,'TFailure> = 
-    | Success of 'TSuccess
-    | Failure of 'TFailure
-
 let succeed x = 
-    Success x
+    Ok x
 
 let fail x = 
-    Failure x
+    Error x
 
 let either successFunc failureFunc twoTrackInput =
     match twoTrackInput with
-    | Success s -> successFunc s
-    | Failure f -> failureFunc f
+    | Ok s -> successFunc s
+    | Error f -> failureFunc f
 
 let bind f = 
     either f fail
@@ -42,7 +38,7 @@ let doubleMap successFunc failureFunc =
 
 let plus addSuccess addFailure switch1 switch2 x = 
     match (switch1 x),(switch2 x) with
-    | Success s1,Success s2 -> Success (addSuccess s1 s2)
-    | Failure f1,Success _  -> Failure f1
-    | Success _ ,Failure f2 -> Failure f2
-    | Failure f1,Failure f2 -> Failure (addFailure f1 f2)
+    | Ok s1,Ok s2 -> Ok (addSuccess s1 s2)
+    | Error f1,Ok _  -> Error f1
+    | Ok _ ,Error f2 -> Error f2
+    | Error f1,Error f2 -> Error (addFailure f1 f2)

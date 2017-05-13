@@ -216,8 +216,12 @@ let serializeUnion (o:'a)  =
     writer.Flush()
     case.Name, stream.ToArray()
 
-let serialiseCli (o:'a) = JsonConvert.SerializeObject(o)
+let serialiseCli (o:'a) = 
+    try JsonConvert.SerializeObject(o) |> Ok
+    with
+    | _ -> Error "Could not serialise record"
+
 let deserialiseCli<'TObj> json = 
-    try Some <| JsonConvert.DeserializeObject<'TObj>(json) 
+    try Ok <| JsonConvert.DeserializeObject<'TObj>(json) 
     with 
-    | _ -> None
+    | _ -> Error "Could not deserialise JSON"

@@ -71,10 +71,10 @@ let import (command:Import) validateInBackbone state =
     | Species (l,_,_) ->
         match command.Parent with
         | None -> invalidArg "Must specify a parent taxon for a genus" "parent"
-        | Some parent ->
-            match validateInBackbone (ValidateById parent) with
-            | Some result -> printfn "Validation Successful"
-            | None -> invalidArg "Parent was not valid" "parent"
+        | Some parent -> printfn "Disabled taxonomic parent checking..."
+            // match validateInBackbone (ValidateById parent) with
+            // | Some result -> printfn "Validation Successful"
+            // | None -> invalidArg "Parent was not valid" "parent"
 
     [Imported { Id = command.Id
                 Group = command.Group

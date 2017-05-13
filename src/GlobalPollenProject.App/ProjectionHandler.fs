@@ -1,133 +1,53 @@
 module GlobalPollenProject.App.ProjectionHandler
 
-open GlobalPollenProject.Core.DomainTypes
-open GlobalPollenProject.Core.Aggregates.Grain
-open GlobalPollenProject.Core.Aggregates.Taxonomy
-open GlobalPollenProject.Core.Aggregates.ReferenceCollection
-
 open System
 open System.Collections.Generic
-
+open GlobalPollenProject.Core.DomainTypes
+open ReadStore
 open ReadModels
 
-// ID Unwrappers
-let unwrapGrainId (GrainId e) = e
-let unwrapTaxonId (TaxonId e) = e
-let unwrapUserId (UserId e) = e
-let unwrapRefId (CollectionId e) = e
-let unwrapSlideId (SlideId (e,f)) = e,f
-let unwrapLatin (LatinName ln) = ln
-let unwrapId (TaxonId id) = id
-let unwrapEph (SpecificEphitet e) = e
-let unwrapAuthor (Scientific a) = a
+module UnknownGrainProjections =
 
-let grain redis = function
-    | GrainSubmitted event ->
-        // // Do file upload here using file upload service, to get thumbnail
-        // let thumbUrl = 
-        //     match event.Images.Head with
-        //     | SingleImage x -> x
-        //     | FocusImage (u,s,c) -> u.Head
+    open GlobalPollenProject.Core.Aggregates.Grain
 
-        // let repo = ReadRepositories.projectionRepo<ReadModels.GrainSummary> redis "Grain"
-        // repo.Save (unwrapGrainId event.Id) { Id= unwrapGrainId event.Id; Thumbnail= Url.unwrap thumbUrl } |> ignore
-        printfn "Unknown grain submitted! It has %i images" event.Images.Length
+    let submit setReadModel (e:GrainSubmitted) =
+        let thumbUrl = 
+            match e.Images.Head with
+            | SingleImage x -> x
+            | FocusImage (u,s,c) -> u.Head
+        let summary = { Id = Converters.DomainToDto.unwrapGrainId e.Id; Thumbnail = Url.unwrap thumbUrl }
+        ReadStore.RepositoryBase.setSingle (summary.Id.ToString()) summary |> ignore
 
-    | GrainIdentified event ->
-        printfn "Grain identitied"
+    let identified e =
+        ()
 
-    | GrainIdentityConfirmed event ->
-        printfn "Grain identity confirmed"
+    let identityChanged e = 
+        ()
 
-    | GrainIdentityChanged event ->
-        printfn "Grain identity changed"
+    let route set = function
+    | GrainSubmitted e -> submit set e
+    | GrainIdentified e -> identified e
+    | GrainIdentityConfirmed e -> identityChanged e
+    | GrainIdentityChanged e -> identityChanged e
+    | GrainIdentityUnconfirmed e -> identityChanged e
 
-    | GrainIdentityUnconfirmed event ->
-        printfn "This grain lost its ID!"
 
-let getById (id:Guid) redis = ReadStore.RedisReadStore.load<BackboneTaxon> (id.ToString()) redis
-let getTaxonByName latinName rank parent redis =
-    let result = match rank with
-                    | "Species" -> ReadStore.RedisReadStore.load<Guid> ""
-                    ctx.BackboneTaxon.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Species" && t.Genus = parent)
-                    | "Genus" -> ctx.BackboneTaxon.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Genus" && t.Family = parent)
-                    | "Family" -> ctx.BackboneTaxon.FirstOrDefault(fun t -> t.LatinName = latinName && t.Rank = "Family")
-                    | _ -> invalidOp "Not a valid taxonomic rank"
-    if not (isNull result)
-        then Some result
-        else None
+module ReferenceMaterialProjections =
 
-let taxonomy redis = function
-    | Imported event ->            
+    open GlobalPollenProject.Core.Aggregates.ReferenceCollection
 
-        let getTaxon id = 
-            match id with
-            | Some id -> ReadStore.RedisReadStore.load<BackboneTaxon> id redis
-            | None -> None
+    let start e =
+        // let summary = { Id = unwrapRefId e.Id; User = unwrapUserId e.Owner; Name = e.Name; Description = e.Description; SlideCount = 0 }
+        // let detail = { Id = unwrapRefId e.Id; User = unwrapUserId e.Owner; Name = e.Name; Status = "Draft"; Version = 1; Description = e.Description; Slides = [] }
+        // setKey (unwrapRefId e.Id) summary
+        // setKey (unwrapRefId e.Id) detail
+        ()
 
-        let getTaxonByName name rank parent =
-            let key = match rank with
-                      | Family -> sprintf "family:%s" name
-                      | Genus -> sprintf "genus:%s:%s" parent name
-                      | Species -> sprintf "species:%s:%s" parent name
-            getTaxon key
+    let publish e =
+        ()
 
-        let getParent getTaxon parentId : BackboneTaxon = 
-            match parentId with
-            | Some parent -> 
-                match getTaxon parent with
-                | Some parent -> parent
-                | None -> invalidOp "There was no parent. Rebuild the projections database now."
-            | None -> invalidOp "The taxon is a genus, but did not have a parent"
-
-        let family,genus,species,rank,ln,namedBy =
-            match event.Identity with
-            | Family ln -> 
-                unwrapLatin ln,"","", "Family", unwrapLatin ln,""
-            | Genus ln ->
-                let family = getParent getTaxon event.Parent
-                family.LatinName,unwrapLatin ln,"", "Genus", unwrapLatin ln,""
-            | Species (g,s,n) -> 
-                let species = sprintf "%s %s" (unwrapLatin g) (unwrapEph s)
-                let genus = getParent getTaxon event.Parent
-                let family = getTaxonByName genus.Family "Family" ""
-                match family with
-                | Some f -> f.LatinName, genus.LatinName, species,"Species", species,unwrapAuthor n
-                | None -> invalidOp "The backbone taxonomy is corrupted. Rebuild required."
-        
-        let reference, referenceUrl =
-            match event.Reference with
-            | None -> "", ""
-            | Some r -> 
-                match r with
-                | ref,Some u -> ref,unwrap u
-                | ref,None -> ref,""
-
-        let projection = {  Id = unwrapTaxonId event.Id
-                            Family = family
-                            Genus = genus
-                            Species = species
-                            LatinName = ln
-                            NamedBy = namedBy
-                            Rank = rank
-                            ReferenceName = reference
-                            ReferenceUrl = referenceUrl }
-
-        readStore.BackboneTaxon.AddAsync projection |> Async.AwaitTask |> Async.RunSynchronously |> ignore
-        readStore.SaveChanges() |> ignore
-        printfn "Taxon imported: %s" ln
-
-//     | EstablishedConnection event ->
-//         printfn "Taxon connected to Neotoma and GBIF"
-let reference redis = function
-    | DigitisationStarted e -> 
-        let summary = { Id = unwrapRefId e.Id; User = unwrapUserId e.Owner; Name = e.Name; Description = e.Description; SlideCount = 0 }
-        redis |> ReadStore.RedisReadStore.save (unwrapRefId e.Id) summary
-
-        let detail = { Id = unwrapRefId e.Id; User = unwrapUserId e.Owner; Name = e.Name; Status = "Draft"; Version = 1; Description = e.Description; Slides = [] }
-        redis |> ReadStore.RedisReadStore.save (unwrapRefId e.Id) detail
-    // | CollectionPublished cid -> printfn ""
-    // | SlideRecorded slide -> 
+    let recordSlide e =
+        ()
     //     let colId (SlideId (colId,slideId)) = colId
     //     let col = readStore.ReferenceCollection.Include(fun x -> x.Slides) |> Seq.find (fun c -> c.Id = unwrapRefId (colId slide.Id))
     //     let backboneTaxon =
@@ -155,6 +75,14 @@ let reference redis = function
     //     readStore.ReferenceCollection.Update(col) |> ignore
     //     readStore.SaveChanges() |> ignore
 
+    let slideImage slideId image =
+        ()
+
+    let markDigitised slideId =
+        ()
+
+    let slideIdentityChanged slideId taxonId =
+        ()
     // | SlideGainedIdentity (slideId, taxonId) ->
     //     let col = readStore.ReferenceCollection.Include(fun x -> x.Slides) |> Seq.find (fun c -> c.Id = unwrapRefId (fst (unwrapSlideId slideId)))
     //     let backboneTaxon = readStore.BackboneTaxon |> Seq.find (fun t -> t.Id = unwrapTaxonId taxonId)
@@ -180,14 +108,93 @@ let reference redis = function
     //     // readStore.ReferenceCollection.Update( { col with Slides = updatedSlideList } ) |> ignore
     //     readStore.SaveChanges() |> ignore
 
-    // | SlideImageUploaded (id,img) -> printfn ""
-    // | SlideFullyDigitised slideId -> printfn ""
 
-let project redis (e:obj) =
-    match e with
-    | :? GlobalPollenProject.Core.Aggregates.Grain.Event as e -> grain redis e
-    | :? GlobalPollenProject.Core.Aggregates.ReferenceCollection.Event as e -> reference redis e
-    | :? GlobalPollenProject.Core.Aggregates.Taxonomy.Event as e -> taxonomy redis e
+    let route = function
+    | DigitisationStarted e -> start e
+    | CollectionPublished e -> publish e
+    | SlideRecorded e -> recordSlide e
+    | SlideImageUploaded (id,image) -> slideImage id image
+    | SlideFullyDigitised sid -> markDigitised sid
+    | SlideGainedIdentity (sid,tid) -> slideIdentityChanged sid tid
+
+
+module TaxonomicSystemProjections =
+
+    open GlobalPollenProject.Core.Aggregates.Taxonomy
+
+    let addToBackbone getKey setKey setSortedList serialise deserialise (event:Imported) =
+
+        let getById id =
+            match id with
+            | Some id ->
+                let u : Guid = Converters.DomainToDto.unwrapTaxonId id
+                match ReadStore.RepositoryBase.getSingle<BackboneTaxon> (u.ToString()) getKey deserialise with
+                | Ok t -> t
+                | Error e -> invalidOp "A parent was required but not found. The read model may be corrupted"
+            | None -> invalidOp "A parent was required but not found. The read model may be corrupted"
+
+        let getFamily familyName =
+            ReadStore.TaxonomicBackbone.tryFindByLatinName familyName None None getKey deserialise
+
+        let reference, referenceUrl =
+            match event.Reference with
+            | None -> "", ""
+            | Some r -> 
+                match r with
+                | ref,Some u -> ref,unwrap u
+                | ref,None -> ref,""
+
+        let family,genus,species,rank,ln,namedBy =
+            match event.Identity with
+            | Family ln -> 
+                Converters.DomainToDto.unwrapLatin ln,"","", "Family", Converters.DomainToDto.unwrapLatin ln,""
+            | Genus ln ->
+                let family = getById event.Parent
+                family.LatinName,Converters.DomainToDto.unwrapLatin ln,"", "Genus", Converters.DomainToDto.unwrapLatin ln,""
+            | Species (g,s,n) -> 
+                let species = sprintf "%s %s" (Converters.DomainToDto.unwrapLatin g) (Converters.DomainToDto.unwrapEph s)
+                let genus = getById event.Parent
+                let family = getFamily genus.Family
+                match family with
+                | Ok f ->
+                    f.LatinName, genus.LatinName, species,"Species", species,Converters.DomainToDto.unwrapAuthor n
+                | Error e -> invalidOp "A parent was required but not found. The read model may be corrupted"
+
+        let projection = 
+            {   Id = Converters.DomainToDto.unwrapTaxonId event.Id
+                Family = family
+                Genus = genus
+                Species = species
+                LatinName = ln
+                NamedBy = namedBy
+                Rank = rank
+                ReferenceName = reference
+                ReferenceUrl = referenceUrl }
+        ReadStore.TaxonomicBackbone.import setKey setSortedList serialise projection |> ignore
+        printfn "ReadModel: Imported %s" projection.LatinName
+
+    let link e =
+        ()
+
+    let route getKey setKey setList serialise deserialise = function
+    | Imported e -> addToBackbone getKey setKey setList serialise deserialise e
+    | EstablishedConnection e -> link e
+
+// TODO Remove this reference to serialisation
+let deserialise<'a> json = 
+    let unwrap (ReadStore.Json j) = j
+    Serialisation.deserialiseCli<'a> (unwrap json)
+
+let serialise s = 
+    let result = Serialisation.serialiseCli s
+    match result with
+    | Ok r -> Ok <| ReadStore.Json r
+    | Error e -> Error e
+// END of TODO
+
+let router (get:GetFromKeyValueStore) (set:SetStoreValue) (setSortedList:SetEntryInSortedList) (e:string * obj) =
+    match snd e with
+    | :? GlobalPollenProject.Core.Aggregates.Grain.Event as e -> UnknownGrainProjections.route set e
+    | :? GlobalPollenProject.Core.Aggregates.ReferenceCollection.Event as e -> ReferenceMaterialProjections.route e
+    | :? GlobalPollenProject.Core.Aggregates.Taxonomy.Event as e -> TaxonomicSystemProjections.route get set setSortedList serialise deserialise e
     | _ -> ()
-
-let projectObservable (e:string*obj) = project

@@ -30,7 +30,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Include="Models.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
 
