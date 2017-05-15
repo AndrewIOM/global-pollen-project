@@ -46,7 +46,11 @@ let readPlantListTextFile filePath : ParsedTaxon list =
                         NamePublishedIn = values.[13]
                         References = values.[14] }
         parsed <- parsed |> List.append [taxon]
-    parsed |> Seq.skip 1 |> Seq.filter (fun t -> t.TaxonRank = "species") |> Seq.toList
+    parsed 
+    |> Seq.skip 1 
+    |> Seq.filter (fun t -> t.TaxonRank = "species") 
+    |> Seq.sortBy (fun t -> t.TaxonomicStatus )
+    |> Seq.toList
 
 let bryophytes = ["Acrobolbaceae"; "Adelanthaceae"; "Allisoniaceae"; "Amblystegiaceae"; "Anastrophyllaceae"; "Andreaeaceae"; "Andreaeobryaceae"; "Aneuraceae"; "Antheliaceae"; "Anthocerotaceae"; "Archidiaceae"; "Arnelliaceae"; "Aulacomniaceae"; "Aytoniaceae"; "Balantiopsaceae"; "Bartramiaceae"; "Blasiaceae"; "Brachytheciaceae"; "Brevianthaceae"; "Bruchiaceae"; "Bryaceae"; "Bryobartramiaceae"; "Bryoxiphiaceae"; "Buxbaumiaceae"; "Calomniaceae"; "Calymperaceae"; "Calypogeiaceae"; "Catagoniaceae"; "Catoscopiaceae"; "Cephaloziaceae"; "Cephaloziellaceae"; "Chaetophyllopsaceae"; "Chonecoleaceae"; "Cinclidotaceae"; "Cleveaceae"; "Climaciaceae"; "Conocephalaceae"; "Corsiniaceae"; "Cryphaeaceae"; "Cyrtopodaceae"; "Daltoniaceae"; "Dendrocerotaceae"; "Dicnemonaceae"; "Dicranaceae"; "Diphysciaceae"; "Disceliaceae"; "Ditrichaceae"; "Echinodiaceae"; "Encalyptaceae"; "Entodontaceae"; "Ephemeraceae"; "Erpodiaceae"; "Eustichiaceae"; "Exormothecaceae"; "Fabroniaceae"; "Fissidentaceae"; "Fontinalaceae"; "Fossombroniaceae"; "Funariaceae"; "Geocalycaceae"; "Gigaspermaceae"; "Goebeliellaceae"; "Grimmiaceae"; "Gymnomitriaceae"; "Gyrothyraceae"; "Haplomitriaceae"; "Hedwigiaceae"; "Helicophyllaceae"; "Herbertaceae"; "Hookeriaceae"; "Hylocomiaceae"; "Hymenophytaceae"; "Hypnaceae"; "Hypnodendraceae"; "Hypopterygiaceae"; "Jackiellaceae"; "Jubulaceae"; "Jubulopsaceae"; "Jungermanniaceae"; "Lejeuneaceae"; "Lembophyllaceae"; "Lepicoleaceae"; "Lepidolaenaceae"; "Lepidoziaceae"; "Leptodontaceae"; "Lepyrodontaceae"; "Leskeaceae"; "Leucodontaceae"; "Leucomiaceae"; "Lophocoleaceae"; "Lophoziaceae"; "Lunulariaceae"; "Makinoaceae"; "Marchantiaceae"; "Mastigophoraceae"; "Meesiaceae"; "Mesoptychiaceae"; "Meteoriaceae"; "Metzgeriaceae"; "Microtheciellaceae"; "Mitteniaceae"; "Mizutaniaceae"; "Mniaceae"; "Monocarpaceae"; "Monocleaceae"; "Monosoleniaceae"; "Myriniaceae"; "Myuriaceae"; "Neckeraceae"; "Neotrichocoleaceae"; "Notothyladaceae"; "Octoblepharaceae"; "Oedipodiaceae"; "Orthorrhynchiaceae"; "Orthotrichaceae"; "Oxymitraceae"; "Pallaviciniaceae"; "Pelliaceae"; "Phyllodrepaniaceae"; "Phyllogoniaceae"; "Pilotrichaceae"; "Plagiochilaceae"; "Plagiotheciaceae"; "Pleurophascaceae"; "Pleuroziaceae"; "Pleuroziopsaceae"; "Polytrichaceae"; "Porellaceae"; "Pottiaceae"; "Prionodontaceae"; "Pseudoditrichaceae"; "Pseudolepicoleaceae"; "Pterigynandraceae"; "Pterobryaceae"; "Ptilidiaceae"; "Ptychomitriaceae"; "Ptychomniaceae"; "Racopilaceae"; "Radulaceae"; "Regmatodontaceae"; "Rhabdoweisiaceae"; "Rhachitheciaceae"; "Rhacocarpaceae"; "Rhizogoniaceae"; "Ricciaceae"; "Riellaceae"; "Rigodiaceae"; "Rutenbergiaceae"; "Scapaniaceae"; "Schistochilaceae"; "Schistostegaceae"; "Scorpidiaceae"; "Seligeriaceae"; "Sematophyllaceae"; "Serpotortellaceae"; "Sorapillaceae"; "Sphaerocarpaceae"; "Sphagnaceae"; "Spiridentaceae"; "Splachnaceae"; "Splachnobryaceae"; "Stereophyllaceae"; "Takakiaceae"; "Targioniaceae"; "Tetraphidaceae"; "Thamnobryaceae"; "Theliaceae"; "Thuidiaceae"; "Timmiaceae"; "Trachypodaceae"; "Treubiaceae"; "Trichocoleaceae"; "Trichotemnomataceae"; "Vandiemeniaceae"; "Vetaformaceae"; "Viridivelleraceae"; "Wardiaceae"; "Wiesnerellaceae" ]
 let pteridophytes = ["Anemiaceae"; "Apleniaceae"; "Aspleniaceae"; "Athyriaceae"; "Blechnaceae"; "Cibotiaceae"; "Culcitaceae"; "Cyatheaceae"; "Cystodiaceae"; "Cystopteridaceae"; "Davalliaceae"; "Dennstaedtiaceae"; "Dicksoniaceae"; "Diplaziopsidaceae"; "Dipteridaceae"; "Dryopteridacae"; "Dryopteridaceae"; "Equisetaceae"; "Gleicheniaceae"; "Hymenophyllaceae"; "Hypodematiaceae"; "Isoëtaceae"; "Lindsaeaceae"; "Lomariopsidaceae"; "Lonchitidaceae"; "Loxsomataceae"; "Lycopodiaceae"; "Lygodiaceae"; "Marattiaceae"; "Marsileaceae"; "Matoniaceae"; "Metaxyaceae"; "Nephrolepidaceae"; "Oleandraceae"; "Onocleaceae"; "Ophioglossaceae"; "Osmundaceae"; "Plagiogyriaceae"; "Polypodiaceae"; "Psilotaceae"; "Pteridaceae"; "Rhachidosoraceae"; "Saccolomataceae"; "Salviniaceae"; "Schizaeaceae"; "Selaginellaceae"; "Tectariaceae"; "Thelypteridaceae"; "Thyrsopteridaceae"; "Woodsiaceae" ]
@@ -69,7 +73,30 @@ let toUrl str =
     | FirstRegexGroup "http://(.*?)/(.*)" host -> Some (Url.create (str))
     | _ -> None
 
-let createImportCommands (taxon:ParsedTaxon) (currentCommands: Command list) generateId : Command list =
+let findTaxonIdInCommandsByName genus species currentCommands =
+
+    let unwrapLn (LatinName ln) = ln
+    let unwrapSe (SpecificEphitet se) = se
+
+    let command = currentCommands |> Seq.tryFind (fun c ->
+        match c with
+        | ImportFromBackbone ci ->
+            match ci.Identity with
+            | Family f -> false
+            | Genus g -> false
+            | Species (ln,se,auth) -> 
+                (unwrapLn ln) = genus && (unwrapSe se) = species
+        | _ -> false )
+
+    match command with
+    | None -> None
+    | Some c ->
+        match c with
+        | ImportFromBackbone i -> Some i.Id
+        | _ -> None
+
+
+let createImportCommands (taxon:ParsedTaxon) (allParsed:ParsedTaxon seq) (currentCommands: Command list) generateId : Command list =
 
     let group = match taxon.Family with
                 | t when gymnosperms |> List.tryFind (fun x -> x = t) = Some t -> Gymnosperm
@@ -125,12 +152,29 @@ let createImportCommands (taxon:ParsedTaxon) (currentCommands: Command list) gen
         match existingSpecies with
         | Some c -> None
         | None -> 
+
+            let status =
+
+                let relateToOtherTaxon otherPlantListId =
+                    let readTaxon = allParsed |> Seq.find (fun t -> t.TaxonId = otherPlantListId)
+                    let existingId = findTaxonIdInCommandsByName taxon.Genus taxon.SpecificEphitet currentCommands
+                    match existingId with
+                    | Some id -> id
+                    | None -> invalidOp "Not supported" // TODO
+
+                match taxon.TaxonomicStatus with
+                | "accepted" -> Accepted
+                | "doubtful" -> Doubtful
+                | "misapplied" -> Misapplied <| relateToOtherTaxon taxon.AcceptedNameUsageId
+                | "synonym" -> Synonym <| relateToOtherTaxon taxon.AcceptedNameUsageId
+                | _ -> invalidOp "Corrupt input data: invalid taxonomic status"
+
             let id = TaxonId (generateId())
             Some (ImportFromBackbone {      Id          = TaxonId (generateId())
                                             Group       = group
                                             Identity    = Species (LatinName taxon.Genus, SpecificEphitet taxon.SpecificEphitet, Scientific taxon.ScientificNameAuthorship )
                                             Parent      = Some (snd genus)
-                                            Status      = Accepted
+                                            Status      = status
                                             Reference   = reference })
 
 

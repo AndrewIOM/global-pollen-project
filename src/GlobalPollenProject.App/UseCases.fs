@@ -30,19 +30,19 @@ let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirecto
 let imageUploader = AzureImageStore.uploadToAzure "Development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
 
 // Write (Event) Store
-let eventStore = 
+let eventStore = lazy(
     let ip = appSettings.["eventstore:eventstoreip"]
     let port = appSettings.["eventstore:eventstoreport"] |> int
     let username = appSettings.["eventstore:eventstoreuser"]
     let pass = appSettings.["eventstore:eventstorepassword"]
     let es = EventStore.connect ip port username pass |> Async.RunSynchronously
-    EventStore.EventStore(es)
+    EventStore.EventStore(es) )
 
 // Read Model 'Repository'
-let redisGet,redisSet,redisSetSortedList = 
+let redisGet,redisSet,redisSetSortedList =
     let ip = appSettings.["readstore:redisip"]
-    let redis = ReadStore.Redis.connect ip
-    redis |> ReadStore.Redis.get, redis |> ReadStore.Redis.set, redis |> ReadStore.Redis.addToSortedList
+    let redis = lazy (ReadStore.Redis.connect ip)
+    redis.Value |> ReadStore.Redis.get, redis.Value |> ReadStore.Redis.set, redis.Value |> ReadStore.Redis.addToSortedList
 
 let deserialise<'a> json = 
     let unwrap (ReadStore.Json j) = j
@@ -54,7 +54,7 @@ let serialise s =
     | Ok r -> Ok <| ReadStore.Json r
     | Error e -> Error e
 
-eventStore.SaveEvent 
+eventStore.Value.SaveEvent 
 :> IObservable<string*obj>
 |> Observable.subscribe (ProjectionHandler.router redisGet redisSet redisSetSortedList)
 |> ignore
@@ -84,7 +84,7 @@ module Digitise =
 
     let private issueCommand = 
         let aggregate = { initial = State.Initial; evolve = State.Evolve; handle = handle; getId = getId }
-        eventStore.MakeCommandHandler "ReferenceCollection" aggregate domainDependencies
+        eventStore.Value.MakeCommandHandler "ReferenceCollection" aggregate domainDependencies
 
     let startNewCollection (request:StartCollectionRequest) getCurrentUser =
         let newId = CollectionId <| domainDependencies.GenerateId()
@@ -124,7 +124,7 @@ module UnknownGrains =
 
     let private issueCommand = 
         let aggregate = { initial = State.InitialState; evolve = State.Evolve; handle = handle; getId = getId }
-        eventStore.MakeCommandHandler "Specimen" aggregate domainDependencies
+        eventStore.Value.MakeCommandHandler "Specimen" aggregate domainDependencies
 
     let submitUnknownGrain grainId (images:string list) age (lat:float) lon =
         let id = GrainId grainId
@@ -162,15 +162,17 @@ module Backbone =
 
     let private issueCommand = 
         let aggregate = { initial = State.InitialState; evolve = State.Evolve; handle = handle; getId = getId }
-        eventStore.MakeCommandHandler "Taxon" aggregate domainDependencies
+        eventStore.Value.MakeCommandHandler "Taxon" aggregate domainDependencies
 
     let importAll filePath =
-        let taxa = (readPlantListTextFile filePath) |> List.filter (fun x -> x.TaxonomicStatus = "accepted") |> List.take 5000
+        let taxa = readPlantListTextFile filePath
         let mutable commands : Command list = []
         for row in taxa do
-            let additionalCommands = createImportCommands row commands domainDependencies.GenerateId
+            let additionalCommands = createImportCommands row taxa commands domainDependencies.GenerateId
             commands <- List.append commands additionalCommands
-        commands |> List.map issueCommand
+            if commands.Length % 20000 = 0 then (printfn "Commands %i" commands.Length) else ignore()
+            additionalCommands |> List.map issueCommand |> ignore
+        //commands |> List.map issueCommand |> ignore
         ()
 
     let search (request:BackboneSearchRequest) =
@@ -184,7 +186,7 @@ module User =
     
     let private issueCommand = 
         let aggregate = { initial = State.InitialState; evolve = State.Evolve; handle = handle; getId = getId }
-        eventStore.MakeCommandHandler "User" aggregate domainDependencies
+        eventStore.Value.MakeCommandHandler "User" aggregate domainDependencies
     
     let register (newUser:NewAppUserRequest) (getUserId:GetCurrentUser) =
         let id = UserId (getUserId())

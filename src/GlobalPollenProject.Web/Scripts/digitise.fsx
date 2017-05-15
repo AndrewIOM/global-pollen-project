@@ -37,6 +37,8 @@ and BackboneResult = {
     Rank:string
     ReferenceName:string
     ReferenceUrl:string
+    TaxonomicStatus:string
+    TaxonomicAlias:string
 }
 
 and PagedResult<'TProjection> = {
@@ -55,6 +57,7 @@ and SlideRequest = {
 and AddSlideModel = {
   BackboneId: Guid option
   CollectionId: Guid option
+  IdentificationMethod: string
   Rank: string
   Family: string
   Genus: string option

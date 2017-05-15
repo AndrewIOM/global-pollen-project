@@ -31,6 +31,8 @@ type BackboneTaxon = {
     Rank:string
     ReferenceName:string
     ReferenceUrl:string
+    TaxonomicStatus:string
+    TaxonomicAlias:string
 }
 
 [<CLIMutable>]
@@ -73,7 +75,7 @@ type Slide = {
     Id:Guid
     CollectionId: Guid
     CollectionSlideId: string
-    Taxon: TaxonSummary
+    Taxon: TaxonSummary option
     IdentificationMethod: string
     FamilyOriginal: string
     GenusOriginal: string
