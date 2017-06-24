@@ -30,13 +30,36 @@ module UnknownGrainProjections =
             match e.Images.Head with
             | SingleImage x -> x
             | FocusImage (u,s,c) -> u.Head
-        let summary = { Id = Converters.DomainToDto.unwrapGrainId e.Id; Thumbnail = Url.unwrap thumbUrl }
+
+        let summary = { 
+            Id = Converters.DomainToDto.unwrapGrainId e.Id 
+            Thumbnail = Url.unwrap thumbUrl
+            HasTaxonomicIdentity = false }
+
+        let detail = {
+            Id = Converters.DomainToDto.unwrapGrainId e.Id
+            Images = [ { Url = "https://acm.im/cool.png" } ]
+            FocusImages = []
+            Identifications = []
+            ConfirmedFamily = ""
+            ConfirmedGenus = ""
+            ConfirmedSpecies = "" }
+
         ReadStore.RepositoryBase.setSingle (summary.Id.ToString()) summary |> ignore
+        ReadStore.RepositoryBase.setSingle (detail.Id.ToString()) detail |> ignore
 
     let identified e =
+
+        // Load detail read model for unknown grain
+        // Add this identification as a morphological identification
         ()
 
     let identityChanged e = 
+
+        // match e with
+        // | GrainIdentityConfirmed ce ->
+        //     ce.Taxon
+        // | -> ()
         ()
 
     let route set = function
@@ -61,6 +84,8 @@ module ReferenceMaterialProjections =
         ReadStore.RepositoryBase.setSingle (refId.ToString()) detail set serialise |> ignore
 
     let publish get deserialise e =
+        // Make all of the public-facing read models here
+
         ()
 
     let recordSlide get setSingle (e:SlideRecorded) =
@@ -157,10 +182,10 @@ module TaxonomicSystemProjections =
             | Error e -> readModelErrorHandler()
         | None -> readModelErrorHandler()
 
-    let addToBackbone getKey setKey setSortedList serialise deserialise (event:Imported) =
+    let addToBackbone getKey getListKey setKey setSortedList serialise deserialise (event:Imported) =
 
         let getFamily familyName =
-            ReadStore.TaxonomicBackbone.tryFindByLatinName familyName None None getKey deserialise
+            ReadStore.TaxonomicBackbone.tryFindByLatinName familyName None None getListKey getKey deserialise
 
         let reference, referenceUrl =
             match event.Reference with
@@ -211,13 +236,13 @@ module TaxonomicSystemProjections =
     let link e =
         ()
 
-    let route getKey setKey setList serialise deserialise = function
-    | Imported e -> addToBackbone getKey setKey setList serialise deserialise e
+    let route getKey getListKey setKey setList serialise deserialise = function
+    | Imported e -> addToBackbone getKey getListKey setKey setList serialise deserialise e
     | EstablishedConnection e -> link e
 
-let router (get:GetFromKeyValueStore) (set:SetStoreValue) (setSortedList:SetEntryInSortedList) (e:string * obj) =
+let router (get:GetFromKeyValueStore) (getList:GetListFromKeyValueStore) (set:SetStoreValue) (setSortedList:SetEntryInSortedList) (e:string * obj) =
     match snd e with
     | :? GlobalPollenProject.Core.Aggregates.Grain.Event as e -> UnknownGrainProjections.route set e
     | :? GlobalPollenProject.Core.Aggregates.ReferenceCollection.Event as e -> ReferenceMaterialProjections.route get set setSortedList serialise deserialise e
-    | :? GlobalPollenProject.Core.Aggregates.Taxonomy.Event as e -> TaxonomicSystemProjections.route get set setSortedList serialise deserialise e
+    | :? GlobalPollenProject.Core.Aggregates.Taxonomy.Event as e -> TaxonomicSystemProjections.route get getList set setSortedList serialise deserialise e
     | _ -> ()

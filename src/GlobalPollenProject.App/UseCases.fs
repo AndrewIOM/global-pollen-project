@@ -27,7 +27,7 @@ type GetCurrentUser = unit -> Guid
 let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build()
 
 // Image Store
-let imageUploader = AzureImageStore.uploadToAzure "Development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
+let uploadImage = AzureImageStore.uploadToAzure "Development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
 
 // Write (Event) Store
 let eventStore = lazy(
@@ -39,10 +39,13 @@ let eventStore = lazy(
     EventStore.EventStore(es) )
 
 // Read Model 'Repository'
-let redisGet,redisSet,redisSetSortedList =
+let readStoreGet,readStoreGetList,redisSet,redisSetSortedList =
     let ip = appSettings.["readstore:redisip"]
     let redis = lazy (ReadStore.Redis.connect ip)
-    redis.Value |> ReadStore.Redis.get, redis.Value |> ReadStore.Redis.set, redis.Value |> ReadStore.Redis.addToSortedList
+    redis.Value |> ReadStore.Redis.get, 
+    redis.Value |> ReadStore.Redis.getListItems, 
+    redis.Value |> ReadStore.Redis.set, 
+    redis.Value |> ReadStore.Redis.addToSortedList
 
 let deserialise<'a> json = 
     let unwrap (ReadStore.Json j) = j
@@ -56,7 +59,7 @@ let serialise s =
 
 eventStore.Value.SaveEvent 
 :> IObservable<string*obj>
-|> Observable.subscribe (ProjectionHandler.router redisGet redisSet redisSetSortedList)
+|> Observable.subscribe (ProjectionHandler.router readStoreGet readStoreGetList redisSet redisSetSortedList)
 |> ignore
 
 // App Core Dependencies
@@ -64,13 +67,13 @@ let domainDependencies =
     let log = ignore
     let calculateIdentity = calculateTaxonomicIdentity ReadStore.TaxonomicBackbone.search
     let isValidTaxon query =
-        match ReadStore.TaxonomicBackbone.validate query redisGet deserialise with
+        match ReadStore.TaxonomicBackbone.validate query readStoreGet readStoreGetList deserialise with
         | Ok t -> Some (TaxonId t.Id)
         | Error e -> None
 
     { GenerateId          = Guid.NewGuid
       Log                 = log
-      UploadImage         = imageUploader
+      UploadImage         = uploadImage
       GetGbifId           = ExternalLink.getGbifId
       GetNeotomaId        = ExternalLink.getNeotomaId
       ValidateTaxon       = isValidTaxon
@@ -106,16 +109,16 @@ module Digitise =
         Ok
 
     let listCollections () = 
-        ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> redisGet deserialise
+        ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> readStoreGet deserialise
     
     let myCollections getCurrentUser = 
-        ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> redisGet deserialise
+        ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> readStoreGet deserialise
         // let userId = getCurrentUser()
         // let readModel = projections.ReferenceCollectionSummary |> Seq.filter (fun rc -> rc.User = userId) |> Seq.toList
         // Success readModel
 
     let getCollection id =
-        ReadStore.RepositoryBase.getSingle id redisGet deserialise<ReferenceCollectionSummary>
+        ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<ReferenceCollectionSummary>
 
 
 module UnknownGrains =
@@ -126,34 +129,49 @@ module UnknownGrains =
         let aggregate = { initial = State.InitialState; evolve = State.Evolve; handle = handle; getId = getId }
         eventStore.Value.MakeCommandHandler "Specimen" aggregate domainDependencies
 
-    let submitUnknownGrain grainId (images:string list) age (lat:float) lon =
-        let id = GrainId grainId
-        let uploadedImages = images |> List.map (fun x -> SingleImage (Url.create x))
-        let spatial = Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>)
-        let temporal = CollectionDate (age * 1<CalYr>)
-        let userId = UserId (Guid.NewGuid())
-        issueCommand <| SubmitUnknownGrain {Id = id; Images = uploadedImages; SubmittedBy = userId; Temporal = Some temporal; Spatial = spatial }
-        Ok id
+    // let submitUnknownGrain grainId (images:string list) age (lat:float) lon =
+    //     let id = GrainId grainId
+    //     let uploadedImages = images |> List.map (fun x -> SingleImage (Url.create x))
+    //     let spatial = Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>)
+    //     let temporal = CollectionDate (age * 1<CalYr>)
+    //     let userId = UserId (Guid.NewGuid())
+    //     issueCommand <| SubmitUnknownGrain {Id = id; Images = uploadedImages; SubmittedBy = userId; Temporal = Some temporal; Spatial = spatial }
+    //     Ok id
+
+    let submitUnknownGrain (request:AddUnknownGrainRequest) getCurrentUser =
+
+        let upload base64Strings = 
+            base64Strings
+            |> List.map (Base64Image >> Single >> uploadImage)
+            |> Ok
+
+        let currentUser = Ok(UserId <| getCurrentUser())
+        let newId = Ok(GrainId <| domainDependencies.GenerateId())
+
+        request
+        |> Converters.DtoToDomain.dtoToGrain newId currentUser
+        <*> (upload request.StaticImagesBase64)
+        |> Result.map issueCommand
 
     let getDetail grainId =
-        ReadStore.RepositoryBase.getSingle<GrainSummary> grainId redisGet deserialise
+        ReadStore.RepositoryBase.getSingle<GrainSummary> grainId readStoreGet deserialise
 
     let identifyUnknownGrain grainId taxonId =
         invalidOp "Not Implemented"
         handle (IdentifyUnknownGrain { Id = GrainId grainId; Taxon = TaxonId taxonId; IdentifiedBy = UserId (Guid.NewGuid()) })
 
     let listUnknownGrains =
-        ReadStore.RepositoryBase.getAll<GrainSummary> redisGet deserialise
+        ReadStore.RepositoryBase.getAll<GrainSummary> readStoreGet deserialise
 
 module Taxonomy =
 
     open GlobalPollenProject.Core.Aggregates.Taxonomy
 
     let list (request:PageRequest) =
-        ReadStore.RepositoryBase.getAll<TaxonSummary> redisGet deserialise
+        ReadStore.RepositoryBase.getAll<TaxonSummary> readStoreGet deserialise
 
     let getByName family genus species =
-        ReadStore.TaxonomicBackbone.tryFindByLatinName family genus species redisGet deserialise
+        ReadStore.TaxonomicBackbone.tryFindByLatinName family genus species readStoreGetList readStoreGet deserialise
 
 module Backbone =
 
@@ -165,20 +183,50 @@ module Backbone =
         eventStore.Value.MakeCommandHandler "Taxon" aggregate domainDependencies
 
     let importAll filePath =
+
+        let processTaxa' initialCommands allTaxa taxaToProcess =
+            let mutable generatedCommands : Command list = initialCommands
+            let mutable results : (ParsedTaxon * Result<Command list,ImportError>) list = []
+            for taxon in taxaToProcess do
+                let added = createImportCommands taxon allTaxa generatedCommands domainDependencies.GenerateId
+                match added with 
+                | Ok cmds -> 
+                    cmds |> List.map issueCommand |> ignore
+                    generatedCommands <- List.append generatedCommands cmds
+                | Error e ->
+                    match e with
+                    | Postpone -> printfn "Postponing %s" taxon.ScientificName
+                    | SynonymOfSubspecies -> printfn "Synonym of Subspecies (Skipping): %s" taxon.ScientificName 
+                results <- List.append results [taxon,added]
+                if generatedCommands.Length % 20000 = 0 then (printfn "Commands %i" generatedCommands.Length) else ignore()
+            results
+
+        let rec processTaxa commands allTaxa taxaToProcess =
+            let results = processTaxa' commands allTaxa taxaToProcess
+            let toReprocess = 
+                results 
+                |> List.filter(fun result -> match (snd result) with | Ok r -> false | Error e -> match e with | ImportError.Postpone -> true | ImportError.SynonymOfSubspecies -> false ) 
+                |> List.map fst
+            let currentCommands = 
+                results 
+                |> List.choose(fun result -> match (snd result) with | Ok r -> Some r | Error e -> None ) 
+                |> List.concat
+                |> List.append commands
+            printfn "Generated commands for %i taxa, with %i remaining" currentCommands.Length toReprocess.Length
+            match toReprocess.Length with
+            | 0 -> currentCommands
+            | _ -> processTaxa currentCommands allTaxa toReprocess
+
         let taxa = readPlantListTextFile filePath
-        let mutable commands : Command list = []
-        for row in taxa do
-            let additionalCommands = createImportCommands row taxa commands domainDependencies.GenerateId
-            commands <- List.append commands additionalCommands
-            if commands.Length % 20000 = 0 then (printfn "Commands %i" commands.Length) else ignore()
-            additionalCommands |> List.map issueCommand |> ignore
+        let commands : Command list = processTaxa [] taxa taxa
+        //printfn "Issuing %i import commands..." commands.Length
         //commands |> List.map issueCommand |> ignore
         ()
 
     let search (request:BackboneSearchRequest) =
         request
         |> DtoToDomain.backboneSearchToIdentity
-        |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.search s redisGet deserialise)
+        |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.search s readStoreGetList readStoreGet deserialise)
 
 module User = 
 

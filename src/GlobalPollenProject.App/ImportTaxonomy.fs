@@ -88,6 +88,13 @@ let findTaxonIdInCommandsByName genus species currentCommands =
                 (unwrapLn ln) = genus && (unwrapSe se) = species
         | _ -> false )
 
+    // TODO
+    // 1. Make sure all lookups are using authorship
+    // 2. When adding synonyms:
+        // If the actual taxon lookup fails, return an Error / Failure
+        // If this occurs, queue it with recursion to re-add all taxa, until they have been added.
+        // This is because a synonym can point to another synonym.
+
     match command with
     | None -> None
     | Some c ->
@@ -95,87 +102,102 @@ let findTaxonIdInCommandsByName genus species currentCommands =
         | ImportFromBackbone i -> Some i.Id
         | _ -> None
 
+type ImportError =
+| Postpone
+| SynonymOfSubspecies
 
-let createImportCommands (taxon:ParsedTaxon) (allParsed:ParsedTaxon seq) (currentCommands: Command list) generateId : Command list =
+let createImportCommands (taxon:ParsedTaxon) (allParsed:ParsedTaxon seq) (currentCommands: Command list) generateId =
 
-    let group = match taxon.Family with
-                | t when gymnosperms |> List.tryFind (fun x -> x = t) = Some t -> Gymnosperm
-                | t when pteridophytes |> List.tryFind (fun x -> x = t) = Some t -> Pteridophyte
-                | t when bryophytes |> List.tryFind (fun x -> x = t) = Some t -> Bryophyte
-                | _ -> Angiosperm
+    let group = 
+        match taxon.Family with
+        | t when gymnosperms |> List.tryFind (fun x -> x = t) = Some t -> Gymnosperm
+        | t when pteridophytes |> List.tryFind (fun x -> x = t) = Some t -> Pteridophyte
+        | t when bryophytes |> List.tryFind (fun x -> x = t) = Some t -> Bryophyte
+        | _ -> Angiosperm
 
-    let family : Command option * TaxonId = 
-        let exsitingFamily = currentCommands |> List.tryFind (fun c -> 
-                                            match c with
-                                            | ImportFromBackbone t -> t.Identity = Family (LatinName taxon.Family)
-                                            | _ -> false )
-        match exsitingFamily with
-        | Some c -> None, (unwrap c)
-        | None -> 
-            let id = TaxonId (generateId())
-            Some (ImportFromBackbone {  Id          = id
-                                        Group       = group
-                                        Identity    = Family (LatinName taxon.Family)
-                                        Parent      = None
-                                        Status      = Accepted
-                                        Reference   = None }) , id
+    let status =
+        let relateToOtherTaxon otherPlantListId =
+            let readTaxon = allParsed |> Seq.tryFind (fun t -> t.TaxonId = otherPlantListId)
+            match readTaxon with
+            | None -> Error SynonymOfSubspecies
+            | Some tx ->
+                let existingId = findTaxonIdInCommandsByName tx.Genus tx.SpecificEphitet currentCommands
+                match existingId with
+                | Some id -> Ok id
+                | None -> Error Postpone
+        match taxon.TaxonomicStatus with
+        | "accepted" -> Ok Accepted
+        | "doubtful" -> Ok Doubtful
+        | "misapplied" -> relateToOtherTaxon taxon.AcceptedNameUsageId |> Result.bind (fun id -> Ok (Misapplied id))
+        | "synonym" -> relateToOtherTaxon taxon.AcceptedNameUsageId |> Result.bind (fun id -> Ok (Synonym id))
+        | _ -> invalidOp "Corrupt input data: invalid taxonomic status"
 
-    let genus : Command option * TaxonId = 
-        let existingGenus = currentCommands |> List.tryFind (fun c -> 
-                                            match c with
-                                            | ImportFromBackbone t -> t.Identity = Genus (LatinName taxon.Genus) && t.Parent = Some (snd family)
-                                            | _ -> false )
-        match existingGenus with
-        | Some c -> None, (unwrap c)
-        | None -> 
-            let id = TaxonId (generateId())
-            Some (ImportFromBackbone {  Id          = id
-                                        Group       = group
-                                        Identity    = Genus (LatinName taxon.Genus)
-                                        Parent      = Some (snd family)
-                                        Status      = Accepted
-                                        Reference   = None }) , id
+    match status with
+    | Error e -> Error e
+    | Ok s ->
 
-    let reference =
-        match taxon.NamePublishedIn.Length with
-        | 0 -> None
-        | _ -> match taxon.References.Length with
-               | 0 -> Some (taxon.NamePublishedIn, None)
-               | _ -> Some (taxon.NamePublishedIn, toUrl taxon.References)
+        let higherRankStatus =
+            match s with
+            | Accepted -> Accepted
+            | Doubtful -> Doubtful
+            | Misapplied id -> Doubtful // TODO handle alternative cases
+            | Synonym id -> Doubtful // TODO handle alternative cases
 
-    let species : Command option = 
-        let existingSpecies = currentCommands |> List.tryFind (fun c -> 
-                                            match c with
-                                            | ImportFromBackbone t -> t.Identity = Family (LatinName taxon.Family) && t.Parent = Some (snd genus)
-                                            | _ -> false )
-
-        match existingSpecies with
-        | Some c -> None
-        | None -> 
-
-            let status =
-
-                let relateToOtherTaxon otherPlantListId =
-                    let readTaxon = allParsed |> Seq.find (fun t -> t.TaxonId = otherPlantListId)
-                    let existingId = findTaxonIdInCommandsByName taxon.Genus taxon.SpecificEphitet currentCommands
-                    match existingId with
-                    | Some id -> id
-                    | None -> invalidOp "Not supported" // TODO
-
-                match taxon.TaxonomicStatus with
-                | "accepted" -> Accepted
-                | "doubtful" -> Doubtful
-                | "misapplied" -> Misapplied <| relateToOtherTaxon taxon.AcceptedNameUsageId
-                | "synonym" -> Synonym <| relateToOtherTaxon taxon.AcceptedNameUsageId
-                | _ -> invalidOp "Corrupt input data: invalid taxonomic status"
-
-            let id = TaxonId (generateId())
-            Some (ImportFromBackbone {      Id          = TaxonId (generateId())
+        let family : Command option * TaxonId = 
+            let exsitingFamily = currentCommands |> List.tryFind (fun c -> 
+                                                match c with
+                                                | ImportFromBackbone t -> t.Identity = Family (LatinName taxon.Family)
+                                                | _ -> false )
+            match exsitingFamily with
+            | Some c -> None, (unwrap c)
+            | None -> 
+                let id = TaxonId (generateId())
+                Some (ImportFromBackbone {  Id          = id
                                             Group       = group
-                                            Identity    = Species (LatinName taxon.Genus, SpecificEphitet taxon.SpecificEphitet, Scientific taxon.ScientificNameAuthorship )
-                                            Parent      = Some (snd genus)
-                                            Status      = status
-                                            Reference   = reference })
+                                            Identity    = Family (LatinName taxon.Family)
+                                            Parent      = None
+                                            Status      = higherRankStatus
+                                            Reference   = None }) , id
+
+        let genus : Command option * TaxonId = 
+            let existingGenus = currentCommands |> List.tryFind (fun c -> 
+                                                match c with
+                                                | ImportFromBackbone t -> t.Identity = Genus (LatinName taxon.Genus) && t.Parent = Some (snd family)
+                                                | _ -> false )
+            match existingGenus with
+            | Some c -> None, (unwrap c)
+            | None -> 
+                let id = TaxonId (generateId())
+                Some (ImportFromBackbone {  Id          = id
+                                            Group       = group
+                                            Identity    = Genus (LatinName taxon.Genus)
+                                            Parent      = Some (snd family)
+                                            Status      = higherRankStatus
+                                            Reference   = None }) , id
+
+        let reference =
+            match taxon.NamePublishedIn.Length with
+            | 0 -> None
+            | _ -> match taxon.References.Length with
+                    | 0 -> Some (taxon.NamePublishedIn, None)
+                    | _ -> Some (taxon.NamePublishedIn, toUrl taxon.References)
+
+        let species : Command option = 
+            let existingSpecies = currentCommands |> List.tryFind (fun c -> 
+                                                match c with
+                                                | ImportFromBackbone t -> t.Identity = Family (LatinName taxon.Family) && t.Parent = Some (snd genus)
+                                                | _ -> false )
+
+            match existingSpecies with
+            | Some c -> None
+            | None -> 
+                let id = TaxonId (generateId())
+                Some (ImportFromBackbone {      Id          = TaxonId (generateId())
+                                                Group       = group
+                                                Identity    = Species (LatinName taxon.Genus, SpecificEphitet taxon.SpecificEphitet, Scientific taxon.ScientificNameAuthorship )
+                                                Parent      = Some (snd genus)
+                                                Status      = s
+                                                Reference   = reference })
 
 
-    [ fst family; fst genus; species ] |> List.choose id
+        [ fst family; fst genus; species ] |> List.choose id |> Ok

@@ -42,3 +42,26 @@ let plus addSuccess addFailure switch1 switch2 x =
     | Error f1,Ok _  -> Error f1
     | Ok _ ,Error f2 -> Error f2
     | Error f1,Error f2 -> Error (addFailure f1 f2)
+
+
+let toErrorList (result:Result<'a,'b>) : Result<'a,'b list> =
+    match result with
+    | Error e -> Error [e]
+    | Ok c -> Ok c
+
+let apply f result =
+    match f,result with
+    | Ok f, Ok x -> 
+        f x |> Ok 
+    | Error e, Ok _ 
+    | Ok _, Error e -> 
+        e |> Error
+    | Error e1, Error e2 -> 
+        e1 |> Error 
+
+let lift f result =
+    let f' =  f |> succeed
+    apply f' result
+
+let (<*>) = apply
+let (<!>) = lift

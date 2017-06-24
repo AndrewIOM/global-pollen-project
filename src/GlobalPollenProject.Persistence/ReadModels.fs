@@ -2,10 +2,34 @@ module ReadModels
 
 open System
 
+// Images
+[<CLIMutable>]
+type FocusableImage = {
+    FrameUrls: string list
+}
+
+[<CLIMutable>]
+type StandardImage = {
+    Url: string
+}
+
 [<CLIMutable>]
 type GrainSummary = {
     Id:Guid;
-    Thumbnail:string }
+    Thumbnail:string
+    HasTaxonomicIdentity: bool 
+}
+
+[<CLIMutable>]
+type GrainDetail = {
+    Id:Guid
+    Images: StandardImage list
+    FocusImages: FocusableImage list
+    Identifications: Guid list
+    ConfirmedFamily: string
+    ConfirmedGenus: string
+    ConfirmedSpecies: string
+}
 
 [<CLIMutable>]
 type TaxonSummary = {

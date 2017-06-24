@@ -62,3 +62,13 @@ type BackboneSearchRequest = {
     Genus: string
     Species: string
 }
+
+[<CLIMutable>]
+type AddUnknownGrainRequest = {
+    StaticImagesBase64: string list
+    LatitudeDD: float
+    LongitudeDD: float
+    SampleType: string
+    Year: int option
+    YearType: string
+}

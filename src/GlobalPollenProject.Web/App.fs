@@ -91,10 +91,10 @@ let userHandler =
     fun ctx ->
         text ctx.HttpContext.User.Identity.Name ctx
 
-let importFromBackboneHandler =
-    fun ctx ->
-        Backbone.importAll "/Users/andrewmartin/Documents/Global Pollen Project/Plant List Offline/taxa.txt"
-        text "Import successful" ctx
+// let importFromBackboneHandler =
+//     fun ctx ->
+//         Backbone.importAll "/Users/andrewmartin/Documents/Global Pollen Project/Plant List Offline/taxa.txt"
+//         text "Import successful" ctx
 
 let showUserHandler id =
     fun ctx ->
@@ -174,10 +174,19 @@ let showGrainDetail id =
         | Ok model -> razorHtmlView "Grain/Identify" model ctx
         | Error e -> text "error" ctx
 
+let grainUploadHandler ctx =
+    async {
+        let! req = bindForm<AddUnknownGrainRequest> ctx
+        let result = UnknownGrains.submitUnknownGrain req (currentUserId ctx)
+        match result with
+        | Ok id -> return! json id ctx
+        | Error error -> return! text "Error" ctx
+    }
+
 let api =
     choose [
         route   "/backbone/search"        >=> backboneSearchHandler
-        route   "/backbone/import"        >=> importFromBackboneHandler
+        // route   "/backbone/import"        >=> importFromBackboneHandler
         route   "/taxa"                   >=> taxonListHandler
 
         route   "/collection"             >=> mustBeUser >=> getCollectionHandler
@@ -193,6 +202,7 @@ let webApp =
             choose [
                 route               "/Account/Login"    >=> loginHandler
                 route               "/Account/Register" >=> registerHandler
+                route               "/Identify/Upload"  >=> grainUploadHandler
             ]    
         GET >=> 
             choose [
@@ -200,7 +210,8 @@ let webApp =
                 route               "/Guide"            >=> razorHtmlView "Home/Guide" None
                 route               "/Digitise"         >=> razorHtmlView "Digitise/Index" None
                 route               "/Identify"         >=> listGrains
-                // route               "/Identify/%s"      (fun id -> showGrainDetail id)
+                route               "/Identify/Upload"  >=> razorHtmlView "Grain/Add" None
+                //route               "/Identify/%s"      (fun id -> showGrainDetail id)
                 subRoute            "/Taxon"    
                     (choose [   
                         route       ""                  >=> pagedTaxonomyHandler
