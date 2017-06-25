@@ -33,4 +33,9 @@
     <Compile Include="App.fs" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="Dockerfile" CopyToPublishDirectory="always" />
+    <None Include="docker-compose.yml" CopyToPublishDirectory="always" />
+  </ItemGroup>
+
 </Project>

@@ -2,7 +2,8 @@ module UserTests
 
 open System
 open Xunit
-open GlobalPollenProject.Core.Types    
+open GlobalPollenProject.Core.DomainTypes    
+open GlobalPollenProject.Core.Aggregate
 open GlobalPollenProject.Core.Aggregates.User
 
 let a = {

@@ -105,12 +105,18 @@ module Redis =
         if obj.ReferenceEquals(value, null) then None 
         else Some()
 
-    let connect (ip:string) =
-        //TODO Validate IP
+    let connect (host:string) =
+        printfn "Connecting to redis..."
         let config = ConfigurationOptions()
         config.SyncTimeout <- 100000
         config.ConnectTimeout <- 100000
+        //because of https://github.com/dotnet/corefx/issues/8768:
+        let ip = System.Net.Dns.GetHostAddressesAsync(host) 
+                 |> Async.AwaitTask 
+                 |> Async.RunSynchronously
+                 |> Array.map (fun x -> x.MapToIPv4().ToString()) |> Array.head
         config.EndPoints.Add(ip)
+        printfn "Connecting to redis ip: %s" ip
         StackExchange.Redis.ConnectionMultiplexer.Connect(config)
 
     let get (redis:ConnectionMultiplexer) (key:string) =

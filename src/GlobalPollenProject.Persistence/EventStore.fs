@@ -23,9 +23,13 @@ let serialise (event:'a) =
     EventData(Guid.NewGuid(), typeName, true, data, null)
 let deserialise<'TEvent> (event:ResolvedEvent) : 'TEvent option = Serialisation.deserializeUnion event.Event.EventType event.Event.Data
 
-let connect ip port username userpass = 
+let connect host port username userpass = 
     async {
-        let ipAddress = IPAddress.Parse(ip)
+        let ipAddress = 
+            System.Net.Dns.GetHostAddressesAsync(host) 
+            |> Async.AwaitTask 
+            |> Async.RunSynchronously
+            |> Array.map (fun x -> x.MapToIPv4()) |> Array.head
         let endpoint = IPEndPoint(ipAddress, port)
         let esSettings = ConnectionSettings.Create()
                             .UseConsoleLogger()

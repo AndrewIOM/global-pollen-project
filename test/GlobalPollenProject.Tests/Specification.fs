@@ -5,7 +5,7 @@ open Xunit
 open Microsoft.EntityFrameworkCore
 open EventStore
 open System
-open GlobalPollenProject.Core.CommandHandlers
+open GlobalPollenProject.Core.Aggregate
 open GlobalPollenProject.Core
 
 let defaultDependencies = 
