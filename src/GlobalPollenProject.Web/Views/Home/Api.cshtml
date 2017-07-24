@@ -1,0 +1,28 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Guide";
+    ViewData["Subtitle"] = "Find out about the project and how it works";
+    ViewData["Description"] = "The Global Pollen Project is a user-driven, open reference library of plant pollen. Exchange identifications with other users for collaborative science. Upload your reference material or unknown grains today.";
+}
+
+@section headerSection {
+    <header>
+        <div class="container">
+            <h2 id="about">@ViewData["Title"]</h2>
+            <p>@ViewData["Subtitle"]</p>
+        </div>
+    </header>
+}
+
+<div class="row">
+    <div class="col-md-12">
+        <p>The GPP exposes a public API.</p>
+        <p>Access at the base URL https://globalpollenproject.org/api/v1/</p>
+
+        <h3>Taxonomic Backbone</h3>
+
+        <h4>Search</h4>
+        <p>/backbone/search?rank={Rank}&latinName={LatinName}</p>
+        <p>Returns a list </p>
+    </div>
+</div>

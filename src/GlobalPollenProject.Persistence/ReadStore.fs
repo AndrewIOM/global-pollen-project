@@ -10,6 +10,7 @@ type Deserialise<'a> = Json -> Result<'a,string>
 
 type GetFromKeyValueStore = string -> Result<Json,string>
 type GetListFromKeyValueStore = string -> Result<Json list,string>
+type GetLexographic = string -> string -> Result<string list,string>
 
 type SetStoreValue = string -> Json -> Result<unit,string>
 type SetEntryInList = string -> string -> Result<unit,string>
@@ -41,6 +42,9 @@ module KeyValueStore =
             |> Ok
         getListFromStore key
         |> Result.bind deserialiseList
+
+    let getLexographic key searchTerm (get:GetLexographic) =
+        get key searchTerm
 
     let setKey key item (setStoreValue:SetStoreValue) (serialise:Serialise) =
         serialise item
@@ -115,7 +119,7 @@ module Redis =
                  |> Async.AwaitTask 
                  |> Async.RunSynchronously
                  |> Array.map (fun x -> x.MapToIPv4().ToString()) |> Array.head
-        config.EndPoints.Add(ip)
+        config.EndPoints.Add("127.0.0.1")
         printfn "Connecting to redis ip: %s" ip
         StackExchange.Redis.ConnectionMultiplexer.Connect(config)
 
@@ -126,10 +130,26 @@ module Redis =
         | NotNull -> Ok <| Json result
         | _ -> Error "Could not get read model from Redis"
 
+    let delete (redis:ConnectionMultiplexer) (key:string) =
+        let db = redis.GetDatabase()
+        match db.KeyDelete(~~key) with
+        | true -> Ok()
+        | false -> "Could not remove the key from redis: " + key |> Error
+
     let getListItems (redis:ConnectionMultiplexer) (key:string) =
         let db = redis.GetDatabase()
-        let result : string seq = db.SortedSetRangeByRank(~~key) |> Seq.map (fun x -> ~~x)
+        let result : string seq = db.SetMembers(~~key) |> Seq.map ( ~~ )
         Ok <| (result |> Seq.map Json |> Seq.toList)
+
+    let getSortedListItems (redis:ConnectionMultiplexer) (key:string) =
+        let db = redis.GetDatabase()
+        let result : string seq = db.SortedSetRangeByRank(~~key) |> Seq.map ( ~~ )
+        Ok <| (result |> Seq.map Json |> Seq.toList)
+
+    let lexographicSearch (redis:ConnectionMultiplexer) (key:string) (searchTerm:string) =
+        let db = redis.GetDatabase()
+        let result : string seq = db.SortedSetRangeByValue(~~key, ~~searchTerm, ~~(searchTerm + "\xff")) |> Seq.map ( ~~ )
+        Ok <| (result |> Seq.toList)
 
     let set (redis:ConnectionMultiplexer) (key:string) (thing:Json) =
         let db = redis.GetDatabase()
@@ -142,6 +162,12 @@ module Redis =
         let db = redis.GetDatabase()
         let indexKey = RepositoryBase.generateIndexKey (model.GetType().Name)
         db.SetAdd(~~indexKey, ~~key)
+
+    let addToList (redis:ConnectionMultiplexer) (key:string) (model:string) =
+        let db = redis.GetDatabase()
+        match db.SetAdd(~~key, ~~model) with
+        | true -> Ok()
+        | false -> Error <| "Could not update read model"
 
     let addToSortedList (redis:ConnectionMultiplexer) (key:string) (model:string) (score:float) =
         let db = redis.GetDatabase()
@@ -198,7 +224,8 @@ module TaxonomicBackbone =
         |> tryFindId
         |> Result.bind tryFindReadModel
 
-    let search identity getList getSingle deserialise : Result<BackboneTaxon list,string> =
+    // Search names to find possible matches, returning whole taxa
+    let findMatches identity getList getSingle deserialise : Result<BackboneTaxon list,string> =
         let search key = RepositoryBase.getListKey key getList deserialiseGuid
         let fetchAllById ids = 
             ids 
@@ -210,19 +237,25 @@ module TaxonomicBackbone =
         |> search
         |> Result.bind fetchAllById
 
+    // Search names to find possible matches, returning taxon names
+    let search identity (getLexographical:GetLexographic) deserialise : Result<string list, string> =
+        let rank,ln =
+            match identity with
+            | Family ln -> "Family", unwrapLatinName ln
+            | Genus ln -> "Genus", unwrapLatinName ln
+            | Species (ln,eph,auth) -> "Species", unwrapLatinName ln
+        let key = "Autocomplete:BackboneTaxon:" + rank
+        KeyValueStore.getLexographic key ln getLexographical
+
     let validate (query:BackboneQuery) get getList deserialise =
         match query with
         | ValidateById id -> getById id get deserialise
         | Validate i -> 
-            let matches = search i getList get deserialise
+            let matches = findMatches i getList get deserialise
             Error "Not implemented"
 
-    // 1. Add by ID
-    // 2. Add to name index.
-    // 3. Add to autocomplete index
     let import set setSortedList serialise (taxon:BackboneTaxon) = 
         RepositoryBase.setSingle (taxon.Id.ToString()) taxon set serialise |> ignore
         RepositoryBase.setSortedListItem (taxon.Id.ToString()) (sprintf "BackboneTaxon:%s:%s" taxon.Rank taxon.LatinName) 0. setSortedList |> ignore
-        // RepositoryBase.setKey taxon.Id (sprintf "BackboneTaxon:%s:%s" taxon.Rank taxon.LatinName) set serialise |> ignore
         RepositoryBase.setSortedListItem taxon.LatinName ("Autocomplete:BackboneTaxon:" + taxon.Rank) 0. setSortedList |> ignore
         Ok ()

@@ -13,35 +13,41 @@ type Command =
 and CreateCollection = {Id:CollectionId; Name:string; Owner:UserId; Description: string}
 and UploadSlideImage = {Id:SlideId; Image:Image}
 and AddSlide = 
-    {Id:        CollectionId
-     Taxon:     TaxonIdentification
-     Place:     SamplingLocation option
-     Time:      Age option}
+    {Id:                CollectionId
+     Taxon:             TaxonIdentification
+     Place:             SamplingLocation option
+     OriginalFamily:    string
+     OriginalGenus:     string
+     OriginalSpecies:   string
+     Time:              Age option }
 
 type Event =
 | DigitisationStarted of DigitisationStarted
-| CollectionPublished of CollectionId
+| CollectionPublished of CollectionId * DateTime * ColVersion
 | SlideRecorded of SlideRecorded
 | SlideImageUploaded of SlideId * Image
 | SlideFullyDigitised of SlideId
 | SlideGainedIdentity of SlideId * TaxonId
 
 and DigitisationStarted = {Id: CollectionId; Name: string; Owner: UserId; Description: string}
-and SlideRecorded = {Id: SlideId; Taxon: TaxonIdentification}
+and SlideRecorded = {Id: SlideId; OriginalFamily: string; OriginalGenus: string; OriginalSpecies: string; Taxon: TaxonIdentification}
 
 type State =
 | Initial
 | Draft of RefState
-| Complete of RefState
 
 and RefState = {
     Owner: UserId
     Curators: UserId list
     Name: string
     Description: string option
+    CurrentVersion: ColVersion
     Slides: SlideState list}
 and SlideState = {
     Id: string
+    OriginalFamily: string
+    OriginalGenus: string
+    OriginalSpecies: string
     Identification: IdentificationStatus
     Images: Image list
 }
@@ -49,14 +55,13 @@ and SlideState = {
 let create (command:CreateCollection) state =
     [DigitisationStarted {Id = command.Id; Name = command.Name; Owner = command.Owner; Description = command.Description }]
 
-let publish command state =
+let publish (id:CollectionId) state =
     match state with
-    | Complete c -> invalidOp "Cannot publish an already published collection"
     | Initial -> invalidOp "This collection does not exist"
     | Draft c ->
         match c.Slides.Length with
         | 0 -> invalidOp "Cannot publish an empty collection"
-        | _ -> [CollectionPublished command]
+        | _ -> [CollectionPublished (id, DateTime.Now, c.CurrentVersion |> ColVersion.increment ) ]
 
 let addSlide (command:AddSlide) calcIdentity state =
     match state with
@@ -66,14 +71,23 @@ let addSlide (command:AddSlide) calcIdentity state =
         let identity = calcIdentity [command.Taxon]
         match identity with
         | Some taxon -> 
-            [SlideRecorded {Id = SlideId (command.Id,slideId); Taxon = command.Taxon}; SlideGainedIdentity ((SlideId (command.Id,slideId)),taxon) ]
+            [SlideRecorded {
+                Id = SlideId (command.Id,slideId)
+                Taxon = command.Taxon
+                OriginalFamily = command.OriginalFamily
+                OriginalGenus = command.OriginalGenus
+                OriginalSpecies = command.OriginalSpecies }; 
+             SlideGainedIdentity ((SlideId (command.Id,slideId)),taxon) ]
         | None -> 
-            [SlideRecorded {Id = SlideId (command.Id,slideId); Taxon = command.Taxon}]
-    | Complete c -> invalidOp "Cannot publish an already published collection"
+            [SlideRecorded {
+                Id = SlideId (command.Id,slideId)
+                Taxon = command.Taxon
+                OriginalFamily = command.OriginalFamily
+                OriginalGenus = command.OriginalGenus
+                OriginalSpecies = command.OriginalSpecies } ]
 
 let uploadImage (command:UploadSlideImage) state =
     match state with
-    | Complete c -> invalidOp "Cannot publish an already published collection"
     | Initial -> invalidOp "This collection does not exist"
     | Draft c -> [SlideImageUploaded (command.Id, command.Image)]
  
@@ -89,17 +103,17 @@ let getSlideId (SlideId (c,x)) = x
 type State with
     static member Evolve state = function
 
-        | CollectionPublished event ->
+        | CollectionPublished (id,time,version) ->
             match state with
             | Initial -> invalidOp "Collection is empty"
-            | Draft c -> Complete c
-            | Complete c -> invalidOp "Collection cannot be re-published"
+            | Draft c -> Draft { c with CurrentVersion = version }
 
         | DigitisationStarted event ->
             match state with
             | Initial ->
                 Draft {
                     Name = event.Name
+                    CurrentVersion = ColVersion.initial
                     Owner = event.Owner
                     Description = Some event.Description
                     Slides = []
@@ -110,12 +124,14 @@ type State with
         | SlideRecorded event ->
             match state with
             | Initial -> invalidOp "You must create a collection before adding a slide to it"
-            | Complete c -> invalidOp "You cannot add slides to completed collections"
             | Draft c ->
                 let newSlide = {
                     Id = getSlideId event.Id
                     Identification = Partial [event.Taxon]
                     Images = []
+                    OriginalFamily = event.OriginalFamily
+                    OriginalGenus = event.OriginalGenus
+                    OriginalSpecies = event.OriginalSpecies
                 }
                 Draft { c with Slides = newSlide :: c.Slides }
 
@@ -124,7 +140,6 @@ type State with
         | SlideFullyDigitised event ->
             match state with
             | Initial -> invalidOp "Collection has not been started"
-            | Complete c -> invalidOp "Cannot modify a complete collection"
             | Draft c ->
                 let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId event)
                 match slide with
@@ -134,7 +149,6 @@ type State with
         | SlideImageUploaded (id,image) ->
             match state with
             | Initial -> invalidOp "Collection has not been started"
-            | Complete c -> invalidOp "Cannot modify a complete collection"
             | Draft c ->
                 let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with

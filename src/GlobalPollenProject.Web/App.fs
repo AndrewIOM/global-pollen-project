@@ -62,7 +62,7 @@ let loginHandler =
                ctx.HttpContext.Response.Redirect "/"
                return! text "Couldn't log in" ctx
            else
-               return! razorHtmlView "/Account/Login" loginRequest ctx
+               return! razorHtmlView "Account/Login" loginRequest ctx
         }
 
 let registerHandler ctx =
@@ -77,14 +77,14 @@ let registerHandler ctx =
             let id() = Guid.Parse user.Id
             let register = User.register model id
             match register with
-            | Error msg -> return! razorHtmlView "/Account/Register" model ctx
+            | Error msg -> return! razorHtmlView "Account/Register" model ctx
             | Ok r -> 
                 do! signInManager.SignInAsync(user, isPersistent = false) |> Async.AwaitTask
                 ctx.Logger.LogInformation "User created a new account with password."
                 // Redirect to another route here...
                 return! text "Account successfully registered" ctx
         | false -> 
-            return! razorHtmlView "/Account/Register" model ctx
+            return! razorHtmlView "Account/Register" model ctx
     }
 
 let userHandler =
@@ -113,8 +113,30 @@ let backboneSearchHandler =
     fun ctx ->
         async {
             let! request = bindQueryString<BackboneSearchRequest> ctx
-            let appResult = Backbone.search request
-            return! json appResult ctx
+            let appResult = Backbone.searchNames request
+            match appResult with
+            | Ok list -> return! json list ctx
+            | Error e -> return! json "Error" ctx
+        }
+
+let backboneMatchHandler =
+    fun ctx ->
+        async {
+            let! request = bindQueryString<BackboneSearchRequest> ctx
+            let appResult = Backbone.tryMatch request
+            match appResult with
+            | Ok list -> return! json list ctx
+            | Error e -> return! json "Error" ctx
+        }
+ 
+let backboneTraceHandler =
+    fun ctx ->
+        async {
+            let! request = bindQueryString<BackboneSearchRequest> ctx
+            let appResult = Backbone.tryTrace request
+            match appResult with
+            | Ok list -> return! json list ctx
+            | Error e -> return! json "Error" ctx
         }
 
 let taxonListHandler ctx =
@@ -186,7 +208,8 @@ let grainUploadHandler ctx =
 let api =
     choose [
         route   "/backbone/search"        >=> backboneSearchHandler
-        // route   "/backbone/import"        >=> importFromBackboneHandler
+        route   "/backbone/match"         >=> backboneMatchHandler //TODO connect to tryMatch function in ReadStore
+        route   "/backbone/trace"         >=> backboneTraceHandler //TODO connect to tryMatch function in ReadStore
         route   "/taxa"                   >=> taxonListHandler
 
         route   "/collection"             >=> mustBeUser >=> getCollectionHandler
@@ -197,18 +220,20 @@ let api =
 
 let webApp = 
     choose [
+        route                   "/Api"              >=> razorHtmlView "Home/Api" None
         subRoute                "/api/v1"           api
         POST >=>
             choose [
                 route               "/Account/Login"    >=> loginHandler
                 route               "/Account/Register" >=> registerHandler
                 route               "/Identify/Upload"  >=> grainUploadHandler
-            ]    
+            ]
         GET >=> 
             choose [
                 route               "/"                 >=> razorHtmlView "Home/Index" None
                 route               "/Guide"            >=> razorHtmlView "Home/Guide" None
-                route               "/Digitise"         >=> razorHtmlView "Digitise/Index" None
+                route               "/Statistics"       >=> razorHtmlView "Statistics/Index" None
+                route               "/Digitise"         >=> mustBeLoggedIn >=> razorHtmlView "Digitise/Index" None
                 route               "/Identify"         >=> listGrains
                 route               "/Identify/Upload"  >=> razorHtmlView "Grain/Add" None
                 //route               "/Identify/%s"      (fun id -> showGrainDetail id)

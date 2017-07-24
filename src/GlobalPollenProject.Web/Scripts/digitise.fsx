@@ -20,25 +20,10 @@ let sass = importAll<obj> "../Styles/Apps/_Digitise.scss"
 type Url = string
 
 and Model = {
-  Collections: RefCollectionListItem list
-  IsEditing: RefCollectionDetail option
+  Collections: EditableRefCollection list
+  IsEditing: EditableRefCollection option
   IsCreatingCollection: RefCollectionRequest option
   IsAddingSlide: AddSlideModel option
-}
-
-// TODO Reference types from central location
-and BackboneResult = {
-    Id:Guid;
-    Family:string
-    Genus:string
-    Species:string
-    NamedBy:string
-    LatinName:string
-    Rank:string
-    ReferenceName:string
-    ReferenceUrl:string
-    TaxonomicStatus:string
-    TaxonomicAlias:string
 }
 
 and PagedResult<'TProjection> = {
@@ -62,7 +47,7 @@ and AddSlideModel = {
   Family: string
   Genus: string option
   Species: string option
-  BackboneMatches: BackboneResult list
+  BackboneMatches: string list
 }
 
 and RefCollectionRequest = {
@@ -70,12 +55,30 @@ and RefCollectionRequest = {
   Description: string
 }
 
-and RefCollectionListItem = {
-    Id:Guid;
-    User:Guid;
-    Name:string;
-    Description:string;
-    SlideCount:int;
+and EditableRefCollection = {
+    Id:                 Guid
+    Name:               string
+    Description:        string
+    EditUserIds:        Guid list
+    LastEdited:         DateTime
+    PublishedVersion:   int
+    SlideCount:         int
+    Slides:             SlideDetail list
+}
+
+and SlideDetail = {
+    CollectionId:       Guid
+    CollectionSlideId:  string
+    FamilyOriginal:     string
+    GenusOriginal:      string
+    SpeciesOriginal:    string
+    CurrentTaxonId:     Guid option
+    CurrentFamily:      string
+    CurrentGenus:       string
+    CurrentSpecies:     string
+    CurrentSpAuth:      string
+    IsFullyDigitised:   bool
+    Images:             List<SlideImage>
 }
 
 and TaxonSummary = {
@@ -114,25 +117,15 @@ and Slide = {
     IsFullyDigitised: bool
 }
 
-and RefCollectionDetail = {
-    Id:Guid;
-    User:Guid;
-    Name:string;
-    Status:string;
-    Version: int;
-    Description:string;
-    Slides:Slide list;
-}
-
 type Message =
   | LoadCollections
   | EditCollection    of System.Guid
   | AddCollection
   | CreateCollection  of CreateCollectionMessage
   | AddSlide          of AddSlideMessage
-  | OnListSuccess     of RefCollectionListItem list
-  | OnDetailSuccess   of RefCollectionDetail
-  | OnBackboneSuccess of PagedResult<BackboneResult>
+  | OnListSuccess     of EditableRefCollection list
+  | OnDetailSuccess   of EditableRefCollection
+  | OnBackboneSuccess of string list
   | OnSlideSubmitSuccess of obj
   | FetchFailure      of exn
 
@@ -167,16 +160,16 @@ open Fetch.Fetch_types
 
 let queryBackbone name =
   promise {
-    return! Fetch.fetchAs<PagedResult<BackboneResult>> (sprintf "/api/v1/backbone/search%s" name) [ Credentials RequestCredentials.Include ; Headers [ Cookie ".AspNetCore.Cookie" ] ]
+    return! Fetch.fetchAs<string list> (sprintf "/api/v1/backbone/search%s" name) [ Credentials RequestCredentials.Include ; Headers [ Cookie ".AspNetCore.Cookie" ] ]
   }
 let getCollections f =
   promise {
-    return! Fetch.fetchAs<RefCollectionListItem list> "/api/v1/collection/list" [ Credentials RequestCredentials.Include ; Headers [ Cookie ".AspNetCore.Cookie" ] ]
+    return! Fetch.fetchAs<EditableRefCollection list> "/api/v1/collection/list" [ Credentials RequestCredentials.Include ; Headers [ Cookie ".AspNetCore.Cookie" ] ]
   }
 
 let getDetail (id:Guid) =
   promise {
-    return! Fetch.fetchAs<RefCollectionDetail> (sprintf "/api/v1/collection?id=%s" (id.ToString())) [ Credentials RequestCredentials.Include ; Headers [ Cookie ".AspNetCore.Cookie" ] ]
+    return! Fetch.fetchAs<EditableRefCollection> (sprintf "/api/v1/collection?id=%s" (id.ToString())) [ Credentials RequestCredentials.Include ; Headers [ Cookie ".AspNetCore.Cookie" ] ]
   }
 
 let submitNewCollection (req: RefCollectionRequest) =
@@ -220,7 +213,7 @@ let update msg model : Model * Cmd<Message> =
   | AddSlide m            -> match model.IsAddingSlide with
                              | None ->
                                   match m with
-                                  | BeginAddingSlide -> {model with IsAddingSlide = Some { BackboneId = None; BackboneMatches = []; CollectionId = None; Rank = "Species"; Family = ""; Genus = None; Species = None  } }, []
+                                  | BeginAddingSlide -> {model with IsAddingSlide = Some { IdentificationMethod = "Book"; BackboneId = None; BackboneMatches = []; CollectionId = None; Rank = "Species"; Family = ""; Genus = None; Species = None  } }, []
                                   | _ -> model, [] // Exception
                              | Some slide ->
                                   match m with
@@ -304,7 +297,7 @@ let view (state:Model) dispatch =
       ]
     ]
 
-  let addSlide (c:RefCollectionDetail) (s:AddSlideModel) =
+  let addSlide (c:EditableRefCollection) (s:AddSlideModel) =
 
     let backboneResult =
       match s.BackboneMatches.Length with

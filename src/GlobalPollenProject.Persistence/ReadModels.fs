@@ -2,134 +2,172 @@ module ReadModels
 
 open System
 
-// Images
+// Helper DTOs
 [<CLIMutable>]
 type FocusableImage = {
-    FrameUrls: string list
+    FrameUrls:  string list
 }
 
 [<CLIMutable>]
 type StandardImage = {
-    Url: string
-}
-
-[<CLIMutable>]
-type GrainSummary = {
-    Id:Guid;
-    Thumbnail:string
-    HasTaxonomicIdentity: bool 
-}
-
-[<CLIMutable>]
-type GrainDetail = {
-    Id:Guid
-    Images: StandardImage list
-    FocusImages: FocusableImage list
-    Identifications: Guid list
-    ConfirmedFamily: string
-    ConfirmedGenus: string
-    ConfirmedSpecies: string
-}
-
-[<CLIMutable>]
-type TaxonSummary = {
-    Id:Guid;
-    Family:string
-    Genus:string
-    Species:string
-    LatinName:string
-    Rank:string
-    SlideCount:int
-    GrainCount:int
-    ThumbnailUrl:string
-}
-
-[<CLIMutable>]
-type BackboneTaxon = {
-    Id:Guid;
-    Family:string
-    Genus:string
-    Species:string
-    NamedBy:string
-    LatinName:string
-    Rank:string
-    ReferenceName:string
-    ReferenceUrl:string
-    TaxonomicStatus:string
-    TaxonomicAlias:string
-}
-
-[<CLIMutable>]
-type ReferenceCollectionSummary = {
-    Id:Guid;
-    User:Guid;
-    Name:string;
-    Description:string;
-    SlideCount:int;
-}
-
-[<CLIMutable>]
-type Calibration = {
-    Id: Guid
-    User: Guid
-    Device: string
-    Ocular: int
-    Objective: int
-    Image: string
-    PixelWidth: float
-}
-
-[<CLIMutable>]
-type Frame = {
-    Id: Guid
-    Url: string
+    Url:        string
 }
 
 [<CLIMutable>]
 type SlideImage = {
-    Id: int
-    Frames: List<Frame>
-    CalibrationImageUrl: string
-    CalibrationFocusLevel: int
+    Id:                     int
+    Frames:                 List<string>
+    CalibrationImageUrl:    string
+    CalibrationFocusLevel:  int
+    PixelWidth:             float
+}
+
+// GPP Master Reference Collection
+
+[<CLIMutable>]
+type SlideSummary = {
+    Id:         Guid
+    LatinName:  string
+    Rank:       string
+    Thumbnail:  string
+}
+
+[<CLIMutable>]
+type GrainSummary = {
+    Id:         Guid
+    Thumbnail:  string
+}
+
+[<CLIMutable>]
+type TaxonSummary = {
+    Id:         Guid
+    Family:     string
+    Genus:      string
+    Species:    string
+    LatinName:  string
+    Authorship: string
+    Rank:       string
+    SlideCount: int
+    GrainCount: int
+    ThumbnailUrl:string
+}
+
+[<CLIMutable>]
+type Node = {
+    Id:         Guid
+    Name:       string
+}
+
+[<CLIMutable>]
+type TaxonDetail = {
+    Id:         Guid
+    Family:     string
+    Genus:      string
+    Species:    string
+    LatinName:  string
+    Authorship: string
+    Rank:       string
+    Parent:     Node option
+    Children:   Node list
+    Slides:     SlideSummary list
+    Grains:     GrainSummary list
+}
+
+// Grains
+// - Crowdsourced / Unknown Grains
+// - Grains split out of digitised slides
+
+[<CLIMutable>]
+type GrainDetail = {
+    Id:                 Guid
+    Images:             StandardImage list
+    FocusImages:        FocusableImage list
+    Identifications:    Guid list
+    ConfirmedFamily:    string
+    ConfirmedGenus:     string
+    ConfirmedSpecies:   string
+}
+
+// Reference Slides
+// - Not split into grains
+
+[<CLIMutable>]
+type SlideDetail = {
+    CollectionId:       Guid
+    CollectionSlideId:  string
+    FamilyOriginal:     string
+    GenusOriginal:      string
+    SpeciesOriginal:    string
+    CurrentTaxonId:     Guid option
+    CurrentFamily:      string
+    CurrentGenus:       string
+    CurrentSpecies:     string
+    CurrentSpAuth:      string
+    IsFullyDigitised:   bool
+    Images:             List<SlideImage>
+}
+
+// Taxonomic Backbone
+
+[<CLIMutable>]
+type BackboneTaxon = {
+    Id:             Guid
+    Family:         string
+    Genus:          string
+    Species:        string
+    NamedBy:        string
+    LatinName:      string
+    Rank:           string
+    ReferenceName:  string
+    ReferenceUrl:   string
+    TaxonomicStatus:string
+    TaxonomicAlias: string
+}
+
+// Read-Only Reference Collections
+
+[<CLIMutable>]
+type ReferenceCollectionSummary = {
+    Id:         Guid
+    User:       Guid
+    Name:       string
+    Description:string
+    SlideCount: int
+    Slides:     List<SlideSummary>
+    Published:  DateTime
+}
+
+// User Profiles
+
+[<CLIMutable>]
+type PublicProfile = {
+    UserId:     Guid
+    IsPublic:   bool
+    FirstName:  string
+    LastName:   string
+}
+
+// Digitisation Features
+
+[<CLIMutable>]
+type Calibration = {
+    Id:         Guid
+    User:       Guid
+    Device:     string
+    Ocular:     int
+    Objective:  int
+    Image:      string
     PixelWidth: float
 }
 
 [<CLIMutable>]
-type Slide = {
-    Id:Guid
-    CollectionId: Guid
-    CollectionSlideId: string
-    Taxon: TaxonSummary option
-    IdentificationMethod: string
-    FamilyOriginal: string
-    GenusOriginal: string
-    SpeciesOriginal: string
-    IsFullyDigitised: bool
-    Images: List<SlideImage>
-}
-
-[<CLIMutable>]
-type ReferenceCollection = {
-    Id:Guid;
-    User:Guid;
-    Name:string;
-    Status:string; // Draft etc.
-    Version: int;
-    Description:string;
-    Slides: List<Slide>
-}
-
-[<CLIMutable>]
-type SlideSummary = {
-    Id: Guid
-    ThumbnailUrl: string
-    TaxonId: Guid
-}
-
-[<CLIMutable>]
-type PublicProfile = {
-    UserId:Guid
-    IsPublic:bool
-    FirstName:string
-    LastName:string
+type EditableRefCollection = {
+    Id:                 Guid
+    Name:               string
+    Description:        string
+    EditUserIds:        Guid list
+    LastEdited:         DateTime
+    PublishedVersion:   int
+    SlideCount:         int
+    Slides:             SlideDetail list
 }

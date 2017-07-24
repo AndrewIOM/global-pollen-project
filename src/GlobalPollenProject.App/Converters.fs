@@ -2,6 +2,7 @@ module Converters
 
 open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Composition
+open ReadModels
 
 module DomainToDto =
     let unwrapGrainId (GrainId e) = e
@@ -13,6 +14,17 @@ module DomainToDto =
     let unwrapId (TaxonId id) = id
     let unwrapEph (SpecificEphitet e) = e
     let unwrapAuthor (Scientific a) = a
+
+    let image (domainImage:Image) : SlideImage =
+        match domainImage with
+        | SingleImage i ->
+            invalidOp "TODO: Make it possible to add single images to slides?"
+        | FocusImage (urls,stepping,calId) ->
+            { Id = 0
+              Frames = urls |> List.map Url.unwrap
+              CalibrationImageUrl = ""
+              CalibrationFocusLevel = 0
+              PixelWidth = 0.0 }
 
 module DtoToDomain =
 

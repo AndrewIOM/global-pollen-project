@@ -69,6 +69,14 @@ type EventStore(store:IEventStoreConnection) =
 
             return events, int slice.LastEventNumber, nextEventNumber }
 
+    member this.Checkpoint () =
+        let e = 
+            store.ReadAllEventsBackwardAsync(Position.End, 1, false)
+            |> Async.AwaitTask
+            |> Async.RunSynchronously
+        printfn "Checkpoint: %s" (e.FromPosition.ToString())
+        e.FromPosition.ToString() |> int
+
     member this.AppendToStream streamId expectedVersion newEvents = 
         async {
             let serializedEvents = [| for event in newEvents -> serialise event |]

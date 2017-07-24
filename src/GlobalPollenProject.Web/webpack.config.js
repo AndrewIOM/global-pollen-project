@@ -7,7 +7,7 @@ var config = {
   entry: {
     taxonomy: './Scripts/taxonomy',
     digitise: './Scripts/digitise',
-    styles: [ './../Styles/main.scss' ]
+    styles: [ './../Styles/main.scss', '../../Styles/Apps/digitise.scss' ]
   },
   output: {
     path: __dirname + '/wwwroot/js',

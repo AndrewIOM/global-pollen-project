@@ -115,8 +115,11 @@ type TaxonomicStatus =
 | Synonym of TaxonId
 
 // Taxonomic Identity
+type IdentificationSource =
+    | Book of string
+
 type TaxonIdentification =
-    | Botanical of TaxonId
+    | Botanical of TaxonId * IdentificationSource
     | Environmental of TaxonId
     | Morphological of TaxonId
 
@@ -160,3 +163,12 @@ type LinkRequest = {Family:string;Genus:string option;Species:string option;Iden
 
 // Dependencies
 type ImageStore = (unit -> string) -> ImageForUpload -> Image
+
+[<AutoOpen>]
+module ColVersion =
+    type ColVersion = private ColVersion of int
+    let initial =
+        ColVersion 0 //Draft
+    let unwrap (ColVersion u) = u
+    let increment (v:ColVersion) =
+        v |> unwrap |> (+) 1 |> ColVersion

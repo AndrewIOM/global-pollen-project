@@ -39,12 +39,15 @@ let eventStore = lazy(
     EventStore.EventStore(es) )
 
 // Read Model 'Repository'
-let readStoreGet,readStoreGetList,redisSet,redisSetSortedList =
+let readStoreGet,readStoreGetList,readStoreGetSortedList,readLex,redisSet,redisSetList,redisSetSortedList =
     let ip = appSettings.["readstore:redisip"]
     let redis = lazy (ReadStore.Redis.connect ip)
     redis.Value |> ReadStore.Redis.get, 
     redis.Value |> ReadStore.Redis.getListItems, 
+    redis.Value |> ReadStore.Redis.getSortedListItems, 
+    redis.Value |> ReadStore.Redis.lexographicSearch,
     redis.Value |> ReadStore.Redis.set, 
+    redis.Value |> ReadStore.Redis.addToList,
     redis.Value |> ReadStore.Redis.addToSortedList
 
 let deserialise<'a> json = 
@@ -57,15 +60,25 @@ let serialise s =
     | Ok r -> Ok <| ReadStore.Json r
     | Error e -> Error e
 
+let projectionHandler e =
+    let router = ProjectionHandler.route readStoreGet readStoreGetList readStoreGetSortedList redisSet redisSetList redisSetSortedList
+    let getEventCount = eventStore.Value.Checkpoint
+    let result = (ProjectionHandler.readModelAgent router readStoreGet redisSet getEventCount).PostAndReply(fun rc -> e, rc)
+    match result with 
+    | Ok r -> ()
+    | Error e -> invalidOp "Read model is corrupt"
+
 eventStore.Value.SaveEvent 
 :> IObservable<string*obj>
-|> Observable.subscribe (ProjectionHandler.router readStoreGet readStoreGetList redisSet redisSetSortedList)
+|> Observable.subscribe projectionHandler
 |> ignore
+
+
 
 // App Core Dependencies
 let domainDependencies = 
     let log = ignore
-    let calculateIdentity = calculateTaxonomicIdentity ReadStore.TaxonomicBackbone.search
+    let calculateIdentity = calculateTaxonomicIdentity ReadStore.TaxonomicBackbone.findMatches
     let isValidTaxon query =
         match ReadStore.TaxonomicBackbone.validate query readStoreGet readStoreGetList deserialise with
         | Ok t -> Some (TaxonId t.Id)
@@ -96,8 +109,8 @@ module Digitise =
         Ok newId
 
     let addSlideRecord request = 
-        let identification = Botanical (TaxonId request.BackboneTaxonId)
-        issueCommand <| AddSlide { Id = CollectionId request.Collection; Taxon = identification; Place = None; Time = None }
+        // let identification = Botanical (TaxonId request.BackboneTaxonId)
+        // issueCommand <| AddSlide { Id = CollectionId request.Collection; Taxon = identification; Place = None; Time = None }
         Ok (SlideId (CollectionId request.Collection,"SL001"))
 
     let uploadSlideImage request = 
@@ -111,14 +124,27 @@ module Digitise =
     let listCollections () = 
         ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> readStoreGet deserialise
     
+    let private deserialiseGuid json =
+        let unwrap (ReadStore.Json j) = j
+        let s = (unwrap json).Replace("\"", "")
+        match Guid.TryParse(s) with
+        | true,g -> Ok g
+        | false,g -> Error <| "Guid was not in correct format"
+
     let myCollections getCurrentUser = 
-        ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> readStoreGet deserialise
-        // let userId = getCurrentUser()
-        // let readModel = projections.ReferenceCollectionSummary |> Seq.filter (fun rc -> rc.User = userId) |> Seq.toList
-        // Success readModel
+        let userId = getCurrentUser()
+        let cols = ReadStore.RepositoryBase.getListKey<Guid> ("CollectionAccessList:" + (userId.ToString())) readStoreGetList deserialiseGuid
+        match cols with
+        | Error e -> Error PersistenceError
+        | Ok clist -> 
+            let getCol id = ReadStore.RepositoryBase.getSingle<EditableRefCollection> (id.ToString()) readStoreGet deserialise
+            clist 
+            |> List.map getCol 
+            |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
+            |> Ok
 
     let getCollection id =
-        ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<ReferenceCollectionSummary>
+        ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<EditableRefCollection>
 
 
 module UnknownGrains =
@@ -223,10 +249,72 @@ module Backbone =
         //commands |> List.map issueCommand |> ignore
         ()
 
-    let search (request:BackboneSearchRequest) =
+    let searchNames (request:BackboneSearchRequest) =
         request
         |> DtoToDomain.backboneSearchToIdentity
-        |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.search s readStoreGetList readStoreGet deserialise)
+        |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.search s readLex deserialise)
+
+    let tryMatch (request:BackboneSearchRequest) =
+        request
+        |> DtoToDomain.backboneSearchToIdentity
+        |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.findMatches s readStoreGetSortedList readStoreGet deserialise)
+
+    // Traces a backbone taxon to its most recent name (e.g. synonym -> synonym -> accepted name)
+    let tryTrace (request:BackboneSearchRequest) =
+
+        // TODO Remove this active pattern. Backbone was serialised incorrectly.
+        let (|Prefix|_|) (p:string) (s:string) =
+            if s.StartsWith(p) then
+                Some(s.Substring(p.Length))
+            else
+                None
+
+        let rec lookupSynonym (id:string) =
+            let guid =
+                match id with
+                | Prefix "TaxonId " rest -> Guid.TryParse rest
+                | _ -> Guid.TryParse id
+            match fst guid with
+            | false -> Error "Invalid taxon specified"
+            | true -> 
+                ReadStore.TaxonomicBackbone.getById (TaxonId (snd guid)) readStoreGet deserialise
+                |> Result.bind (fun syn ->
+                    match syn.TaxonomicStatus with
+                    | "accepted" -> Ok [syn]
+                    | "synonym"
+                    | "misapplied" -> lookupSynonym syn.TaxonomicAlias
+                    | "doubtful" -> Ok [syn]
+                    | _ -> Error "Could not determine taxonomic status" )
+
+        let trace (auth:string) (matches:BackboneTaxon list) =
+            match matches.Length with
+            | 0 -> Error "Unknown taxon specified"
+            | 1 ->
+                match matches.[0].TaxonomicStatus with
+                | "doubtful"
+                | "accepted" -> Ok ([matches.[0]])
+                | "synonym"
+                | "misapplied" ->  lookupSynonym matches.[0].TaxonomicAlias
+                | _ -> Error "Could not determine taxonomic status"
+            | _ ->
+                match String.IsNullOrEmpty auth with
+                | true -> matches |> Ok
+                | false ->
+                    // Search by author (NB currently not fuzzy)
+                    let m = matches |> List.tryFind(fun t -> t.NamedBy = auth)
+                    match m with
+                    | None -> matches |> Ok
+                    | Some t ->
+                        match t.TaxonomicStatus with
+                        | "doubtful"
+                        | "accepted" -> Ok ([t])
+                        | "synonym"
+                        | "misapplied" ->  lookupSynonym t.TaxonomicAlias
+                        | _ -> Error "Could not determine taxonomic status"
+
+        request
+        |> tryMatch
+        >>= trace request.Authorship
 
 module User = 
 

@@ -13,6 +13,7 @@
     <Compile Include="Requests.fs" />
     <Compile Include="Responses.fs" />    
     <Compile Include="Converters.fs" />
+    <Compile Include="Projections.fs" />
     <Compile Include="ProjectionHandler.fs" />
     <Compile Include="ImportTaxonomy.fs" />
     <Compile Include="UseCases.fs" />

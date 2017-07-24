@@ -61,6 +61,7 @@ type BackboneSearchRequest = {
     Family: string
     Genus: string
     Species: string
+    Authorship: string
 }
 
 [<CLIMutable>]

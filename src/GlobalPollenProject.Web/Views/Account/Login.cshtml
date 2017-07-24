@@ -14,13 +14,14 @@
 <link rel="stylesheet" href="~/lib/bootstrap-social/bootstrap-social.css" />
 <link rel="stylesheet" href="~/lib/font-awesome/css/font-awesome.min.css">
 
-    <div class="addgrain-section headsection">
+@section headerSection {
+    <header>
         <div class="container">
-            <h2>@ViewBag.Title</h2>
-            <p>@ViewBag.Subtitle</p>
+            <h2 id="about">@ViewData["Title"]</h2>
+            <p>@ViewData["Subtitle"]</p>
         </div>
-    </div>
-    <br />
+    </header>
+}
 
 <form action="/Account/Login" method="post" class="form-horizontal" role="form">
 

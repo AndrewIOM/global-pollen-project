@@ -1,13 +1,13 @@
 version: "3"
 services:
-  webui:
-    ports:
-      - "80:80"
-    build: .
-    links:
-      - redis
-      # - userdb
-      - eventstore
+  # webui:
+  #   ports:
+  #     - "80:80"
+  #   build: .
+  #   links:
+  #     - redis
+  #     # - userdb
+  #     - eventstore
   # userdb:
   #   container_name: gpp-userdb
   #   image: microsoft/mssql-server-linux
