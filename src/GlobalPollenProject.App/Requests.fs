@@ -43,15 +43,28 @@ type StartCollectionRequest = {
     Description: string 
 }
 
+[<CLIMutable>]
 type SlideRecordRequest = {
     Collection: System.Guid
-    BackboneTaxonId: System.Guid
+    ExistingId: string
+    OriginalFamily: string
+    OriginalGenus: string
+    OriginalSpecies: string
+    OriginalAuthor: string
+    ValidatedTaxonId: System.Guid
+    SamplingMethod: string
+    YearCollected: int option
+    YearSlideMade: int
+    LocationRegion: string
+    LocationCountry: string
 }
+
 
 type SlideImageRequest = {
     CollectionId: System.Guid
     SlideId: string
     ImageBase64: string
+    DigitisedYear: int
 }
 
 [<CLIMutable>]

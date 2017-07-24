@@ -19,13 +19,35 @@
     <script src="/js/digitise/app.js"></script>
 }
 
+@* Top button bar *@
+<div class="btn-toolbar mb-3" role="toolbar">
+    <button data-bind="click: startCreatingCollection" class="btn btn-secondary">Create new collection</button>
+</div>
+
+<div class="row">
+    <div class="col-md-3">
+        <label>My Collections</label>
+        <ul class="list-group backbone-list" data-bind="foreach: myCollections">
+            <li data-bind="text: Name, click: $parent.viewCollection"></li>
+        </ul>
+    </div>
+
+    <div class="col-md-9" data-bind="visible: activeCollection, if: activeCollection">
+        <h3 data-bind="text: activeCollection().Name"></h3>
+        <hr/>
+
+        <button data-bind="click: addSlide" class="btn btn-primary">Add new Slide</button>
+        <p data-bind="text: activeCollection().Description"></p>
+    </div>
+</div>
+
 @* Start Collection Modal *@
-<div data-bind="BSModal: isCreatingCollection" class="modal bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+<div data-bind="BSModal: isCreatingCollection" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Digitise a Collection</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -44,19 +66,19 @@
       </div>
       <div class="modal-footer">
         <button data-bind="click: startCollection" type="button" data-bind="startCollection" class="btn btn-primary">Create</button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary">Close</button>
       </div>
     </div>
   </div>
 </div>
 
 @* Add Slide Modal *@
-<div data-bind="BSModal: isAddingSlide" class="modal bd-example-modal-lg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+<div data-bind="BSModal: isAddingSlide" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
       <div class="modal-header">
         <h5 class="modal-title">Add a Slide: Single</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+        <button type="button" class="close" aria-label="Close">
           <span aria-hidden="true">&times;</span>
         </button>
       </div>
@@ -66,7 +88,8 @@
             Please fill these in below. For more information, <a href="/Guide" target="_blank">please refer to the GPP guide</a>.
         </p>
 
-        <h5>Taxonomic Identity</h5>
+        <h5>1. Taxonomic Identity</h5>
+        <hr/>
         <p>This reference slide is of 
             <select data-bind="value: rank" class="form-control input-sm inline-dropdown">
                 <option value="Species">Species</option>
@@ -78,53 +101,61 @@
         <p>Please enter the original taxonomic identity given to the slide.</p>
         <div class="row">
             <div class="col-sm-3">
-                <input data-bind="value: family" type="text" id="original-family" class="form-control" autocomplete="off" placeholder="Family" onblur="disable('Family');" onkeyup="suggest(this, 'Family');"/>
+                <input data-bind="value: family" type="text" id="original-Family" class="form-control" autocomplete="off" placeholder="Family (optional)" onblur="disable('Family');" onkeyup="suggest(this, 'Family');"/>
                 <div class="dropdown-menu" id="FamilyList" style="display:none"></div>
                 </div>
             <div class="col-sm-3">
-                <input data-bind="value: genus" type="text" id="original-genus" class="form-control" autocomplete="off" placeholder="Genus" onblur="disable('Genus');" onkeyup="suggest(this, 'Genus');"/>
+                <input data-bind="value: genus, enable: rank() != 'Family'" type="text" id="original-Genus" class="form-control" autocomplete="off" placeholder="Genus" onblur="disable('Genus');" onkeyup="suggest(this, 'Genus');"/>
                 <div class="dropdown-menu" id="GenusList" style="display:none"></div>
             </div>
             <div class="col-sm-3">
-                <input data-bind="value: species" type="text" id="original-species" class="form-control" autocomplete="off" placeholder="Species" onblur="disable('Species');" onkeyup="suggest(this, 'Species');"/>
+                <input data-bind="value: species, disable: rank() != 'Species'" type="text" id="original-Species" class="form-control" autocomplete="off" placeholder="Species" onblur="disable('Species');" onkeyup="suggest(this, 'Species');"/>
                 <div class="dropdown-menu" id="SpeciesList" style="display:none"></div>
             </div>
-            <div class="col-sm-3"><input data-bind="value: author" type="text" class="form-control" autocomplete="off" placeholder="Auth."/></div>
+            <div class="col-sm-3"><input data-bind="value: author, disable: rank() != 'Species'" type="text" class="form-control" autocomplete="off" placeholder="Auth."/></div>
         </div>
         <small id="taxon-help" class="form-text text-muted">This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically.</small>
 
-        <button class="btn btn-default" data-bind="click: validateTaxon">Validate taxon</button>
+        <button class="btn btn-default" data-bind="click: validateTaxon, enable: isValidTaxonSearch">Validate taxon</button>
         <div data-bind="visible: newSlideTaxonStatus, if: newSlideTaxonStatus">
-            <div data-bind="visible: newSlideTaxonStatus()[0].TaxonomicStatus == 'accepted'"> @*Accepted Taxon*@
-                <p><strong>This taxon is an accepted name.</strong></p>
-                <p>GPP Taxon: 
-                    <span data-bind="text: newSlideTaxonStatus()[0].Family"></span>
-                    <span data-bind="text: newSlideTaxonStatus()[0].Genus"></span>
-                    <span data-bind="text: newSlideTaxonStatus()[0].Species"></span>
-                    <span data-bind="text: newSlideTaxonStatus()[0].NamedBy"></span>
-                </p>
-            </div>
-            <div data-bind="visible: newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'synonym'"> @*Synonym*@
-                <p>This taxon is a synonym of <span data-bind="text: newSlideTaxonStatus()[0].LatinName"></span>.</p>
-            </div>
-            <div data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length > 1"> @*Synonym of ambiguity (more than one - authorship validation required)*@
-                <p>There are <span data-bind="text: newSlideTaxonStatus().length"></span> possible taxa in the GPP's taxonomic backbone:</p>
-                <ul data-bind="foreach: newSlideTaxonStatus">
-                    <li data-bind="text: LatinName + ' ' + NamedBy + ' (' + TaxonomicStatus + ' name)'"></li>
-                </ul>
-            </div>
-            <div data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'doubtful'"> @*Unknown*@
-                <p>This taxon is currently unverified. We are not confident of it's validity, but will accept this slide. 
-                    The slde will not be visible in the Master Reference Collection until the taxon can be verified.</p>
-            </div>
-            <div data-bind="visible: newSlideTaxonStatus().length == 0"> @*Invalid*@
-                <p>This taxon was not recognised. Please check you entered the name correctly, or enquire with us. </p>
-            </div>
+
             <div data-bind="visible: newSlideTaxonStatus() == 'Error'">There was a problem communicating with the taxonomic backbone.</div>
+
+            <div data-bind="if: newSlideTaxonStatus() != 'Error'">
+                <div data-bind="visible: newSlideTaxonStatus()[0].TaxonomicStatus == 'accepted'"> @*Accepted Taxon*@
+                    <p><strong>This taxon is an accepted name.</strong></p>
+                    <p>GPP Taxon: 
+                        <span data-bind="text: newSlideTaxonStatus()[0].Family"></span>
+                        <span> > </span>
+                        <span data-bind="text: newSlideTaxonStatus()[0].Genus"></span>
+                        <em><span data-bind="text: newSlideTaxonStatus()[0].Species"></span></em>
+                        <span> </span>
+                        <span data-bind="text: newSlideTaxonStatus()[0].NamedBy"></span>
+                    </p>
+                </div>
+                <div data-bind="visible: newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'synonym'"> @*Synonym*@
+                    <p>This taxon is a synonym of <span data-bind="text: newSlideTaxonStatus()[0].LatinName"></span>.</p>
+                </div>
+                <div data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length > 1"> @*Synonym of ambiguity (more than one - authorship validation required)*@
+                    <p>There are <span data-bind="text: newSlideTaxonStatus().length"></span> possible taxa in the GPP's taxonomic backbone:</p>
+                    <ul data-bind="foreach: newSlideTaxonStatus">
+                        <li data-bind="text: LatinName + ' ' + NamedBy + ' (' + TaxonomicStatus + ' name)'"></li>
+                    </ul>
+                </div>
+                <div data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'doubtful'"> @*Unknown*@
+                    <p>This taxon is currently unverified. We are not confident of it's validity, but will accept this slide. 
+                        The slde will not be visible in the Master Reference Collection until the taxon can be verified.</p>
+                </div>
+                <div data-bind="visible: newSlideTaxonStatus().length == 0"> @*Invalid*@
+                    <p>This taxon was not recognised. Please check you entered the name correctly, or enquire with us. </p>
+                </div>
+            </div>
+
         </div>
 
 
-        <h5>Origin of Sample</h5>
+        <h5>2. Origin of Sample</h5>
+        <hr/>
         <div class="form-check">
             <label class="form-check-label">
                 <input class="form-check-input" type="radio" name="sampleType" id="botanical" value="botanical">
@@ -147,32 +178,9 @@
 
     </div>
     <div class="modal-footer">
-        <button data-bind="click: startCollection" type="button" data-bind="startCollection" class="btn btn-primary">Create</button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button data-bind="click: addSlide" type="button" data-bind="startCollection" class="btn btn-primary">Create</button>
+        <button type="button" class="btn btn-secondary">Close</button>
     </div>
   </div>
 </div>
-</div>
-
-@* Top button bar *@
-<div class="btn-toolbar mb-3" role="toolbar">
-    <button data-bind="click: startCreatingCollection" class="btn btn-secondary">Create new collection</button>
-</div>
-
-<div class="row">
-    <div class="col-md-3">
-        <label>My Collections</label>
-        <ul class="list-group backbone-list" data-bind="foreach: myCollections">
-            <li data-bind="text: Name, click: $parent.viewCollection"></li>
-        </ul>
-    </div>
-
-    <div class="col-md-9" data-bind="visible: activeCollection, if: activeCollection">
-        <h3 data-bind="text: activeCollection().Name"></h3>
-        <hr/>
-
-        <button data-bind="click: addSlide" class="btn btn-primary" data-toggle="modal" data-target="addslide-modal">Add new Slide</button>
-        <p data-bind="text: activeCollection().Description"></p>
-        
-    </div>
 </div>

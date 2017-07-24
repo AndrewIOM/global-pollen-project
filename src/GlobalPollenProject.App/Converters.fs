@@ -1,5 +1,6 @@
 module Converters
 
+open System
 open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Composition
 open ReadModels
@@ -30,8 +31,8 @@ module DtoToDomain =
 
     let backboneSearchToIdentity (dto:BackboneSearchRequest) =
         match dto.Rank with
-        | "Family" -> Ok <| Family (LatinName dto.Family)
-        | "Genus" -> Ok <| Genus (LatinName dto.Genus)
+        | "Family" -> Ok <| Family (LatinName dto.LatinName)
+        | "Genus" -> Ok <| Genus (LatinName dto.LatinName)
         | "Species" -> Ok <| Species (LatinName dto.LatinName,SpecificEphitet dto.Species,Scientific "")
         | _ -> Error "DTO validation failed"
 
@@ -51,8 +52,13 @@ module DtoToDomain =
                 | Some y -> Ok (Some <| Lead210 (y * 1<YBP>))
             | _ -> Error "The dating type was not in a correct format"
 
-    let createLocation lat lon : Result<Site,string> =
+    let createPoint lat lon : Result<Site,string> =
         Ok <| (Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>))
+
+    let createRegion region country =
+        match String.IsNullOrEmpty region with
+        | false -> Some (Region (region,country)) |> Ok
+        | true -> None |> Ok
 
     let createAddGrainCommand id user time space images =
         GlobalPollenProject.Core.Aggregates.Grain.Command.SubmitUnknownGrain {
@@ -63,16 +69,66 @@ module DtoToDomain =
             Spatial = space
         }
 
+    let createAddSlideCommand colId id taxon place age =
+        GlobalPollenProject.Core.Aggregates.ReferenceCollection.Command.AddSlide {
+            Collection = colId
+            ExistingId = id
+            Taxon = taxon
+            Place = place
+            OriginalFamily = ""
+            OriginalGenus = ""
+            OriginalSpecies = ""
+            OriginalAuthor = ""
+            Time = age
+        }
+
     let dtoToGrain (grainId:Result<GrainId,string>) (userId:Result<UserId,string>) (dto:AddUnknownGrainRequest) =
 
         let timeOrError =
             createAge dto.Year dto.YearType
 
         let locationOrError =
-            createLocation dto.LatitudeDD dto.LongitudeDD
+            createPoint dto.LatitudeDD dto.LongitudeDD
 
         createAddGrainCommand
         <!> grainId
         <*> userId
         <*> timeOrError
         <*> locationOrError
+
+    let dtoToAddSlideCommand (dto:SlideRecordRequest) =
+
+        let existingId =
+            match String.IsNullOrEmpty dto.ExistingId with
+            | true -> None
+            | false -> Some dto.ExistingId
+
+        let ageOrError =
+            createAge dto.YearCollected dto.SamplingMethod
+
+        let placeOrError =
+            createRegion dto.LocationRegion dto.LocationCountry
+
+        let taxonIdOrError =
+            // Check taxon exists
+            // Check 'original' values are valid
+            // Check original matches taxon through trace to ensure concurrent info
+            dto.ValidatedTaxonId
+            |> TaxonId
+            |> Ok
+
+        let taxon t =
+            match dto.SamplingMethod with
+            | "Botanical" -> Ok <| Botanical (t, Book "Fake plant identification book")
+            | "Environmental" -> Ok <| Environmental t
+            | "Morphological" -> Ok <| Morphological t
+            | _ -> Error <| "Not a valid sampling method: " + dto.SamplingMethod
+
+        let taxonOrError =
+            taxonIdOrError
+            >>= taxon
+
+        createAddSlideCommand (CollectionId dto.Collection) existingId
+        <!> taxonOrError
+        <*> placeOrError
+        <*> ageOrError

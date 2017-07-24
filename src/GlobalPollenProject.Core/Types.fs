@@ -63,8 +63,9 @@ type Continent =
 
 type SamplingLocation =
     | Site of Point
-    | Region of Polygon
-    | Country of string // Country name
+    | Area of Polygon
+    | Region of string * string //Region and country name
+    | Country of string // Country name only
     | Continent of Continent
 
 type Age =

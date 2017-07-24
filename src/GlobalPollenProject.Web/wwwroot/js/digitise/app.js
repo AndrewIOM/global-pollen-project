@@ -25,12 +25,20 @@ function DigitiseViewModel(users, analyses) {
     // Adding a slide
     self.isAddingSlide = ko.observable(false);
     self.newSlideData = ko.observable({});
-    self.rank = ko.observable("Species");
-    self.family = ko.observable();
-    self.genus = ko.observable();
-    self.species = ko.observable();
-    self.author = ko.observable();
+    self.rank = ko.observable("");
+    self.family = ko.observable("");
+    self.genus = ko.observable("");
+    self.species = ko.observable("");
+    self.author = ko.observable("");
     self.newSlideTaxonStatus = ko.observable(null);
+
+    self.isValidTaxonSearch = ko.computed(function() {
+        if (self.rank() == "Family" && self.family().length > 0) return true;
+        if (self.rank() == "Genus" && self.family().length > 0 && self.genus().length > 0) return true;
+        if (self.rank() == "Species" && self.genus().length > 0 && self.species().length > 0) return true;
+        return false;
+    }, self);
+
 
     self.updateMyCollections = function() {
         $.ajax({
@@ -72,7 +80,23 @@ function DigitiseViewModel(users, analyses) {
 
     self.addSlide = function() {
         self.isAddingSlide(true);
-        self.addSlide({});
+        self.newSlideData({});
+    }
+
+    self.submitAddSlide = function() {
+        console.log(self.newSlideData())
+        $.ajax({
+            url: "/api/v1/collection/slide/add",
+            type: "POST",
+            data: JSON.stringify(self.newSlideData()),
+            dataType: "json",
+            contentType: "application/json"
+        })
+        .done(function (data) {
+            self.isAddingSlide(false);
+            self.newCollectionData({Name: "", Description: ""});
+            self.updateMyCollections();
+        })
     }
 
     self.validateTaxon = function() {
@@ -82,7 +106,7 @@ function DigitiseViewModel(users, analyses) {
         if (self.rank() == "Family") {
             query = "rank=Family&family=" + self.family() + "&latinname=" + self.family();
         } else if (self.rank() == 'Genus') {
-            query = "rank=Species&family=" + self.family() + "&genus=" + self.genus() + "&latinname=" + self.genus();
+            query = "rank=Genus&family=" + self.family() + "&genus=" + self.genus() + "&latinname=" + self.genus();
         } else if (self.rank() == "Species") {
             query = "rank=Species&family=" + self.family() + "&genus=" + self.genus() + "&species=" + self.species() + "&latinname=" + self.genus() + " " + self.species() + "&authorship=" + self.author();
         }
@@ -94,7 +118,7 @@ function DigitiseViewModel(users, analyses) {
         .done(function(data) {
             if (data.length == 1 && data[0].TaxonomicStatus == "accepted") self.newSlideData().Taxon = data[0].Id;
             self.newSlideTaxonStatus(data);
-        })
+        })        
     }
 }
 
@@ -105,8 +129,7 @@ $(document).ready(function() {
 });
 
 
-// Helpers
-//Ensure API call sent only when typing completed
+// Helpers - Dropdown autocomplete
 var typingTimer;
 var doneTypingInterval = 100;
 
@@ -124,7 +147,7 @@ function updateList(entryBox, rank) {
     var query = '';
     if (rank == 'Species') {
         //Combine genus and species for canonical name
-        var genus = document.getElementById('original-genus').value;
+        var genus = document.getElementById('original-Genus').value;
         query += genus + " ";
     }
     query += entryBox.value;
@@ -133,7 +156,10 @@ function updateList(entryBox, rank) {
 
     } else {
         var request = "/api/v1/backbone/search?rank=" + rank + "&latinName=" + query;
-        ajaxHelper(request, 'GET', 'json').done(function (data) {
+        $.ajax({
+            url: request,
+            type: "GET"
+        }).done(function (data) {
             var list = document.getElementById(rank + 'List');
             $('#' + rank + 'List').css('display', 'block');
             list.innerHTML = "";
@@ -150,36 +176,20 @@ function updateList(entryBox, rank) {
                         matchCount++;
                     }
                 };
-
-                // if (rank == 'Genus') {
-                //     var familySpan = document.createElement('span');
-                //     familySpan.innerHTML = (data[i].parentLatinName + ',' + matchCount);
-                //     familySpan.className = 'family-name';
-                //     link.appendChild(familySpan);
-                // }
                 link.addEventListener('click', function (e) {
                     var name = this.innerHTML;
                     if (rank == 'Species') {
-                        var species = name.split(' ')[1];
-                        $('#original-' + rank).val(species);
-                    } else {
-                        $('#original-' + rank).val(name);
+                        $('#original-Species').val(name.split(' ')[1]).change();
+                        $('#original-Genus').val(name.split(' ')[0]).change();
+                    } else if (rank == 'Genus') {
+                        $('#original-Genus').val(name).change();
+                    } else if (rank == 'Family') {
+                        $('#original-Family').val(name).change();
                     }
-
-                    //Autofill family name
-                    // var familySpan = this.getElementsByClassName("family-name");
-                    // if (familySpan.length > 0) {
-                    //     var family = this.getElementsByClassName("family-name")[0].innerHTML.split(',')[0];
-                    //     var matchCount = this.getElementsByClassName("family-name")[0].innerHTML.split(',')[1];
-                    //     if (matchCount == 1) {
-                    //         $('#Family').val(family);
-                    //     };
-                    // }
                     $('#' + rank + 'List').fadeOut();
                 });
                 list.appendChild(option);
             }
-            $('.family-name').css('display', 'none');
         });
     }
 }
@@ -194,19 +204,4 @@ function disable(rank) {
     function func() {
         $('#' + element).fadeOut();
     }
-}
-
-//Base Functions
-function ajaxHelper(uri, method, dataType, data) {
-    //self.error('');
-    return $.ajax({
-        type: method,
-        url: uri,
-        dataType: dataType,
-        contentType: 'application/json',
-        data: data ? JSON.stringify(data) : null
-    }).fail(function (jqXhr, textStatus, errorThrown) {
-        console.log(errorThrown);
-        //self.error(errorThrown);
-    });
 }

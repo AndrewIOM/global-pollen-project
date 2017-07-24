@@ -93,10 +93,17 @@ let domainDependencies =
       CalculateIdentity   = calculateIdentity }
 
 
+let toAppResult domainResult =
+    match domainResult with
+    | Ok r -> Ok r
+    | Error str -> Error CoreError
+
+
 // Digitisation Use Cases
 module Digitise =
 
     open GlobalPollenProject.Core.Aggregates.ReferenceCollection
+    open Converters
 
     let private issueCommand = 
         let aggregate = { initial = State.Initial; evolve = State.Evolve; handle = handle; getId = getId }
@@ -109,9 +116,10 @@ module Digitise =
         Ok newId
 
     let addSlideRecord request = 
-        // let identification = Botanical (TaxonId request.BackboneTaxonId)
-        // issueCommand <| AddSlide { Id = CollectionId request.Collection; Taxon = identification; Place = None; Time = None }
-        Ok (SlideId (CollectionId request.Collection,"SL001"))
+        request
+        |> DtoToDomain.dtoToAddSlideCommand
+        |> lift issueCommand
+        |> toAppResult
 
     let uploadSlideImage request = 
         let base64 = Base64Image request.ImageBase64

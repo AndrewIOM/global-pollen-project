@@ -13,12 +13,14 @@ type Command =
 and CreateCollection = {Id:CollectionId; Name:string; Owner:UserId; Description: string}
 and UploadSlideImage = {Id:SlideId; Image:Image}
 and AddSlide = 
-    {Id:                CollectionId
+    {Collection:        CollectionId
+     ExistingId:        string option
      Taxon:             TaxonIdentification
      Place:             SamplingLocation option
      OriginalFamily:    string
      OriginalGenus:     string
      OriginalSpecies:   string
+     OriginalAuthor:    string
      Time:              Age option }
 
 type Event =
@@ -72,15 +74,15 @@ let addSlide (command:AddSlide) calcIdentity state =
         match identity with
         | Some taxon -> 
             [SlideRecorded {
-                Id = SlideId (command.Id,slideId)
+                Id = SlideId (command.Collection,slideId)
                 Taxon = command.Taxon
                 OriginalFamily = command.OriginalFamily
                 OriginalGenus = command.OriginalGenus
                 OriginalSpecies = command.OriginalSpecies }; 
-             SlideGainedIdentity ((SlideId (command.Id,slideId)),taxon) ]
+             SlideGainedIdentity ((SlideId (command.Collection,slideId)),taxon) ]
         | None -> 
             [SlideRecorded {
-                Id = SlideId (command.Id,slideId)
+                Id = SlideId (command.Collection,slideId)
                 Taxon = command.Taxon
                 OriginalFamily = command.OriginalFamily
                 OriginalGenus = command.OriginalGenus
@@ -162,6 +164,6 @@ let getId =
     let unwrapSlideId (SlideId (c,x)) = c
     function
     | CreateCollection c -> unwrap c.Id
-    | AddSlide c -> unwrap c.Id
+    | AddSlide c -> unwrap c.Collection
     | Publish c -> unwrap c
     | UploadSlideImage c -> unwrapSlideId c.Id |> unwrap
