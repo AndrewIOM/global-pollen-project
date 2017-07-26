@@ -53,12 +53,13 @@ type SlideRecordRequest = {
     OriginalAuthor: string
     ValidatedTaxonId: System.Guid
     SamplingMethod: string
-    YearCollected: int option
-    YearSlideMade: int
+    YearCollected: System.Nullable<int>
+    YearSlideMade: System.Nullable<int>
     LocationRegion: string
     LocationCountry: string
+    PreperationMethod: string
+    MountingMaterial: string
 }
-
 
 type SlideImageRequest = {
     CollectionId: System.Guid

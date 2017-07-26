@@ -22,15 +22,26 @@ function DigitiseViewModel(users, analyses) {
     // Editing Collection
     self.activeCollection = ko.observable(null);
     
-    // Adding a slide
+    // Adding a slide: request model
     self.isAddingSlide = ko.observable(false);
-    self.newSlideData = ko.observable({});
     self.rank = ko.observable("");
     self.family = ko.observable("");
     self.genus = ko.observable("");
     self.species = ko.observable("");
     self.author = ko.observable("");
     self.newSlideTaxonStatus = ko.observable(null);
+    self.currentTaxon = ko.observable();
+    self.collectionMethod = ko.observable();
+    self.existingId = ko.observable();
+    self.yearCollected = ko.observable();
+    self.nameOfCollector = ko.observable();
+    self.locality = ko.observable();
+    self.district = ko.observable();
+    self.country = ko.observable();
+    self.region = ko.observable();
+    self.yearPrepared = ko.observable();
+    self.preperationMethod = ko.observable();
+    self.mountingMaterial = ko.observable();
 
     self.isValidTaxonSearch = ko.computed(function() {
         if (self.rank() == "Family" && self.family().length > 0) return true;
@@ -39,6 +50,12 @@ function DigitiseViewModel(users, analyses) {
         return false;
     }, self);
 
+    self.isValidAddSlideRequest = ko.computed(function() {
+        if (self.rank() == "") return false;
+        if (self.currentTaxon() == "") return false;
+        if (self.collectionMethod() == "") return false;
+        return true;
+    }, self)
 
     self.updateMyCollections = function() {
         $.ajax({
@@ -73,35 +90,59 @@ function DigitiseViewModel(users, analyses) {
     }
 
     self.viewCollection = function(collection) {
-        // get collection detail
-        // set as the active collection
-        self.activeCollection(collection);
+        $.ajax({ url: "/api/v1/collection?id=" + collection.Id, type: "GET" })
+        .done(function (col) {
+            self.activeCollection(col);
+        })
     }
 
     self.addSlide = function() {
         self.isAddingSlide(true);
-        self.newSlideData({});
+    }
+
+    self.stopAddingSlide = function() {
+        self.isAddingSlide(false);
     }
 
     self.submitAddSlide = function() {
-        console.log(self.newSlideData())
+        let request = {
+            Collection: self.activeCollection().Id,
+            ExistingId: self.existingId(),
+            OriginalFamily: self.family(),
+            OriginalGenus: self.genus(),
+            OriginalSpecies: self.species(),
+            OriginalAuthor: self.author(),
+            ValidatedTaxonId: self.currentTaxon(),
+            SamplingMethod: self.collectionMethod(),
+            YearCollected: parseInt(self.yearCollected()),
+            YearSlideMade: parseInt(self.yearPrepared()),
+            LocationRegion: self.region(),
+            LocationCountry: self.country(),
+            PreperationMethod: self.preperationMethod(),
+            MountingMaterial: self.mountingMaterial()
+        };
+        console.log(request);
         $.ajax({
             url: "/api/v1/collection/slide/add",
             type: "POST",
-            data: JSON.stringify(self.newSlideData()),
+            data: JSON.stringify(request),
             dataType: "json",
             contentType: "application/json"
         })
         .done(function (data) {
             self.isAddingSlide(false);
-            self.newCollectionData({Name: "", Description: ""});
-            self.updateMyCollections();
+            self.updateCurrentCollection();
+        })
+    }
+
+    self.updateCurrentCollection = function() {
+        $.ajax({ url: "/api/v1/collection?id=" + self.activeCollection().Id, type: "GET" })
+        .done(function (col) {
+            self.activeCollection(col);
         })
     }
 
     self.validateTaxon = function() {
-        if (self.newSlideData == null) return;
-
         var query;
         if (self.rank() == "Family") {
             query = "rank=Family&family=" + self.family() + "&latinname=" + self.family();
@@ -110,15 +151,14 @@ function DigitiseViewModel(users, analyses) {
         } else if (self.rank() == "Species") {
             query = "rank=Species&family=" + self.family() + "&genus=" + self.genus() + "&species=" + self.species() + "&latinname=" + self.genus() + " " + self.species() + "&authorship=" + self.author();
         }
-
         $.ajax({
             url: "/api/v1/backbone/trace?" + query,
             type: "GET"
         })
         .done(function(data) {
-            if (data.length == 1 && data[0].TaxonomicStatus == "accepted") self.newSlideData().Taxon = data[0].Id;
+            if (data.length == 1 && data[0].TaxonomicStatus == "accepted") self.currentTaxon(data[0].Id);
             self.newSlideTaxonStatus(data);
-        })        
+        })
     }
 }
 

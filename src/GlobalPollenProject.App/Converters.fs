@@ -52,12 +52,25 @@ module DtoToDomain =
                 | Some y -> Ok (Some <| Lead210 (y * 1<YBP>))
             | _ -> Error "The dating type was not in a correct format"
 
+    let createSampleAge (year:Nullable<int>) samplingMethod =
+        match samplingMethod with
+        | "botanical" ->
+            if (year.HasValue) 
+                then Ok (Some <| CollectionDate (year.Value * 1<CalYr>)) 
+                else Error "The year of botanical collection was missing"
+        | "environmental" -> Error "Not supported"
+        | "morphological" -> Error "not supported"
+        | _ -> Error "The sampling method was not valid"
+
     let createPoint lat lon : Result<Site,string> =
         Ok <| (Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>))
 
     let createRegion region country =
-        match String.IsNullOrEmpty region with
-        | false -> Some (Region (region,country)) |> Ok
+        match String.IsNullOrEmpty country with
+        | false ->
+            match String.IsNullOrEmpty region with
+            | false -> Some (Region (region,country)) |> Ok
+            | true -> Some (Country country) |> Ok
         | true -> None |> Ok
 
     let createAddGrainCommand id user time space images =
@@ -69,16 +82,16 @@ module DtoToDomain =
             Spatial = space
         }
 
-    let createAddSlideCommand colId id taxon place age =
+    let createAddSlideCommand colId id f g s auth taxon place age =
         GlobalPollenProject.Core.Aggregates.ReferenceCollection.Command.AddSlide {
             Collection = colId
             ExistingId = id
             Taxon = taxon
             Place = place
-            OriginalFamily = ""
-            OriginalGenus = ""
-            OriginalSpecies = ""
-            OriginalAuthor = ""
+            OriginalFamily = f
+            OriginalGenus = g
+            OriginalSpecies = s
+            OriginalAuthor = auth
             Time = age
         }
 
@@ -104,7 +117,7 @@ module DtoToDomain =
             | false -> Some dto.ExistingId
 
         let ageOrError =
-            createAge dto.YearCollected dto.SamplingMethod
+            createSampleAge dto.YearCollected dto.SamplingMethod
 
         let placeOrError =
             createRegion dto.LocationRegion dto.LocationCountry
@@ -119,16 +132,16 @@ module DtoToDomain =
 
         let taxon t =
             match dto.SamplingMethod with
-            | "Botanical" -> Ok <| Botanical (t, Book "Fake plant identification book")
-            | "Environmental" -> Ok <| Environmental t
-            | "Morphological" -> Ok <| Morphological t
+            | "botanical" -> Ok <| Botanical (t, Book "Fake plant identification book")
+            | "environmental" -> Ok <| Environmental t
+            | "morphological" -> Ok <| Morphological t
             | _ -> Error <| "Not a valid sampling method: " + dto.SamplingMethod
 
         let taxonOrError =
             taxonIdOrError
             >>= taxon
 
-        createAddSlideCommand (CollectionId dto.Collection) existingId
+        createAddSlideCommand (CollectionId dto.Collection) existingId dto.OriginalFamily dto.OriginalGenus dto.OriginalSpecies dto.OriginalAuthor
         <!> taxonOrError
         <*> placeOrError
         <*> ageOrError
