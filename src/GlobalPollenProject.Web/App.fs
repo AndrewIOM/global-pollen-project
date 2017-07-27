@@ -243,6 +243,7 @@ let webApp =
                         routef      "/%s/%s/%s"         (fun (family,genus,species) -> showTaxonHandler family genus species)
                         routef      "/%s/%s"            (fun (family,genus) -> showTaxonHandler family genus None)
                         routef      "/%s"               (fun family -> showTaxonHandler family None None) ])
+                route               "/MRC/Slide"        >=> razorHtmlView "MRC/Slide" None
                 route               "/Account/Login"    >=> razorHtmlView "Account/Login" None
                 route               "/Account/Register" >=> razorHtmlView "Account/Register" None
                 route               "/Account/Logoff"   >=> signOff authScheme >=> text "Logged Out"

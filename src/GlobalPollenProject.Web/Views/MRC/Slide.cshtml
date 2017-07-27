@@ -1,5 +1,29 @@
 @{
+    Layout = "_Layout";
     ViewBag.Title = "Individual Slide";
+    ViewData["Title"] = "SLIDENAME";
+    ViewData["Subtitle"] = "It's a slide, yo";
     ViewData["Description"] = "";
 }
 
+@section headerSection {
+    <header>
+        <div class="container">
+            <h2 id="about">@ViewData["Title"]</h2>
+            <p>@ViewData["Subtitle"]</p>
+        </div>
+    </header>
+}
+
+@section scripts {
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script src="https://d3js.org/d3-scale.v1.min.js"></script>
+    <script src="/js/viewer/viewer.js"></script>
+}
+
+<div class="row">
+    <div class="col-md-8" id="viewer-container"></div>
+    <div class="col-md-4">
+        Testing
+    </div>
+</div>
