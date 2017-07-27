@@ -106,7 +106,7 @@ let showTaxonHandler family genus species =
     fun ctx ->
         let appResult = Taxonomy.getByName family genus species
         match appResult with
-        | Ok t -> razorHtmlView "Taxon/View" t ctx
+        | Ok t -> razorHtmlView "MRC/Taxon" t ctx
         | Error e -> text "Not found" ctx
 
 let backboneSearchHandler =
@@ -146,7 +146,7 @@ let taxonListHandler ctx =
 
 let pagedTaxonomyHandler ctx =
     let appResult = Taxonomy.list {Page = 1; PageSize = 20}
-    razorHtmlView "Taxon/Index" appResult ctx
+    razorHtmlView "MRC/Index" appResult ctx
 
 let listCollectionsHandler ctx =
     let result = Digitise.myCollections (currentUserId ctx)
@@ -193,7 +193,7 @@ let showGrainDetail id =
     fun ctx -> 
         let appResult = UnknownGrains.getDetail id
         match appResult with
-        | Ok model -> razorHtmlView "Grain/Identify" model ctx
+        | Ok model -> razorHtmlView "Identify/View" model ctx
         | Error e -> text "error" ctx
 
 let grainUploadHandler ctx =

@@ -69,7 +69,10 @@ let addSlide (command:AddSlide) calcIdentity state =
     match state with
     | Initial -> invalidOp "This collection does not exist"
     | Draft c ->
-        let slideId = sprintf "GPP%i" (c.Slides.Length + 1)
+        let slideId = 
+            match command.ExistingId with
+            | None -> sprintf "GPP%i" (c.Slides.Length + 1)
+            | Some i -> i
         let identity = calcIdentity [command.Taxon]
         match identity with
         | Some taxon -> 

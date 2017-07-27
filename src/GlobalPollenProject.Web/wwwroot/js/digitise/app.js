@@ -43,6 +43,12 @@ function DigitiseViewModel(users, analyses) {
     self.preperationMethod = ko.observable();
     self.mountingMaterial = ko.observable();
 
+    // Slide Detail
+    self.isViewingSlideDetail = ko.observable(false);
+    self.slideDetail = ko.observable();
+    self.addImage = ko.observable();
+    self.focusImagePreview = null;
+
     self.isValidTaxonSearch = ko.computed(function() {
         if (self.rank() == "Family" && self.family().length > 0) return true;
         if (self.rank() == "Genus" && self.family().length > 0 && self.genus().length > 0) return true;
@@ -160,6 +166,16 @@ function DigitiseViewModel(users, analyses) {
             self.newSlideTaxonStatus(data);
         })
     }
+
+    self.viewSlideDetail = function(slide) {
+        self.slideDetail(slide);
+        self.isViewingSlideDetail(true);
+        self.focusImagePreview = new FocusImagePreview();
+    }
+
+    self.stopViewingSlide = function(slide) {
+        self.isViewingSlideDetail(false);
+    }
 }
 
 $(document).ready(function() {
@@ -245,3 +261,177 @@ function disable(rank) {
         $('#' + element).fadeOut();
     }
 }
+
+
+function FocusImagePreview() {
+    let self = this;
+    self.canvas = null;
+    self.image = null;
+    self.ctx = null;
+
+    self.create = function()
+    {
+        // Canvas
+        canvas = document.getElementById('focusImagePreview');
+        canvas.height = 300;
+        canvas.width = 300;
+        $('#focus-preview').show();
+        image = new Image;
+        ctx = canvas.getContext('2d');
+        var firstImage = $('#focus-images img:first');
+        image.src = firstImage.attr("src");
+        self.redraw();
+        $(window).resize(self.redraw());
+
+        //Setup Slider
+        slider = document.getElementById('focusSlider');
+        noUiSlider.create(slider, {
+            start: [1],
+            step:1,
+            tooltips:true,
+            range: {
+                'min': [1],
+                'max': [5]
+            }, orientation: 'vertical'
+        });
+
+        // Change focus level
+        slider.noUiSlider.on('slide', function () {
+            var value = slider.noUiSlider.get();
+            var imageContainer = document.getElementById('focus-images');
+            image.src = imageContainer.getElementsByTagName('img')[value-1].src;
+            self.redraw();
+        });
+        $('#focus-add-button').removeClass('disabled');
+    }
+
+    self.addData = function(input) {
+        self.dispose();
+        if (input.files.length) {
+            var validImages = 0;
+            var imageContainer = document.getElementById('focus-images');
+            for (var i = 0; i < input.files.length; i++) {
+                if (/\.(jpe?g|png|gif)$/i.test(input.files[i].name)) {
+                    validImages++;
+                    var img = document.createElement('img');
+                    img.src = window.URL.createObjectURL(input.files[i]);
+                    imageContainer.appendChild(img);
+                }
+            }
+            if (validImages == 5) {
+                $('#focus-upload-error').text('');
+                self.create();
+            } else {
+                $('#focus-upload-error').text('The image stack was not valid');
+            }
+        } else {
+            $('#focus-upload-error').text("You didn't select any images");
+        }
+    }
+
+    self.saveImage = function() {
+        // Somehow submit image here...
+    }
+
+    self.dispose = function() {
+        //Cleanup old focus image from dialog box
+        $('#focus-add-button').addClass('disabled');
+        $('#focus-upload-button').removeClass('disabled');
+        $('#focus-upload-error').text('');
+        $('#focus-preview').hide();
+        document.getElementById('focusImagePreview').innerHTML = '';
+        document.getElementById('focus-images').innerHTML = '';
+    }
+
+    self.redraw = function() {
+        ctx.fillStyle = '#333333';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        var imgObj = new Image();
+        imgObj.onload = function () {
+            var renderHeight = imgObj.naturalHeight;
+            var renderWidth = imgObj.naturalWidth;
+
+            var ratio = imgObj.naturalWidth / imgObj.naturalHeight;
+            if (ratio < 1) { //Portrait
+                var scaling = 1;
+                if (renderHeight > canvas.height) {
+                    scaling = canvas.height / renderHeight;
+                    renderHeight = canvas.height;
+                }
+                renderWidth = renderWidth * scaling;
+            } else { //Landscape
+                var scaling = 1;
+                if (renderWidth > canvas.width) {
+                    scaling = canvas.width / renderWidth;
+                    renderWidth = canvas.width;
+                }
+                renderHeight = renderHeight * scaling;
+            }
+
+            var widthOffset = (canvas.width - renderWidth) / 2;
+            var heightOffset = (canvas.height - renderHeight) / 2;
+            ctx.drawImage(image, widthOffset, heightOffset, renderWidth, renderHeight);
+        };
+        imgObj.src = image.src;
+    }
+
+
+}
+
+//Base Functions
+function convertToDataURLviaCanvas(url, callback) {
+    var img = new Image();
+    img.crossOrigin = 'Anonymous';
+    img.onload = function () {
+        var canvas = document.createElement('CANVAS');
+        var ctx = canvas.getContext('2d');
+        var dataURL;
+        canvas.height = this.height;
+        canvas.width = this.width;
+        ctx.drawImage(this, 0, 0);
+        dataURL = canvas.toDataURL("image/png");
+        callback(dataURL);
+        canvas = null;
+    };
+    img.src = url;
+}
+
+
+// OLD
+
+// function addImageToGrid(d, images) {
+//     //Create elements for image
+//     var li = document.createElement('li');
+//     d.appendChild(li);
+//     var div = document.createElement('div');
+//     div.className = "img-container";
+//     li.appendChild(div);
+//     var a = document.createElement('a');
+//     div.appendChild(a);
+
+//     //Create URL holders for each image
+//     function convertToBase64(urlHolder, image) {
+//         convertToDataURLviaCanvas(image.src, function (base64Img) {
+//             urlHolder.src = base64Img;
+//         }, false)
+//     }
+//     for (var i = 0; i < images.length; i++) {
+//         var urlHolder = document.createElement('img');
+//         if (i != 2) urlHolder.hidden = 'hidden';
+//         //urlHolder.src = images[i].src;
+//         convertToBase64(urlHolder, images[i]);
+//         a.appendChild(urlHolder);
+//     }
+
+//     //Create delete button
+//     var del = document.createElement('span');
+//     del.className = 'delete';
+//     var icon = document.createElement('span');
+//     icon.className = 'glyphicon glyphicon-trash';
+//     del.appendChild(icon);
+//     a.appendChild(del);
+//     del.onclick = function () {
+//         $(this).closest('li').remove();
+//     };
+// }
