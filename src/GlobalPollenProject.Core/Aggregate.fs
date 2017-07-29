@@ -12,6 +12,7 @@ type Dependencies =  {
     ValidateTaxon:     BackboneQuery -> TaxonId option
     GetGbifId:         LinkRequest -> int option
     GetNeotomaId:      LinkRequest -> int option
+    GetTime:           unit -> DateTime
     CalculateIdentity: TaxonIdentification list -> TaxonId option }
 
 type RootAggregate<'TState, 'TCommand, 'TEvent> = {

@@ -10,13 +10,15 @@ init:
 - npm install -g bower
 before_build:
 - appveyor-retry dotnet restore "src\GlobalPollenProject.Web\GlobalPollenProject.Web.fsproj" -v Minimal
-- appveyor-retry dotnet restore "test\GlobalPollenProject.Tests\GlobalPollenProject.Tests.fsproj" -v Minimal
+- appveyor-retry dotnet restore "test\GlobalPollenProject.Core.Tests\GlobalPollenProject.Core.Tests.fsproj" -v Minimal
+- appveyor-retry dotnet restore "test\GlobalPollenProject.Persistence.Tests\GlobalPollenProject.Persistence.Tests.fsproj" -v Minimal
 build_script:
 - dotnet build "src\GlobalPollenProject.Web\GlobalPollenProject.Web.fsproj" -c %CONFIGURATION% --version-suffix %LABEL%
 # after_build:
 # - dotnet publish "src\GlobalPollenProject.WebUI" -c %CONFIGURATION% --no-build --version-suffix %LABEL% -o artifacts\GlobalPollenProject.WebUI
 test_script:
-- dotnet test "test\GlobalPollenProject.Tests\GlobalPollenProject.Tests.fsproj" -c %CONFIGURATION%
+- dotnet test "test\GlobalPollenProject.Core.Tests\GlobalPollenProject.Core.Tests.fsproj" -c %CONFIGURATION%
+- dotnet test "test\GlobalPollenProject.Persistence.Tests\GlobalPollenProject.Persistence.Tests.fsproj" -c %CONFIGURATION%
 artifacts:
 - path: artifacts\**\*.*
 cache:

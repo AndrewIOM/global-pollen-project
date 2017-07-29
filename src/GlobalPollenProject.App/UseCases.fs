@@ -88,6 +88,7 @@ let domainDependencies =
       Log                 = log
       GetGbifId           = ExternalLink.getGbifId
       GetNeotomaId        = ExternalLink.getNeotomaId
+      GetTime             = (fun x -> DateTime.Now)
       ValidateTaxon       = isValidTaxon
       CalculateIdentity   = calculateIdentity }
 
@@ -200,7 +201,9 @@ module Taxonomy =
     open GlobalPollenProject.Core.Aggregates.Taxonomy
 
     let list (request:PageRequest) =
-        ReadStore.RepositoryBase.getAll<TaxonSummary> All readStoreGetList deserialise
+        let req = Paged {ItemsPerPage = request.PageSize; Page = request.Page }
+        ReadStore.RepositoryBase.getAll<TaxonSummary> req readStoreGetList deserialise
+        |> toAppResult
 
     let getByName family genus species =
         ReadStore.TaxonomicBackbone.tryFindByLatinName family genus species readStoreGetList readStoreGet deserialise

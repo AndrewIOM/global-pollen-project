@@ -12,7 +12,7 @@ let a = {
     handle = handle
     getId = getId 
 }
-let Given = Given a defaultDependencies
+let Given = Given a domainDefaultDeps
 
 module ``When registering a new account`` =
 

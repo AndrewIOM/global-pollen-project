@@ -12,12 +12,12 @@ let a = {
     handle = handle
     getId = getId 
 }
-let Given = Given a defaultDependencies
+let Given = Given a domainDefaultDeps
 
 module ``When importing a taxon`` =
 
-    let taxonId = TaxonId (defaultDependencies.GenerateId())
-    let parentId = TaxonId (defaultDependencies.GenerateId())
+    let taxonId = TaxonId (domainDefaultDeps.GenerateId())
+    let parentId = TaxonId (domainDefaultDeps.GenerateId())
 
     [<Fact>]
     let ``A family cannot have a parent`` () =
@@ -32,7 +32,7 @@ module ``When importing a taxon`` =
 
     [<Fact>]
     let ``The parent taxon must exist`` () =
-        let dep = { defaultDependencies with ValidateTaxon = fun unit -> None }
+        let dep = { domainDefaultDeps with ValidateTaxon = fun unit -> None }
         Specification.Given a dep []
         |> When (ImportFromBackbone {Id = taxonId
                                      Group = Angiosperm
@@ -69,7 +69,3 @@ module ``When importing a taxon`` =
                               Parent = Some parentId
                               Reference = None }]
 
-module ``When connecting a taxon to other databases`` =
-
-    [<Fact>]
-    let ``hello`` = 2.

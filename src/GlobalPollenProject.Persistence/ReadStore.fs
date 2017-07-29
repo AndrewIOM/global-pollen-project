@@ -17,6 +17,18 @@ and PagedRequest = {
     Page: int
 }
 
+// type ListResult<'a> =
+// | AllPages
+// | SinglePage of PagedResult<'a>
+
+// and PagedResult<'a> = {
+//     ItemsPerPage: int
+//     CurrentPage: int
+//     Items: 'a list
+//     TotalPages: int
+//     TotalItems: int
+// }
+
 type GetFromKeyValueStore = string -> Result<Json,string>
 type GetListFromKeyValueStore = ListRequest -> string -> Result<Json list,string>
 type GetLexographic = string -> string -> Result<string list,string>

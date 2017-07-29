@@ -2,7 +2,8 @@ module CalibrationTests
 
 open System
 open Xunit
-open GlobalPollenProject.Core.Types    
+open GlobalPollenProject.Core.DomainTypes
+open GlobalPollenProject.Core.Aggregate
 open GlobalPollenProject.Core.Aggregates.Calibration
 
 let a = {
@@ -11,7 +12,7 @@ let a = {
     handle = handle
     getId = getId 
 }
-let Given = Given a defaultDependencies
+let Given = Given a domainDefaultDeps
 
 module ``When creating a calibration set`` =
 

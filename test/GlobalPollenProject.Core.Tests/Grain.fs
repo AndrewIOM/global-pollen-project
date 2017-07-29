@@ -13,7 +13,7 @@ let a = {
     getId = getId 
 }
 
-let Given = Given a defaultDependencies
+let Given = Given a domainDefaultDeps
 
 let grainId = GrainId (Guid.NewGuid())
 let currentUser = UserId (Guid.NewGuid())
