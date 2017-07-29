@@ -121,11 +121,11 @@ module Digitise =
         |> toAppResult
 
     let uploadSlideImage request = 
-        let base64 = Base64Image request.ImageBase64
-        let toUpload = Single base64
-        let uploaded = saveImage toUpload
-        let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId)
-        issueCommand <| UploadSlideImage { Id = slideId; Image = uploaded }
+        // let base64 = Base64Image request.ImageBase64
+        // let toUpload = Single base64
+        // let uploaded = saveImage toUpload
+        // let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId)
+        // issueCommand <| UploadSlideImage { Id = slideId; Image = uploaded }
         Ok
 
     let listCollections () = 
@@ -173,18 +173,19 @@ module UnknownGrains =
 
     let submitUnknownGrain (request:AddUnknownGrainRequest) getCurrentUser =
 
-        let upload base64Strings = 
-            base64Strings
-            |> List.map (Base64Image >> Single >> saveImage)
-            |> Ok
+        // let upload base64Strings = 
+        //     base64Strings
+        //     |> List.map (Base64Image >> ImageForUpload.Single >> saveImage)
+        //     |> Ok
 
-        let currentUser = Ok(UserId <| getCurrentUser())
-        let newId = Ok(GrainId <| domainDependencies.GenerateId())
+        // let currentUser = Ok(UserId <| getCurrentUser())
+        // let newId = Ok(GrainId <| domainDependencies.GenerateId())
 
-        request
-        |> Converters.DtoToDomain.dtoToGrain newId currentUser
-        <*> (upload request.StaticImagesBase64)
-        |> Result.map issueCommand
+        // request
+        // |> Converters.DtoToDomain.dtoToGrain newId currentUser
+        // <*> (upload request.StaticImagesBase64)
+        // |> Result.map issueCommand
+        Ok()
 
     let getDetail grainId =
         ReadStore.RepositoryBase.getSingle<GrainSummary> grainId readStoreGet deserialise

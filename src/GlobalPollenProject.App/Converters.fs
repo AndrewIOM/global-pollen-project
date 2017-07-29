@@ -18,7 +18,7 @@ module DomainToDto =
 
     let image (domainImage:Image) : SlideImage =
         match domainImage with
-        | SingleImage i ->
+        | SingleImage (i,cal) ->
             invalidOp "TODO: Make it possible to add single images to slides?"
         | FocusImage (urls,stepping,calId) ->
             { Id = 0

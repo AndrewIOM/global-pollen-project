@@ -52,10 +52,10 @@ let container connectionString name : CloudBlobContainer =
 
 let uploadToAzure conName connString nameGenerator image =
     match image with
-    | Single i -> 
+    | ImageForUpload.Single (i,cal) -> 
         use s = new MemoryStream(base64ToByte i)
         let url = uploadImage (container connString conName) (nameGenerator()) s |> Async.RunSynchronously
-        SingleImage (url)
+        SingleImage (url,cal)
     | Focus (stack,s,c) ->
         let urls = 
             stack 

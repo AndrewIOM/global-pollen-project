@@ -176,7 +176,7 @@ module Grain =
     let submit setReadModel (e:GrainSubmitted) =
         let thumbUrl = 
             match e.Images.Head with
-            | SingleImage x -> x
+            | SingleImage (x,cal) -> x
             | FocusImage (u,s,c) -> u.Head
 
         let summary = { 
