@@ -10,9 +10,9 @@ open GlobalPollenProject.Core.Aggregate
 open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Dependencies
 open GlobalPollenProject.Core.Composition
-open GlobalPollenProject.Shared.Identity.Models
 
 open ReadModels
+open ReadStore
 open Converters
 
 type ServiceError =
@@ -27,7 +27,7 @@ type GetCurrentUser = unit -> Guid
 let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build()
 
 // Image Store
-let uploadImage = AzureImageStore.uploadToAzure "Development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
+let saveImage = AzureImageStore.uploadToAzure "Development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
 
 // Write (Event) Store
 let eventStore = lazy(
@@ -86,7 +86,6 @@ let domainDependencies =
 
     { GenerateId          = Guid.NewGuid
       Log                 = log
-      UploadImage         = uploadImage
       GetGbifId           = ExternalLink.getGbifId
       GetNeotomaId        = ExternalLink.getNeotomaId
       ValidateTaxon       = isValidTaxon
@@ -99,7 +98,6 @@ let toAppResult domainResult =
     | Error str -> Error CoreError
 
 
-// Digitisation Use Cases
 module Digitise =
 
     open GlobalPollenProject.Core.Aggregates.ReferenceCollection
@@ -124,13 +122,13 @@ module Digitise =
     let uploadSlideImage request = 
         let base64 = Base64Image request.ImageBase64
         let toUpload = Single base64
-        let uploaded = domainDependencies.UploadImage toUpload
+        let uploaded = saveImage toUpload
         let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId)
         issueCommand <| UploadSlideImage { Id = slideId; Image = uploaded }
         Ok
 
     let listCollections () = 
-        ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> readStoreGet deserialise
+        ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> All readStoreGetList deserialise
     
     let private deserialiseGuid json =
         let unwrap (ReadStore.Json j) = j
@@ -141,7 +139,7 @@ module Digitise =
 
     let myCollections getCurrentUser = 
         let userId = getCurrentUser()
-        let cols = ReadStore.RepositoryBase.getListKey<Guid> ("CollectionAccessList:" + (userId.ToString())) readStoreGetList deserialiseGuid
+        let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("CollectionAccessList:" + (userId.ToString())) readStoreGetList deserialiseGuid
         match cols with
         | Error e -> Error PersistenceError
         | Ok clist -> 
@@ -176,7 +174,7 @@ module UnknownGrains =
 
         let upload base64Strings = 
             base64Strings
-            |> List.map (Base64Image >> Single >> uploadImage)
+            |> List.map (Base64Image >> Single >> saveImage)
             |> Ok
 
         let currentUser = Ok(UserId <| getCurrentUser())
@@ -195,14 +193,14 @@ module UnknownGrains =
         handle (IdentifyUnknownGrain { Id = GrainId grainId; Taxon = TaxonId taxonId; IdentifiedBy = UserId (Guid.NewGuid()) })
 
     let listUnknownGrains =
-        ReadStore.RepositoryBase.getAll<GrainSummary> readStoreGet deserialise
+        ReadStore.RepositoryBase.getAll<GrainSummary> All readStoreGetList deserialise
 
 module Taxonomy =
 
     open GlobalPollenProject.Core.Aggregates.Taxonomy
 
     let list (request:PageRequest) =
-        ReadStore.RepositoryBase.getAll<TaxonSummary> readStoreGet deserialise
+        ReadStore.RepositoryBase.getAll<TaxonSummary> All readStoreGetList deserialise
 
     let getByName family genus species =
         ReadStore.TaxonomicBackbone.tryFindByLatinName family genus species readStoreGetList readStoreGet deserialise
