@@ -27,7 +27,7 @@ type GetCurrentUser = unit -> Guid
 let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build()
 
 // Image Store
-let saveImage = AzureImageStore.uploadToAzure "Development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
+let saveImage = AzureImageStore.uploadToAzure "development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
 
 // Write (Event) Store
 let eventStore = lazy(

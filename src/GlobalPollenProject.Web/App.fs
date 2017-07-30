@@ -46,10 +46,13 @@ let currentUserId (ctx:HttpContext) () =
         return Guid.Parse user.Id
     } |> Async.RunSynchronously
 
+let renderView name model =
+    warbler (fun x -> razorHtmlView name model)
+
 let toViewResult view ctx result =
     match result with
-    | Ok model -> ctx |> razorHtmlView view model
-    | Error e -> ctx |> (clearResponse >=> setStatusCode 500 >=> razorHtmlView "Error" None)
+    | Ok model -> ctx |> renderView view model
+    | Error e -> ctx |> (clearResponse >=> setStatusCode 500 >=> renderView "Error" None)
 
 let toApiResult ctx result =
     match result with
@@ -86,7 +89,7 @@ let loginHandler redirectUrl =
                logger.LogInformation "User logged in."
                return! redirectTo false redirectUrl ctx
            else
-               return! razorHtmlView "Account/Login" loginRequest ctx
+               return! renderView "Account/Login" loginRequest ctx
         }
 
 let registerHandler (ctx:HttpContext) =
@@ -101,13 +104,13 @@ let registerHandler (ctx:HttpContext) =
             let id() = Guid.Parse user.Id
             let register = User.register model id
             match register with
-            | Error msg -> return! razorHtmlView "Account/Register" model ctx
+            | Error msg -> return! renderView "Account/Register" model ctx
             | Ok r -> 
                 do! signInManager.SignInAsync(user, isPersistent = false) |> Async.AwaitTask
                 (ctx.GetLogger()).LogInformation "User created a new account with password."
                 return! redirectTo true "/" ctx
         | false -> 
-            return! razorHtmlView "Account/Register" model ctx
+            return! renderView "Account/Register" model ctx
     }
 
 let taxonDetail family genus species ctx =
@@ -175,7 +178,8 @@ let grainUploadHandler (ctx:HttpContext) =
 
 let webApp =
     let publicApi =
-        [
+        GET >=>
+        choose [
             route   "/backbone/match"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
             route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
             route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
@@ -198,8 +202,8 @@ let webApp =
             POST >=> route  "/Login"            >=> loginHandler "/"
             POST >=> route  "/Register"         >=> registerHandler
             POST >=> route  "/Upload"           >=> grainUploadHandler
-            GET  >=> route  "/Register"         >=> razorHtmlView "Account/Register" None
-            GET  >=> route  "/Login"            >=> razorHtmlView "Account/Login" None
+            GET  >=> route  "/Register"         >=> renderView "Account/Register" None
+            GET  >=> route  "/Login"            >=> renderView "Account/Login" None
             GET  >=> route  "/Logout"           >=> signOff authScheme >=> redirectTo true "/"
         ]
 
@@ -216,25 +220,26 @@ let webApp =
         GET >=>
         choose [
             route   "/"                         >=> listGrains
-            route   "/Upload"                   >=> razorHtmlView "Identify/Add" None
-            route   "/%s"                       >=> razorHtmlView "NotFound" None
+            route   "/Upload"                   >=> renderView "Identify/Add" None
+            route   "/%s"                       >=> renderView "NotFound" None
         ]
 
     // Main router
     choose [
-        subRoute    "/api/v1"                   digitiseApi :: publicApi |> choose
+        subRoute    "/api/v1"                   publicApi
+        subRoute    "/api/v1/digitise"          digitiseApi
         subRoute    "/Account"                  accountManagement
         subRoute    "/Taxon"                    masterReferenceCollection
         subRoute    "/Identify"                 identify
         GET >=> 
         choose [
-            route   "/"                         >=> razorHtmlView "Home/Index" None
-            route   "/Guide"                    >=> razorHtmlView "Home/Guide" None
-            route   "/Api"                      >=> razorHtmlView "Home/Api" None
-            route   "/Statistics"               >=> razorHtmlView "Statistics/Index" None
-            route   "/Digitise"                 >=> mustBeLoggedIn >=> razorHtmlView "Digitise/Index" None
+            route   "/"                         >=> renderView "Home/Index" None
+            route   "/Guide"                    >=> renderView "Home/Guide" None
+            route   "/Api"                      >=> renderView "Home/Api" None
+            route   "/Statistics"               >=> renderView "Statistics/Index" None
+            route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
         ]
-        setStatusCode 404 >=> razorHtmlView "NotFound" None 
+        setStatusCode 404 >=> renderView "NotFound" None 
     ]
 
 

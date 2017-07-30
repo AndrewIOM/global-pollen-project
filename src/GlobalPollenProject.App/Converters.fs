@@ -10,6 +10,7 @@ module DomainToDto =
     let unwrapTaxonId (TaxonId e) = e
     let unwrapUserId (UserId e) = e
     let unwrapRefId (CollectionId e) = e
+    let unwrapCalId (CalibrationId e) = e
     let unwrapSlideId (SlideId (e,f)) = e,f
     let unwrapLatin (LatinName ln) = ln
     let unwrapId (TaxonId id) = id

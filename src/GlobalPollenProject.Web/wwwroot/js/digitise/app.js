@@ -65,7 +65,7 @@ function DigitiseViewModel(users, analyses) {
 
     self.updateMyCollections = function() {
         $.ajax({
-            url: "/api/v1/collection/list",
+            url: "/api/v1/digitise/collection/list",
             cache: false,
             success: function(serverCols)
             {
@@ -82,7 +82,7 @@ function DigitiseViewModel(users, analyses) {
     self.startCollection = function() {
         console.log(self.newCollectionData())
         $.ajax({
-            url: "/api/v1/collection/start",
+            url: "/api/v1/digitise/collection/start",
             type: "POST",
             data: JSON.stringify(self.newCollectionData()),
             dataType: "json",
@@ -96,7 +96,7 @@ function DigitiseViewModel(users, analyses) {
     }
 
     self.viewCollection = function(collection) {
-        $.ajax({ url: "/api/v1/collection?id=" + collection.Id, type: "GET" })
+        $.ajax({ url: "/api/v1/digitise/collection?id=" + collection.Id, type: "GET" })
         .done(function (col) {
             self.activeCollection(col);
         })
@@ -129,7 +129,7 @@ function DigitiseViewModel(users, analyses) {
         };
         console.log(request);
         $.ajax({
-            url: "/api/v1/collection/slide/add",
+            url: "/api/v1/digitise/collection/slide/add",
             type: "POST",
             data: JSON.stringify(request),
             dataType: "json",
@@ -142,7 +142,7 @@ function DigitiseViewModel(users, analyses) {
     }
 
     self.updateCurrentCollection = function() {
-        $.ajax({ url: "/api/v1/collection?id=" + self.activeCollection().Id, type: "GET" })
+        $.ajax({ url: "/api/v1/digitise/collection?id=" + self.activeCollection().Id, type: "GET" })
         .done(function (col) {
             self.activeCollection(col);
         })
@@ -179,16 +179,104 @@ function DigitiseViewModel(users, analyses) {
 
     // Calibration
     self.isEditingCalibrations = ko.observable(false);
-    self.calibrationImage = null;
-    self.microscopeType = ko.observable();
+    self.isSettingUpNewMicroscope = ko.observable(false);
+    self.myMicroscopes = ko.observableArray();
+    //A. Setup a new microscope
     self.friendlyName = ko.observable();
+    self.microscopeType = ko.observable();
     self.ocular = ko.observable();
-    self.magnifications = ko.observableArray();
+    self.microscopeModel = ko.observable("FAKE MICROSCOPE");
+    self.magnifications = ko.observableArray([10,20,40,100]);
+
+    self.updateCurrentCalibrationSets = function() {
+        $.ajax({ url: "/api/v1/digitise/calibration/list", type: "GET" })
+        .done(function (cals) {
+            self.myMicroscopes(cals);
+        })
+    }
 
     self.startEditingCalibrations = function() {
+        self.updateCurrentCalibrationSets();
         self.isEditingCalibrations(true);
+    }
+
+    self.endEditingCalibrations = function() {
+        self.isEditingCalibrations(false);
+    }
+
+    self.addNewMicroscope = function() {
+        self.isSettingUpNewMicroscope(true);
+    }
+
+    self.submitMicroscope = function() {
+        let request = {
+            Name: self.friendlyName(),
+            Type: self.microscopeType(),
+            Model: self.microscopeModel(),
+            Ocular: self.ocular(),
+            Objectives: self.magnifications()
+        };
+        console.log(request);
+        $.ajax({
+            url: "/api/v1/digitise/calibration/use",
+            type: "POST",
+            data: JSON.stringify(request),
+            dataType: "json",
+            contentType: "application/json"
+        })
+        .done(function (data) {
+            self.isSettingUpNewMicroscope(false);
+            self.updateCurrentCalibrationSets();
+        })
+    }
+
+    self.addMag = function () {
+        self.magnifications.push();
+    }
+
+    self.removeMag = function(mag) {
+        self.magnifications.remove(mag);
+    }
+
+    //B. Calibrate magnification...
+    self.currentMicroscope = ko.observable();
+    self.magnification = ko.observable(40);
+    self.startPoint = ko.observable([2,5]);
+    self.endPoint = ko.observable([88,21]);
+    self.measuredLength = ko.observable(10);
+    self.calibrationImage = null;
+
+    self.startEditingMicroscope = function(m) {
+        self.currentMicroscope(m);
         self.calibrationImage = new CalibrationImage();
         self.calibrationImage.init("calibration-image-container");
+        console.log(self.currentMicroscope());
+    }
+
+    self.submitCalibration = function() {
+        let request = {
+            CalibrationId: self.currentMicroscope().Id,
+            Magnification: self.magnification(),
+            X1: self.startPoint()[0],
+            X2: self.endPoint()[0],
+            Y1: self.startPoint()[1],
+            Y2: self.endPoint()[1],
+            MeasuredLength: self.measuredLength(),
+            ImageBase64: self.calibrationImage.getBase64()
+        }
+        console.log(request);
+        $.ajax({
+            url: "/api/v1/digitise/calibration/use/mag",
+            type: "POST",
+            data: JSON.stringify(request),
+            dataType: "json",
+            contentType: "application/json"
+        })
+        .done(function (data) {
+            self.currentMicroscope(null);
+            self.updateCurrentCalibrationSets();
+            self.isEditingCalibrations(false);
+        })
     }
 }
 
@@ -399,8 +487,10 @@ function CalibrationImage() {
     self.svg = null;
     self.line = null;
 
-    self.height = 400;
-    self.width = 600;
+    self.height = 300;
+    self.width = 400;
+
+    self.base64 = null;
 
     self.init = function(containerId) {
         d3.select("#" + containerId)
@@ -430,19 +520,23 @@ function CalibrationImage() {
 
         reader.onloadend = function (onloadend_e) 
         {
-            let base64 = reader.result;
+            self.base64 = reader.result;
             let img = new Image();
             img.onload = function() {
                 self.canvas.drawImage(img, 0, 0, img.width, img.height,
                                            0, 0, self.width, self.height);
             };
-            img.src = base64;
+            img.src = self.base64;
         };
 
         if(file)
         {
             reader.readAsDataURL(file);
         }
+    }
+
+    self.getBase64 = function() {
+        return self.base64;
     }
 
     self.mousedown = function() {
@@ -465,6 +559,7 @@ function CalibrationImage() {
 
     self.mouseup = function() {
         self.svg.on("mousemove", null);
+        $('#startPoint').val(self.line);
     }
 }
 
@@ -485,42 +580,3 @@ function convertToDataURLviaCanvas(url, callback) {
     };
     img.src = url;
 }
-
-
-// OLD
-
-// function addImageToGrid(d, images) {
-//     //Create elements for image
-//     var li = document.createElement('li');
-//     d.appendChild(li);
-//     var div = document.createElement('div');
-//     div.className = "img-container";
-//     li.appendChild(div);
-//     var a = document.createElement('a');
-//     div.appendChild(a);
-
-//     //Create URL holders for each image
-//     function convertToBase64(urlHolder, image) {
-//         convertToDataURLviaCanvas(image.src, function (base64Img) {
-//             urlHolder.src = base64Img;
-//         }, false)
-//     }
-//     for (var i = 0; i < images.length; i++) {
-//         var urlHolder = document.createElement('img');
-//         if (i != 2) urlHolder.hidden = 'hidden';
-//         //urlHolder.src = images[i].src;
-//         convertToBase64(urlHolder, images[i]);
-//         a.appendChild(urlHolder);
-//     }
-
-//     //Create delete button
-//     var del = document.createElement('span');
-//     del.className = 'delete';
-//     var icon = document.createElement('span');
-//     icon.className = 'glyphicon glyphicon-trash';
-//     del.appendChild(icon);
-//     a.appendChild(del);
-//     del.onclick = function () {
-//         $(this).closest('li').remove();
-//     };
-// }

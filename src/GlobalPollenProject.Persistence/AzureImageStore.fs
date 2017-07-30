@@ -19,7 +19,7 @@ let calcScale maxDimension height width =
 
 let base64ToByte base64 =
     let unwrap (Base64Image i) = i
-    let unwrapped = unwrap base64
+    let unwrapped = (unwrap base64).Replace("data:image/jpeg;base64,", "")
     Convert.FromBase64String(unwrapped)
 
 let upload (blob:CloudBlockBlob) memoryStream = async {
