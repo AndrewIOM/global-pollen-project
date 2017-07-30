@@ -108,7 +108,7 @@ module Digitise =
         let aggregate = { initial = State.Initial; evolve = State.Evolve; handle = handle; getId = getId }
         eventStore.Value.MakeCommandHandler "ReferenceCollection" aggregate domainDependencies
 
-    let startNewCollection (request:StartCollectionRequest) getCurrentUser =
+    let startNewCollection getCurrentUser (request:StartCollectionRequest) =
         let newId = CollectionId <| domainDependencies.GenerateId()
         let currentUser = UserId <| getCurrentUser()
         issueCommand <| CreateCollection { Id = newId; Name = request.Name; Owner = currentUser; Description = request.Description }
@@ -154,6 +154,59 @@ module Digitise =
         ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<EditableRefCollection>
 
 
+module Calibrations =
+
+    open GlobalPollenProject.Core.Aggregates.Calibration
+    open Converters
+    let private issueCommand = 
+        let aggregate = { initial = State.Initial; evolve = State.Evolve; handle = handle; getId = getId }
+        eventStore.Value.MakeCommandHandler "Calibration" aggregate domainDependencies
+
+    let private deserialiseGuid json =
+        let unwrap (ReadStore.Json j) = j
+        let s = (unwrap json).Replace("\"", "")
+        match Guid.TryParse(s) with
+        | true,g -> Ok g
+        | false,g -> Error <| "Guid was not in correct format"
+
+    let getMyCalibrations getCurrentUser =
+        let userId = getCurrentUser()
+        let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("Calibration:User:" + (userId.ToString())) readStoreGetList deserialiseGuid
+        match cols with
+        | Error e -> Error PersistenceError
+        | Ok clist -> 
+            let getCol id = ReadStore.RepositoryBase.getSingle<ReadModels.Calibration> (id.ToString()) readStoreGet deserialise
+            clist 
+            |> List.map getCol 
+            |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
+            |> Ok
+
+    let setupMicroscope getCurrentUser (req:AddMicroscopeRequest) =
+        let microscope = Microscope.Light <| LightMicroscope.Compound (10, [ 10; 20; 40; 100 ], "Nikon")
+        let cmd = UseMicroscope { Id = CalibrationId <| domainDependencies.GenerateId()
+                                  User = getCurrentUser() |> UserId
+                                  FriendlyName = req.Name
+                                  Microscope = microscope }
+        issueCommand cmd
+        |> Ok
+
+    let calibrateMagnification (req:CalibrateRequest) =
+        let floatingCalibration = {
+            Point1 = req.X1,req.Y1
+            Point2 = req.X2,req.Y2
+            MeasuredDistance = req.MeasuredLength * 1.<um>
+        }
+        let img = ImageForUpload.Single ((Base64Image req.ImageBase64),floatingCalibration)
+        let savedImg = img |> saveImage
+        let url = match savedImg with
+                  | SingleImage (u,cal) -> u
+                  | FocusImage _ -> invalidOp "Error handle"
+        let id = req.CalibrationId |> Guid.Parse |> CalibrationId
+        let cmd = Calibrate (id,400<timesMagnified>, { Image = url ; StartPoint = floatingCalibration.Point1; EndPoint = floatingCalibration.Point2; MeasureLength = floatingCalibration.MeasuredDistance })
+        issueCommand cmd
+        |> Ok
+
+
 module UnknownGrains =
 
     open GlobalPollenProject.Core.Aggregates.Grain
@@ -171,7 +224,7 @@ module UnknownGrains =
     //     issueCommand <| SubmitUnknownGrain {Id = id; Images = uploadedImages; SubmittedBy = userId; Temporal = Some temporal; Spatial = spatial }
     //     Ok id
 
-    let submitUnknownGrain (request:AddUnknownGrainRequest) getCurrentUser =
+    let submitUnknownGrain getCurrentUser (request:AddUnknownGrainRequest) =
 
         // let upload base64Strings = 
         //     base64Strings

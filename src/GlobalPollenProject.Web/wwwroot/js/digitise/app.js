@@ -176,6 +176,20 @@ function DigitiseViewModel(users, analyses) {
     self.stopViewingSlide = function(slide) {
         self.isViewingSlideDetail(false);
     }
+
+    // Calibration
+    self.isEditingCalibrations = ko.observable(false);
+    self.calibrationImage = null;
+    self.microscopeType = ko.observable();
+    self.friendlyName = ko.observable();
+    self.ocular = ko.observable();
+    self.magnifications = ko.observableArray();
+
+    self.startEditingCalibrations = function() {
+        self.isEditingCalibrations(true);
+        self.calibrationImage = new CalibrationImage();
+        self.calibrationImage.init("calibration-image-container");
+    }
 }
 
 $(document).ready(function() {
@@ -377,6 +391,81 @@ function FocusImagePreview() {
     }
 
 
+}
+
+function CalibrationImage() {
+    let self = this;
+    self.canvas = null;
+    self.svg = null;
+    self.line = null;
+
+    self.height = 400;
+    self.width = 600;
+
+    self.init = function(containerId) {
+        d3.select("#" + containerId)
+        .style('position', 'relative');
+
+        self.canvas = d3.select("#" + containerId)
+            .append("canvas") 
+            .attr("width", self.width)
+            .attr("height", self.height)
+            .node().getContext('2d');
+
+        self.svg = d3.select("#" + containerId)
+            .append("svg") 
+            .attr("width", self.width)
+            .attr("height", self.height)
+            .style('position', 'absolute')
+            .style('top', 0)
+            .style('left', 0)
+            .on("mousedown", self.mousedown)
+            .on("mouseup", self.mouseup);
+        self.line = self.svg.append("line");
+    }
+
+    self.changeImage = function(image) {
+        let file = image.files[0];
+        let reader = new FileReader();
+
+        reader.onloadend = function (onloadend_e) 
+        {
+            let base64 = reader.result;
+            let img = new Image();
+            img.onload = function() {
+                self.canvas.drawImage(img, 0, 0, img.width, img.height,
+                                           0, 0, self.width, self.height);
+            };
+            img.src = base64;
+        };
+
+        if(file)
+        {
+            reader.readAsDataURL(file);
+        }
+    }
+
+    self.mousedown = function() {
+        var m = d3.mouse(this);
+        self.line
+            .attr("x1", m[0])
+            .attr("y1", m[1])
+            .attr("x2", m[0])
+            .attr("y2", m[1])
+            .attr('stroke', 'red');
+        
+        self.svg.on("mousemove", self.mousemove);
+    }
+
+    self.mousemove = function() {
+        var m = d3.mouse(this);
+        self.line.attr("x2", m[0])
+            .attr("y2", m[1]);
+    }
+
+    self.mouseup = function() {
+        self.svg.on("mousemove", null);
+    }
 }
 
 //Base Functions

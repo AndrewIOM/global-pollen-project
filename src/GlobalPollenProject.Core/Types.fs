@@ -42,7 +42,7 @@ and Stepping =
 and FloatingCalibration = {
     Point1: int * int
     Point2: int * int
-    MeasuredDistance: int<um>
+    MeasuredDistance: float<um>
 }
 
 // Microscope
