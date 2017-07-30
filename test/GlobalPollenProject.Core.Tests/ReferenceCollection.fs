@@ -51,7 +51,7 @@ module ``When uploading a slide`` =
 
     let image = Url.create "https://sometesturl"
     let focusImage = FocusImage ([image; image; image; image; image],Fixed 2.3<um>,(CalibrationId Guid.Empty))
-    let singleImage = SingleImage (image, {Point1 = 2,3; Point2 = 5,8; MeasuredDistance = 4<um>})
+    let singleImage = SingleImage (image, {Point1 = 2,3; Point2 = 5,8; MeasuredDistance = 4.<um>})
 
     [<Fact>]
     let ``A slide is added to the reference collection`` () =
