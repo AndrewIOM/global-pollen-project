@@ -1,0 +1,69 @@
+@* Calibration Modal *@
+<div data-bind="BSModal: isEditingCalibrations" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Calibrations</h5>
+                <button type="button" class="close" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+            </div>
+            <div class="modal-body">
+
+                <div class="row">
+                    @* List of current microscopes *@
+                    <div class="col-md-4">
+                        <label>Your Microscopes</label>
+                        <ul data-bind="foreach: myMicroscopes" class="list-group backbone-list">
+                            <li data-bind="text: Name, click: $parent.startEditingMicroscope"></li>
+                        </ul>
+                        <button data-bind="click: addNewMicroscope">Setup new</button>
+                    </div>
+
+                    <div class="col-md-8">
+                        @* Adding microscope *@
+                        <div data-bind="if: isSettingUpNewMicroscope">
+                            <h2>Setting up new microscope</h2>
+                            <div class="form-group">
+                                <label>Calibration Friendly Name</label>
+                                <input data-bind="textInput: friendlyName" class="form-control" id="friendlyname" />
+                                <small id="friendlyname-help" class="form-text text-muted">Use a name that is specific to this microscope, for example its make and model.</small>
+                            </div>
+                            <label>Microscope type</label>
+                            <select data-bind="value: microscopeType" class="form-control input-sm inline-dropdown">
+                                <option value="Compound">Compound</option>
+                                <option value="Single">Single</option>
+                                <option value="Digital">Digital</option>
+                            </select>
+
+                            <div data-bind='foreach: magnifications'>
+                                <input class='required' data-bind='value: $data, uniqueName: true' />
+                                <a href='#' data-bind='click: $root.removeMag'>Remove</a>
+                            </div>
+
+                            <button data-bind="click: submitMicroscope" class="btn btn-primary">Submit</button>
+
+                        </div>
+                        @* Editing microscope *@
+                        <div data-bind="if: currentMicroscope">
+                            <h2>Calibrate my microscope</h2>
+
+                            <label>Magnification Level</label>
+                            <input data-bind="value: magnification" />
+
+                            <input type="file" class="upload" data-bind="event: { change: function() { calibrationImage.changeImage($element) } }" />
+                            <div id="calibration-image-container"></div>
+
+                            <button data-bind="click: submitCalibration" class="btn btn-primary">Submit</button>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+            <div class="modal-footer">
+                <button data-bind="click: endEditingCalibrations" class="btn btn-default">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

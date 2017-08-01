@@ -176,7 +176,7 @@ module Grain =
     let submit setReadModel (e:GrainSubmitted) =
         let thumbUrl = 
             match e.Images.Head with
-            | SingleImage x -> x
+            | SingleImage (x,cal) -> x
             | FocusImage (u,s,c) -> u.Head
 
         let summary = { 
@@ -451,4 +451,52 @@ module Digitisation =
             | ReferenceCollection.Event.SlideFullyDigitised e -> digitised get set e
             | ReferenceCollection.Event.SlideGainedIdentity (s,t) -> gainedIdentity get set s t
             | ReferenceCollection.Event.CollectionPublished (id,d,v) -> published get set id d v
+        | _ -> Ok()
+
+
+module Calibration =
+
+    open GlobalPollenProject.Core.Aggregates.Calibration
+    open Converters.DomainToDto
+
+    // Calibration:User:{UserId}   : CalId list
+    // Calibration:{CalId}         : Calibration
+
+    let setup set setList (e:SetupMicroscope) =
+        let cal = {
+            Id              = e.Id |> unwrapCalId
+            User            = e.User |> unwrapUserId
+            Name            = e.FriendlyName
+            Camera          = "Unknown"
+            Ocular          = 0
+            Objectives      = []
+            Magnifications  = [] }
+        let id = (e.Id |> unwrapCalId).ToString()
+        
+        RepositoryBase.setSingle id cal set serialise |> ignore
+        RepositoryBase.setListItem id ("Calibration:User:" + ((e.User |> unwrapUserId).ToString())) setList
+
+    let removeUnitInt (x:int<_>) = int x
+
+    let removeUnitFloat (x:float<_>) = float x
+
+    let calibrated get set e =
+        let calId : Guid = e.Id |> unwrapCalId
+        let cal = RepositoryBase.getSingle (calId.ToString()) get deserialise<Calibration> 
+        match cal with
+        | Error e -> Error e
+        | Ok c ->
+            let newMag = {
+                Level = e.Magnification |> removeUnitInt
+                Image = e.Image |> Url.unwrap
+                PixelWidth = e.PixelWidth |> removeUnitFloat
+            }
+            RepositoryBase.setSingle (calId.ToString()) { c with Magnifications = newMag :: c.Magnifications } set serialise
+
+    let handle get getList set setList (e:string*obj) =
+        match snd e with
+        | :? Event as e ->
+            match e with
+            | Event.SetupMicroscope e -> setup set setList e
+            | Event.CalibratedMag e -> calibrated get set e
         | _ -> Ok()

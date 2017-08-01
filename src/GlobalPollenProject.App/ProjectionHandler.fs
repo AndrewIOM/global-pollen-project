@@ -33,6 +33,7 @@ let route
     e
     |> feed (TaxonomicBackbone.handle get getSortedList set setSortedList)
     >>= feed (Digitisation.handle get getList set setList)
+    >>= feed (Calibration.handle get getList set setList)
     >>= feed UserProfile.handle
     >>= feed ReferenceCollectionReadOnly.handle
     >>= feed Slide.handle

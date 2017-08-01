@@ -19,7 +19,7 @@ let calcScale maxDimension height width =
 
 let base64ToByte base64 =
     let unwrap (Base64Image i) = i
-    let unwrapped = unwrap base64
+    let unwrapped = (unwrap base64).Replace("data:image/jpeg;base64,", "")
     Convert.FromBase64String(unwrapped)
 
 let upload (blob:CloudBlockBlob) memoryStream = async {
@@ -52,10 +52,10 @@ let container connectionString name : CloudBlobContainer =
 
 let uploadToAzure conName connString nameGenerator image =
     match image with
-    | Single i -> 
+    | ImageForUpload.Single (i,cal) -> 
         use s = new MemoryStream(base64ToByte i)
         let url = uploadImage (container connString conName) (nameGenerator()) s |> Async.RunSynchronously
-        SingleImage (url)
+        SingleImage (url,cal)
     | Focus (stack,s,c) ->
         let urls = 
             stack 

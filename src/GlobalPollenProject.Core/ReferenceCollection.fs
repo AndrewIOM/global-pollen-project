@@ -57,13 +57,13 @@ and SlideState = {
 let create (command:CreateCollection) state =
     [DigitisationStarted {Id = command.Id; Name = command.Name; Owner = command.Owner; Description = command.Description }]
 
-let publish (id:CollectionId) state =
+let publish getTime (id:CollectionId) state =
     match state with
     | Initial -> invalidOp "This collection does not exist"
     | Draft c ->
         match c.Slides.Length with
         | 0 -> invalidOp "Cannot publish an empty collection"
-        | _ -> [CollectionPublished (id, DateTime.Now, c.CurrentVersion |> ColVersion.increment ) ]
+        | _ -> [CollectionPublished (id, getTime(), c.CurrentVersion |> ColVersion.increment ) ]
 
 let addSlide (command:AddSlide) calcIdentity state =
     match state with
@@ -99,7 +99,7 @@ let uploadImage (command:UploadSlideImage) state =
 let handle deps = 
     function
     | CreateCollection c -> create c
-    | Publish c -> publish c
+    | Publish c -> publish deps.GetTime c
     | AddSlide c -> addSlide c deps.CalculateIdentity
     | UploadSlideImage c -> uploadImage c
 

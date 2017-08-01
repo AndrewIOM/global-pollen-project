@@ -15,6 +15,7 @@
 }
 
 @section scripts {
+    <script src="/lib/d3/d3.min.js"></script>
     <script src="/lib/nouislider/distribute/nouislider.min.js"></script>
     <script src="/lib/knockout/dist/knockout.js"></script>
     <script src="/js/digitise/app.js"></script>
@@ -23,11 +24,12 @@
 @Html.Partial("Digitise/_AddCollection")
 @Html.Partial("Digitise/_AddSlide")
 @Html.Partial("Digitise/_SlideDetail")
-@Html.Partial("Digitise/_AddCalibration")
+@Html.Partial("Digitise/_Calibration")
 
  @* Top button bar *@
 <div class="btn-toolbar mb-3" role="toolbar">
     <button data-bind="click: startCreatingCollection" class="btn btn-secondary">Create new collection</button>
+    <button data-bind="click: startEditingCalibrations" class="btn btn-secondary">Setup Microscope Calibrations</button>
 </div>
 
 <div class="row">

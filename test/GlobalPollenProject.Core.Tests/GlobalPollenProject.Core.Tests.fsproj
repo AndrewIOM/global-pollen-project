@@ -1,0 +1,36 @@
+﻿<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <AssemblyName>GlobalPollenProject.Core.Tests</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <PackageId>GlobalPollenProject.Core.Tests</PackageId>
+    <PackageTargetFallback>$(PackageTargetFallback);portable-net45+win8;dnxcore50</PackageTargetFallback>
+    <RuntimeFrameworkVersion>1.1.1</RuntimeFrameworkVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Specification.fs" />
+    <Compile Include="User.fs" />
+    <Compile Include="Taxonomy.fs" />
+    <Compile Include="ReferenceCollection.fs" />
+    <Compile Include="Grain.fs" />
+    <Compile Include="Calibration.fs" />
+    <Compile Include="Empty.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\GlobalPollenProject.Core\GlobalPollenProject.Core.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FSharp.Core" Version="4.1.*" />
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.*" PrivateAssets="All" />
+    <PackageReference Include="xunit" Version="2.2.0" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.2.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="15.0.0" />
+  </ItemGroup>
+
+</Project>
