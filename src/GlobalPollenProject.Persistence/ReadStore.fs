@@ -8,14 +8,6 @@ type Json = Json of string
 type Serialise = obj -> Result<Json,string>
 type Deserialise<'a> = Json -> Result<'a,string>
 
-type GetFromKeyValueStore = string -> Result<Json,string>
-type GetListFromKeyValueStore = string -> Result<Json list,string>
-type GetLexographic = string -> string -> Result<string list,string>
-
-type SetStoreValue = string -> Json -> Result<unit,string>
-type SetEntryInList = string -> string -> Result<unit,string>
-type SetEntryInSortedList = string -> string ->float -> Result<unit,string>
-
 type ListRequest =
 | All 
 | Paged of PagedRequest
@@ -25,13 +17,34 @@ and PagedRequest = {
     Page: int
 }
 
+// type ListResult<'a> =
+// | AllPages
+// | SinglePage of PagedResult<'a>
+
+// and PagedResult<'a> = {
+//     ItemsPerPage: int
+//     CurrentPage: int
+//     Items: 'a list
+//     TotalPages: int
+//     TotalItems: int
+// }
+
+type GetFromKeyValueStore = string -> Result<Json,string>
+type GetListFromKeyValueStore = ListRequest -> string -> Result<Json list,string>
+type GetLexographic = string -> string -> Result<string list,string>
+
+type SetStoreValue = string -> Json -> Result<unit,string>
+type SetEntryInList = string -> string -> Result<unit,string>
+type SetEntryInSortedList = string -> string ->float -> Result<unit,string>
+
+
 module KeyValueStore =
 
     let getKey<'a> key (getFromStore:GetFromKeyValueStore) (deserialise:Deserialise<'a>) =
         getFromStore key
         |> Result.bind deserialise
 
-    let getList<'a> key (getListFromStore:GetListFromKeyValueStore) (deserialise: Deserialise<'a>) =
+    let getList<'a> listReq key (getListFromStore:GetListFromKeyValueStore) (deserialise: Deserialise<'a>) =
         let deserialiseList jsonList =
             jsonList
             |> List.map deserialise
@@ -40,7 +53,7 @@ module KeyValueStore =
                 | Ok o -> Some o
                 | Error e -> None )
             |> Ok
-        getListFromStore key
+        getListFromStore listReq key
         |> Result.bind deserialiseList
 
     let getLexographic key searchTerm (get:GetLexographic) =
@@ -77,13 +90,13 @@ module RepositoryBase =
     let getKey<'a> key =
         KeyValueStore.getKey<'a> key
 
-    let getAll<'a> =
+    let getAll<'a> listReq =
         getTypeName<'a>
         |> generateIndexKey
-        |> KeyValueStore.getKey<'a>
+        |> KeyValueStore.getList<'a> listReq
 
-    let getListKey<'a> key =
-        KeyValueStore.getList<'a> key
+    let getListKey<'a> listReq key =
+        KeyValueStore.getList<'a> listReq key
 
     let setKey item key =
         KeyValueStore.setKey key item
@@ -136,14 +149,19 @@ module Redis =
         | true -> Ok()
         | false -> "Could not remove the key from redis: " + key |> Error
 
-    let getListItems (redis:ConnectionMultiplexer) (key:string) =
+    let getListItems (redis:ConnectionMultiplexer) (pageReq:ListRequest) (key:string) =
         let db = redis.GetDatabase()
         let result : string seq = db.SetMembers(~~key) |> Seq.map ( ~~ )
         Ok <| (result |> Seq.map Json |> Seq.toList)
 
-    let getSortedListItems (redis:ConnectionMultiplexer) (key:string) =
+    let getSortedListItems (redis:ConnectionMultiplexer) (listReq:ListRequest) (key:string) =
         let db = redis.GetDatabase()
-        let result : string seq = db.SortedSetRangeByRank(~~key) |> Seq.map ( ~~ )
+        let result : string seq =
+            match listReq with
+            | All -> db.SortedSetRangeByRank(~~key) |> Seq.map ( ~~ )
+            | Paged p -> 
+                let start = (p.Page - 1) * p.ItemsPerPage
+                db.SortedSetRangeByScore(~~key, float start, start + p.ItemsPerPage |> float) |> Seq.map (~~)
         Ok <| (result |> Seq.map Json |> Seq.toList)
 
     let lexographicSearch (redis:ConnectionMultiplexer) (key:string) (searchTerm:string) =
@@ -215,7 +233,7 @@ module TaxonomicBackbone =
         |> RepositoryBase.getSingle<BackboneTaxon>
 
     let tryFindByLatinName family genus species getList getSingle deserialise =
-        let tryFindId key = RepositoryBase.getListKey<Guid> key getList deserialiseGuid
+        let tryFindId key = RepositoryBase.getListKey<Guid> All key getList deserialiseGuid
         let tryFindReadModel (id:Guid list) = 
             // TODO modify to handle multiple possible matches
             RepositoryBase.getSingle<BackboneTaxon> (id.Head.ToString()) getSingle deserialise
@@ -226,7 +244,7 @@ module TaxonomicBackbone =
 
     // Search names to find possible matches, returning whole taxa
     let findMatches identity getList getSingle deserialise : Result<BackboneTaxon list,string> =
-        let search key = RepositoryBase.getListKey key getList deserialiseGuid
+        let search key = RepositoryBase.getListKey All key getList deserialiseGuid
         let fetchAllById ids = 
             ids 
             |> List.map (fun id -> RepositoryBase.getSingle<BackboneTaxon> (id.ToString()) getSingle deserialise)

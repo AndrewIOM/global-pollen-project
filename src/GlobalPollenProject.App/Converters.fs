@@ -10,6 +10,7 @@ module DomainToDto =
     let unwrapTaxonId (TaxonId e) = e
     let unwrapUserId (UserId e) = e
     let unwrapRefId (CollectionId e) = e
+    let unwrapCalId (CalibrationId e) = e
     let unwrapSlideId (SlideId (e,f)) = e,f
     let unwrapLatin (LatinName ln) = ln
     let unwrapId (TaxonId id) = id
@@ -18,7 +19,7 @@ module DomainToDto =
 
     let image (domainImage:Image) : SlideImage =
         match domainImage with
-        | SingleImage i ->
+        | SingleImage (i,cal) ->
             invalidOp "TODO: Make it possible to add single images to slides?"
         | FocusImage (urls,stepping,calId) ->
             { Id = 0

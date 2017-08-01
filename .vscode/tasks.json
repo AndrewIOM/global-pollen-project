@@ -16,7 +16,7 @@
         {
             "taskName": "test",
             "args": [
-                "test/GlobalPollenProject.Tests/GlobalPollenProject.Tests.fsproj"
+                "test/GlobalPollenProject.Core.Tests/GlobalPollenProject.Core.Tests.fsproj"
             ],
             "isTestCommand": true,
             "showOutput": "always",

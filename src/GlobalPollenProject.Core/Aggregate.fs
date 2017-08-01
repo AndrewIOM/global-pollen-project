@@ -9,10 +9,10 @@ type DomainError =
 type Dependencies =  {
     GenerateId:        unit -> Guid; 
     Log:               LogMessage -> unit
-    UploadImage:       ImageForUpload -> Image
     ValidateTaxon:     BackboneQuery -> TaxonId option
     GetGbifId:         LinkRequest -> int option
     GetNeotomaId:      LinkRequest -> int option
+    GetTime:           unit -> DateTime
     CalculateIdentity: TaxonIdentification list -> TaxonId option }
 
 type RootAggregate<'TState, 'TCommand, 'TEvent> = {

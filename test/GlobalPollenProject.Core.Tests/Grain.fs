@@ -13,11 +13,11 @@ let a = {
     getId = getId 
 }
 
-let Given = Given a defaultDependencies
+let Given = Given a domainDefaultDeps
 
 let grainId = GrainId (Guid.NewGuid())
 let currentUser = UserId (Guid.NewGuid())
-let testImage = SingleImage (Url.create "https://sometest.com/someimage.png")
+let testImage = SingleImage (Url.create "https://sometest.com/someimage.png",{Point1 = 2,3; Point2 = 5,8; MeasuredDistance = 4.<um>})
 let latlon = Latitude 1.0<DD>, Longitude 1.0<DD>
 let time = CollectionDate 1995<CalYr>
 

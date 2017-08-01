@@ -6,6 +6,7 @@
     "bootstrap-social": "4.12.0",
     "components-font-awesome": "",
     "darkroomjs": "2.0.1",
+    "d3": "latest",
     "hammer.js": "2.0.4",
     "jquery": "2.1.4",
     "jquery-validation": "1.11.1",

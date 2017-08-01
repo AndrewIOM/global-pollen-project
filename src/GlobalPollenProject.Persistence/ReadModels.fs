@@ -148,16 +148,22 @@ type PublicProfile = {
 }
 
 // Digitisation Features
+[<CLIMutable>]
+type Magnification = {
+    Level:      int
+    Image:      string
+    PixelWidth: float
+}
 
 [<CLIMutable>]
 type Calibration = {
-    Id:         Guid
-    User:       Guid
-    Device:     string
-    Ocular:     int
-    Objective:  int
-    Image:      string
-    PixelWidth: float
+    Id:             Guid
+    User:           Guid
+    Name:           string
+    Camera:         string
+    Ocular:         int
+    Objectives:     int list
+    Magnifications: Magnification list
 }
 
 [<CLIMutable>]

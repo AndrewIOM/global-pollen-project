@@ -65,7 +65,7 @@ function DigitiseViewModel(users, analyses) {
 
     self.updateMyCollections = function() {
         $.ajax({
-            url: "/api/v1/collection/list",
+            url: "/api/v1/digitise/collection/list",
             cache: false,
             success: function(serverCols)
             {
@@ -82,7 +82,7 @@ function DigitiseViewModel(users, analyses) {
     self.startCollection = function() {
         console.log(self.newCollectionData())
         $.ajax({
-            url: "/api/v1/collection/start",
+            url: "/api/v1/digitise/collection/start",
             type: "POST",
             data: JSON.stringify(self.newCollectionData()),
             dataType: "json",
@@ -96,7 +96,7 @@ function DigitiseViewModel(users, analyses) {
     }
 
     self.viewCollection = function(collection) {
-        $.ajax({ url: "/api/v1/collection?id=" + collection.Id, type: "GET" })
+        $.ajax({ url: "/api/v1/digitise/collection?id=" + collection.Id, type: "GET" })
         .done(function (col) {
             self.activeCollection(col);
         })
@@ -129,7 +129,7 @@ function DigitiseViewModel(users, analyses) {
         };
         console.log(request);
         $.ajax({
-            url: "/api/v1/collection/slide/add",
+            url: "/api/v1/digitise/collection/slide/add",
             type: "POST",
             data: JSON.stringify(request),
             dataType: "json",
@@ -142,7 +142,7 @@ function DigitiseViewModel(users, analyses) {
     }
 
     self.updateCurrentCollection = function() {
-        $.ajax({ url: "/api/v1/collection?id=" + self.activeCollection().Id, type: "GET" })
+        $.ajax({ url: "/api/v1/digitise/collection?id=" + self.activeCollection().Id, type: "GET" })
         .done(function (col) {
             self.activeCollection(col);
         })
@@ -175,6 +175,108 @@ function DigitiseViewModel(users, analyses) {
 
     self.stopViewingSlide = function(slide) {
         self.isViewingSlideDetail(false);
+    }
+
+    // Calibration
+    self.isEditingCalibrations = ko.observable(false);
+    self.isSettingUpNewMicroscope = ko.observable(false);
+    self.myMicroscopes = ko.observableArray();
+    //A. Setup a new microscope
+    self.friendlyName = ko.observable();
+    self.microscopeType = ko.observable();
+    self.ocular = ko.observable();
+    self.microscopeModel = ko.observable("FAKE MICROSCOPE");
+    self.magnifications = ko.observableArray([10,20,40,100]);
+
+    self.updateCurrentCalibrationSets = function() {
+        $.ajax({ url: "/api/v1/digitise/calibration/list", type: "GET" })
+        .done(function (cals) {
+            self.myMicroscopes(cals);
+        })
+    }
+
+    self.startEditingCalibrations = function() {
+        self.updateCurrentCalibrationSets();
+        self.isEditingCalibrations(true);
+    }
+
+    self.endEditingCalibrations = function() {
+        self.isEditingCalibrations(false);
+    }
+
+    self.addNewMicroscope = function() {
+        self.isSettingUpNewMicroscope(true);
+    }
+
+    self.submitMicroscope = function() {
+        let request = {
+            Name: self.friendlyName(),
+            Type: self.microscopeType(),
+            Model: self.microscopeModel(),
+            Ocular: self.ocular(),
+            Objectives: self.magnifications()
+        };
+        console.log(request);
+        $.ajax({
+            url: "/api/v1/digitise/calibration/use",
+            type: "POST",
+            data: JSON.stringify(request),
+            dataType: "json",
+            contentType: "application/json"
+        })
+        .done(function (data) {
+            self.isSettingUpNewMicroscope(false);
+            self.updateCurrentCalibrationSets();
+        })
+    }
+
+    self.addMag = function () {
+        self.magnifications.push();
+    }
+
+    self.removeMag = function(mag) {
+        self.magnifications.remove(mag);
+    }
+
+    //B. Calibrate magnification...
+    self.currentMicroscope = ko.observable();
+    self.magnification = ko.observable(40);
+    self.startPoint = ko.observable([2,5]);
+    self.endPoint = ko.observable([88,21]);
+    self.measuredLength = ko.observable(10);
+    self.calibrationImage = null;
+
+    self.startEditingMicroscope = function(m) {
+        self.currentMicroscope(m);
+        self.calibrationImage = new CalibrationImage();
+        self.calibrationImage.init("calibration-image-container");
+        console.log(self.currentMicroscope());
+    }
+
+    self.submitCalibration = function() {
+        let request = {
+            CalibrationId: self.currentMicroscope().Id,
+            Magnification: self.magnification(),
+            X1: self.startPoint()[0],
+            X2: self.endPoint()[0],
+            Y1: self.startPoint()[1],
+            Y2: self.endPoint()[1],
+            MeasuredLength: self.measuredLength(),
+            ImageBase64: self.calibrationImage.getBase64()
+        }
+        console.log(request);
+        $.ajax({
+            url: "/api/v1/digitise/calibration/use/mag",
+            type: "POST",
+            data: JSON.stringify(request),
+            dataType: "json",
+            contentType: "application/json"
+        })
+        .done(function (data) {
+            self.currentMicroscope(null);
+            self.updateCurrentCalibrationSets();
+            self.isEditingCalibrations(false);
+        })
     }
 }
 
@@ -379,6 +481,88 @@ function FocusImagePreview() {
 
 }
 
+function CalibrationImage() {
+    let self = this;
+    self.canvas = null;
+    self.svg = null;
+    self.line = null;
+
+    self.height = 300;
+    self.width = 400;
+
+    self.base64 = null;
+
+    self.init = function(containerId) {
+        d3.select("#" + containerId)
+        .style('position', 'relative');
+
+        self.canvas = d3.select("#" + containerId)
+            .append("canvas") 
+            .attr("width", self.width)
+            .attr("height", self.height)
+            .node().getContext('2d');
+
+        self.svg = d3.select("#" + containerId)
+            .append("svg") 
+            .attr("width", self.width)
+            .attr("height", self.height)
+            .style('position', 'absolute')
+            .style('top', 0)
+            .style('left', 0)
+            .on("mousedown", self.mousedown)
+            .on("mouseup", self.mouseup);
+        self.line = self.svg.append("line");
+    }
+
+    self.changeImage = function(image) {
+        let file = image.files[0];
+        let reader = new FileReader();
+
+        reader.onloadend = function (onloadend_e) 
+        {
+            self.base64 = reader.result;
+            let img = new Image();
+            img.onload = function() {
+                self.canvas.drawImage(img, 0, 0, img.width, img.height,
+                                           0, 0, self.width, self.height);
+            };
+            img.src = self.base64;
+        };
+
+        if(file)
+        {
+            reader.readAsDataURL(file);
+        }
+    }
+
+    self.getBase64 = function() {
+        return self.base64;
+    }
+
+    self.mousedown = function() {
+        var m = d3.mouse(this);
+        self.line
+            .attr("x1", m[0])
+            .attr("y1", m[1])
+            .attr("x2", m[0])
+            .attr("y2", m[1])
+            .attr('stroke', 'red');
+        
+        self.svg.on("mousemove", self.mousemove);
+    }
+
+    self.mousemove = function() {
+        var m = d3.mouse(this);
+        self.line.attr("x2", m[0])
+            .attr("y2", m[1]);
+    }
+
+    self.mouseup = function() {
+        self.svg.on("mousemove", null);
+        $('#startPoint').val(self.line);
+    }
+}
+
 //Base Functions
 function convertToDataURLviaCanvas(url, callback) {
     var img = new Image();
@@ -396,42 +580,3 @@ function convertToDataURLviaCanvas(url, callback) {
     };
     img.src = url;
 }
-
-
-// OLD
-
-// function addImageToGrid(d, images) {
-//     //Create elements for image
-//     var li = document.createElement('li');
-//     d.appendChild(li);
-//     var div = document.createElement('div');
-//     div.className = "img-container";
-//     li.appendChild(div);
-//     var a = document.createElement('a');
-//     div.appendChild(a);
-
-//     //Create URL holders for each image
-//     function convertToBase64(urlHolder, image) {
-//         convertToDataURLviaCanvas(image.src, function (base64Img) {
-//             urlHolder.src = base64Img;
-//         }, false)
-//     }
-//     for (var i = 0; i < images.length; i++) {
-//         var urlHolder = document.createElement('img');
-//         if (i != 2) urlHolder.hidden = 'hidden';
-//         //urlHolder.src = images[i].src;
-//         convertToBase64(urlHolder, images[i]);
-//         a.appendChild(urlHolder);
-//     }
-
-//     //Create delete button
-//     var del = document.createElement('span');
-//     del.className = 'delete';
-//     var icon = document.createElement('span');
-//     icon.className = 'glyphicon glyphicon-trash';
-//     del.appendChild(icon);
-//     a.appendChild(del);
-//     del.onclick = function () {
-//         $(this).closest('li').remove();
-//     };
-// }

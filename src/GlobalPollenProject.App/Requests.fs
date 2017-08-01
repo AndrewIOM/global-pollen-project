@@ -1,7 +1,10 @@
 [<AutoOpen>]
 module Requests
 
+open System
 open System.ComponentModel.DataAnnotations
+
+[<CLIMutable>] type IdQuery = { Id: Guid }
 
 type PageRequest = { Page: int; PageSize: int }
 
@@ -86,4 +89,25 @@ type AddUnknownGrainRequest = {
     SampleType: string
     Year: int option
     YearType: string
+}
+
+[<CLIMutable>]
+type AddMicroscopeRequest = {
+    Name: string
+    Type: string
+    Model: string
+    Ocular: int
+    Objectives: int list
+}
+
+[<CLIMutable>]
+type CalibrateRequest = {
+    CalibrationId: string
+    Magnification: int
+    X1: int
+    X2: int
+    Y1: int
+    Y2: int
+    MeasuredLength: float
+    ImageBase64: string
 }

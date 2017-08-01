@@ -12,64 +12,91 @@ open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
+
+open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
 open Giraffe.Middleware
-open Giraffe.ModelBinding
-open Newtonsoft.Json
+open Giraffe.Razor.HttpHandlers
+open Giraffe.Razor.Middleware
 
 open GlobalPollenProject.Core.Composition
 open GlobalPollenProject.Shared.Identity
 open GlobalPollenProject.Shared.Identity.Models
 open GlobalPollenProject.Shared.Identity.Services
-
 open GlobalPollenProject.App.UseCases
+open ReadModels
 
-(* Error Handling *)
+/////////////////////////
+/// Helpers
+/////////////////////////
 
-let errorHandler (ex : Exception) (ctx : HttpHandlerContext) =
-    ctx.Logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
+let errorHandler (ex : Exception) (logger : ILogger) (ctx : HttpContext) =
+    logger.LogError(EventId(0), ex, "An unhandled exception has occurred while executing the request.")
     ctx |> (clearResponse >=> setStatusCode 500 >=> text ex.Message)
 
-(* App *)
-
 let authScheme = "Cookie"
+let accessDenied = setStatusCode 401 >=> razorHtmlView "AccessDenied" None
+let mustBeLoggedIn = requiresAuthentication accessDenied
+let mustBeAdmin ctx = requiresRole "Admin" accessDenied ctx
 
-let accessDenied = setStatusCode 401 >=> text "Access Denied"
-let currentUserId ctx () =
+let currentUserId (ctx:HttpContext) () =
     async {
-        let manager = ctx.Services.GetRequiredService<UserManager<ApplicationUser>>()
-        let! user = manager.GetUserAsync(ctx.HttpContext.User) |> Async.AwaitTask
+        let manager = ctx.GetService<UserManager<ApplicationUser>>()
+        let! user = manager.GetUserAsync(ctx.User) |> Async.AwaitTask
         return Guid.Parse user.Id
     } |> Async.RunSynchronously
 
-let mustBeUser = requiresAuthentication accessDenied
-let mustBeLoggedIn = requiresAuthentication (challenge authScheme)
+let renderView name model =
+    warbler (fun x -> razorHtmlView name model)
 
-let mustBeAdmin = 
-    requiresAuthentication accessDenied 
-    >=> requiresRole "Admin" accessDenied
+let toViewResult view ctx result =
+    match result with
+    | Ok model -> ctx |> renderView view model
+    | Error e -> ctx |> (clearResponse >=> setStatusCode 500 >=> renderView "Error" None)
 
-let loginHandler =
-    fun ctx ->
+let toApiResult ctx result =
+    match result with
+    | Ok list -> json list ctx
+    | Error e -> json "Error" ctx
+
+let jsonToModel<'a> (ctx:HttpContext) =
+    ctx.BindJson<'a>()
+    |> Async.RunSynchronously
+
+let jsonRequestToApiResponse<'a> appService ctx =
+    jsonToModel<'a> ctx
+    |> appService
+    |> toApiResult ctx
+
+let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,string>) (ctx:HttpContext) =
+    ctx.BindQueryString<'a>()
+    |> appService
+    |> toApiResult ctx
+
+/////////////////////////
+/// Custom HTTP Handlers
+/////////////////////////
+
+let loginHandler redirectUrl =
+    fun (ctx: HttpContext) ->
         async {
-            let! loginRequest = bindForm<LoginRequest> ctx
-            let userManager = ctx.Services.GetRequiredService<UserManager<ApplicationUser>>()
-            let signInManager = ctx.Services.GetRequiredService<SignInManager<ApplicationUser>>()
-            
+            let! loginRequest = ctx.BindForm<LoginRequest>()
+            let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+            let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
             let! result = signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, lockoutOnFailure = false) |> Async.AwaitTask
             if result.Succeeded then
-               ctx.Logger.LogInformation "User logged in."
-               ctx.HttpContext.Response.Redirect "/"
-               return! text "Couldn't log in" ctx
+               let logger = ctx.GetLogger()
+               logger.LogInformation "User logged in."
+               return! redirectTo false redirectUrl ctx
            else
-               return! razorHtmlView "Account/Login" loginRequest ctx
+               return! renderView "Account/Login" loginRequest ctx
         }
 
-let registerHandler ctx =
+let registerHandler (ctx:HttpContext) =
     async {
-        let! model = bindForm<NewAppUserRequest> ctx
-        let userManager = ctx.Services.GetRequiredService<UserManager<ApplicationUser>>()
-        let signInManager = ctx.Services.GetRequiredService<SignInManager<ApplicationUser>>()
+        let! model = ctx.BindForm<NewAppUserRequest>()
+        let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+        let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
         let user = ApplicationUser(UserName = model.Email, Email = model.Email)
         let! result = userManager.CreateAsync(user, model.Password) |> Async.AwaitTask
         match result.Succeeded with
@@ -77,179 +104,148 @@ let registerHandler ctx =
             let id() = Guid.Parse user.Id
             let register = User.register model id
             match register with
-            | Error msg -> return! razorHtmlView "Account/Register" model ctx
+            | Error msg -> return! renderView "Account/Register" model ctx
             | Ok r -> 
                 do! signInManager.SignInAsync(user, isPersistent = false) |> Async.AwaitTask
-                ctx.Logger.LogInformation "User created a new account with password."
-                // Redirect to another route here...
-                return! text "Account successfully registered" ctx
+                (ctx.GetLogger()).LogInformation "User created a new account with password."
+                return! redirectTo true "/" ctx
         | false -> 
-            return! razorHtmlView "Account/Register" model ctx
+            return! renderView "Account/Register" model ctx
     }
 
-let userHandler =
-    fun ctx ->
-        text ctx.HttpContext.User.Identity.Name ctx
-
-// let importFromBackboneHandler =
-//     fun ctx ->
-//         Backbone.importAll "/Users/andrewmartin/Documents/Global Pollen Project/Plant List Offline/taxa.txt"
-//         text "Import successful" ctx
-
-let showUserHandler id =
-    fun ctx ->
-        mustBeAdmin >=>
-        text (sprintf "User ID: %i" id)
-        <| ctx
-
-let showTaxonHandler family genus species =
-    fun ctx ->
-        let appResult = Taxonomy.getByName family genus species
-        match appResult with
-        | Ok t -> razorHtmlView "MRC/Taxon" t ctx
-        | Error e -> text "Not found" ctx
-
-let backboneSearchHandler =
-    fun ctx ->
-        async {
-            let! request = bindQueryString<BackboneSearchRequest> ctx
-            let appResult = Backbone.searchNames request
-            match appResult with
-            | Ok list -> return! json list ctx
-            | Error e -> return! json "Error" ctx
-        }
-
-let backboneMatchHandler =
-    fun ctx ->
-        async {
-            let! request = bindQueryString<BackboneSearchRequest> ctx
-            let appResult = Backbone.tryMatch request
-            match appResult with
-            | Ok list -> return! json list ctx
-            | Error e -> return! json "Error" ctx
-        }
- 
-let backboneTraceHandler =
-    fun ctx ->
-        async {
-            let! request = bindQueryString<BackboneSearchRequest> ctx
-            let appResult = Backbone.tryTrace request
-            match appResult with
-            | Ok list -> return! json list ctx
-            | Error e -> return! json "Error" ctx
-        }
-
-let taxonListHandler ctx =
-    let name = ctx.HttpContext.Request.Query.["name"].ToString()
-    let appResult = Taxonomy.list {Page = 1; PageSize = 20}
-    json appResult ctx
+let taxonDetail family genus species ctx =
+    Taxonomy.getByName family genus species
+    |> toViewResult "MRC/Taxon" ctx
 
 let pagedTaxonomyHandler ctx =
-    let appResult = Taxonomy.list {Page = 1; PageSize = 20}
-    razorHtmlView "MRC/Index" appResult ctx
+    Taxonomy.list {Page = 1; PageSize = 20}
+    |> toViewResult "MRC/Index" ctx
 
 let listCollectionsHandler ctx =
-    let result = Digitise.myCollections (currentUserId ctx)
-    match result with
-    | Ok clist -> json clist ctx
-    | Error error -> text "Error" ctx
+    Digitise.myCollections (currentUserId ctx)
+    |> toApiResult ctx
 
-let startCollectionHandler ctx =
-    async {
-        let! model = bindJson<StartCollectionRequest> ctx
-        let result = Digitise.startNewCollection model (currentUserId ctx)
-        match result with
-        | Ok id -> return! json id ctx
-        | Error error -> return! text "Error" ctx
-    }
+let startCollectionHandler (ctx:HttpContext) =
+    ctx.BindJson<StartCollectionRequest>()
+    |> Async.RunSynchronously
+    |> Digitise.startNewCollection (currentUserId ctx)
+    |> toApiResult ctx
 
-let addSlideHandler ctx =
-    async {
-        let! model = bindJson<SlideRecordRequest> ctx
-        let result = Digitise.addSlideRecord model
-        match result with
-        | Ok id -> return! json id ctx
-        | Error error -> return! text "Error" ctx
-    }
+let addSlideHandler (ctx:HttpContext) =
+    ctx.BindJson<SlideRecordRequest>()
+    |> Async.RunSynchronously
+    |> Digitise.addSlideRecord
+    |> toApiResult ctx
 
-[<CLIMutable>] type IdQuery = { Id: Guid }
+let getCollectionHandler (ctx:HttpContext) =
+    ctx.BindQueryString<IdQuery>().Id.ToString()
+    |> Digitise.getCollection
+    |> toApiResult ctx
+    
+let getCalibrationsHandler (ctx:HttpContext) =
+    Calibrations.getMyCalibrations (currentUserId ctx)
+    |> toApiResult ctx
 
-let getCollectionHandler ctx =
-    async {
-        let! id = bindQueryString<IdQuery> ctx
-        let result = Digitise.getCollection (id.Id.ToString())
-        match result with
-        | Ok rc -> return! json rc ctx
-        | Error error -> return! text "Error" ctx
-    }
+let setupMicroscopeHandler (ctx:HttpContext) =
+    ctx.BindJson<AddMicroscopeRequest>()
+    |> Async.RunSynchronously
+    |> Calibrations.setupMicroscope (currentUserId ctx)
+    |> toApiResult ctx
+
+let calibrateHandler (ctx:HttpContext) =
+    ctx.BindJson<CalibrateRequest>()
+    |> Async.RunSynchronously
+    |> Calibrations.calibrateMagnification
+    |> toApiResult ctx
 
 let listGrains ctx =
-    let appResult = UnknownGrains.listUnknownGrains
-    match appResult with
-    | Ok model -> razorHtmlView "" model ctx
-    | Error e -> text "Error" ctx
+    UnknownGrains.listUnknownGrains
+    |> toViewResult "Identify/Index" ctx
 
-let showGrainDetail id =
-    fun ctx -> 
-        let appResult = UnknownGrains.getDetail id
-        match appResult with
-        | Ok model -> razorHtmlView "Identify/View" model ctx
-        | Error e -> text "error" ctx
+let showGrainDetail id ctx =
+    UnknownGrains.getDetail id
+    |> toViewResult "Identify/View" ctx
 
-let grainUploadHandler ctx =
-    async {
-        let! req = bindForm<AddUnknownGrainRequest> ctx
-        let result = UnknownGrains.submitUnknownGrain req (currentUserId ctx)
-        match result with
-        | Ok id -> return! json id ctx
-        | Error error -> return! text "Error" ctx
-    }
+let grainUploadHandler (ctx:HttpContext) =
+    ctx.BindForm<AddUnknownGrainRequest>()
+    |> Async.RunSynchronously
+    |> UnknownGrains.submitUnknownGrain (currentUserId ctx)
+    |> toApiResult ctx
 
-let api =
+/////////////////////////
+/// Routes
+/////////////////////////
+
+let webApp =
+    let publicApi =
+        GET >=>
+        choose [
+            route   "/backbone/match"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
+            route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
+            route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
+        ]
+
+    let digitiseApi =
+        mustBeLoggedIn >=>
+        choose [
+            route   "/collection"               >=> getCollectionHandler
+            route   "/collection/list"          >=> listCollectionsHandler
+            route   "/collection/start"         >=> startCollectionHandler
+            route   "/collection/slide/add"     >=> addSlideHandler
+            route   "/calibration/list"         >=> getCalibrationsHandler
+            route   "/calibration/use"          >=> setupMicroscopeHandler
+            route   "/calibration/use/mag"      >=> calibrateHandler
+        ]
+
+    let accountManagement =
+        choose [
+            POST >=> route  "/Login"            >=> loginHandler "/"
+            POST >=> route  "/Register"         >=> registerHandler
+            POST >=> route  "/Upload"           >=> grainUploadHandler
+            GET  >=> route  "/Register"         >=> renderView "Account/Register" None
+            GET  >=> route  "/Login"            >=> renderView "Account/Login" None
+            GET  >=> route  "/Logout"           >=> signOff authScheme >=> redirectTo true "/"
+        ]
+
+    let masterReferenceCollection =
+        GET >=> 
+        choose [   
+            route   ""                          >=> pagedTaxonomyHandler
+            routef  "/%s/%s/%s"                 (fun (family,genus,species) -> taxonDetail family genus species)
+            routef  "/%s/%s"                    (fun (family,genus) -> taxonDetail family genus None)
+            routef  "/%s"                       (fun family -> taxonDetail family None None) 
+        ]
+
+    let identify =
+        GET >=>
+        choose [
+            route   "/"                         >=> listGrains
+            route   "/Upload"                   >=> renderView "Identify/Add" None
+            route   "/%s"                       >=> renderView "NotFound" None
+        ]
+
+    // Main router
     choose [
-        route   "/backbone/search"        >=> backboneSearchHandler
-        route   "/backbone/match"         >=> backboneMatchHandler //TODO connect to tryMatch function in ReadStore
-        route   "/backbone/trace"         >=> backboneTraceHandler //TODO connect to tryMatch function in ReadStore
-        route   "/taxa"                   >=> taxonListHandler
-
-        route   "/collection"             >=> mustBeUser >=> getCollectionHandler
-        route   "/collection/list"        >=> mustBeUser >=> listCollectionsHandler
-        route   "/collection/start"       >=> mustBeUser >=> startCollectionHandler
-        route   "/collection/slide/add"   >=> mustBeUser >=> addSlideHandler
+        subRoute    "/api/v1"                   publicApi
+        subRoute    "/api/v1/digitise"          digitiseApi
+        subRoute    "/Account"                  accountManagement
+        subRoute    "/Taxon"                    masterReferenceCollection
+        subRoute    "/Identify"                 identify
+        GET >=> 
+        choose [
+            route   "/"                         >=> renderView "Home/Index" None
+            route   "/Guide"                    >=> renderView "Home/Guide" None
+            route   "/Api"                      >=> renderView "Home/Api" None
+            route   "/Statistics"               >=> renderView "Statistics/Index" None
+            route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
+        ]
+        setStatusCode 404 >=> renderView "NotFound" None 
     ]
 
-let webApp = 
-    choose [
-        route                   "/Api"              >=> razorHtmlView "Home/Api" None
-        subRoute                "/api/v1"           api
-        POST >=>
-            choose [
-                route               "/Account/Login"    >=> loginHandler
-                route               "/Account/Register" >=> registerHandler
-                route               "/Identify/Upload"  >=> grainUploadHandler
-            ]
-        GET >=> 
-            choose [
-                route               "/"                 >=> razorHtmlView "Home/Index" None
-                route               "/Guide"            >=> razorHtmlView "Home/Guide" None
-                route               "/Statistics"       >=> razorHtmlView "Statistics/Index" None
-                route               "/Digitise"         >=> mustBeLoggedIn >=> razorHtmlView "Digitise/Index" None
-                route               "/Identify"         >=> listGrains
-                route               "/Identify/Upload"  >=> razorHtmlView "Grain/Add" None
-                //route               "/Identify/%s"      (fun id -> showGrainDetail id)
-                subRoute            "/Taxon"    
-                    (choose [   
-                        route       ""                  >=> pagedTaxonomyHandler
-                        routef      "/%s/%s/%s"         (fun (family,genus,species) -> showTaxonHandler family genus species)
-                        routef      "/%s/%s"            (fun (family,genus) -> showTaxonHandler family genus None)
-                        routef      "/%s"               (fun family -> showTaxonHandler family None None) ])
-                route               "/Account/Login"    >=> razorHtmlView "Account/Login" None
-                route               "/Account/Register" >=> razorHtmlView "Account/Register" None
-                route               "/Account/Logoff"   >=> signOff authScheme >=> text "Logged Out"
-                route               "/user"             >=> mustBeUser >=> userHandler
-                routef              "/user/%i"          showUserHandler
-            ]
-        setStatusCode 404 >=> razorHtmlView "NotFound" None ]
+
+/////////////////////////
+/// Configuration
+/////////////////////////
 
 let configureApp (app : IApplicationBuilder) = 
     app.UseGiraffeErrorHandler(errorHandler)
