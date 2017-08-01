@@ -1,9 +1,6 @@
 temp
 wwwroot/css
-<<<<<<< HEAD
 wwwroot/js/styles.bundle.js
 wwwroot/js/styles.bundle.js.map
-=======
 
 appsettings.json
->>>>>>> upstream/master
