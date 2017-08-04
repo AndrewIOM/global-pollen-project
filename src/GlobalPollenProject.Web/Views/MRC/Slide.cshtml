@@ -1,0 +1,33 @@
+@{
+    Layout = "_Layout";
+    ViewBag.Title = "Individual Slide";
+    ViewData["Title"] = "SLIDENAME";
+    ViewData["Subtitle"] = "It's a slide, yo";
+    ViewData["Description"] = "";
+}
+
+@section headerSection {
+    <header>
+        <div class="container">
+            <h2 id="about">@ViewData["Title"]</h2>
+            <p>@ViewData["Subtitle"]</p>
+        </div>
+    </header>
+}
+
+@section scripts {
+    <script src="/lib/d3/d3.min.js"></script>
+    <script src="/js/viewer/viewer.js"></script>
+    <script src="/js/viewer/focusslider.js"></script>
+    <script src="/js/viewer/scalebar.js"></script>
+    <script>
+        
+    </script>
+}
+
+<div class="row">
+    <div class="col-md-8" id="viewer-container"></div>
+    <div class="col-md-4">
+        Testing
+    </div>
+</div>
