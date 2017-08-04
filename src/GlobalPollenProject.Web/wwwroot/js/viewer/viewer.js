@@ -1,49 +1,42 @@
 /**
  * Creates a new slide image canvas - allows panning and zooming, and ensures the slide is always visible
- * @param {String} containerId the parent object's id
- * @param {Int} width the desired width of the canvas
- * @param {Int} height the desired height of the canvas
- * @return {Viewer} the relevant viewer object
+ * @param {String} containerId  the parent object's id
+ * @param {Int} width           the desired width of the canvas
+ * @param {Int} height          the desired height of the canvas
+ * @param {[String]} imagePaths an array of image paths
+ * @return {Viewer}             the relevant viewer object
  */
-function Viewer(containerId, width, height) {
+function Viewer(containerId, width, height, imagePaths) {
     var self = this;
 
-    this.id = "#viewer-canvas";
+    self.id = "#viewer-canvas";
 
     // holds the function parameters
-    this.containerId = containerId;
-    this.width = width;
-    this.height = height;
-
-    // paths to the png slide images
-    this.imagePaths = [
-        "/images/tmp1.png",
-        "/images/tmp2.png",
-        "/images/tmp3.png",
-        "/images/tmp4.png",
-        "/images/tmp5.png"
-    ];
+    self.containerId = containerId;
+    self.width = width;
+    self.height = height;
+    self.imagePaths = imagePaths
 
     // stores the loaded image objects
-    this.images = [];
-    this.loadedCounter = 0;
+    self.images = [];
+    self.loadedCounter = 0;
 
-    this.base = null; // the parent container of the whole viewer
-    this.canvas = null; // the canvas element - displays the image of the slide
-    this.transform = null; // zoom/pan transform
-    this.context = null; // the canvas 2d context - for drawing on the canvas
-    this.imgWidth = null; // stores the width of the slide image
-    this.imgHeight = null; // stores the height of the slide image
+    self.base = null; // the parent container of the whole viewer
+    self.canvas = null; // the canvas element - displays the image of the slide
+    self.transform = null; // zoom/pan transform
+    self.context = null; // the canvas 2d context - for drawing on the canvas
+    self.imgWidth = null; // stores the width of the slide image
+    self.imgHeight = null; // stores the height of the slide image
     
-    this.focusLevel = 0; // holds the current focus level (image to draw)
+    self.focusLevel = 0; // holds the current focus level (image to draw)
 
     /**
      * Populates the "images" array with image objects loaded using image paths
      * Will throw an error if the images are not equal sized
      */
-    this.loadImages = function (callback) {
+    self.loadImages = function (callback) {
         // loop through all image paths (focus levels), and load the images
-        for (var i = 0; i < this.imagePaths.length; i++) {
+        for (var i = 0; i < self.imagePaths.length; i++) {
             var img = new Image();
             img.onload = function () {
                 // ensure all focus level images have the same dimensions
@@ -62,27 +55,27 @@ function Viewer(containerId, width, height) {
                 if (self.loadedCounter == self.imagePaths.length - 1) {
                     // proceed if all images have been loaded - trigger a jQuery function too
                     callback();
-                    $(self).trigger("loadedImages");
+                    $(self).trigger(Viewer.EVENT_LOADED_IMAGES);
                 }
             }
-            img.src = this.imagePaths[i];
-            this.images.push(img);
+            img.src = self.imagePaths[i];
+            self.images.push(img);
         }
     }
 
     /**
      * Creates the <canvas> element, and initialises panning + zooming through d3
      */
-    this.createCanvas = function (callback) {
+    self.createCanvas = function (callback) {
 
         // sub-function - zoom callback - gets called when canvas is zoomed
         function zoomed() {
             if (self.transform.k > d3.event.transform.k) {
-                $(this.id).css("cursor", "zoom-out");
+                $(self.id).css("cursor", "zoom-out");
             } else if (self.transform.k < d3.event.transform.k) {
-                $(this.id).css("cursor", "zoom-in");
+                $(self.id).css("cursor", "zoom-in");
             } else {
-                $(this.id).css("cursor", "move");
+                $(self.id).css("cursor", "move");
             }
 
             if (d3.event.transform.x > self.width / 2) 
@@ -96,18 +89,21 @@ function Viewer(containerId, width, height) {
                 d3.event.transform.y = self.height / 2 - self.imgHeight * d3.event.transform.k;
 
             self.transform = d3.event.transform;
+
+            // trigger a zoom event
+            $(self).trigger(Viewer.EVENT_ZOOMED);
         }
 
         // create the canvas element
-        this.base = d3.select(this.containerId);
-        this.canvas = this.base.append("canvas")
-            .attr("id", this.id.substr(1))
-            .attr("width", this.width)
-            .attr("height", this.height)
+        self.base = d3.select(self.containerId);
+        self.canvas = self.base.append("canvas")
+            .attr("id", self.id.substr(1))
+            .attr("width", self.width)
+            .attr("height", self.height)
             .call(d3.zoom()
                 .extent([
-                    [-this.imgWidth / 2, -this.imgHeight / 2],
-                    [this.imgWidth + this.imgWidth / 2, this.imgHeight + this.imgHeight / 2]
+                    [-self.imgWidth / 2, -self.imgHeight / 2],
+                    [self.imgWidth + self.imgWidth / 2, self.imgHeight + self.imgHeight / 2]
                 ])
                 .scaleExtent([0.5, 4])
                 .on("zoom", function() {
@@ -115,15 +111,15 @@ function Viewer(containerId, width, height) {
                     self.render();
                 })
                 .on("end", function() {
-                    $(this.id).css("cursor", "grab");
+                    $(self.id).css("cursor", "grab");
                 }));
-        this.transform = d3.zoomIdentity;
-        this.context = this.canvas.node().getContext("2d");
+        self.transform = d3.zoomIdentity;
+        self.context = self.canvas.node().getContext("2d");
 
-        $(this.id).css("cursor", "grab"); // set the cursor to "grab" initially
+        $(self.id).css("cursor", "grab"); // set the cursor to "grab" initially
 
         // stop the page from scrolling when zooming with the mouse wheel
-        $(this.id).bind("wheel mousewheel", function (e) {
+        $(self.id).bind("wheel mousewheel", function (e) {
             e.preventDefault()
         });
 
@@ -134,43 +130,57 @@ function Viewer(containerId, width, height) {
     /**
      * To be called when the canvas needs to be redrawn
      */
-    this.render = function() {
-        this.context.save();
+    self.render = function() {
+        self.context.save();
         
         // clear the screen
-        this.context.clearRect(0, 0, this.width, this.height);
-        this.context.fillStyle = "#444444";
-        this.context.fillRect(0, 0, this.width, this.height);
+        self.context.clearRect(0, 0, self.width, self.height);
+        self.context.fillStyle = "#777777";
+        self.context.fillRect(0, 0, self.width, self.height);
 
         // draw the correct slide image in the correct location
-        this.context.translate(this.transform.x, this.transform.y);
-        this.context.scale(this.transform.k, this.transform.k);
-        this.context.drawImage(this.images[this.focusLevel], 0, 0);
+        self.context.translate(self.transform.x, self.transform.y);
+        self.context.scale(self.transform.k, self.transform.k);
+        self.context.shadowColor = '#555555';
+        self.context.shadowBlur = 20;
+        self.context.shadowOffsetX = 15;
+        self.context.shadowOffsetY = 15;
+        self.context.drawImage(self.images[self.focusLevel], 0, 0);
 
-        this.context.restore();
+        self.context.restore();
     }
 
     /**
      * Switches the displayed image to the intended focus level
      */
-    this.setFocusLevel = function(level) {
+    self.setFocusLevel = function(level) {
         if(level < 0) level = 0;
-        if(level > this.getMaxFocusLevel()) level = this.getMaxFocusLevel();
-        this.focusLevel = level;
-        this.render();
+        if(level > self.getMaxFocusLevel()) level = self.getMaxFocusLevel();
+        self.focusLevel = level;
+        self.render();
     }
 
     /**
      * Returns the maximum possible focus level (minimum is always 0)
      */
-    this.getMaxFocusLevel = function() {
-        return this.images.length - 1;
+    self.getMaxFocusLevel = function() {
+        return self.images.length - 1;
+    }
+
+    /**
+     * Returns the current zoom level
+     */
+    self.getZoom = function() {
+        return self.transform.k;
     }
 
     // ENTRY POINT - functions have all been defined
-    this.loadImages(function() {
+    self.loadImages(function() {
         self.createCanvas(function() {
             self.render();
         });
     });
 }
+
+Viewer.EVENT_LOADED_IMAGES = "loadedImages";
+Viewer.EVENT_ZOOMED = "zoomed";
