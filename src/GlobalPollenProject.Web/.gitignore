@@ -1,4 +1,6 @@
 temp
 wwwroot/css
+wwwroot/js/styles.bundle.js
+wwwroot/js/styles.bundle.js.map
 
 appsettings.json

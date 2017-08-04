@@ -226,6 +226,7 @@ let webApp =
         GET >=> 
         choose [   
             route   ""                          >=> pagedTaxonomyHandler
+            route   "/Slide"                    >=> renderView "MRC/Slide" None
             routef  "/%s/%s/%s"                 (fun (family,genus,species) -> taxonDetail family genus species)
             routef  "/%s/%s"                    (fun (family,genus) -> taxonDetail family genus None)
             routef  "/%s"                       (fun family -> taxonDetail family None None) 

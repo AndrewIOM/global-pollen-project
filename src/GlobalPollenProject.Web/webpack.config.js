@@ -5,9 +5,7 @@ const ExtractTextPlugin = require("extract-text-webpack-plugin");
 var config = {
   context: __dirname + '/temp',
   entry: {
-    taxonomy: './Scripts/taxonomy',
-    digitise: './Scripts/digitise',
-    styles: [ './../Styles/main.scss', '../../Styles/Apps/digitise.scss' ]
+    styles: [ './../Styles/main.scss' ]
   },
   output: {
     path: __dirname + '/wwwroot/js',
