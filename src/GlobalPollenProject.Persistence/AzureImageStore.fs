@@ -30,13 +30,13 @@ let upload (blob:CloudBlockBlob) memoryStream = async {
 }
 
 let uploadImage (container:CloudBlobContainer) fileName (stream:Stream) = 
-    let mutable image = new ImageSharp.Image (stream)
-    let scale = calcScale 800. (float image.Height) (float image.Width)
+    use image = ImageSharp.Image.Load<Rgba32>(stream)
+    let resizeRatio = calcScale 1600. (float image.Height) (float image.Width)
     let mutable memoryStream = new MemoryStream()
-    image.MetaData.Quality <- 256
+    image.MetaData.VerticalResolution <- 300.
     let memoryStream = new MemoryStream ()
-    let h = (float image.Height) * scale
-    let w = (float image.Width) * scale
+    let h = (float image.Height) * resizeRatio
+    let w = (float image.Width) * resizeRatio
     image.Resize(int h,int w).SaveAsPng(memoryStream) |> ignore
     memoryStream.Position <- int64(0)
     let blob = container.GetBlockBlobReference(fileName)
@@ -54,11 +54,11 @@ let uploadToAzure conName connString nameGenerator image =
     match image with
     | ImageForUpload.Single (i,cal) -> 
         use s = new MemoryStream(base64ToByte i)
-        let url = uploadImage (container connString conName) (nameGenerator()) s |> Async.RunSynchronously
+        let url = uploadImage (container connString conName) (nameGenerator() + ".png") s |> Async.RunSynchronously
         SingleImage (url,cal)
     | Focus (stack,s,c) ->
         let urls = 
             stack 
             |> List.map (fun x -> use s = new MemoryStream(base64ToByte x)
-                                  uploadImage (container connString conName) (nameGenerator()) s |> Async.RunSynchronously)
+                                  uploadImage (container connString conName) (nameGenerator() + ".png") s |> Async.RunSynchronously)
         FocusImage (urls,s,c)
