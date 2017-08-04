@@ -164,7 +164,7 @@ module ColVersion =
 
 
 // Pollen Traits: Simple
-type GrainDiameter = float<um>
+type GrainDiameter = float<um> * float<um>
 type WallThickness = float<um>
 
 type GrainShape =

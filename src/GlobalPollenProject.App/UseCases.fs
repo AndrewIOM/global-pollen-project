@@ -14,12 +14,7 @@ open GlobalPollenProject.Core.Composition
 open ReadModels
 open ReadStore
 open Converters
-
-type ServiceError =
-| CoreError
-| ValidationError
-| PersistenceError
-| NotFound
+open Responses
 
 type GetCurrentUser = unit -> Guid
 
@@ -96,7 +91,7 @@ let domainDependencies =
 let toAppResult domainResult =
     match domainResult with
     | Ok r -> Ok r
-    | Error str -> Error CoreError
+    | Error str -> Error Core
 
 
 module Digitise =
@@ -142,7 +137,7 @@ module Digitise =
         let userId = getCurrentUser()
         let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("CollectionAccessList:" + (userId.ToString())) readStoreGetList deserialiseGuid
         match cols with
-        | Error e -> Error PersistenceError
+        | Error e -> Error Persistence
         | Ok clist -> 
             let getCol id = ReadStore.RepositoryBase.getSingle<EditableRefCollection> (id.ToString()) readStoreGet deserialise
             clist 
@@ -152,6 +147,7 @@ module Digitise =
 
     let getCollection id =
         ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<EditableRefCollection>
+        |> toAppResult
 
 
 module Calibrations =
@@ -173,7 +169,7 @@ module Calibrations =
         let userId = getCurrentUser()
         let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("Calibration:User:" + (userId.ToString())) readStoreGetList deserialiseGuid
         match cols with
-        | Error e -> Error PersistenceError
+        | Error e -> Error Persistence
         | Ok clist -> 
             let getCol id = ReadStore.RepositoryBase.getSingle<ReadModels.Calibration> (id.ToString()) readStoreGet deserialise
             clist 
@@ -201,7 +197,7 @@ module Calibrations =
         let url = match savedImg with
                   | SingleImage (u,cal) -> u
                   | FocusImage _ -> invalidOp "Error handle"
-        let id = req.CalibrationId |> Guid.Parse |> CalibrationId
+        let id = req.CalibrationId |> CalibrationId
         let cmd = Calibrate (id,400<timesMagnified>, { Image = url ; StartPoint = floatingCalibration.Point1; EndPoint = floatingCalibration.Point2; MeasureLength = floatingCalibration.MeasuredDistance })
         issueCommand cmd
         |> Ok
@@ -316,6 +312,7 @@ module Backbone =
         request
         |> DtoToDomain.backboneSearchToIdentity
         |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.search s readLex deserialise)
+        |> toAppResult
 
     let tryMatch (request:BackboneSearchRequest) =
         request
@@ -377,7 +374,8 @@ module Backbone =
 
         request
         |> tryMatch
-        >>= trace request.Authorship
+        |> Result.bind (trace request.Authorship)
+        |> toAppResult
 
 module User = 
 

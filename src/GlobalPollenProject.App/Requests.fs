@@ -42,20 +42,20 @@ type LoginRequest = {
 }
 
 type StartCollectionRequest = {
-    Name: string
-    Description: string 
+    [<Required>] Name: string
+    [<Required>] Description: string 
 }
 
 [<CLIMutable>]
 type SlideRecordRequest = {
-    Collection: System.Guid
-    ExistingId: string
-    OriginalFamily: string
+    [<Required>] Collection: System.Guid
+    [<Required>] OriginalFamily: string
+    [<Required>] ValidatedTaxonId: System.Guid
+    [<Required>] SamplingMethod: string
     OriginalGenus: string
     OriginalSpecies: string
     OriginalAuthor: string
-    ValidatedTaxonId: System.Guid
-    SamplingMethod: string
+    ExistingId: string
     YearCollected: System.Nullable<int>
     YearSlideMade: System.Nullable<int>
     LocationRegion: string
@@ -65,16 +65,16 @@ type SlideRecordRequest = {
 }
 
 type SlideImageRequest = {
-    CollectionId: System.Guid
-    SlideId: string
-    ImageBase64: string
+    [<Required>] CollectionId: System.Guid
+    [<Required>] SlideId: string
+    [<Required>] ImageBase64: string
     DigitisedYear: int
 }
 
 [<CLIMutable>]
 type BackboneSearchRequest = {
-    LatinName: string
-    Rank: string
+    [<Required>]LatinName: string
+    [<Required>]Rank: string
     Family: string
     Genus: string
     Species: string
@@ -84,30 +84,30 @@ type BackboneSearchRequest = {
 [<CLIMutable>]
 type AddUnknownGrainRequest = {
     StaticImagesBase64: string list
-    LatitudeDD: float
-    LongitudeDD: float
-    SampleType: string
+    [<Required>] LatitudeDD: float
+    [<Required>] LongitudeDD: float
+    [<Required>] SampleType: string
     Year: int option
     YearType: string
 }
 
 [<CLIMutable>]
 type AddMicroscopeRequest = {
-    Name: string
-    Type: string
-    Model: string
+    [<Required>] Name: string
+    [<Required>] Type: string
+    [<Required>] Model: string
     Ocular: int
     Objectives: int list
 }
 
 [<CLIMutable>]
 type CalibrateRequest = {
-    CalibrationId: string
-    Magnification: int
-    X1: int
-    X2: int
-    Y1: int
-    Y2: int
-    MeasuredLength: float
-    ImageBase64: string
+    [<Required>] CalibrationId: Guid
+    [<Required>] [<Range(1, 100)>] Magnification: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] X1: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] X2: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] Y1: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] Y2: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] MeasuredLength: float
+    [<Required>] ImageBase64: string
 }

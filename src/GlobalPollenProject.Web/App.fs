@@ -26,6 +26,8 @@ open GlobalPollenProject.Shared.Identity.Services
 open GlobalPollenProject.App.UseCases
 open ReadModels
 
+open FunctionalModelState
+
 /////////////////////////
 /// Helpers
 /////////////////////////
@@ -57,7 +59,12 @@ let toViewResult view ctx result =
 let toApiResult ctx result =
     match result with
     | Ok list -> json list ctx
-    | Error e -> json "Error" ctx
+    | Error e -> 
+        match e with
+        | Core -> json "Internal error" ctx
+        | Persistence -> json "Internal error" ctx
+        | NotFound -> json "Not found" ctx
+        | Validation valErrors -> json valErrors ctx
 
 let jsonToModel<'a> (ctx:HttpContext) =
     ctx.BindJson<'a>()
@@ -65,12 +72,14 @@ let jsonToModel<'a> (ctx:HttpContext) =
 
 let jsonRequestToApiResponse<'a> appService ctx =
     jsonToModel<'a> ctx
-    |> appService
+    |> validateModel
+    |> Result.bind appService
     |> toApiResult ctx
 
-let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,string>) (ctx:HttpContext) =
+let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,ServiceError>) (ctx:HttpContext) =
     ctx.BindQueryString<'a>()
-    |> appService
+    |> validateModel
+    |> Result.bind appService
     |> toApiResult ctx
 
 /////////////////////////
@@ -81,15 +90,20 @@ let loginHandler redirectUrl =
     fun (ctx: HttpContext) ->
         async {
             let! loginRequest = ctx.BindForm<LoginRequest>()
-            let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-            let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-            let! result = signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, lockoutOnFailure = false) |> Async.AwaitTask
-            if result.Succeeded then
-               let logger = ctx.GetLogger()
-               logger.LogInformation "User logged in."
-               return! redirectTo false redirectUrl ctx
-           else
-               return! renderView "Account/Login" loginRequest ctx
+            
+            let isValid,errors = validateModel' loginRequest
+            match isValid with
+            | false -> return! ctx |> razorHtmlViewWithModelState "Account/Login" errors loginRequest
+            | true ->
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+                let! result = signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, lockoutOnFailure = false) |> Async.AwaitTask
+                if result.Succeeded then
+                   let logger = ctx.GetLogger()
+                   logger.LogInformation "User logged in."
+                   return! redirectTo false redirectUrl ctx
+                else
+                   return! renderView "Account/Login" loginRequest ctx
         }
 
 let registerHandler (ctx:HttpContext) =
@@ -128,7 +142,8 @@ let listCollectionsHandler ctx =
 let startCollectionHandler (ctx:HttpContext) =
     ctx.BindJson<StartCollectionRequest>()
     |> Async.RunSynchronously
-    |> Digitise.startNewCollection (currentUserId ctx)
+    |> validateModel
+    |> Result.bind (Digitise.startNewCollection (currentUserId ctx))
     |> toApiResult ctx
 
 let addSlideHandler (ctx:HttpContext) =
@@ -180,7 +195,7 @@ let webApp =
     let publicApi =
         GET >=>
         choose [
-            route   "/backbone/match"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
+            // route   "/backbone/match"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
             route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
             route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
         ]
