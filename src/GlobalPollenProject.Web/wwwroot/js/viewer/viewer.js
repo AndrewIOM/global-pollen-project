@@ -52,7 +52,7 @@ function Viewer(containerId, width, height, imagePaths) {
                 }
 
                 self.loadedCounter++;
-                if (self.loadedCounter == self.imagePaths.length - 1) {
+                if (self.loadedCounter == self.imagePaths.length) {
                     // proceed if all images have been loaded - trigger a jQuery function too
                     callback();
                     $(self).trigger(Viewer.EVENT_LOADED_IMAGES);
