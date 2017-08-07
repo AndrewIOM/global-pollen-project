@@ -10,16 +10,16 @@ type LogMessage =
 type RootAggregateId = System.Guid
 type UserId = UserId of RootAggregateId
 type ClubId = ClubId of RootAggregateId
-type CalibrationId = CalibrationId of RootAggregateId
 type CollectionId = CollectionId of RootAggregateId
 type SlideId = SlideId of CollectionId * string
 type GrainId = GrainId of RootAggregateId
 type TaxonId = TaxonId of RootAggregateId
-
+type CalibrationId = CalibrationId of RootAggregateId
+type MagnificationId = MagnificationId of CalibrationId * int
 
 [<AutoOpen>]
 module Url =
-    type Url = private Url of string
+    type Url = Url of string //TODO cannot make private due to Newtonsoft limitation
     let create surl =
         Url surl
     let unwrap (Url u) = u
@@ -29,10 +29,10 @@ module Url =
 type Base64Image = Base64Image of string
 
 type ImageForUpload =
-    | Focus of Base64Image list * Stepping * CalibrationId
+    | Focus of Base64Image list * Stepping * MagnificationId
     | Single of Base64Image * FloatingCalibration
 and Image = 
-    | FocusImage of Url list * Stepping * CalibrationId
+    | FocusImage of Url list * Stepping * MagnificationId
     | SingleImage of Url * FloatingCalibration
 
 and Stepping =

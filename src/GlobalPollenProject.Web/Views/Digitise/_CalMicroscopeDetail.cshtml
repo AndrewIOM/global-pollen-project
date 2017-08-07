@@ -1,0 +1,14 @@
+<div data-bind="if: microscopeDetail">
+    <div data-bind="with: microscopeDetail">
+
+        <h3 data-bind="text: microscope().Name"></h3>
+
+        <label>Magnification Level</label>
+        <input data-bind="value: magnification" />
+
+        <input type="file" class="upload" data-bind="event: { change: function() { calibrationImage.changeImage($element) } }" />
+        <div id="calibration-image-container"></div>
+
+        <button data-bind="click: function() { submit($parent) }" class="btn btn-primary">Submit</button>
+    </div>
+</div>

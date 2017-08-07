@@ -17,8 +17,6 @@ type StandardImage = {
 type SlideImage = {
     Id:                     int
     Frames:                 List<string>
-    CalibrationImageUrl:    string
-    CalibrationFocusLevel:  int
     PixelWidth:             float
 }
 

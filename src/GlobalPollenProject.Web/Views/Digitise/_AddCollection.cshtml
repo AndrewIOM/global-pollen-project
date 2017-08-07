@@ -1,6 +1,6 @@
 @* Start Collection Modal *@
-<div data-bind="BSModal: isCreatingCollection" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div data-bind="BSModal: currentView() == CurrentView.ADD_COLLECTION, if: currentView() == CurrentView.ADD_COLLECTION" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
+    <div data-bind="with: newCollectionVM" class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Digitise a Collection</h5>
@@ -13,17 +13,17 @@
                     necessary.</p>
                 <div class="form-group">
                     <label>Collection Name</label>
-                    <input data-bind="textInput: newCollectionData().Name" class="form-control" id="name" />
+                    <input data-bind="textInput: name" class="form-control" id="name" />
                     <small id="name-help" class="form-text text-muted">Use a name specific to the collection.</small>
                 </div>
                 <div class="form-group">
                     <label>Description</label>
-                    <textarea data-bind="textInput: newCollectionData().Description" class="form-control" id="description" rows="3"></textarea>
+                    <textarea data-bind="textInput: description" class="form-control" id="description" rows="3"></textarea>
                     <small id="name-help" class="form-text text-muted">Your collection description could include the motivation for creating the collection, geographical coverage, or the nature of the material, for example.</small>
                 </div>
             </div>
             <div class="modal-footer">
-                <button data-bind="click: startCollection" type="button" data-bind="startCollection" class="btn btn-primary">Create</button>
+                <button data-bind="click: function() { submit($root) }" type="button" class="btn btn-primary">Create</button>
             </div>
         </div>
     </div>

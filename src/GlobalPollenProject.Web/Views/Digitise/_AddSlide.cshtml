@@ -1,10 +1,10 @@
- @* Add Slide Modal *@
-<div data-bind="BSModal: isAddingSlide" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+@* Add Slide Modal *@
+<div data-bind="BSModal: currentView() == CurrentView.ADD_SLIDE_RECORD, if: currentView() == CurrentView.ADD_SLIDE_RECORD" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
+    <div data-bind="with: newSlideVM" class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Add a Slide: Single</h5>
-                <button type="button" class="close" aria-label="Close" data-bind="click: stopAddingSlide">
+                <button type="button" class="close" aria-label="Close" data-bind="click: function() { $root.switchView(CurrentView.MASTER) }">
           <span aria-hidden="true">&times;</span>
         </button>
             </div>
@@ -174,7 +174,7 @@
 
             </div>
             <div class="modal-footer">
-                <button data-bind="click: submitAddSlide, enable: isValidAddSlideRequest" type="button" class="btn btn-primary">Record Slide</button>
+                <button data-bind="click: $root.submitSlideRequest, enable: isValidAddSlideRequest" type="button" class="btn btn-primary">Record Slide</button>
             </div>
         </div>
     </div>

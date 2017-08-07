@@ -115,13 +115,48 @@ module Digitise =
         |> lift issueCommand
         |> toAppResult
 
+    
+
     let uploadSlideImage request = 
-        // let base64 = Base64Image request.ImageBase64
-        // let toUpload = Single base64
-        // let uploaded = saveImage toUpload
-        // let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId)
-        // issueCommand <| UploadSlideImage { Id = slideId; Image = uploaded }
-        Ok
+
+        let imageForUploadOrError =
+            match request.IsFocusImage with
+            | true ->  
+                match request.FramesBase64.Length with
+                | 0 -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["No frames were submitted"]}]
+                | 1 -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["A focus image must have at least two frames"]}]
+                | _ ->
+                    let framesBase64 = request.FramesBase64 |> List.map Base64Image //TODO validation in create function
+                    let calId = request.CalibrationId |> CalibrationId //TODO validation
+                    let magId = (calId,request.Magnification) |> MagnificationId //TODO validation
+                    ImageForUpload.Focus (framesBase64,Stepping.Variable,magId)
+                    |> Ok
+            | false ->
+                match request.FramesBase64.Length with
+                | 0 -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["No frames were submitted"]}]
+                | 1 -> 
+                    match request.FloatingCalPointOneX.HasValue
+                       && request.FloatingCalPointOneY.HasValue
+                       && request.FloatingCalPointTwoX.HasValue
+                       && request.FloatingCalPointTwoY.HasValue 
+                       && request.MeasuredDistance.HasValue with
+                        | true ->
+                            let calibration : FloatingCalibration = {
+                                Point1 = request.FloatingCalPointOneX.Value, request.FloatingCalPointOneY.Value
+                                Point2 = request.FloatingCalPointTwoX.Value, request.FloatingCalPointTwoY.Value
+                                MeasuredDistance = request.MeasuredDistance.Value * 1.0<um>
+                            }
+                            let base64 = request.FramesBase64.Head |> Base64Image
+                            ImageForUpload.Single (base64,calibration) |> Ok
+                        | false -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["You submitted more than one frame"]}]
+                | _ -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["You submitted more than one frame"]}]
+
+        let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId) //TODO proper validation
+        imageForUploadOrError
+        |> lift saveImage
+        |> lift (fun saved -> UploadSlideImage { Id = slideId; Image = saved })
+        |> lift issueCommand
+        
 
     let listCollections () = 
         ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> All readStoreGetList deserialise

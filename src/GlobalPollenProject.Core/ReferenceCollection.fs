@@ -94,7 +94,9 @@ let addSlide (command:AddSlide) calcIdentity state =
 let uploadImage (command:UploadSlideImage) state =
     match state with
     | Initial -> invalidOp "This collection does not exist"
-    | Draft c -> [SlideImageUploaded (command.Id, command.Image)]
+    | Draft c -> 
+        // TODO issue slide fully digitised event if required
+        [SlideImageUploaded (command.Id, command.Image)]
  
 let handle deps = 
     function

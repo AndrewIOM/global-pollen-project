@@ -20,3 +20,13 @@ type PagedResult<'TProjection> = {
     ItemsPerPage: int
     ItemTotal: int
 }
+
+type SuccessResult<'a> = {
+    Message: string
+    Data: 'a
+}
+
+type FailResult = {
+    Message: string
+    Errors: ValidationError list
+}

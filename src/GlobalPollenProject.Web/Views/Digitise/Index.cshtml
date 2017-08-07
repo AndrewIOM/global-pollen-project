@@ -18,6 +18,9 @@
     <script src="/lib/d3/d3.min.js"></script>
     <script src="/lib/nouislider/distribute/nouislider.min.js"></script>
     <script src="/lib/knockout/dist/knockout.js"></script>
+    <script src="/js/viewer/viewer.js"></script>
+    <script src="/js/viewer/scalebar.js"></script>
+    <script src="/js/viewer/focusslider.js"></script>
     <script src="/js/digitise/app.js"></script>
 }
 
@@ -28,15 +31,15 @@
 
  @* Top button bar *@
 <div class="btn-toolbar mb-3" role="toolbar">
-    <button data-bind="click: startCreatingCollection" class="btn btn-secondary">Create new collection</button>
-    <button data-bind="click: startEditingCalibrations" class="btn btn-secondary">Setup Microscope Calibrations</button>
+    <button data-bind="click: function() { switchView(CurrentView.ADD_COLLECTION) }" class="btn btn-secondary">Create new collection</button>
+    <button data-bind="click: function() { switchView(CurrentView.CALIBRATE) }" class="btn btn-secondary">Setup Microscope Calibrations</button>
 </div>
 
 <div class="row">
     <div class="col-md-3">
         <label>My Collections</label>
         <ul class="list-group backbone-list" data-bind="foreach: myCollections">
-            <li data-bind="text: Name, click: $parent.viewCollection"></li>
+            <li data-bind="text: Name, click: function() { $parent.switchView(CurrentView.DETAIL, $data) }"></li>
         </ul>
     </div>
 
@@ -44,7 +47,7 @@
         <h3 data-bind="text: activeCollection().Name"></h3>
         <hr/>
 
-        <button data-bind="click: addSlide" class="btn btn-primary">Add new Slide</button>
+        <button data-bind="click: function() { switchView(CurrentView.ADD_SLIDE_RECORD, $data) }" class="btn btn-primary">Add new Slide</button>
         <p data-bind="text: activeCollection().Description"></p>
 
         <table class="table">
@@ -55,6 +58,7 @@
                     <th>Genus</th>
                     <th>Species</th>
                     <th>Current Taxon</th>
+                    <th>Image Count</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -65,7 +69,8 @@
                     <td data-bind="text: $data.GenusOriginal"></td>
                     <td data-bind="text: $data.SpeciesOriginal"></td>
                     <td data-bind="text: $data.CurrentFamily + ' ' + $data.CurrentGenus + ' ' + $data.CurrentSpecies + ' ' + $data.CurrentSpAuth"></td>
-                    <td><button data-bind="click: $parent.viewSlideDetail" class="btn btn-default">Detail</button></td>
+                    <td data-bind="text: $data.Images.length"></td>
+                    <td><button data-bind="click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }" class="btn btn-default">Upload Image</button></td>
                 </tr>
             </tbody>
         </table>

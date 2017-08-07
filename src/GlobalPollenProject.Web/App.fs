@@ -60,11 +60,11 @@ let toApiResult ctx result =
     match result with
     | Ok list -> json list ctx
     | Error e -> 
-        match e with
-        | Core -> json "Internal error" ctx
-        | Persistence -> json "Internal error" ctx
-        | NotFound -> json "Not found" ctx
-        | Validation valErrors -> json valErrors ctx
+        ctx |>
+        (setStatusCode 400 >=>
+            match e with
+            | Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
+            | _ -> json <| { Message = "Internal error"; Errors = [] } )
 
 let jsonToModel<'a> (ctx:HttpContext) =
     ctx.BindJson<'a>()
@@ -152,6 +152,13 @@ let addSlideHandler (ctx:HttpContext) =
     |> Digitise.addSlideRecord
     |> toApiResult ctx
 
+let addImageHandler (ctx:HttpContext) =
+    ctx.BindJson<SlideImageRequest>()
+    |> Async.RunSynchronously
+    |> validateModel
+    |> Result.bind Digitise.uploadSlideImage
+    |> toApiResult ctx
+
 let getCollectionHandler (ctx:HttpContext) =
     ctx.BindQueryString<IdQuery>().Id.ToString()
     |> Digitise.getCollection
@@ -207,6 +214,7 @@ let webApp =
             route   "/collection/list"          >=> listCollectionsHandler
             route   "/collection/start"         >=> startCollectionHandler
             route   "/collection/slide/add"     >=> addSlideHandler
+            route   "/collection/slide/addimage">=> addImageHandler
             route   "/calibration/list"         >=> getCalibrationsHandler
             route   "/calibration/use"          >=> setupMicroscopeHandler
             route   "/calibration/use/mag"      >=> calibrateHandler

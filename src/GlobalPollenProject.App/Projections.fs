@@ -71,7 +71,6 @@ module MasterReferenceCollection =
 
     // TaxonSummary
     // TaxonDetail
-
     // TaxonSummary index
     // Custom TaxonSummary index that only contains those with fully digitised slides
 
@@ -153,12 +152,46 @@ module MasterReferenceCollection =
     let removeGrainFromTaxon taxonId slideId =
         Ok()
 
+    let publishCollection id set =
+        // let colId : Guid = id |> Converters.DomainToDto.unwrapRefId
+        // let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
+        // match col with
+        // | Error e -> Error e
+        // | Ok c -> 
+        //     let s =
+        //         c.Slides 
+        //         |> List.filter (fun s -> s.IsFullyDigitised)
 
-    let handle (e:string*obj) =
+        //     // For each slide...
+        //     let taxonId = 
+        //         match s.[0].CurrentTaxonId with
+        //         | Some i -> Ok (i.ToString())
+        //         | None -> Error "Invalid taxon ID"
+
+        //     let existingDetail t = RepositoryBase.getKey<TaxonDetail> t getKey deserialise
+
+        //     let getSummary =
+        //         let existingSummary = 
+        //             taxonId
+        //             |> Result.bind (fun t -> RepositoryBase.getKey<TaxonSummary> t getKey deserialise)
+        //         match existingSummary with
+        //         | Ok s -> s
+        //         | Error s -> 
+        //             // Create a new one
+        //             importTaxon taxonId getBackboneTaxon 
+
+        //     //Transpose slides into MRC structure
+        //     // For each slide
+        //     // ... push up the taxon if it doesn't exist (recursively)
+        //     // ... add each slide to the MCR (with images)
+            invalidOp "Not implemented"
+
+
+    let handle get (e:string*obj) =
         match snd e with
         | :? ReferenceCollection.Event as e ->
             match e with
-            | ReferenceCollection.Event.CollectionPublished (id,date,ver) -> invalidOp "Cool" //Get collection and push all slides to appropriate taxa (recursively)
+            | ReferenceCollection.Event.CollectionPublished (id,date,ver) -> publishCollection id get
             | _ -> Ok()
         | :? Grain.Event as e ->
             match e with
@@ -317,7 +350,7 @@ module ReferenceCollectionReadOnly =
         match snd e with
         | :? ReferenceCollection.Event as e ->
             match e with
-            | ReferenceCollection.Event.CollectionPublished (id,time,version) -> invalidOp "Cool"
+            | ReferenceCollection.Event.CollectionPublished (id,time,version) -> publishCollection
             | _ -> Ok()
         | _ -> Ok()
 
@@ -334,7 +367,7 @@ module UserProfile =
             | User.Event.JoinedClub (x,y) -> invalidOp "Cool"
             | User.Event.ProfileHidden x -> invalidOp "Cool"
             | User.Event.ProfileMadePublic x -> invalidOp "Cool"
-            | User.Event.UserRegistered x -> invalidOp "Cool"
+            | User.Event.UserRegistered x -> registered x
         | _ -> Ok()
 
 
@@ -392,11 +425,12 @@ module Digitisation =
             match slide with
             | None -> readModelErrorHandler()
             | Some s ->
-                let imageDto = Converters.DomainToDto.image image
+                let getMag a = None //TODO enable fetching of magnification calibrations
+                let imageDto = Converters.DomainToDto.image getMag image
                 let updatedSlide = { s with Images = imageDto :: s.Images }
                 let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
                 let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle (c.ToString()) updatedCol setKey serialise
+                RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise
 
     let digitised getKey setKey id =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId

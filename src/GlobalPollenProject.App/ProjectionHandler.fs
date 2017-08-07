@@ -38,7 +38,7 @@ let route
     >>= feed ReferenceCollectionReadOnly.handle
     >>= feed Slide.handle
     >>= feed (Grain.handle set)
-    >>= MasterReferenceCollection.handle
+    >>= MasterReferenceCollection.handle set
 
 
 type Message = 

@@ -1,6 +1,7 @@
 @* Slide Detail *@
-<div data-bind="BSModal: isViewingSlideDetail, if: slideDetail" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+<div data-bind="BSModal: currentView() == CurrentView.SLIDE_DETAIL, if: currentView() == CurrentView.SLIDE_DETAIL" class="modal bd-example-modal-lg"
+    role="dialog" aria-hidden="true">
+    <div data-bind="with: slideDetailVM" class="modal-dialog modal-lg">
         <div class="modal-content">
 
             <div class="modal-header">
@@ -14,6 +15,11 @@
             <span class="label label-awaiting">Awaiting Digitisation</span>
 
             <div class="modal-body">
+
+                <ul data-bind="foreach: validationErrors">
+                    <li data-bind="text: $data"></li>
+                </ul>
+
                 <p>
                     The original reference slide has the taxonomic identification:
                     <span data-bind="text: slideDetail().FamilyOriginal"></span>
@@ -25,54 +31,59 @@
 
                 <h5>Images</h5>
                 <hr/>
+                <p>Upload a focusable image? <input type="checkbox" data-bind="checked: isFocusImage" /></p>
 
-
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <span class="glyphicon glyphicon-plus"></span> Add New Image
-                    </div>
-
-                    <div class="panel-body">
-                        <ul class="nav nav-tabs" role="tablist">
-                            <li class="nav-item active" role="presentation"><a class="nav-link" href="#single" aria-controls="single" role="tab" data-toggle="tab">Single Images</a></li>
-                            <li class="nav-item" role="presentation"><a class="nav-link" href="#focus" aria-controls="focus" role="tab" data-toggle="tab"><span class="glyphicon glyphicon-eye-open"></span> Focus Image</a></li>
-                        </ul>
-                        <div class="tab-content">
-                            <div role="tabpanel" class="tab-pane active" id="single">
-                                <br />
-                                <p>Use Single Images if a fixed camera setup is not available. </p>
-                                <div class="row">
-                                    <div class="fileUpload btn btn-default">
-                                        <span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span><span> Add More Images</span>
-                                        <input type="file" multiple="multiple" class="upload" onchange="handleFiles(this);" />
-                                    </div>
-                                </div>
-                            </div>
-                            <div role="tabpanel" class="tab-pane" id="focus">
-                                <br />
-                                <p>Focus Images enable users to scroll through an image as if moving through the focus on a
-                                    microscope. You must upload at least five focal planes (images) to create a valid focus image.</p>
-                                <div class="row">
-                                    <div class="fileUpload btn btn-default">
-                                        <span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span><span> Upload New Image Set</span>
-                                        <input id="focus-upload-button" type="file" multiple="multiple" class="upload" data-bind="event: { change: function() { focusImagePreview.addData($element) } }"
-                                        />
-                                    </div>
-                                </div>
-                                <p id="focus-upload-error"></p>
-                                <div id="focus-preview">
-                                    <div class="zoom-canvas-container" style="position:relative">
-                                        <canvas id="focusImagePreview" class="zoom-canvas"></canvas>
-                                        <div id="focusSlider" style="display:inline-block;height:10em;position:absolute;top:4em;left:0"></div>
-                                        <div id="focus-images" hidden="hidden"></div>
-                                    </div>
-                                </div>
-                                <p>Calibration</p>
-                                <button id="focus-add-button" class="btn btn-default" onclick="confirmFocusImage()">Add Focus Image</button>
-                            </div>
-                        </div>
+                <div class="form-group row">
+                    <label for="digitisedYear" class="col-sm-2 col-form-label">Year Image Taken</label>
+                    <div class="col-sm-10">
+                        <input data-bind="value: digitisedYear" id="digitisedYear" class="form-control" />
+                        <small class="help">In which calendar year was this image taken?</small>
                     </div>
                 </div>
+
+                <div data-bind="visible: isFocusImage">
+                    <h5>Upload a focusable image</h5>
+                    @* Calibration selection *@
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label"></label>
+                        <div class="col-sm-5">
+                            <select data-bind="foreach: calibrations" class="form-control input-sm inline-dropdown">
+                                <option data-bind="value: $data.Name, text: $data.Name"></option>
+                            </select>
+                        </div>
+                        <div class="col-sm-5">
+                            <select data-bind="value: magnification" class="form-control input-sm inline-dropdown">
+                                <option value="10">10x</option>
+                                <option value="20">20x</option>
+                                <option value="40">40x</option>
+                                <option value="100">100x</option>
+                            </select>
+                        </div>
+                    </div>
+                    @* Image Upload and Preview *@
+                    <input type="file" multiple="multiple" class="upload" data-bind="event: { change: function() { imageSelected($element, 'image-previewer'); } } "/>
+                    <div id="image-previewer" style="width:500px"></div>
+                </div>
+
+                <div data-bind="visible: !isFocusImage()">
+                    <h5>Upload a static image</h5>
+                    <p>A static image uses a floating calibration to discren size within the image. You must complete the calibration step for every image.</p>
+                    <input type="file" class="upload" data-bind="event: { change: function() { viewer.changeImage($element) } }" />
+                    <div id="static-image-previewer"></div>
+
+                    <div class="form-group row">
+                        <label for="measuredDistance" class="col-sm-2 col-form-label">Measured Distance</label>
+                        <div class="col-sm-10">
+                            <input data-bind="value: measuredDistance" id="measuredDistance" class="form-control" />
+                            <small class="help">Enter the length of your measurement line in micrometres (um)</small>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button data-bind="click: function() { submit($root); }" type="button" class="btn btn-primary">Upload Image</button>
             </div>
 
         </div>

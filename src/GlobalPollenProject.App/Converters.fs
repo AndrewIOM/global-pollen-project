@@ -17,16 +17,20 @@ module DomainToDto =
     let unwrapEph (SpecificEphitet e) = e
     let unwrapAuthor (Scientific a) = a
 
-    let image (domainImage:Image) : SlideImage =
+    let image getMag (domainImage:Image) : SlideImage =
         match domainImage with
         | SingleImage (i,cal) ->
-            invalidOp "TODO: Make it possible to add single images to slides?"
-        | FocusImage (urls,stepping,calId) ->
             { Id = 0
-              Frames = urls |> List.map Url.unwrap
-              CalibrationImageUrl = ""
-              CalibrationFocusLevel = 0
-              PixelWidth = 0.0 }
+              Frames = [i |> Url.unwrap]
+              PixelWidth = 2. }
+        | FocusImage (urls,stepping,calId) ->
+            let magnification = getMag calId
+            match magnification with
+            | None -> invalidOp "DTO validation failed"
+            | Some (mag:Magnification) ->
+                { Id = 0
+                  Frames = urls |> List.map Url.unwrap
+                  PixelWidth = mag.PixelWidth }
 
 module DtoToDomain =
 

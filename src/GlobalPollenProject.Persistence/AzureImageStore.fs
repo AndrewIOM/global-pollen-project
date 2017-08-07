@@ -19,13 +19,14 @@ let calcScale maxDimension height width =
 
 let base64ToByte base64 =
     let unwrap (Base64Image i) = i
-    let unwrapped = (unwrap base64).Replace("data:image/jpeg;base64,", "")
+    let unwrapped = (unwrap base64).Replace("data:image/png;base64,", "")
     Convert.FromBase64String(unwrapped)
 
 let upload (blob:CloudBlockBlob) memoryStream = async {
-    let! exists = blob.ExistsAsync() |> Async.AwaitIAsyncResult
-    if exists then invalidOp "Blob already exists" 
-    blob.UploadFromStreamAsync(memoryStream) |> Async.AwaitIAsyncResult |> ignore
+    //let! exists = blob.ExistsAsync() |> Async.AwaitIAsyncResult
+    //if exists then invalidOp "Blob already exists" 
+    let! worked = blob.UploadFromStreamAsync(memoryStream) |> Async.AwaitIAsyncResult
+    if not worked then invalidOp "Aah"
     return Url.create blob.Uri.AbsoluteUri
 }
 

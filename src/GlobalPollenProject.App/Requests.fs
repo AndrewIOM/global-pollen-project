@@ -41,6 +41,7 @@ type LoginRequest = {
     [<Display(Name = "Remember me?")>] RememberMe: bool
 }
 
+[<CLIMutable>]
 type StartCollectionRequest = {
     [<Required>] Name: string
     [<Required>] Description: string 
@@ -64,11 +65,20 @@ type SlideRecordRequest = {
     MountingMaterial: string
 }
 
+[<CLIMutable>]
 type SlideImageRequest = {
     [<Required>] CollectionId: System.Guid
     [<Required>] SlideId: string
-    [<Required>] ImageBase64: string
-    DigitisedYear: int
+    [<Required>] IsFocusImage: bool
+    [<Required>] FramesBase64: string list
+    FloatingCalPointOneX: Nullable<int>
+    FloatingCalPointOneY: Nullable<int>
+    FloatingCalPointTwoX: Nullable<int>
+    FloatingCalPointTwoY: Nullable<int>
+    MeasuredDistance: Nullable<float>
+    CalibrationId: System.Guid
+    Magnification: int
+    DigitisedYear: Nullable<int>
 }
 
 [<CLIMutable>]
