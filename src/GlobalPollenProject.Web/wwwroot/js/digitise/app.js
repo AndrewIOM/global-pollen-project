@@ -6,10 +6,11 @@
 ko.bindingHandlers.BSModal= {
     init: function (element, valueAccessor) {
         var value = valueAccessor();
-        $(element).modal({ keyboard: false, show: ko.unwrap(value) });;
+        $(element).modal({ keyboard: false, show: ko.unwrap(value) });
     },
     update: function (element, valueAccessor) {
          var value = valueAccessor();
+         console.log(value);
          ko.unwrap(value) ? $(element).modal('show') : $(element).modal('hide');
     }
 };
@@ -50,6 +51,8 @@ function DigitiseViewModel(users, analyses) {
             cache: false,
             success: function(serverCols)
             {
+                $("#collection-list").show();
+                $("#collection-loading-spinner").hide();
                 self.myCollections(serverCols);
             }
         });
@@ -63,6 +66,7 @@ function DigitiseViewModel(users, analyses) {
                 self.currentView(view);
                 break;
             case CurrentView.DETAIL:
+                console.log(data);
                 $.ajax({ url: apiPrefix + "collection?id=" + data.Id, type: "GET" })
                 .done(function (col) {
                     self.activeCollection(col);
@@ -106,6 +110,11 @@ function DigitiseViewModel(users, analyses) {
         .done(function (data) {
             self.switchView(CurrentView.DETAIL, self.activeCollection());
         })
+    }
+
+    self.setActiveCollectionTab = function(element) {
+        $(element).parent().find("li").removeClass("active");
+        $(element).addClass("active");
     }
 }
 

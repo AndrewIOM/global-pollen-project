@@ -1,13 +1,13 @@
 @* Slide Detail *@
 <div data-bind="BSModal: currentView() == CurrentView.SLIDE_DETAIL, if: currentView() == CurrentView.SLIDE_DETAIL" class="modal bd-example-modal-lg"
-    role="dialog" aria-hidden="true">
+    role="dialog" aria-hidden="true" data-keyboard="false" data-backdrop="static">
     <div data-bind="with: slideDetailVM" class="modal-dialog modal-lg">
         <div class="modal-content">
 
             <div class="modal-header">
                 <h5 class="modal-title" data-bind="text: 'Slide: ' + slideDetail().CollectionSlideId ">
                 </h5>
-                <button type="button" class="close" aria-label="Close">
+                <button type="button" class="close" aria-label="Close" >
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>

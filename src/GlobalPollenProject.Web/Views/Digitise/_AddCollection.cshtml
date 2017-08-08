@@ -1,10 +1,10 @@
 @* Start Collection Modal *@
-<div data-bind="BSModal: currentView() == CurrentView.ADD_COLLECTION, if: currentView() == CurrentView.ADD_COLLECTION" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
+<div data-bind="BSModal: currentView() == CurrentView.ADD_COLLECTION, if: currentView() == CurrentView.ADD_COLLECTION" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true" data-keyboard="false" data-backdrop="static">
     <div data-bind="with: newCollectionVM" class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title">Digitise a Collection</h5>
-                <button type="button" class="close" aria-label="Close">
+                <button type="button" class="close" aria-label="Close" data-bind="click: function() { $parent.switchView(CurrentView.MASTER); }">
           <span aria-hidden="true">&times;</span>
         </button>
             </div>
