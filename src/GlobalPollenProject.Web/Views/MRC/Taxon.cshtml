@@ -16,7 +16,7 @@
 @* Header *@
 @section headerSection {
     <header><div class="container">
-    <h1>@Model.LatinName</h1>
+    <h1>@Model.LatinName<small>@Model.Authorship</small></h1>
     <p>@Model.Rank</p>
     </div></header>
 }
@@ -32,12 +32,12 @@
                 <li class="breadcrumb-item active">@Model.LatinName</li>
             }
             @if (Model.Rank == "Genus") {
-                <li class="breadcrumb-item"><a>@Model.Family</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Family">@Model.Family</a></li>
                 <li class="breadcrumb-item active">@Model.LatinName</li>
             }
             @if (Model.Rank == "Species") {
-                <li class="breadcrumb-item"><a>@Model.Family</a></li>
-                <li class="breadcrumb-item"><a>@Model.Genus</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Family">@Model.Family</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Family/@Model.Genus">@Model.Genus</a></li>
                 <li class="breadcrumb-item active">@Model.LatinName</li>
             }
         </ol>
@@ -48,14 +48,21 @@
     <div class="col-md-6">
 
         <div class="panel panel-white">
-            <div class="panel-heading"><span class="glyphicon glyphicon-film"></span> Specimens</div>
+            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Specimens</div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-12">
                         <label>Digitised Reference Slides</label>
                         <ul class="grain-grid columns-8">
+                            @foreach (var slide in Model.Slides) {
                             <li>
+                                <a href="/Taxon/Slide/@slide.ColId/@slide.SlideId">
+                                    <div class="img-container">
+                                        <img src="@slide.Thumbnail"/>
+                                    </div>
+                                </a>
                             </li>
+                            }
                         </ul>
                         <hr />
                         <label>User Submissions</label>
@@ -71,7 +78,7 @@
     <div class="col-md-6">
 
         <div class="panel panel-black">
-            <div class="panel-heading"><span class="glyphicon glyphicon-globe"></span> 
+            <div class="panel-heading"><i class="fa fa-globe" aria-hidden="true"></i> 
                 Distribution
                 <div class="btn-group" data-toggle="buttons" style="float:right;">
                     <label class="btn btn-primary btn-sm active">
@@ -114,7 +121,7 @@
         </div>
 
         <div class="panel panel-white">
-            <div class="panel-heading"><span class="glyphicon glyphicon-book"></span> Definition <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://gbif.org/species/@gbifId" target="_blank">View at GBIF</a></div>
+            <div class="panel-heading"><i class="fa fa-book" aria-hidden="true"></i> Definition <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://gbif.org/species/@gbifId" target="_blank">View at GBIF</a></div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -123,6 +130,10 @@
                         <p><span id="description-source"></span> <br/> <span id="gbif-image-source"></span></p>
                     </div>
                 </div>
+                <dl class="row">
+                    <dt class="col-sm-3">GPP UUID</dt>
+                    <dd class="col-sm-9">@Model.Id</dd>
+                </dl>
                 <div class="row">
                     <div class="col-md-12">
                         <hr />
@@ -163,11 +174,11 @@
     @* Present Distribution Map *@
     <script type="text/javascript" src="~/lib/leaflet/dist/leaflet.js"></script>
     <script src="~/lib/nouislider/distribute/nouislider.min.js"></script>
-    <script src="~/js/taxon/PresentDistribution.js"></script>
+    <script src="~/js/links/gbif-map.js"></script>
 
     @* Past Distribution Map *@
     <script src="//d3js.org/d3.v3.min.js"></script>
     <script src="//d3js.org/topojson.v0.min.js"></script>
     <script src="~/lib/wnumb/wNumb.js"></script>
-    <script src="~/js/taxon/PastDistribution.js"></script>
+    <script src="~/js/links/neotoma-map.js"></script>
 }

@@ -227,14 +227,13 @@ module MasterReferenceCollection =
                         let updatedDetail = { d with Slides = slideSummaryRM :: d.Slides }
                         match summaryRM with 
                         | Ok s ->
-                            let updatedSummary = { s with SlideCount = s.SlideCount + 1 }
+                            let updatedSummary = { s with SlideCount = s.SlideCount + 1; ThumbnailUrl = slideSummaryRM.Thumbnail }
                             updateTaxon get set setSortedList (d.Id |> TaxonId) updatedSummary updatedDetail 
                         | Error e -> Error e
                     | Error e -> Error e
                 taxonId
                 |> bind (ensureCreatedRecursive get getSortedList set setSortedList)
-                |> bind (fun t -> 
-                    List.map (fun (s,d) -> update s d) |> Ok)
+                |> bind (fun tlist -> tlist |> List.map (fun (s,d) -> update s d) |> Ok )
             c.Slides 
             |> List.filter (fun s -> s.IsFullyDigitised)
             |> List.map processSlide

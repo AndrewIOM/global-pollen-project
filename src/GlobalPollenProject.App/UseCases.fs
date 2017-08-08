@@ -314,7 +314,8 @@ module Taxonomy =
         | Some g ->
             match species with
             | None -> sprintf "Taxon:%s:%s" family g
-            | Some s -> sprintf "Taxon:%s:%s:%s" family g s
+            | Some s -> 
+                sprintf "Taxon:%s:%s:%s %s" family g g s
 
     let getByName family genus species =
         let key = toNameSearchKey family genus species

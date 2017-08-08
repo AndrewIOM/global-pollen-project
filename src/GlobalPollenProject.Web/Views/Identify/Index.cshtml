@@ -1,29 +1,55 @@
 @model FSharpList<ReadModels.GrainSummary>
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Identify";
-    ViewData["Subtitle"] = "These pollen grains remain taxonomically unidentified. Can you help?";
+    ViewData["Title"] = "Identify Pollen Grains";
+    ViewData["Subtitle"] = "Pollen grains have been submitted, for which the botanical origin is not known. Can you help with a morphological identification?";
 }
 
+@* Header *@
 @section headerSection {
-    <header>
-        <div class="container">
-            <h2 id="about">@ViewData["Title"]</h2>
-            <p>@ViewData["Subtitle"]</p>
+    <header><div class="container">
+    <h1><i class="fa fa-question-circle" aria-hidden="true"></i> @ViewData["Title"]</h1>
+    <p>@ViewData["Subtitle"]</p>
+    </div></header>
+}
+
+@* Breadcrumb *@
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Pollen of Unknown Identity</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    @* Grain Grid *@
+    <div class="col-md-8">
+        @foreach (var grain in Model)
+        {
+            <p><a href="@Url.Action("Identify", "Grain", new {id = @grain.Id})">@grain.Thumbnail</a></p>
+        }
+    </div>
+    @* Filters *@
+    <div class="col-md-4">
+        <a class="btn btn-primary btn-lg btn-block" style="margin-bottom:1em;" href="/Identify/Upload"><i class="fa fa-plus-square" aria-hidden="true"></i> Submit a Grain</a>
+        <div class="card" style="margin-bottom:1em;">
+            <div class="card-block">
+                <h3 class="card-title">Sort</h3>
+                <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+            </div>
         </div>
-    </header>
-}
+        <div class="card">
+            <div class="card-block">
+                <h3 class="card-title">Spatial and temporal filters</h3>
+                <p class="card-text">With supporting text below as a natural lead-in to additional content.</p>
+                <a href="#" class="btn btn-primary">Go somewhere</a>
+            </div>
+        </div>
+    </div>
+</div>
 
-<h2>Unidentified Pollen Grains</h2>
-<hr/>
-
-@foreach (var grain in Model)
-{
-    <p><a href="@Url.Action("Identify", "Grain", new {id = @grain.Id})">@grain.Thumbnail</a></p>
-}
-
-<h4>Functions</h4>
-<a class="btn btn-default" href="/Identify/Upload">Submit a Grain</a>
 
 @section Scripts {
     <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.1/knockout-min.js"></script>

@@ -4,6 +4,17 @@
     background:url('/images/pollen-tiles.png');
 }
 
+// Typography
+.header-toggle {
+    font-size:2em;
+    line-height: 3em;
+    padding-right: 0.25em;
+}
+
+.header-toggle-active {
+    border-bottom: 0.1em solid $primary-color-accent;
+}
+
 //A: Home Page
 @keyframes scroll {
   100%{
@@ -59,7 +70,11 @@
 }
 
 h1 {
-    font-size: 3em;
+    font-size: 2em;
+}
+
+h4 {
+    font-size: 1.25em;
 }
 
 .home-tri-image {

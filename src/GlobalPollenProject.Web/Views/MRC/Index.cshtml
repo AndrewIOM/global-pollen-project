@@ -2,13 +2,14 @@
 
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Reference Collection";
+    ViewData["Title"] = "Master Reference Collection";
 }
 
 @* Header *@
 @section headerSection {
     <header><div class="container">
     <h1>@ViewData["Title"]</h1>
+    <p>The Global Pollen Project collates information from independent reference collections into this global reference collection. We use the Global Pollen Project's taxonomic backbone to define botanical names.</p>
     </div></header>
 }
 
@@ -16,18 +17,20 @@
 <div class="row">
     <div class="col-md-12">
         <ol class="breadcrumb">
-            <li><a href="/">Home</a></li>
-            <li>Pollen Reference Collection</li>
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Master Reference Collection</li>
         </ol>
     </div>
 </div>
 
-@* Key *@
-<p>
-    <strong>Key: </strong>
-    <span class="glyphicon glyphicon-user">  </span> = User Submissions with Confirmed Identity;
-    <span class="glyphicon glyphicon-globe">  </span> = Digitised Reference Slides;
-</p>
+@* Options *@
+<div class="row">
+    <div class="col-md-12">
+        <a class="header-toggle">Family</a>
+        <a class="header-toggle header-toggle-active">Genus</a>
+        <a class="header-toggle">Species</a>
+    </div>
+</div>
 
 @* Taxonomy Grid *@
 <div class="row">
@@ -46,8 +49,8 @@
                         <h3>@taxon.LatinName</h3>
                     </a>
                     <ul class="list-inline">
-                        <li><span class="glyphicon glyphicon-user"></span>  @taxon.GrainCount</li>
-                        <li><span class="glyphicon glyphicon-globe"></span> @taxon.SlideCount</li>
+                        <li class="list-inline-item"><i class="fa fa-object-ungroup" aria-hidden="true"></i>  @taxon.GrainCount</li>
+                        <li class="list-inline-item"><i class="fa fa-object-group" aria-hidden="true"></i> @taxon.SlideCount</li>
                     </ul>
                 </div>
             </div>

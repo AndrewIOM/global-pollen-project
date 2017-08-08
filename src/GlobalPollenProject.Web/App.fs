@@ -238,9 +238,9 @@ let webApp =
             POST >=> route  "/Login"            >=> loginHandler "/"
             POST >=> route  "/Register"         >=> registerHandler
             POST >=> route  "/Upload"           >=> grainUploadHandler
+            POST >=> route  "/Logout"           >=> signOff authScheme >=> redirectTo true "/"
             GET  >=> route  "/Register"         >=> renderView "Account/Register" None
             GET  >=> route  "/Login"            >=> renderView "Account/Login" None
-            GET  >=> route  "/Logout"           >=> signOff authScheme >=> redirectTo true "/"
         ]
 
     let masterReferenceCollection =
@@ -248,13 +248,13 @@ let webApp =
         choose [   
             route   ""                          >=> pagedTaxonomyHandler
             route   "/Slide"                    >=> renderView "MRC/Slide" None
-            routef  "/%s"                       (fun taxon -> taxonDetail taxon) 
+            routef  "/%s"                       taxonDetail
         ]
 
     let identify =
         GET >=>
         choose [
-            route   "/"                         >=> listGrains
+            route   ""                          >=> listGrains
             route   "/Upload"                   >=> renderView "Identify/Add" None
             route   "/%s"                       >=> renderView "NotFound" None
         ]
