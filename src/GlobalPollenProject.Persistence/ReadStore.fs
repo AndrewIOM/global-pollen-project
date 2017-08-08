@@ -207,8 +207,8 @@ module TaxonomicBackbone =
         | None -> "BackboneTaxon:Family:" + family
         | Some g ->
             match species with
-            | None -> "BackboneTaxon:Genus:" + family + ":" + g
-            | Some s -> "BackboneTaxon:Species:" + family + ":" + g + ":" + s
+            | None -> "BackboneTaxon:Genus:" + g
+            | Some s -> "BackboneTaxon:Species:" + s
 
     let private unwrapLatinName (LatinName n) = n
     let private taxonIdToGuid (TaxonId n) : Guid = n
@@ -234,9 +234,17 @@ module TaxonomicBackbone =
 
     let tryFindByLatinName family genus species getList getSingle deserialise =
         let tryFindId key = RepositoryBase.getListKey<Guid> All key getList deserialiseGuid
-        let tryFindReadModel (id:Guid list) = 
-            // TODO modify to handle multiple possible matches
-            RepositoryBase.getSingle<BackboneTaxon> (id.Head.ToString()) getSingle deserialise
+        let tryFindReadModel (ids:Guid list) = 
+            // Where there are multiple matches for a genus, return the accepted one...
+            match ids |> List.length with
+            | 1 -> RepositoryBase.getSingle<BackboneTaxon> (ids.Head.ToString()) getSingle deserialise
+            | id when ids.Length > 1 ->
+                let results = ids |> List.map (fun i -> RepositoryBase.getSingle<BackboneTaxon> (i.ToString()) getSingle deserialise)
+                let m = results |> List.tryFind(fun x -> match x with | Ok t -> t.TaxonomicStatus = "accepted" | Error e -> false)
+                match m with
+                | Some t -> t
+                | None -> Error "No accepted matches by latin name"
+            | _ -> Error "No matches by latin name"
         (family,genus,species)
         |> toNameSearchKey
         |> tryFindId

@@ -1,4 +1,4 @@
-@model Responses.PagedResult<ReadModels.TaxonSummary>
+@model FSharpList<ReadModels.TaxonSummary>
 
 @{
     Layout = "_Layout";
@@ -31,7 +31,7 @@
 
 @* Taxonomy Grid *@
 <div class="row">
-    @foreach (var taxon in Model.Items)
+    @foreach (var taxon in Model)
     {
         <div class="col-md-6">
             <div class="taxon-list-item">
@@ -42,7 +42,7 @@
                     }
                 </div>
                 <div class="taxon-details">
-                    <a href="/">
+                    <a href="/Taxon/@taxon.Family/@taxon.Genus">
                         <h3>@taxon.LatinName</h3>
                     </a>
                     <ul class="list-inline">

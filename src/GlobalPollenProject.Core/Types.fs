@@ -155,7 +155,7 @@ type LinkRequest = {Family:string;Genus:string option;Species:string option;Iden
 
 [<AutoOpen>]
 module ColVersion =
-    type ColVersion = private ColVersion of int
+    type ColVersion = ColVersion of int
     let initial =
         ColVersion 0 //Draft
     let unwrap (ColVersion u) = u

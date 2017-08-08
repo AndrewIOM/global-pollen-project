@@ -109,13 +109,17 @@ module Digitise =
         issueCommand <| CreateCollection { Id = newId; Name = request.Name; Owner = currentUser; Description = request.Description }
         Ok newId
 
+    let publish getCurrentUser colId =
+        let currentUser = UserId <| getCurrentUser()
+        let id = CollectionId colId
+        Publish id
+        |> issueCommand
+
     let addSlideRecord request = 
         request
         |> DtoToDomain.dtoToAddSlideCommand
         |> lift issueCommand
         |> toAppResult
-
-    
 
     let uploadSlideImage request = 
 
@@ -287,11 +291,38 @@ module Taxonomy =
 
     let list (request:PageRequest) =
         let req = Paged {ItemsPerPage = request.PageSize; Page = request.Page }
-        ReadStore.RepositoryBase.getAll<TaxonSummary> req readStoreGetList deserialise
+        let key = "TaxonSummary:Genus"
+        let unwrapJson (Json x) : Result<string,string> = x |> Ok
+        let namesOnPage = RepositoryBase.getListKey<string> req key readStoreGetSortedList unwrapJson
+        match namesOnPage with
+        | Error e -> Error e
+        | Ok names ->
+
+            let getSummary name =
+                RepositoryBase.getKey<Guid> ("Taxon:" + name) readStoreGet deserialise
+                |> bind (fun x -> RepositoryBase.getKey<TaxonSummary> ("TaxonSummary:" + (x.ToString())) readStoreGet deserialise)
+
+            names
+            |> List.map getSummary
+            |> List.choose ( fun x -> match x with | Ok r -> Some r | Error e -> None )
+            |> Ok
         |> toAppResult
 
+    let private toNameSearchKey family genus species =
+        match genus with
+        | None -> "Taxon:" + family
+        | Some g ->
+            match species with
+            | None -> sprintf "Taxon:%s:%s" family g
+            | Some s -> sprintf "Taxon:%s:%s:%s" family g s
+
     let getByName family genus species =
-        ReadStore.TaxonomicBackbone.tryFindByLatinName family genus species readStoreGetList readStoreGet deserialise
+        let key = toNameSearchKey family genus species
+        let taxonId = RepositoryBase.getKey<Guid> key readStoreGet deserialise
+        match taxonId with
+        | Ok i -> RepositoryBase.getKey<TaxonDetail> ("TaxonDetail:" + (i.ToString())) readStoreGet deserialise
+        | Error e -> Error e
+        |> toAppResult
 
 module Backbone =
 

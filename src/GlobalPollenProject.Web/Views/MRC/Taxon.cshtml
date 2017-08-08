@@ -1,8 +1,13 @@
-@model ReadModels.TaxonSummary
+@model ReadModels.TaxonDetail
 
 @{
+    Layout = "_Layout";
     ViewBag.Title = Model.LatinName + " (" + Model.Rank + ") - Reference Collection";
     ViewData["Description"] = "View reference images for " + Model.LatinName + " pollen, alongside botanical description and geographic range. Use our collections for your pollen identification today.";
+
+    // TODO
+    var neotomaId = 0;
+    var gbifId = 0;
 }
 
 <link rel="stylesheet" href="~/lib/nouislider/distribute/nouislider.min.css"> @* TODO Move this *@
@@ -21,9 +26,20 @@
 <div class="row">
     <div class="col-md-12">
         <ol class="breadcrumb">
-            <li><a asp-action="Index" asp-controller="Home">Home</a></li>
-            <li><a asp-action="Index">Pollen Reference Collection</a></li>
-            <li class="active">@Model.Id: @Model.LatinName</li>
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon">Master Reference Collection</a></li>
+            @if (Model.Rank == "Family") {
+                <li class="breadcrumb-item active">@Model.LatinName</li>
+            }
+            @if (Model.Rank == "Genus") {
+                <li class="breadcrumb-item"><a>@Model.Family</a></li>
+                <li class="breadcrumb-item active">@Model.LatinName</li>
+            }
+            @if (Model.Rank == "Species") {
+                <li class="breadcrumb-item"><a>@Model.Family</a></li>
+                <li class="breadcrumb-item"><a>@Model.Genus</a></li>
+                <li class="breadcrumb-item active">@Model.LatinName</li>
+            }
         </ol>
     </div>
 </div>
@@ -31,40 +47,20 @@
 <div class="row">
     <div class="col-md-6">
 
-        <div class="panel panel-blue">
-            <div class="panel-heading">Pollen Traits</div>
-            <div class="panel-body">
-                <div class="col-md-3">
-                    <span id="traits-size-mean"></span><span style="font-size:0.75em;line-height:1em;">Mean Maximum Diameter</span>
-                </div>
-                <div class="col-md-9" id="traits-size"></div>
-            </div>
-        </div>
-
         <div class="panel panel-white">
-            <div class="panel-heading"><span class="glyphicon glyphicon-film"></span> Grains</div>
+            <div class="panel-heading"><span class="glyphicon glyphicon-film"></span> Specimens</div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-12">
                         <label>Digitised Reference Slides</label>
-                        <ul class="grain-grid columns-8" data-bind="foreach: referenceSlides">
+                        <ul class="grain-grid columns-8">
                             <li>
-                                <a data-bind="attr: {href: '@Url.Action("Slide", "Reference")/' + $data.id}">
-                                    <div class="img-container">
-                                        <img data-bind="attr: { src: $data.images[0].thumbnailUrl }"/>
-                                    </div>
-                                </a>
                             </li>
                         </ul>
                         <hr />
                         <label>User Submissions</label>
-                        <ul class="grain-grid columns-8" data-bind="foreach: unknownGrains">
+                        <ul class="grain-grid columns-8">
                             <li>
-                                <a data-bind="attr: {href: '@Url.Action("Identify", "Grain")/' + $data.id}">
-                                    <div class="img-container">
-                                        <img data-bind="attr: { src: $data.thumbnailUri }"/>
-                                    </div>
-                                </a>
                             </li>
                         </ul>
                     </div>
@@ -89,8 +85,8 @@
                 </div>
             <div class="panel-body">
 
-                <input hidden="hidden" id="NeotomaId" value="@Model.NeotomaId" />
-                <input hidden="hidden" id="GbifId" value="@Model.GbifId" />
+                <input hidden="hidden" id="NeotomaId" value="@neotomaId" />
+                <input hidden="hidden" id="GbifId" value="@gbifId" />
 
                 <div class="row" id="warnings-container" style="display:none">
                     <div class="col-md-12">
@@ -118,7 +114,7 @@
         </div>
 
         <div class="panel panel-white">
-            <div class="panel-heading"><span class="glyphicon glyphicon-book"></span> Definition <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://gbif.org/species/@Model.GbifId" target="_blank">View at GBIF</a></div>
+            <div class="panel-heading"><span class="glyphicon glyphicon-book"></span> Definition <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://gbif.org/species/@gbifId" target="_blank">View at GBIF</a></div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -130,32 +126,19 @@
                 <div class="row">
                     <div class="col-md-12">
                         <hr />
-                        @if (Model.ParentTaxon != null)
+                        @if (Model.Children.Length > 0)
                         {
                             <dl class="dl-horizontal">
-                                @if (Model.Rank == Rank.Genus) {
-                                    <dt>Family</dt>
-                                } else {
-                                    <dt>Genus</dt>
-                                }
-                                <dd>
-                                    <ul class="list-inline"><li><a href="/Taxon/View/@Model.ParentTaxon.Id">@Model.ParentTaxon.LatinName</a></li></ul>
-                                </dd>
-                            </dl>
-                        }
-                        @if (Model.SubTaxa.Count > 0)
-                        {
-                            <dl class="dl-horizontal">
-                                @if (Model.Rank == Rank.Family) {
+                                @if (Model.Rank == "Family") {
                                     <dt>Genera</dt>
                                 } else {
                                     <dt>Species</dt>
                                 }
                                 <dd>
                                     <ul class="list-inline">
-                                        @foreach (var subTaxon in Model.SubTaxa.OrderBy(m => m.LatinName))
+                                        @foreach (var subTaxon in Model.Children.OrderBy(m => m.Name))
                                         {
-                                            <li><a href="/Taxon/View/@subTaxon.Id">@subTaxon.LatinName</a></li>
+                                            <li><a href="/Taxon/Id/@subTaxon.Id">@subTaxon.Name</a></li>
                                         }
                                     </ul>
                                 </dd>
@@ -169,8 +152,7 @@
         <div class="panel panel-green" data-bind="with: taxonomicStatus">
             <div class="panel-heading">Taxonomic Status <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName" target="_blank">View on The Plant List</a></div>
             <div class="panel-body">
-                <span style="font-size: 2em;display: block;" data-bind="text: $data.status">Loading...</span>
-                <p data-bind="text: $data.reference"></p>
+                <span style="font-size: 2em;display: block;">Confirmed</span>
             </div>
         </div>
 
@@ -188,123 +170,4 @@
     <script src="//d3js.org/topojson.v0.min.js"></script>
     <script src="~/lib/wnumb/wNumb.js"></script>
     <script src="~/js/taxon/PastDistribution.js"></script>
-
-    @* Knockout View Model *@
-    <script src="~/lib/knockout/dist/knockout.js"></script>
-    <script src="/js/taxon/taxonview.js"></script>
-    <script type="text/javascript">
-    $(document).ready(function() {
-        var vm = new TaxonViewModel(@Model.Id, '@Model.Family', '@Model.Genus', '@Model.Species');
-        vm.loadData();
-        ko.applyBindings(vm);
-    });
-    </script>
-
-    @* Pollen Traits *@
-    <script type="text/javascript">
-        $(document).ready(function() {
-
-            var container = $('#traits-size');
-            var mean = $('#traits-size-mean');
-
-            d3.json("/api/v1/Trait/Size?taxonId=@Model.Id", function (error, result) {
-                var values = result.measurements;
-                if (values.length == 0) {
-                mean.text('Unknown');
-                } else {
-                mean.text(d3.round(d3.mean(values), 0) + 'μm');
-
-                var margin = {top: 20, right: 20, bottom: 30, left: 40},
-                formatCount = d3.format(",.0f");
-
-var margin = {top: 20, right: 30, bottom: 30, left: 30},
-                    width = container.width() - margin.left - margin.right,
-                    height = 50;
-
-var max = d3.max(values);
-var min = d3.min(values);
-var x = d3.scale.linear()
-      .domain([0, 120])
-      .range([0, width]);
-
-var data = d3.layout.histogram().bins(x.ticks(12))(values);
-console.log(data);
-
-
-                var yMax = d3.max(data, function(d){return d.length});
-                var yMin = d3.min(data, function(d){return d.length});
-                var colorScale = d3.scale.linear()
-                            .domain([yMin, yMax])
-                            .range([d3.rgb(color).brighter(), d3.rgb(color).darker()]);
-
-                var y = d3.scale.linear()
-                    .domain([0, yMax])
-                    .range([height, 0]);
-
-                var xAxis = d3.svg.axis()
-                    .scale(x)
-                    .orient("bottom");
-
-                var xAxis = d3.svg.axis()
-                    .scale(x)
-                    .orient("bottom");
-
-                var svg = d3.select("#traits-size").append("svg")
-                    .attr("width", width + margin.left + margin.right)
-                    .attr("height", height + margin.top + margin.bottom)
-                .append("g")
-                    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
-
-var bar = svg.selectAll(".bar")
-    .data(data)
-  .enter().append("g")
-    .attr("class", "bar")
-    .attr("transform", function(d) { return "translate(" + x(d.x) + "," + y(d.y) + ")"; });
-
-bar.append("rect")
-    .attr("x", 1)
-    .attr("width", (x(data[0].dx) - x(0)) - 1)
-    .attr("height", function(d) { return height - y(d.y); })
-    .attr("fill", function(d) { return colorScale(d.y) });
-
-bar.append("text")
-    .attr("dy", ".75em")
-    .attr("y", -12)
-    .attr("x", (x(data[0].dx) - x(0)) / 2)
-    .attr("text-anchor", "middle")
-    .text(function(d) { return formatCount(d.y); });
-
-svg.append("g")
-    .attr("class", "x axis")
-    .attr("transform", "translate(0," + height + ")")
-    .call(xAxis);
 }
-            });
-        });
-    </script>
-}
-
-<style>
-.bar rect {
-  shape-rendering: crispEdges;
-  fill:white;
-}
-
-.bar text {
-  font: 10px sans-serif;
-  fill: white;
-}
-
-.axis path, .axis line {
-  fill: none;
-  stroke: white;
-  shape-rendering: crispEdges;
-  font: 10px sans-serif;
-}
-
-.axis text {
-    fill: white;
-    font-size: 0.75em;
-}
-
-</style>

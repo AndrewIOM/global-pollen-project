@@ -127,8 +127,15 @@ let registerHandler (ctx:HttpContext) =
             return! renderView "Account/Register" model ctx
     }
 
-let taxonDetail family genus species ctx =
-    Taxonomy.getByName family genus species
+let taxonDetail (taxon:string) ctx =
+    let (f,g,s) =
+        let split = taxon.Split '/'
+        match split.Length with
+        | 1 -> split.[0],None,None
+        | 2 -> split.[0],Some split.[1],None
+        | 3 -> split.[0],Some split.[1],Some split.[2]
+        | _ -> "",None,None
+    Taxonomy.getByName f g s
     |> toViewResult "MRC/Taxon" ctx
 
 let pagedTaxonomyHandler ctx =
@@ -145,6 +152,11 @@ let startCollectionHandler (ctx:HttpContext) =
     |> validateModel
     |> Result.bind (Digitise.startNewCollection (currentUserId ctx))
     |> toApiResult ctx
+
+let publishCollectionHandler (ctx:HttpContext) =
+    let id = ctx.BindQueryString<IdQuery>().Id
+    Digitise.publish (currentUserId ctx) id
+    text "Ok" ctx
 
 let addSlideHandler (ctx:HttpContext) =
     ctx.BindJson<SlideRecordRequest>()
@@ -213,6 +225,7 @@ let webApp =
             route   "/collection"               >=> getCollectionHandler
             route   "/collection/list"          >=> listCollectionsHandler
             route   "/collection/start"         >=> startCollectionHandler
+            route   "/collection/publish"       >=> publishCollectionHandler
             route   "/collection/slide/add"     >=> addSlideHandler
             route   "/collection/slide/addimage">=> addImageHandler
             route   "/calibration/list"         >=> getCalibrationsHandler
@@ -235,9 +248,7 @@ let webApp =
         choose [   
             route   ""                          >=> pagedTaxonomyHandler
             route   "/Slide"                    >=> renderView "MRC/Slide" None
-            routef  "/%s/%s/%s"                 (fun (family,genus,species) -> taxonDetail family genus species)
-            routef  "/%s/%s"                    (fun (family,genus) -> taxonDetail family genus None)
-            routef  "/%s"                       (fun family -> taxonDetail family None None) 
+            routef  "/%s"                       (fun taxon -> taxonDetail taxon) 
         ]
 
     let identify =

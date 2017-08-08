@@ -54,6 +54,8 @@ and SlideState = {
     Images: Image list
 }
 
+let getSlideId (SlideId (c,x)) = x
+
 let create (command:CreateCollection) state =
     [DigitisationStarted {Id = command.Id; Name = command.Name; Owner = command.Owner; Description = command.Description }]
 
@@ -95,8 +97,14 @@ let uploadImage (command:UploadSlideImage) state =
     match state with
     | Initial -> invalidOp "This collection does not exist"
     | Draft c -> 
-        // TODO issue slide fully digitised event if required
-        [SlideImageUploaded (command.Id, command.Image)]
+        // If taxon id and image, fully digitised
+        let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId command.Id)
+        match slide with
+        | None -> invalidOp "Slide does not exist"
+        | Some s ->
+            // TODO assess taxonomic status and images together to determine if fully digitised
+            [SlideImageUploaded (command.Id, command.Image);
+             SlideFullyDigitised command.Id]
  
 let handle deps = 
     function
@@ -104,8 +112,6 @@ let handle deps =
     | Publish c -> publish deps.GetTime c
     | AddSlide c -> addSlide c deps.CalculateIdentity
     | UploadSlideImage c -> uploadImage c
-
-let getSlideId (SlideId (c,x)) = x
 
 type State with
     static member Evolve state = function

@@ -38,7 +38,7 @@ let route
     >>= feed ReferenceCollectionReadOnly.handle
     >>= feed Slide.handle
     >>= feed (Grain.handle set)
-    >>= MasterReferenceCollection.handle set
+    >>= MasterReferenceCollection.handle get getSortedList set setSortedList
 
 
 type Message = 

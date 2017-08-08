@@ -1,9 +1,14 @@
 @{
     ViewData["Title"] = "Error";
+    Layout = "_Layout";
 }
 
-<h1 class="text-danger">Error.</h1>
-<h2 class="text-danger">An error occurred while processing your request.</h2>
+@* Header *@
+@section headerSection {
+    <header><div class="container">
+    <h3>We encountered a problem processing your request</h3>
+    </div></header>
+}
 
 <h3>Development Mode</h3>
 <p>

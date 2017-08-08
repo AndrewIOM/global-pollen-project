@@ -24,7 +24,8 @@ type SlideImage = {
 
 [<CLIMutable>]
 type SlideSummary = {
-    Id:         Guid
+    ColId:      Guid
+    SlideId:    string
     LatinName:  string
     Rank:       string
     Thumbnail:  string
@@ -54,6 +55,7 @@ type TaxonSummary = {
 type Node = {
     Id:         Guid
     Name:       string
+    Rank:       string
 }
 
 [<CLIMutable>]
@@ -101,6 +103,7 @@ type SlideDetail = {
     CurrentGenus:       string
     CurrentSpecies:     string
     CurrentSpAuth:      string
+    Rank:               string
     IsFullyDigitised:   bool
     Images:             List<SlideImage>
 }
