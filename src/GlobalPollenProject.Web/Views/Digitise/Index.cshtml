@@ -64,8 +64,11 @@
                         <button data-bind="click: function() { switchView(CurrentView.ADD_SLIDE_RECORD, $data) }" class="btn btn-primary" id="collection-add-slide-button">Add new Slide</button>
                     </div>
                 </div>
+                <button data-bind="click: function() { switchView(CurrentView.ADD_SLIDE_RECORD, $data) }" class="btn btn-primary">Add new Slide</button>
+                <button data-bind="click: publish" class="btn btn-primary">Request Publication</button>
+                <p data-bind="text: activeCollection().Description"></p>
 
-                <table class="table" id="collection-slide-table">
+                <table class="table">
                     <thead>
                         <tr>
                             <th>ID</th>

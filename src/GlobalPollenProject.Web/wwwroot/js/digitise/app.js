@@ -116,6 +116,14 @@ function DigitiseViewModel(users, analyses) {
         $(element).parent().find("li").removeClass("active");
         $(element).addClass("active");
     }
+
+    self.publish = function() {
+        let requestUrl = "/api/v1/digitise/collection/publish?id=" + self.activeCollection().Id;
+        $.ajax({ url: requestUrl, type: "GET" })
+        .done(function (data) {
+            alert("Published??");
+        })
+    }
 }
 
 ////////////////////////
@@ -560,10 +568,10 @@ function CalibrationImage() {
         }
     }
 
-    self.getPointOneX = function() { return self.line.attr('x1') }
-    self.getPointOneY = function() { return self.line.attr('y1') }
-    self.getPointTwoX = function() { return self.line.attr('x2') }
-    self.getPointTwoY = function() { return self.line.attr('y2') }
+    self.getPointOneX = function() { return Math.round(self.line.attr('x1')) }
+    self.getPointOneY = function() { return Math.round(self.line.attr('y1')) }
+    self.getPointTwoX = function() { return Math.round(self.line.attr('x2')) }
+    self.getPointTwoY = function() { return Math.round(self.line.attr('y2')) }
 
     self.getBase64 = function() {
         return self.base64;
