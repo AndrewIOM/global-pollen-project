@@ -35,7 +35,7 @@ let route
     >>= feed (Digitisation.handle get getList set setList)
     >>= feed (Calibration.handle get getList set setList)
     >>= feed UserProfile.handle
-    >>= feed ReferenceCollectionReadOnly.handle
+    >>= feed (ReferenceCollectionReadOnly.handle get set setList)
     >>= feed Slide.handle
     >>= feed (Grain.handle set)
     >>= MasterReferenceCollection.handle get getSortedList set setSortedList

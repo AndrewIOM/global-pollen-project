@@ -1,0 +1,24 @@
+@model ReadModels.ReferenceCollectionDetail
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.Name;
+}
+
+@* Header *@
+@section headerSection {
+    <header><div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>Digitised and undigitised reference material from individual collections and institutions.</p>
+    </div></header>
+}
+
+@* Breadcrumb *@
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Individual Reference Collections</li>
+        </ol>
+    </div>
+</div>

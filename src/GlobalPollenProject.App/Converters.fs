@@ -16,6 +16,7 @@ module DomainToDto =
     let unwrapId (TaxonId id) = id
     let unwrapEph (SpecificEphitet e) = e
     let unwrapAuthor (Scientific a) = a
+    let unwrapColVer (ColVersion a) = a
 
     let image getMag (domainImage:Image) : SlideImage =
         match domainImage with

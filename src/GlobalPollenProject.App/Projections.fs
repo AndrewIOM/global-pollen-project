@@ -221,6 +221,11 @@ module MasterReferenceCollection =
                     Rank        = slide.Rank
                     Thumbnail   = getThumbnail slide
                 }
+
+                // Publish slide read model for detail pages
+                let slidePublishedId = sprintf "%s:%s" (slide.CollectionId.ToString()) slide.CollectionSlideId
+                RepositoryBase.setSingle slidePublishedId slide set serialise |> ignore
+
                 let update (summaryRM:Result<TaxonSummary,string>) (detailRM:Result<TaxonDetail,string>) =
                     match detailRM with
                     | Ok d ->
@@ -397,13 +402,39 @@ module TaxonomicBackbone =
 
 module ReferenceCollectionReadOnly =
 
-    let publishCollection = Ok()
+    let published get set setList (colId:CollectionId) time version =
+        let id : Guid = colId |> Converters.DomainToDto.unwrapRefId
+        let col = RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
+        match col with
+        | Ok c ->
+            let summary = {
+                Id              = c.Id
+                Name            = c.Name
+                Description     = c.Description
+                SlideCount      = c.SlideCount
+                Published       = time
+                Version         = Converters.DomainToDto.unwrapColVer version
+            }
+            let detail = {
+                Id              = c.Id
+                Name            = c.Name
+                Description     = c.Description
+                Published       = time
+                Version         = Converters.DomainToDto.unwrapColVer version
+                Slides          = c.Slides
+                Contributors    = []
+            }
+            RepositoryBase.setSingle (id.ToString()) summary set serialise |> ignore
+            RepositoryBase.setSingle (id.ToString()) detail set serialise |> ignore
+            RepositoryBase.setListItem (id.ToString()) "ReferenceCollectionSummary:index" setList |> ignore
+            Ok()
+        | Error e -> Error e
 
-    let handle (e:string*obj) =
+    let handle get set setList (e:string*obj) =
         match snd e with
         | :? ReferenceCollection.Event as e ->
             match e with
-            | ReferenceCollection.Event.CollectionPublished (id,time,version) -> publishCollection
+            | ReferenceCollection.Event.CollectionPublished (id,time,version) -> published get set setList id time version
             | _ -> Ok()
         | _ -> Ok()
 

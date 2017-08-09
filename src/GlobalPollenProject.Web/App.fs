@@ -56,6 +56,9 @@ let toViewResult view ctx result =
     | Ok model -> ctx |> renderView view model
     | Error e -> ctx |> (clearResponse >=> setStatusCode 500 >=> renderView "Error" None)
 
+let notFoundResult ctx =
+    ctx |> (clearResponse >=> setStatusCode 400 >=> renderView "NotFound" None)
+
 let toApiResult ctx result =
     match result with
     | Ok list -> json list ctx
@@ -127,6 +130,15 @@ let registerHandler (ctx:HttpContext) =
             return! renderView "Account/Register" model ctx
     }
 
+let slideViewHandler (id:string) ctx =
+    let split = id.Split '/'
+    match split.Length with
+    | 2 -> 
+        let col,slide = split.[0],split.[1]
+        Taxonomy.getSlide col slide
+        |> toViewResult "MRC/Slide" ctx
+    | _ -> notFoundResult ctx
+
 let taxonDetail (taxon:string) ctx =
     let (f,g,s) =
         let split = taxon.Split '/'
@@ -137,6 +149,14 @@ let taxonDetail (taxon:string) ctx =
         | _ -> "",None,None
     Taxonomy.getByName f g s
     |> toViewResult "MRC/Taxon" ctx
+
+let individualCollectionIndex ctx =
+    IndividualReference.list {Page = 1; PageSize = 20}
+    |> toViewResult "Reference/Index" ctx
+
+let individualCollection (colId:string) ctx =
+    IndividualReference.getDetail colId
+    |> toViewResult "Reference/View" ctx
 
 let pagedTaxonomyHandler ctx =
     Taxonomy.list {Page = 1; PageSize = 20}
@@ -247,8 +267,15 @@ let webApp =
         GET >=> 
         choose [   
             route   ""                          >=> pagedTaxonomyHandler
-            route   "/Slide"                    >=> renderView "MRC/Slide" None
+            routef  "/Slide/%s"                 slideViewHandler
             routef  "/%s"                       taxonDetail
+        ]
+
+    let individualRefCollections =
+        GET >=>
+        choose [
+            route ""                            >=> individualCollectionIndex
+            routef "/%s"                        individualCollection
         ]
 
     let identify =
@@ -265,6 +292,7 @@ let webApp =
         subRoute    "/api/v1/digitise"          digitiseApi
         subRoute    "/Account"                  accountManagement
         subRoute    "/Taxon"                    masterReferenceCollection
+        subRoute    "/Reference"                individualRefCollections
         subRoute    "/Identify"                 identify
         GET >=> 
         choose [

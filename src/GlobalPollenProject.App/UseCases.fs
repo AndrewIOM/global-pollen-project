@@ -68,6 +68,12 @@ eventStore.Value.SaveEvent
 |> Observable.subscribe projectionHandler
 |> ignore
 
+let private deserialiseGuid json =
+    let unwrap (ReadStore.Json j) = j
+    let s = (unwrap json).Replace("\"", "")
+    match Guid.TryParse(s) with
+    | true,g -> Ok g
+    | false,g -> Error <| "Guid was not in correct format"
 
 
 // App Core Dependencies
@@ -164,14 +170,7 @@ module Digitise =
 
     let listCollections () = 
         ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> All readStoreGetList deserialise
-    
-    let private deserialiseGuid json =
-        let unwrap (ReadStore.Json j) = j
-        let s = (unwrap json).Replace("\"", "")
-        match Guid.TryParse(s) with
-        | true,g -> Ok g
-        | false,g -> Error <| "Guid was not in correct format"
-
+   
     let myCollections getCurrentUser = 
         let userId = getCurrentUser()
         let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("CollectionAccessList:" + (userId.ToString())) readStoreGetList deserialiseGuid
@@ -324,6 +323,29 @@ module Taxonomy =
         | Ok i -> RepositoryBase.getKey<TaxonDetail> ("TaxonDetail:" + (i.ToString())) readStoreGet deserialise
         | Error e -> Error e
         |> toAppResult
+
+    let getSlide colId slideId =
+        let key = sprintf "SlideDetail:%s:%s" colId slideId
+        RepositoryBase.getKey<SlideDetail> key readStoreGet deserialise
+        |> toAppResult
+
+module IndividualReference =
+
+    let list (request:PageRequest) =
+        let cols = RepositoryBase.getListKey<Guid> All "ReferenceCollectionSummary:index" readStoreGetList deserialiseGuid
+        match cols with
+        | Error e -> Error Persistence
+        | Ok clist -> 
+            let getCol id = ReadStore.RepositoryBase.getSingle<ReferenceCollectionSummary> (id.ToString()) readStoreGet deserialise
+            clist 
+            |> List.map getCol 
+            |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
+            |> Ok
+
+    let getDetail id =
+        RepositoryBase.getSingle<ReferenceCollectionDetail> id readStoreGet deserialise
+        |> toAppResult
+
 
 module Backbone =
 
