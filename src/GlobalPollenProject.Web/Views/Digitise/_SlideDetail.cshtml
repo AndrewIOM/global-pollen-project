@@ -7,44 +7,108 @@
             <div class="modal-header">
                 <h5 class="modal-title" data-bind="text: 'Slide: ' + slideDetail().CollectionSlideId ">
                 </h5>
-                <button type="button" class="close" aria-label="Close" >
+                <button type="button" class="close" aria-label="Close" data-bind="click: function() { $parent.switchView(CurrentView.MASTER); }">
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
 
-            <span class="label label-awaiting">Awaiting Digitisation</span>
-
             <div class="modal-body">
-
-                <ul data-bind="foreach: validationErrors">
-                    <li data-bind="text: $data"></li>
+                <ul class="nav nav-tabs">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bind="click: function() { currentTab(SlideDetailTab.OVERVIEW) }, css: { active: currentTab() == SlideDetailTab.OVERVIEW }">
+                            Overview
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bind="click: function() { currentTab(SlideDetailTab.UPLOAD_STATIC) }, css: { active: currentTab() == SlideDetailTab.UPLOAD_STATIC }">
+                            Upload static image
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-bind="click: function() { currentTab(SlideDetailTab.UPLOAD_FOCUSABLE) }, css: { active: currentTab() == SlideDetailTab.UPLOAD_FOCUSABLE }">
+                            Upload focusable image
+                        </a>
+                    </li>
                 </ul>
 
-                <p>
-                    The original reference slide has the taxonomic identification:
-                    <span data-bind="text: slideDetail().FamilyOriginal"></span>
-                    <span data-bind="text: slideDetail().GenusOriginal"></span>
-                    <span data-bind="text: slideDetail().SpeciesOriginal"></span>
-                </p>
+                <div id="slidedetail-overview-tab" data-bind="visible: currentTab() == SlideDetailTab.OVERVIEW">
+                    <p>
+                        The original reference slide has the taxonomic identification:
+                        <span data-bind="text: slideDetail().FamilyOriginal"></span>
+                        <span data-bind="text: slideDetail().GenusOriginal"></span>
+                        <span data-bind="text: slideDetail().SpeciesOriginal"></span>
+                    </p>
+                    <p>
+                        The most current taxonomic name for this taxon is: <span data-bind="text: slideDetail().CurrentFamily + ' ' + slideDetail().CurrentGenus + ' ' + slideDetail().CurrentSpecies + ' ' + slideDetail().CurrentSpAuth"></span>                    
+                    </p>
+                </div>
 
-                <p>The most current taxonomic name for this taxon is: <span data-bind="text: slideDetail().CurrentFamily + ' ' + slideDetail().CurrentGenus + ' ' + slideDetail().CurrentSpecies + ' ' + slideDetail().CurrentSpAuth"></span>                    </p>
+                <div id="slidedetail-static-tab" data-bind="visible: currentTab() == SlideDetailTab.UPLOAD_STATIC">
+                    <ul data-bind="foreach: validationErrors">
+                        <li data-bind="text: $data"></li>
+                    </ul>
 
-                <h5>Images</h5>
-                <hr/>
-                <p>Upload a focusable image? <input type="checkbox" data-bind="checked: isFocusImage" /></p>
+                    <h5>Upload a static image</h5>
+                    <p>A static image uses a floating calibration to discren size within the image. You must complete the calibration step for every image.</p>
+                    <input type="file" class="upload btn" data-bind="event: { change: function() { createStaticImageViewer($element); } }" />
+                    <div id="static-image-previewer">
 
-                <div class="form-group row">
-                    <label for="digitisedYear" class="col-sm-2 col-form-label">Year Image Taken</label>
-                    <div class="col-sm-10">
-                        <input data-bind="value: digitisedYear" id="digitisedYear" class="form-control" />
-                        <small class="help">In which calendar year was this image taken?</small>
+                    </div>
+                    
+                    <div class="card" id="slidedetail-measurement-section" data-bind="visible: loadedImage">
+                        <div class="card-block">
+                            <div class="form-group row">
+                                <div class="col-sm-3">
+                                    <button data-bind="click: function() { activateMeasuringLine(); }" type="button" class="btn btn-primary">Measure Line</button>        
+                                </div>
+                                <label for="measuredDistance" class="col-sm-3 col-form-label">Measured Distance</label>
+                                <div class="col-sm-6">
+                                    <input data-bind="value: measuredDistance" id="measuredDistance" class="form-control" />
+                                    <small class="help">Enter the length of your measurement line in micrometres (um)</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" id="slidedetail-year-section" data-bind="visible: loadedImage">
+                        <div class="card-block">
+                            <div class="form-group row">
+                                <label for="digitisedYear" class="col-sm-2 col-form-label">Year Image Taken</label>
+                                <div class="col-sm-10">
+                                    <input data-bind="value: digitisedYear" id="digitisedYear" class="form-control" />
+                                    <small class="help">In which calendar year was this image taken?</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card" data-bind="visible: loadedImage">
+                        <div class="card-block">
+                            <div class="row">
+                                <div class="col-sm-9 progress" id="slidedetail-static-upload-progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="slidedetail-static-upload-progressbar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%"></div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <button data-bind="click: function() { submit($root, false); }" type="button" class="btn btn-primary" data-bind="active: loadedImage">Upload Image</button>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <div data-bind="visible: isFocusImage">
-                    <h5>Upload a focusable image</h5>
-                    @* Calibration selection *@
+                <div id="slidedetail-focusable-tab" data-bind="visible: currentTab() == SlideDetailTab.UPLOAD_FOCUSABLE">
+                    <ul data-bind="foreach: validationErrors">
+                        <li data-bind="text: $data"></li>
+                    </ul>
                     <div class="form-group row">
+                        <label for="digitisedYear" class="col-sm-2 col-form-label">Year Image Taken</label>
+                        <div class="col-sm-10">
+                            <input data-bind="value: digitisedYear" id="digitisedYear" class="form-control" />
+                            <small class="help">In which calendar year was this image taken?</small>
+                        </div>
+                    </div>
+                    <h5>Upload a focusable image</h5>
+
+                    @* Calibration selection *@
+                    <div data-bind="visible: calibrations().length > 0" class="form-group row">
                         <label class="col-sm-2 col-form-label"></label>
                         <div class="col-sm-5">
                             <select data-bind="foreach: calibrations" class="form-control input-sm inline-dropdown">
@@ -60,50 +124,19 @@
                             </select>
                         </div>
                     </div>
+                    <div data-bind="visible: calibrations().length == 0" class="form-group row">
+                        <p>You must set up your microscope calibration before you can upload focus images. <a href="" data-bind="click: function() { $parent.switchView(CurrentView.CALIBRATE); }">Go there now.</a></p>
+                    </div>
                     @* Image Upload and Preview *@
                     <input type="file" multiple="multiple" class="upload" data-bind="event: { change: function() { imageSelected($element, 'image-previewer'); } } "/>
                     <div id="image-previewer" style="width:500px"></div>
-                </div>
 
-                <div data-bind="visible: !isFocusImage()">
-                    <h5>Upload a static image</h5>
-                    <p>A static image uses a floating calibration to discren size within the image. You must complete the calibration step for every image.</p>
-                    <input type="file" class="upload" data-bind="event: { change: function() { viewer.changeImage($element) } }" />
-                    <div id="static-image-previewer"></div>
-
-                    <div class="form-group row">
-                        <label for="measuredDistance" class="col-sm-2 col-form-label">Measured Distance</label>
-                        <div class="col-sm-10">
-                            <input data-bind="value: measuredDistance" id="measuredDistance" class="form-control" />
-                            <small class="help">Enter the length of your measurement line in micrometres (um)</small>
-                        </div>
+                    <button data-bind="click: function() { submit($root, true); }" type="button" class="btn btn-primary">Upload Image</button>
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%"></div>
                     </div>
-
                 </div>
             </div>
-
-            <div class="modal-footer">
-                <button data-bind="click: function() { submit($root); }" type="button" class="btn btn-primary">Upload Image</button>
-            </div>
-
         </div>
     </div>
 </div>
-
-<style>
-    .label-awaiting,
-    .label-digitised {
-        color: #fff;
-        text-align: center;
-        height: 2em;
-        line-height: 2em;
-    }
-
-    .label-awaiting {
-        background-color: #ff8c00;
-    }
-
-    .label-digitised {
-        background-color: #006400;
-    }
-</style>

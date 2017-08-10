@@ -21,6 +21,7 @@
     <script src="/js/viewer/viewer.js"></script>
     <script src="/js/viewer/scalebar.js"></script>
     <script src="/js/viewer/focusslider.js"></script>
+    <script src="/js/viewer/measuringline.js"></script>
     <script src="/js/digitise/app.js"></script>
 }
 
@@ -57,16 +58,26 @@
             </div>
             <div class="card-block">
                 <div class="card-title row">
-                    <div class="col-md-9">
+                    <div class="col-md-5">
                         <p data-bind="text: activeCollection().Description"></p>
                     </div>
-                    <div class="col-md-3">
-                        <button data-bind="click: function() { switchView(CurrentView.ADD_SLIDE_RECORD, $data) }" class="btn btn-primary" id="collection-add-slide-button">Add new Slide</button>
+                    <div class="col-md-7">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <button data-bind="click: function() { switchView(CurrentView.ADD_SLIDE_RECORD, $data) }" class="btn btn-primary" id="collection-add-slide-button">
+                                    <i class="fa fa-plus-square" aria-hidden="true"></i>
+                                    Add new Slide
+                                </button>
+                            </div>
+                            <div class="col-md-7">
+                                <button data-bind="click: publish" class="btn btn-primary" id="collection-publish-button">
+                                    <i class="fa fa-beer" aria-hidden="true"></i>
+                                    Request Publication
+                                </button>  
+                            </div>
+                        </div>
                     </div>
-                </div>
-                <button data-bind="click: function() { switchView(CurrentView.ADD_SLIDE_RECORD, $data) }" class="btn btn-primary">Add new Slide</button>
-                <button data-bind="click: publish" class="btn btn-primary">Request Publication</button>
-                <p data-bind="text: activeCollection().Description"></p>
+                </div>              
 
                 <table class="table">
                     <thead>
@@ -89,7 +100,7 @@
                             <td data-bind="text: $data.CurrentFamily + ' ' + $data.CurrentGenus + ' ' + $data.CurrentSpecies + ' ' + $data.CurrentSpAuth"></td>
                             <td data-bind="text: $data.Images.length"></td>
                             <td><button data-bind="click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }"
-                                    class="btn btn-default">Upload Image</button></td>
+                                    class="btn btn-default collection-slide-upload-image-button">Upload Image</button></td>
                         </tr>
                     </tbody>
                 </table>

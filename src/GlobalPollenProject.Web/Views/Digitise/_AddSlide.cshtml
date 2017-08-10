@@ -1,5 +1,6 @@
 @* Add Slide Modal *@
-<div data-bind="BSModal: currentView() == CurrentView.ADD_SLIDE_RECORD, if: currentView() == CurrentView.ADD_SLIDE_RECORD" class="modal bd-example-modal-lg" role="dialog" aria-hidden="true">
+<div data-bind="BSModal: currentView() == CurrentView.ADD_SLIDE_RECORD, if: currentView() == CurrentView.ADD_SLIDE_RECORD" class="modal bd-example-modal-lg" role="dialog" 
+    aria-hidden="true" data-keyboard="false" data-backdrop="static">
     <div data-bind="with: newSlideVM" class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -26,12 +27,12 @@
                 <p>Please enter the original taxonomic identity given to the slide.</p>
                 <div class="row">
                     <div class="col-sm-3">
-                        <input data-bind="value: family" type="text" id="original-Family" class="form-control" autocomplete="off" placeholder="Family (optional)"
+                        <input data-bind="value: family, event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Family" class="form-control" autocomplete="off" placeholder="Family"
                             onblur="disable('Family');" onkeyup="suggest(this, 'Family');" />
                         <div class="dropdown-menu" id="FamilyList" style="display:none"></div>
                     </div>
                     <div class="col-sm-3">
-                        <input data-bind="value: genus, enable: rank() != 'Family'" type="text" id="original-Genus" class="form-control" autocomplete="off"
+                        <input data-bind="value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Genus" class="form-control" autocomplete="off"
                             placeholder="Genus" onblur="disable('Genus');" onkeyup="suggest(this, 'Genus');" />
                         <div class="dropdown-menu" id="GenusList" style="display:none"></div>
                     </div>
@@ -40,7 +41,7 @@
                             placeholder="Species" onblur="disable('Species');" onkeyup="suggest(this, 'Species');" />
                         <div class="dropdown-menu" id="SpeciesList" style="display:none"></div>
                     </div>
-                    <div class="col-sm-3"><input data-bind="value: author, disable: rank() != 'Species'" type="text" class="form-control" autocomplete="off"
+                    <div class="col-sm-3"><input data-bind="value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }" type="text" class="form-control" autocomplete="off"
                             placeholder="Auth." /></div>
                 </div>
                 <small id="taxon-help" class="form-text text-muted">This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically.</small>

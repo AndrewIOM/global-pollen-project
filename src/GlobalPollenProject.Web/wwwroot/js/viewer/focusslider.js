@@ -2,14 +2,15 @@
  * Add-on for a slide viewer - adds a slider to the right hand side, 
  * which calls the "setFocusLevel" function of the viewer, to flick between
  * focus levels
- * @param {Viewer} viewer the Viewer object to attach the slider to
+ * @param {Viewer} viewer   the Viewer object to attach the slider to
+ * @param {String} sliderId the desired slider object id
  */
-function FocusSlider(viewer) {
+function FocusSlider(viewer, sliderId) {
     var self = this;
 
     self.viewer = viewer;
 
-    self.id = "#viewer-focusslider";
+    self.id = sliderId;
     self.scale = null;
 
     // initialise after the images are loaded
