@@ -61,11 +61,7 @@ module Statistics =
     // Statistic:BackboneTaxa:Total
 
     // Should have a statistic for each taxonomic group (family, genus) - current/total
-
-    // let init get set =
-    //     RepositoryBase.
-
-    let x = 2.
+    let x = 2
 
 module MasterReferenceCollection =
 
@@ -402,6 +398,9 @@ module TaxonomicBackbone =
 
 module ReferenceCollectionReadOnly =
 
+    // ReferenceCollectionSummary:{Guid}            : ReferenceCollectionSummary
+    // ReferenceCollectionDetail:{Guid}:V{Version}  : ReferenceCollectionDetail
+
     let published get set setList (colId:CollectionId) time version =
         let id : Guid = colId |> Converters.DomainToDto.unwrapRefId
         let col = RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
@@ -415,17 +414,18 @@ module ReferenceCollectionReadOnly =
                 Published       = time
                 Version         = Converters.DomainToDto.unwrapColVer version
             }
+            let v = Converters.DomainToDto.unwrapColVer version
             let detail = {
                 Id              = c.Id
                 Name            = c.Name
                 Description     = c.Description
                 Published       = time
-                Version         = Converters.DomainToDto.unwrapColVer version
+                Version         = v
                 Slides          = c.Slides
                 Contributors    = []
             }
             RepositoryBase.setSingle (id.ToString()) summary set serialise |> ignore
-            RepositoryBase.setSingle (id.ToString()) detail set serialise |> ignore
+            RepositoryBase.setKey detail (sprintf "ReferenceCollectionDetail:%s:V%i" (id.ToString()) v) set serialise |> ignore
             RepositoryBase.setListItem (id.ToString()) "ReferenceCollectionSummary:index" setList |> ignore
             Ok()
         | Error e -> Error e
@@ -517,7 +517,10 @@ module Digitisation =
                 let getMag a = None //TODO enable fetching of magnification calibrations
                 let imageDto = Converters.DomainToDto.image getMag image
                 let updatedSlide = { s with Images = imageDto :: s.Images }
-                let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+                let updatedSlides = 
+                    c.Slides 
+                    |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+                    |> List.sortBy (fun s -> s.CollectionSlideId)
                 let updatedCol = { c with Slides = updatedSlides }
                 RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise
 

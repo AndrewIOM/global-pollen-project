@@ -154,8 +154,8 @@ let individualCollectionIndex ctx =
     IndividualReference.list {Page = 1; PageSize = 20}
     |> toViewResult "Reference/Index" ctx
 
-let individualCollection (colId:string) ctx =
-    IndividualReference.getDetail colId
+let individualCollection (colId:string) version ctx =
+    IndividualReference.getDetail colId version
     |> toViewResult "Reference/View" ctx
 
 let pagedTaxonomyHandler ctx =
@@ -275,7 +275,7 @@ let webApp =
         GET >=>
         choose [
             route ""                            >=> individualCollectionIndex
-            routef "/%s"                        individualCollection
+            routef "/%s/%i"                     (fun (id,v) -> individualCollection id v)
         ]
 
     let identify =

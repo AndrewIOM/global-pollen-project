@@ -164,7 +164,7 @@ module Digitise =
         let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId) //TODO proper validation
         imageForUploadOrError
         |> lift saveImage
-        |> lift (fun saved -> UploadSlideImage { Id = slideId; Image = saved })
+        |> lift (fun saved -> UploadSlideImage { Id = slideId; Image = saved; DateTaken = DateTime.Now }) //TODO parse year from request
         |> lift issueCommand
         
 
@@ -342,8 +342,9 @@ module IndividualReference =
             |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
             |> Ok
 
-    let getDetail id =
-        RepositoryBase.getSingle<ReferenceCollectionDetail> id readStoreGet deserialise
+    let getDetail id version =
+        let key = sprintf "ReferenceCollectionDetail:%s:V%i" id version
+        RepositoryBase.getKey<ReferenceCollectionDetail> key readStoreGet deserialise
         |> toAppResult
 
 

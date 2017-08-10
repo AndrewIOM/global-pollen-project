@@ -21,6 +21,34 @@ let id = Botanical (TaxonId (Guid.NewGuid()), Book "Fake book")
 let place = Country "Nigeria"
 let age = CollectionDate 1987<CalYr>
 
+let slideRequest = {
+    Collection          = collection
+    Taxon               = id
+    OriginalFamily      = "Compositae"
+    OriginalGenus       = "Aster"
+    OriginalSpecies     = "communis"
+    OriginalAuthor      = "L."
+    ExistingId          = None
+    Place               = None
+    Time                = None
+    PrepMethod          = None
+    PrepDate            = None
+    Mounting            = None }
+
+let slideRecorded = {
+    Id                  = SlideId (collection,"GPP1")
+    Taxon               = id
+    OriginalFamily      = "Compositae"
+    OriginalGenus       = "Aster"
+    OriginalSpecies     = "communis"
+    OriginalAuthor      = "L."
+    Place               = None
+    Time                = None
+    PrepMethod          = None
+    PrepDate            = None
+    Mounting            = None }
+
+
 module ``When digitising reference material`` =
 
     [<Fact>]
@@ -38,15 +66,28 @@ module ``When digitising reference material`` =
     [<Fact>]
     let ``A collection with slides can be published`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
-                SlideRecorded {Id               = SlideId (collection, "GPP1")
-                               OriginalFamily   = ""
-                               OriginalGenus    = ""
-                               OriginalSpecies  = ""
-                               Taxon            = id }]
+                SlideRecorded slideRecorded ]
         |> When (Publish collection)
         |> Expect [ CollectionPublished (collection,domainDefaultDeps.GetTime(),ColVersion.initial |> ColVersion.increment) ]
 
-    
+    [<Fact>]
+    let ``A collection with no changes since the last publication cannot be published again`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                CollectionPublished (collection, domainDefaultDeps.GetTime(), ColVersion 1) ]
+        |> When (Publish collection)
+        |> ExpectInvalidOp
+
+    [<Fact>]
+    let ``A collection with changes since the last publication is published with incremented version number`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                CollectionPublished (collection, domainDefaultDeps.GetTime(), ColVersion 1) 
+                SlideRecorded { slideRecorded with Id = SlideId (collection,"GPP2") } ]
+        |> When (Publish collection)
+        |> Expect [ CollectionPublished (collection,domainDefaultDeps.GetTime(),ColVersion 2) ]
+
+
 module ``When uploading a slide`` =
 
     let image = Url.create "https://sometesturl"
@@ -56,20 +97,29 @@ module ``When uploading a slide`` =
     [<Fact>]
     let ``A slide is added to the reference collection`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Some test"} ]
-        |> When (AddSlide { Collection         = collection
-                            ExistingId         = None
-                            Taxon              = id
-                            Place              = Some place
-                            OriginalFamily     = ""
-                            OriginalGenus      = ""
-                            OriginalSpecies    = ""
-                            OriginalAuthor     = ""
-                            Time               = Some age })
-        |> Expect [ SlideRecorded {Id               = SlideId (collection, "GPP1")
-                                   OriginalFamily   = ""
-                                   OriginalGenus    = ""
-                                   OriginalSpecies  = ""
-                                   Taxon            = id }]
+        |> When (AddSlide slideRequest)
+        |> Expect [ SlideRecorded slideRecorded]
+
+    [<Fact>]
+    let ``Slide ID is incremented from zero`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Some test"}
+                SlideRecorded slideRecorded ]
+        |> When (AddSlide slideRequest)
+        |> Expect [ SlideRecorded {slideRecorded with Id = SlideId (collection,"GPP2")} ]
+
+    [<Fact>]
+    let ``The given slide ID is incremented from the last GPP# ID when not specified`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Some test"}
+                SlideRecorded {slideRecorded with Id = SlideId (collection,"CUST01")} ]
+        |> When (AddSlide slideRequest)
+        |> Expect [ SlideRecorded {slideRecorded with Id = SlideId (collection,"GPP1")} ]
+
+    [<Fact>]
+    let ``Slide IDs must be unique`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Some test"}
+                SlideRecorded slideRecorded ]
+        |> When (AddSlide {slideRequest with ExistingId = Some "GPP1"} )
+        |> ExpectInvalidOp
 
     // [<Fact>]
     // let ``Focus images can be uploaded after calibration`` () =

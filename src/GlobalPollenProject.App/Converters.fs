@@ -75,7 +75,7 @@ module DtoToDomain =
         match String.IsNullOrEmpty country with
         | false ->
             match String.IsNullOrEmpty region with
-            | false -> Some (Region (region,country)) |> Ok
+            | false -> Some (PlaceName ("","",region,country)) |> Ok
             | true -> Some (Country country) |> Ok
         | true -> None |> Ok
 
@@ -99,6 +99,9 @@ module DtoToDomain =
             OriginalSpecies = s
             OriginalAuthor = auth
             Time = age
+            PrepMethod = None
+            PrepDate = None
+            Mounting = None
         }
 
     let dtoToGrain (grainId:Result<GrainId,string>) (userId:Result<UserId,string>) (dto:AddUnknownGrainRequest) =
