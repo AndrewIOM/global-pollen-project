@@ -95,6 +95,7 @@ type GrainDetail = {
 type SlideDetail = {
     CollectionId:       Guid
     CollectionSlideId:  string
+    Thumbnail:          string
     FamilyOriginal:     string
     GenusOriginal:      string
     SpeciesOriginal:    string

@@ -90,7 +90,7 @@ module ``When digitising reference material`` =
 
 module ``When uploading a slide`` =
 
-    let image = Url.create "https://sometesturl"
+    let image = RelativeUrl "image.png"
     let focusImage = FocusImage ([image; image; image; image; image],Fixed 2.3<um>,(MagnificationId (CalibrationId Guid.Empty,100)))
     let singleImage = SingleImage (image, {Point1 = 2,3; Point2 = 5,8; MeasuredDistance = 4.<um>})
 

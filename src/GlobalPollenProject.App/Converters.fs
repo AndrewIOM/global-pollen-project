@@ -22,7 +22,7 @@ module DomainToDto =
         match domainImage with
         | SingleImage (i,cal) ->
             { Id = 0
-              Frames = [i |> Url.unwrap]
+              Frames = [i |> Url.unwrapRelative]
               PixelWidth = 2. }
         | FocusImage (urls,stepping,calId) ->
             let magnification = getMag calId
@@ -30,7 +30,7 @@ module DomainToDto =
             | None -> invalidOp "DTO validation failed"
             | Some (mag:Magnification) ->
                 { Id = 0
-                  Frames = urls |> List.map Url.unwrap
+                  Frames = urls |> List.map Url.unwrapRelative
                   PixelWidth = mag.PixelWidth }
 
 module DtoToDomain =

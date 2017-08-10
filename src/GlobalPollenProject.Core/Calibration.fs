@@ -15,7 +15,7 @@ and UseMicroscope = {
 }
 
 and ImageCalibration = {
-    Image:          Url
+    Image:          RelativeUrl
     StartPoint:     int * int
     EndPoint:       int * int
     MeasureLength:  float<um>
@@ -25,7 +25,7 @@ type Event =
 | SetupMicroscope of SetupMicroscope
 | CalibratedMag of CalibratedMag
 and SetupMicroscope = { Id: CalibrationId; User: UserId; Microscope: Microscope; FriendlyName: Label }
-and CalibratedMag = { Id: CalibrationId; Magnification: Magnification; Image: Url; PixelWidth: float<um> }
+and CalibratedMag = { Id: CalibrationId; Magnification: Magnification; Image: RelativeUrl; PixelWidth: float<um> }
 
 type State =
 | Initial
@@ -40,7 +40,7 @@ and CalState = {
 }
 
 and ImageState = {
-    Image: Url
+    Image: RelativeUrl
     // Height: int<pixels>
     // Width: int<pixels>
     ImageScaleFactor: float<um>

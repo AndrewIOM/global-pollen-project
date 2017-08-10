@@ -6,6 +6,7 @@ open Microsoft.WindowsAzure.Storage.Blob
 open System.IO
 open System
 open GlobalPollenProject.Core.DomainTypes
+open GlobalPollenProject.Core.Composition
 
 let calcScale maxDimension height width =
     let scale = 
@@ -15,51 +16,88 @@ let calcScale maxDimension height width =
     match scale with
     | 0.
     | 1. -> 1.
+    | i when i > 1. -> 1.
     | _ -> scale
 
 let base64ToByte base64 =
     let unwrap (Base64Image i) = i
-    let unwrapped = (unwrap base64).Replace("data:image/png;base64,", "")
-    Convert.FromBase64String(unwrapped)
+    match unwrap base64 with
+    | Prefix "data:image/png;base64," b64 -> Convert.FromBase64String b64 |> Ok
+    | _ -> Error "Base 64 was not a PNG image. Only PNGs are supported"
 
-let upload (blob:CloudBlockBlob) memoryStream = async {
-    //let! exists = blob.ExistsAsync() |> Async.AwaitIAsyncResult
-    //if exists then invalidOp "Blob already exists" 
-    let! worked = blob.UploadFromStreamAsync(memoryStream) |> Async.AwaitIAsyncResult
-    if not worked then invalidOp "Aah"
-    return Url.create blob.Uri.AbsoluteUri
-}
+let uploadFromStream (blob:CloudBlockBlob) stream = async {
+    let! success = blob.UploadFromStreamAsync(stream) |> Async.AwaitIAsyncResult
+    match success with
+    | true -> return Url.create blob.Uri.AbsoluteUri |> Ok
+    | false -> return "The image did not successfully upload to Azure" |> Error }
 
-let uploadImage (container:CloudBlobContainer) fileName (stream:Stream) = 
-    use image = ImageSharp.Image.Load<Rgba32>(stream)
-    let resizeRatio = calcScale 1600. (float image.Height) (float image.Width)
-    let mutable memoryStream = new MemoryStream()
-    image.MetaData.VerticalResolution <- 300.
-    let memoryStream = new MemoryStream ()
-    let h = (float image.Height) * resizeRatio
-    let w = (float image.Width) * resizeRatio
-    image.Resize(int h,int w).SaveAsPng(memoryStream) |> ignore
-    memoryStream.Position <- int64(0)
-    let blob = container.GetBlockBlobReference(fileName)
-    upload blob memoryStream
-
-let container connectionString name : CloudBlobContainer =
+let getContainer connectionString name =
     let storageAccount = CloudStorageAccount.Parse connectionString
     let blobClient = storageAccount.CreateCloudBlobClient ()
     let container = blobClient.GetContainerReference name
     if (container.CreateIfNotExistsAsync() |> Async.AwaitIAsyncResult |> Async.RunSynchronously) 
-    then () //container.SetPermissionsAsync(BlobContainerPermissions (PublicAccess = Blob }) |> Async.AwaitTask
+    then ()//container.SetPermissionsAsync(BlobContainerPermissions (PublicAccess = Blob })) |> Async.AwaitTask
     container
 
-let uploadToAzure conName connString nameGenerator image =
+let getBlob (container:CloudBlobContainer) fileName = 
+    container.GetBlockBlobReference(fileName)
+
+let scaleImage maxDimension maxDpi (stream:Stream) =
+    use image = ImageSharp.Image.Load<Rgba32>(stream)
+    let resizeRatio = calcScale maxDimension (float image.Height) (float image.Width)
+    let mutable memoryStream = new MemoryStream()
+    //image.MetaData.VerticalResolution <- maxDpi
+    let memoryStream = new MemoryStream ()
+    let h = (float image.Height) * resizeRatio
+    let w = (float image.Width) * resizeRatio
+    image.Resize(int w,int h).SaveAsPng(memoryStream) |> ignore
+    memoryStream.Position <- int64(0)
+    memoryStream
+
+let uploadToAzure' blobRef baseUrl base64 =
+    base64ToByte base64
+    |> lift (fun x -> new MemoryStream(x))
+    |> lift (scaleImage 1600. 150.)
+    |> bind (fun x -> uploadFromStream blobRef x |> Async.RunSynchronously)
+    |> bind (Url.createRelative baseUrl)
+
+let uploadToAzure baseUrl conName connString generateName (image:ImageForUpload) =
+    let container = getContainer connString conName
+    let blobRef = 
+        (generateName() + ".png")
+        |> getBlob container
     match image with
-    | ImageForUpload.Single (i,cal) -> 
-        use s = new MemoryStream(base64ToByte i)
-        let url = uploadImage (container connString conName) (nameGenerator() + ".png") s |> Async.RunSynchronously
-        SingleImage (url,cal)
-    | Focus (stack,s,c) ->
-        let urls = 
-            stack 
-            |> List.map (fun x -> use s = new MemoryStream(base64ToByte x)
-                                  uploadImage (container connString conName) (nameGenerator() + ".png") s |> Async.RunSynchronously)
-        FocusImage (urls,s,c)
+    | ImageForUpload.Single (i,floatingCal) ->
+        uploadToAzure' blobRef baseUrl i
+        |> lift (fun url -> SingleImage (url,floatingCal))
+    | ImageForUpload.Focus (b64s,stepping,magId) ->
+        let frames = b64s |> List.length
+        let imgs =
+            b64s
+            |> List.map (uploadToAzure' blobRef baseUrl)
+            |> List.choose (fun x -> match x with | Ok o -> Some o | Error e -> None )
+        match imgs.Length with
+        | i when i = frames -> Image.FocusImage (imgs,stepping,magId) |> Ok
+        | _ -> "Couldn't upload image - not all frames were succesfully saved" |> Error
+
+let toThumbnailName (name:string) =
+    name.Replace(".png","_thumb.png")
+
+let toBlobName containerName (relative:string) =
+    relative.Replace("/" + containerName + "/", "")
+
+let generateThumbnail baseUrl conName connString (fullSizeFile:RelativeUrl) =
+    let container = getContainer connString conName
+    let fullSizeBlobRef = fullSizeFile |> Url.unwrapRelative |> toBlobName conName |> getBlob container
+    let exists = fullSizeBlobRef.ExistsAsync() |> Async.AwaitTask |> Async.RunSynchronously
+    match exists with
+    | false -> "The specified file does not exist in Azure: " + fullSizeBlobRef.Name |> Error
+    | true ->
+        use memoryStream = new MemoryStream()
+        fullSizeBlobRef.DownloadToStreamAsync(memoryStream) |> Async.AwaitTask |> Async.RunSynchronously
+        memoryStream.Position <- int64(0)
+        let thumbBlob = fullSizeFile |> Url.unwrapRelative |> toBlobName conName |> toThumbnailName |> getBlob container
+        memoryStream
+        |> scaleImage 200. 72.
+        |> uploadFromStream thumbBlob
+        |> Async.RunSynchronously

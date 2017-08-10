@@ -22,7 +22,9 @@ type GetCurrentUser = unit -> Guid
 let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build()
 
 // Image Store
-let saveImage = AzureImageStore.uploadToAzure "development" appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
+let saveImage = AzureImageStore.uploadToAzure appSettings.["imagestore:baseurl"] appSettings.["imagestore:container"] appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
+let generateThumbnail = AzureImageStore.generateThumbnail appSettings.["imagestore:baseurl"] appSettings.["imagestore:containerthumbnail"] appSettings.["imagestore:azureconnectionstring"]
+let toAbsoluteUrl = Url.relativeToAbsolute appSettings.["imagestore:baseurl"]
 
 // Write (Event) Store
 let eventStore = lazy(
@@ -56,7 +58,7 @@ let serialise s =
     | Error e -> Error e
 
 let projectionHandler e =
-    let router = ProjectionHandler.route readStoreGet readStoreGetList readStoreGetSortedList redisSet redisSetList redisSetSortedList
+    let router = ProjectionHandler.route readStoreGet readStoreGetList readStoreGetSortedList redisSet redisSetList redisSetSortedList generateThumbnail toAbsoluteUrl
     let getEventCount = eventStore.Value.Checkpoint
     let result = (ProjectionHandler.readModelAgent router readStoreGet redisSet getEventCount).PostAndReply(fun rc -> e, rc)
     match result with 
@@ -99,6 +101,10 @@ let toAppResult domainResult =
     | Ok r -> Ok r
     | Error str -> Error Core
 
+let toPersistenceError domainResult =
+    match domainResult with
+    | Ok r -> Ok r
+    | Error str -> Error ServiceError.Persistence
 
 module Digitise =
 
@@ -163,10 +169,10 @@ module Digitise =
 
         let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId) //TODO proper validation
         imageForUploadOrError
-        |> lift saveImage
+        |> bind (saveImage >> toPersistenceError)
         |> lift (fun saved -> UploadSlideImage { Id = slideId; Image = saved; DateTaken = DateTime.Now }) //TODO parse year from request
         |> lift issueCommand
-        
+
 
     let listCollections () = 
         ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> All readStoreGetList deserialise
@@ -225,19 +231,27 @@ module Calibrations =
         |> Ok
 
     let calibrateMagnification (req:CalibrateRequest) =
+        let getUrl img =
+            match img with
+            | SingleImage (u,cal) -> Ok u
+            | FocusImage _ -> Error "Cannot use focus images"
         let floatingCalibration = {
             Point1 = req.X1,req.Y1
             Point2 = req.X2,req.Y2
             MeasuredDistance = req.MeasuredLength * 1.<um>
         }
-        let img = ImageForUpload.Single ((Base64Image req.ImageBase64),floatingCalibration)
-        let savedImg = img |> saveImage
-        let url = match savedImg with
-                  | SingleImage (u,cal) -> u
-                  | FocusImage _ -> invalidOp "Error handle"
         let id = req.CalibrationId |> CalibrationId
-        let cmd = Calibrate (id,400<timesMagnified>, { Image = url ; StartPoint = floatingCalibration.Point1; EndPoint = floatingCalibration.Point2; MeasureLength = floatingCalibration.MeasuredDistance })
-        issueCommand cmd
+        let generateCommand url =
+            Calibrate (id,400<timesMagnified>, { Image = url ; 
+                                                 StartPoint = floatingCalibration.Point1; 
+                                                 EndPoint = floatingCalibration.Point2; 
+                                                 MeasureLength = floatingCalibration.MeasuredDistance })
+
+        ImageForUpload.Single ((Base64Image req.ImageBase64),floatingCalibration)
+        |> saveImage
+        |> bind getUrl
+        |> lift generateCommand
+        |> lift issueCommand
         |> Ok
 
 

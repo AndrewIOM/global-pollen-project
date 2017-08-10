@@ -26,9 +26,18 @@ type MagnificationId = MagnificationId of CalibrationId * int
 [<AutoOpen>]
 module Url =
     type Url = Url of string //TODO cannot make private due to Newtonsoft limitation
+    type RelativeUrl = RelativeUrl of string
+    let unwrap (Url u) = u
+    let unwrapRelative (RelativeUrl u) = u
     let create surl =
         Url surl
-    let unwrap (Url u) = u
+    let createRelative baseUrl (absoluteUrl:Url) =
+        match absoluteUrl |> unwrap with
+        | Prefix baseUrl rest -> rest |> RelativeUrl |> Ok
+        | _ -> Error "The base URL did not match the absolute URL"
+    let relativeToAbsolute baseUrl (relativeUrl:RelativeUrl) =
+        let unwrap (RelativeUrl u) = u
+        baseUrl + (relativeUrl |> unwrap) |> Url
 
 // Images
 [<Measure>] type um
@@ -38,8 +47,8 @@ type ImageForUpload =
     | Focus of Base64Image list * Stepping * MagnificationId
     | Single of Base64Image * FloatingCalibration
 and Image = 
-    | FocusImage of Url list * Stepping * MagnificationId
-    | SingleImage of Url * FloatingCalibration
+    | FocusImage of RelativeUrl list * Stepping * MagnificationId
+    | SingleImage of RelativeUrl * FloatingCalibration
 
 and Stepping =
 | Fixed of float<um>

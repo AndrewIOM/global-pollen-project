@@ -206,16 +206,12 @@ module MasterReferenceCollection =
                     | "Genus" -> s.CurrentGenus
                     | "Species" -> s.CurrentSpecies
                     | _ -> ""
-                let getThumbnail (s:SlideDetail) =
-                    if s.Images.Length > 0
-                    then if s.Images.Head.Frames.Length > 0 then s.Images.Head.Frames.Head else ""
-                    else ""
                 let slideSummaryRM = {
                     ColId       = slide.CollectionId
                     SlideId     = slide.CollectionSlideId
                     LatinName   = getLatinName slide
                     Rank        = slide.Rank
-                    Thumbnail   = getThumbnail slide
+                    Thumbnail   = slide.Thumbnail
                 }
 
                 // Publish slide read model for detail pages
@@ -260,19 +256,26 @@ module Grain =
 
     open GlobalPollenProject.Core.Aggregates.Grain
 
-    let submit setReadModel (e:GrainSubmitted) =
+    let submit setReadModel generateThumbnail (e:GrainSubmitted) =
         let thumbUrl = 
-            match e.Images.Head with
-            | SingleImage (x,cal) -> x
-            | FocusImage (u,s,c) -> u.Head
+            let result = 
+                match e.Images.Head with
+                | SingleImage (relUrl,cal) -> generateThumbnail relUrl
+                | FocusImage (frames,s,c) ->
+                    match frames |> List.length with
+                    | i when i > 0 -> generateThumbnail frames.[i / 2]
+                    | _ -> invalidOp "Empty focus image"
+            match result with
+            | Ok u -> u |> Url.unwrap
+            | Error e -> ""
 
         let summary = { 
             Id = Converters.DomainToDto.unwrapGrainId e.Id 
-            Thumbnail = Url.unwrap thumbUrl }
+            Thumbnail = thumbUrl }
 
         let detail = {
             Id = Converters.DomainToDto.unwrapGrainId e.Id
-            Images = [ { Url = "https://acm.im/cool.png" } ]
+            Images = [ ]
             FocusImages = []
             Identifications = []
             ConfirmedFamily = ""
@@ -296,11 +299,11 @@ module Grain =
         // | -> ()
         ()
 
-    let handle set (e:string*obj) =
+    let handle set generateThumb (e:string*obj) =
         match snd e with
         | :? Grain.Event as e ->
             match e with
-            | Grain.Event.GrainSubmitted e -> submit set e
+            | Grain.Event.GrainSubmitted e -> submit set generateThumb e
             | Grain.Event.GrainIdentified e -> invalidOp "Cool"
             | Grain.Event.GrainIdentityChanged e -> invalidOp "Help"
             | Grain.Event.GrainIdentityConfirmed e -> invalidOp "Help"
@@ -501,10 +504,11 @@ module Digitisation =
                 CurrentSpecies = ""
                 CurrentSpAuth = ""
                 IsFullyDigitised = false
+                Thumbnail = ""
                 Images = [] }
             RepositoryBase.setSingle (colId.ToString()) { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
 
-    let imageUploaded getKey setKey id image =
+    let imageUploaded getKey setKey generateThumbnail id image =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
         let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
         match col with
@@ -514,9 +518,20 @@ module Digitisation =
             match slide with
             | None -> readModelErrorHandler()
             | Some s ->
+                let thumbnailUrl = 
+                    let result = 
+                        match image with
+                        | SingleImage (relUrl,cal) -> generateThumbnail relUrl
+                        | FocusImage (frames,s,c) ->
+                            match frames |> List.length with
+                            | i when i > 0 -> generateThumbnail frames.[i / 2]
+                            | _ -> invalidOp "Empty focus image"
+                    match result with
+                    | Ok u -> u |> Url.unwrap
+                    | Error e -> ""
                 let getMag a = None //TODO enable fetching of magnification calibrations
                 let imageDto = Converters.DomainToDto.image getMag image
-                let updatedSlide = { s with Images = imageDto :: s.Images }
+                let updatedSlide = { s with Images = imageDto :: s.Images; Thumbnail = thumbnailUrl }
                 let updatedSlides = 
                     c.Slides 
                     |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
@@ -567,13 +582,13 @@ module Digitisation =
         | Ok c -> 
             RepositoryBase.setSingle (colId.ToString()) { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time } setKey serialise
 
-    let handle get getSortedList set setList (e:string*obj) =
+    let handle get getSortedList set setList generateThumb (e:string*obj) =
         match snd e with
         | :? ReferenceCollection.Event as e ->
             match e with
             | ReferenceCollection.Event.DigitisationStarted e -> started set setList e
             | ReferenceCollection.Event.SlideRecorded e -> recordSlide get set e
-            | ReferenceCollection.Event.SlideImageUploaded (s,i) -> imageUploaded get set s i
+            | ReferenceCollection.Event.SlideImageUploaded (s,i) -> imageUploaded get set generateThumb s i
             | ReferenceCollection.Event.SlideFullyDigitised e -> digitised get set e
             | ReferenceCollection.Event.SlideGainedIdentity (s,t) -> gainedIdentity get set s t
             | ReferenceCollection.Event.CollectionPublished (id,d,v) -> published get set id d v
@@ -614,7 +629,7 @@ module Calibration =
         | Ok c ->
             let newMag = {
                 Level = e.Magnification |> removeUnitInt
-                Image = e.Image |> Url.unwrap
+                Image = e.Image |> Url.unwrapRelative
                 PixelWidth = e.PixelWidth |> removeUnitFloat
             }
             RepositoryBase.setSingle (calId.ToString()) { c with Magnifications = newMag :: c.Magnifications } set serialise
