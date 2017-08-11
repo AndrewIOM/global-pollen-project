@@ -1,0 +1,48 @@
+@model FSharpList<ReadModels.ReferenceCollectionSummary>
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Individual Reference Collections";
+}
+
+@* Header *@
+@section headerSection {
+    <header><div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>Digitised and undigitised reference material from individual collections and institutions.</p>
+    </div></header>
+}
+
+@* Breadcrumb *@
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item">Individual Reference Collections</li>
+        </ol>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-9">
+        <ul>
+        @foreach (var col in Model) {
+            <li>
+                <a href="/Reference/@col.Id/@col.Version" class="display-4">@col.Name<small> Version @col.Version</small></a>
+                <span>Number of Slides: @col.SlideCount</span><span>Published @col.Published</span>
+                <p>@col.Description</p>
+            </li>
+        }
+        </ul>
+    </div>
+    <div class="col-md-3">
+        <div class="card">
+            <div class="card-block">
+                <p class="card-text">
+                    Pollen reference material is commonly organised in phyiscal reference collections, of drawers of individual glass slides. 
+                    We hold records of such collections, important information about their manufacture, and whether they have been digitised into the Global Pollen Project.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>

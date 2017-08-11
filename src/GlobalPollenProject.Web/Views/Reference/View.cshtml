@@ -1,0 +1,47 @@
+@model ReadModels.ReferenceCollectionDetail
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.Name;
+}
+
+@* Header *@
+@section headerSection {
+    <header><div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>Digitised and undigitised reference material from individual collections and institutions.</p>
+    </div></header>
+}
+
+@* Breadcrumb *@
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/Reference">Individual Reference Collections</a></li>
+            <li class="breadcrumb-item active">@Model.Name</li>
+        </ol>
+    </div>
+</div>
+
+@* Slide Table *@
+<table class="table">
+  <thead class="thead-default">
+    <tr>
+      <th>#</th>
+      <th>Original Taxon</th>
+      <th>Current Taxon</th>
+      <th>Digitised?</th>
+    </tr>
+  </thead>
+  <tbody>
+      @foreach (var slide in Model.Slides) {
+        <tr>
+            <th scope="row">@slide.CollectionSlideId</th>
+            <td>@slide.FamilyOriginal > @slide.GenusOriginal > @slide.SpeciesOriginal</td>
+            <td><a href="/Taxon/@slide.CurrentFamily">@slide.CurrentFamily</a> > <a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus">@slide.CurrentGenus</a> > <a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus/@slide.CurrentSpecies">@slide.CurrentSpecies @slide.CurrentSpAuth</a></td>
+            <td>@slide.IsFullyDigitised</td>
+        </tr>
+      }
+  </tbody>
+</table>

@@ -95,6 +95,7 @@ type GrainDetail = {
 type SlideDetail = {
     CollectionId:       Guid
     CollectionSlideId:  string
+    Thumbnail:          string
     FamilyOriginal:     string
     GenusOriginal:      string
     SpeciesOriginal:    string
@@ -130,12 +131,22 @@ type BackboneTaxon = {
 [<CLIMutable>]
 type ReferenceCollectionSummary = {
     Id:         Guid
-    User:       Guid
     Name:       string
     Description:string
     SlideCount: int
-    Slides:     List<SlideSummary>
     Published:  DateTime
+    Version:    int
+}
+
+[<CLIMutable>]
+type ReferenceCollectionDetail = {
+    Id:             Guid
+    Name:           string
+    Contributors:   string list
+    Description:    string
+    Slides:         SlideDetail list
+    Published:      DateTime
+    Version:        int
 }
 
 // User Profiles

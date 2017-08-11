@@ -1,7 +1,9 @@
+@model ReadModels.SlideDetail
+
 @{
     Layout = "_Layout";
     ViewBag.Title = "Individual Slide";
-    ViewData["Title"] = "SLIDENAME";
+    ViewData["Title"] = Model.CollectionSlideId;
     ViewData["Subtitle"] = "It's a slide, yo";
     ViewData["Description"] = "";
 }
@@ -15,19 +17,67 @@
     </header>
 }
 
-@section scripts {
-    <script src="/lib/d3/d3.min.js"></script>
-    <script src="/js/viewer/viewer.js"></script>
-    <script src="/js/viewer/focusslider.js"></script>
-    <script src="/js/viewer/scalebar.js"></script>
-    <script>
-        
-    </script>
+@section
+scripts {
+
+<script src="/lib/d3/d3.min.js"></script>
+
+<script src="/js/viewer/viewer.js"></script>
+
+<script src="/js/viewer/focusslider.js"></script>
+
+<script src="/js/viewer/scalebar.js"></script>
+
+<script>
+
+var viewer;
+var slider;
+var scaleBar;
+
+$(function () {
+    viewer = new Viewer("#viewer-container",
+            $("#viewer-container").width(), 500, [
+                "@Model.Images[0].Frames[0]"
+            ]
+        );
+
+    slider = new FocusSlider(viewer);
+    scaleBar = new ScaleBar(viewer, 0.5);
+
+});
+
+</script>
+
 }
+
+@* Breadcrumb *@
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon">Master Reference Collection</a></li>
+            @if (Model.Rank == "Family") {
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
+            }
+            @if (Model.Rank == "Genus") {
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">@Model.CurrentGenus</a></li>
+            }
+            @if (Model.Rank == "Species") {
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">@Model.CurrentGenus</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@Model.CurrentSpecies">@Model.CurrentSpecies</a></li>
+            }
+            <li class="breadcrumb-item active">Cool Slide</li>
+        </ol>
+    </div>
+</div>
 
 <div class="row">
     <div class="col-md-8" id="viewer-container"></div>
     <div class="col-md-4">
-        Testing
+        <a href="/Taxon/@Model.CurrentFamily">Family: @Model.CurrentFamily</a>
+        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">Genus: @Model.CurrentGenus</a>
+        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@Model.CurrentSpecies">Species: @Model.CurrentSpecies</a>
     </div>
 </div>

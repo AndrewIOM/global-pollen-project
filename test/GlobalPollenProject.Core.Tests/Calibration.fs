@@ -18,7 +18,7 @@ module ``When creating a calibration set`` =
 
     let calId = CalibrationId (Guid.NewGuid())
     let currentUser = UserId (Guid.NewGuid())
-    let fakeImage = Url.create "https://sometesturl"
+    let fakeImage = RelativeUrl "https://sometesturl"
     let microscope = Light <| Compound (10, [40], "Nikon D3100")
 
     [<Fact>]

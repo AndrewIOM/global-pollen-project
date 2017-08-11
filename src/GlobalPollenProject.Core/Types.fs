@@ -2,6 +2,12 @@ module GlobalPollenProject.Core.DomainTypes
 
 open System
 
+let (|Prefix|_|) (p:string) (s:string) =
+    if s.StartsWith(p) then
+        Some(s.Substring(p.Length))
+    else
+        None
+
 type LogMessage =
 | DomainError of string
 | Info of string
@@ -20,9 +26,18 @@ type MagnificationId = MagnificationId of CalibrationId * int
 [<AutoOpen>]
 module Url =
     type Url = Url of string //TODO cannot make private due to Newtonsoft limitation
+    type RelativeUrl = RelativeUrl of string
+    let unwrap (Url u) = u
+    let unwrapRelative (RelativeUrl u) = u
     let create surl =
         Url surl
-    let unwrap (Url u) = u
+    let createRelative baseUrl (absoluteUrl:Url) =
+        match absoluteUrl |> unwrap with
+        | Prefix baseUrl rest -> rest |> RelativeUrl |> Ok
+        | _ -> Error "The base URL did not match the absolute URL"
+    let relativeToAbsolute baseUrl (relativeUrl:RelativeUrl) =
+        let unwrap (RelativeUrl u) = u
+        baseUrl + (relativeUrl |> unwrap) |> Url
 
 // Images
 [<Measure>] type um
@@ -32,8 +47,8 @@ type ImageForUpload =
     | Focus of Base64Image list * Stepping * MagnificationId
     | Single of Base64Image * FloatingCalibration
 and Image = 
-    | FocusImage of Url list * Stepping * MagnificationId
-    | SingleImage of Url * FloatingCalibration
+    | FocusImage of RelativeUrl list * Stepping * MagnificationId
+    | SingleImage of RelativeUrl * FloatingCalibration
 
 and Stepping =
 | Fixed of float<um>
@@ -81,17 +96,26 @@ type Point = Latitude * Longitude
 type Polygon = Point list
 
 type Site = Latitude * Longitude
-
+type Country = string
+type District = string
+type Locality = string
+type Region = string
+type Ecoregion = string
 type Continent = 
+    | Africa
     | Asia
-    | America
     | Europe
+    | NorthAmerica
+    | SouthAmerica
+    | Antarctica
+    | Australia
 
 type SamplingLocation =
-    | Site of Point
-    | Area of Polygon
-    | Region of string * string //Region and country name
-    | Country of string // Country name only
+    | Site      of Point
+    | Area      of Polygon
+    | PlaceName of Locality * District * Region * Country
+    | Country   of Country
+    | Ecoregion of Ecoregion
     | Continent of Continent
 
 type Age =
@@ -100,15 +124,14 @@ type Age =
     | Lead210 of int<YBP>
 
 // Sample Preperation
-type ChemicalTreatments =
-    | HF
-    | No
+type ChemicalTreatment =
+    | FreshGrains
+    | Acetolysis
+    | HydrofluoricAcid
 
 type MountingMedium =
-    | Glycerol
-
-type PalaeoSiteType =
-    | Lake
+    | GlycerineJelly
+    | SiliconeOil
 
 // Taxonomy
 type LatinName = LatinName of string
@@ -134,7 +157,8 @@ type TaxonomicStatus =
 
 // Taxonomic Identity
 type IdentificationSource =
-    | Book of string
+   | Unknown
+   | Book of string
 
 type TaxonIdentification =
     | Botanical of TaxonId * IdentificationSource

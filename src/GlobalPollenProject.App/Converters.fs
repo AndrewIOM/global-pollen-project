@@ -16,12 +16,13 @@ module DomainToDto =
     let unwrapId (TaxonId id) = id
     let unwrapEph (SpecificEphitet e) = e
     let unwrapAuthor (Scientific a) = a
+    let unwrapColVer (ColVersion a) = a
 
     let image getMag (domainImage:Image) : SlideImage =
         match domainImage with
         | SingleImage (i,cal) ->
             { Id = 0
-              Frames = [i |> Url.unwrap]
+              Frames = [i |> Url.unwrapRelative]
               PixelWidth = 2. }
         | FocusImage (urls,stepping,calId) ->
             let magnification = getMag calId
@@ -29,7 +30,7 @@ module DomainToDto =
             | None -> invalidOp "DTO validation failed"
             | Some (mag:Magnification) ->
                 { Id = 0
-                  Frames = urls |> List.map Url.unwrap
+                  Frames = urls |> List.map Url.unwrapRelative
                   PixelWidth = mag.PixelWidth }
 
 module DtoToDomain =
@@ -74,7 +75,7 @@ module DtoToDomain =
         match String.IsNullOrEmpty country with
         | false ->
             match String.IsNullOrEmpty region with
-            | false -> Some (Region (region,country)) |> Ok
+            | false -> Some (PlaceName ("","",region,country)) |> Ok
             | true -> Some (Country country) |> Ok
         | true -> None |> Ok
 
@@ -98,6 +99,9 @@ module DtoToDomain =
             OriginalSpecies = s
             OriginalAuthor = auth
             Time = age
+            PrepMethod = None
+            PrepDate = None
+            Mounting = None
         }
 
     let dtoToGrain (grainId:Result<GrainId,string>) (userId:Result<UserId,string>) (dto:AddUnknownGrainRequest) =

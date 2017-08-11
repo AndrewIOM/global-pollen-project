@@ -2,8 +2,7 @@
 
 @{
     Layout = "_Layout";
-    ViewBag.Title = Model.LatinName + " (" + Model.Rank + ") - Reference Collection";
-    ViewData["Description"] = "View reference images for " + Model.LatinName + " pollen, alongside botanical description and geographic range. Use our collections for your pollen identification today.";
+    ViewBag.Title = Model.LatinName + " (" + Model.Rank + ") - Master Reference Collection";
 
     // TODO
     var neotomaId = 0;
@@ -16,8 +15,8 @@
 @* Header *@
 @section headerSection {
     <header><div class="container">
-    <h1>@Model.LatinName<small>@Model.Authorship</small></h1>
-    <p>@Model.Rank</p>
+    <h1>@Model.LatinName <small>@Model.Authorship</small></h1>
+    <p>@Model.Rank in the Global Pollen Project's Master Reference Collection.</p>
     </div></header>
 }
 
