@@ -267,8 +267,11 @@ function SlideDetailViewModel(detail) {
     let self = this;
     self.currentTab = ko.observable(SlideDetailTab.OVERVIEW);
     self.slideDetail = ko.observable(detail);
-    self.loadedImage = ko.observable(false);
+    self.loadedStaticImage = ko.observable(false);
+    self.loadedFocusImages = ko.observable(false);
+    self.uploadPercentage = ko.observable(null);
     self.viewer = null;
+    self.slider = null;
     self.measuringLine = null;
     self.validationErrors = ko.observableArray([]);
 
@@ -285,6 +288,11 @@ function SlideDetailViewModel(detail) {
     self.isValidStaticRequest = ko.computed(function () {
         if (self.floatingCal() == null) return false;
         if (self.measuredDistance() == null) return false;
+        if (self.digitisedYear() == null) return false;
+        return true;
+    }, self);
+
+    self.isValidFocusRequest = ko.computed(function () {
         if (self.digitisedYear() == null) return false;
         return true;
     }, self);
@@ -314,9 +322,9 @@ function SlideDetailViewModel(detail) {
     self.switchTab = function (tab) {
         self.currentTab(tab);
         if (tab != SlideDetailTab.UPLOAD_STATIC) {
+            self.loadedStaticImage(false);
             if (self.viewer != null) {
                 self.viewer.dispose();
-                self.loadedImage(false);
             }
 
             if (self.measuringLine != null) {
@@ -325,8 +333,35 @@ function SlideDetailViewModel(detail) {
 
             $("#static-image-previewer-container").html("");
             $("#measuredDistance").val("").change();
-            $("#digitisedYear").val("").change();
-            $("#digitisedYear").datepicker("update");
+            $("#digitisedYearStatic").val("").change();
+            $("#digitisedYearStatic").datepicker({
+                format: " yyyy",
+                viewMode: "years",
+                startDate: '1850',
+                endDate: '+0d',
+                minViewMode: "years"
+            });
+        }
+
+        if (tab != SlideDetailTab.UPLOAD_FOCUSABLE) {
+            self.loadedFocusImages(false);
+            if (self.viewer != null) {
+                self.viewer.dispose();
+            }
+
+            if (self.slider != null) {
+                self.slider.dispose();
+            }
+
+            $("#focus-image-previewer-container").html("");
+            $("#digitisedYearFocus").val("").change();
+            $("#digitisedYearFocus").datepicker({
+                format: " yyyy",
+                viewMode: "years",
+                startDate: '1850',
+                endDate: '+0d',
+                minViewMode: "years"
+            });
         }
     }
 
@@ -348,15 +383,29 @@ function SlideDetailViewModel(detail) {
                 DigitisedYear: self.digitisedYear()
             }
             console.log(request);
+
             $.ajax({
                 url: "/api/v1/digitise/collection/slide/addimage",
                 type: "POST",
                 data: JSON.stringify(request),
                 dataType: "json",
                 contentType: "application/json",
+                xhr: function () {
+                    var xhr = $.ajaxSettings.xhr();
+                    xhr.upload.onprogress = function (evt) {
+                        if (evt.lengthComputable) {
+                            var percentComplete = evt.loaded / evt.total;
+                            self.uploadPercentage(percentComplete * 100);
+                            console.log(percentComplete * 100);
+                        }
+                    }
+                    return xhr;
+                },
                 success: function (data) {
                     console.log(self.slideDetail());
-                    rootVM.switchView(CurrentView.DETAIL, { Id: self.slideDetail().CollectionId });
+                    rootVM.switchView(CurrentView.DETAIL, {
+                        Id: self.slideDetail().CollectionId
+                    });
                 },
                 statusCode: {
                     400: function (err) {
@@ -377,7 +426,7 @@ function SlideDetailViewModel(detail) {
 
     self.createStaticImageViewer = function (element) {
         $("#static-image-previewer-container").html("<div id=\"static-image-previewer\"></div>");
-        $("#digitisedYear").datepicker({
+        $("#digitisedYearStatic").datepicker({
             format: " yyyy",
             viewMode: "years",
             startDate: '1850',
@@ -391,7 +440,7 @@ function SlideDetailViewModel(detail) {
 
         if (self.viewer != null) {
             self.viewer.dispose();
-            self.loadedImage(false);
+            self.loadedStaticImage(false);
         }
 
         if (self.measuringLine != null) {
@@ -409,11 +458,53 @@ function SlideDetailViewModel(detail) {
                     self.base64
                 ]
             );
-            self.loadedImage(true);
+            self.loadedStaticImage(true);
         }
 
         if (file) {
             reader.readAsDataURL(file);
+        }
+    }
+
+    self.createFocusImageViewer = function (element) {
+        $("#focus-image-previewer-container").html("<div id=\"focus-image-previewer\"></div>");
+        $("#digitisedYearFocus").datepicker({
+            format: " yyyy",
+            viewMode: "years",
+            startDate: '1850',
+            endDate: '+0d',
+            minViewMode: "years"
+        });
+
+        if (self.viewer != null) {
+            self.viewer.dispose();
+            self.loadedFocusImages(false);
+        }
+
+        var files = element.files;
+        var loaded = 0;
+        var readers = [];
+        var base64s = [];
+
+        for (var i = 0; i < files.length; i++) {
+            readers.push(new FileReader());
+
+            readers[i].onloadend = function (e) {
+                loaded++;
+                base64s.push(this.result);
+
+                if (loaded >= files.length) {
+                    self.viewer = new Viewer("#focus-image-previewer",
+                        "#focus-image-previewer-canvas",
+                        $("#focus-image-previewer").width() * 0.8, 500, base64s
+                    );
+                    self.slider = new FocusSlider(self.viewer, "#focus-image-previewer-slider");
+                    self.loadedFocusImages(true);
+                }
+            }
+            if (files[i]) {
+                readers[i].readAsDataURL(files[i]);
+            }
         }
     }
 

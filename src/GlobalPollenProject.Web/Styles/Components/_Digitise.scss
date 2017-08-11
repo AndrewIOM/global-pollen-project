@@ -14,11 +14,11 @@
     width: 100%;
 }
 
-#slidedetail-measurement-section {
+#slidedetail-static-measurement-section {
     margin-bottom: 10px;
 }
 
-#slidedetail-year-section {
+#slidedetail-static-year-section {
     margin-bottom: 10px;
 }
 
@@ -40,6 +40,10 @@
 }
 
 #static-image-previewer-measuring-line {
+}
+
+#slidedetail-focus-year-section {
+    margin-bottom: 10px;
 }
 
 span.year.active {

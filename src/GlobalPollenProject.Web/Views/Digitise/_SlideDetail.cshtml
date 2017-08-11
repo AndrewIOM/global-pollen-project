@@ -53,7 +53,7 @@
                     <input type="file" class="upload btn" data-bind="event: { change: function() { createStaticImageViewer($element); } }" />
                     <div id="static-image-previewer-container"></div>
 
-                    <div class="card" id="slidedetail-measurement-section" data-bind="visible: loadedImage">
+                    <div class="card" id="slidedetail-static-measurement-section" data-bind="visible: loadedStaticImage">
                         <div class="card-header">
                             Draw a line on the loaded image of known length
                         </div>
@@ -73,22 +73,22 @@
                             </div>
                         </div>
                     </div>
-                    <div class="card" id="slidedetail-year-section" data-bind="visible: loadedImage">
+                    <div class="card" id="slidedetail-static-year-section" data-bind="visible: loadedStaticImage">
                         <div class="card-block">
                             <div class="form-group row">
-                                <label for="digitisedYear" class="col-sm-4 col-form-label">Year Image Taken</label>
+                                <label for="digitisedYearStatic" class="col-sm-4 col-form-label">Year Image Taken</label>
                                 <div class="col-sm-8">
-                                    <input data-bind="value: digitisedYear" id="digitisedYear" class="form-control" />
+                                    <input data-bind="value: digitisedYear" id="digitisedYearStatic" class="form-control" />
                                     <small class="help">In which calendar year was this image taken?</small>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <div class="card" data-bind="visible: loadedImage">
+                    <div class="card" data-bind="visible: loadedStaticImage">
                         <div class="card-block">
                             <div class="row">
                                 <div class="col-sm-9 progress" id="slidedetail-static-upload-progress">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated" id="slidedetail-static-upload-progressbar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%"></div>
+                                    <div data-bind="visible: uploadPercentage, attr: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }" class="progress-bar progress-bar-striped progress-bar-animated" id="slidedetail-static-upload-progressbar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
                                 </div>
                                 <div class="col-sm-3">
                                     <button data-bind="click: function() { submit($root, false); }, enable: isValidStaticRequest" type="button" class="btn btn-primary">Upload Image</button>
@@ -102,22 +102,21 @@
                     <ul data-bind="foreach: validationErrors">
                         <li data-bind="text: $data"></li>
                     </ul>
-                    <div class="form-group row">
-                        <label for="digitisedYear" class="col-sm-2 col-form-label">Year Image Taken</label>
-                        <div class="col-sm-10">
-                            <input data-bind="value: digitisedYear" id="digitisedYear" class="form-control" />
-                            <small class="help">In which calendar year was this image taken?</small>
-                        </div>
-                    </div>
-                    <h5>Upload a focusable image</h5>
+                    
+                    <!-- <h5>Upload a focusable image</h5>
 
                     @* Calibration selection *@
                     <div data-bind="visible: calibrations().length > 0" class="form-group row">
                         <label class="col-sm-2 col-form-label"></label>
                         <div class="col-sm-5">
-                            <select data-bind="foreach: calibrations" class="form-control input-sm inline-dropdown">
-                                <option data-bind="value: $data.Name, text: $data.Name"></option>
-                            </select>
+                            <div class="dropdown">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="microscopeDropdown" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Microscope
+                            </button>
+                            <div data-bind="foreach: calibrations" class="dropdown-menu" aria-labelledby="microscopeDropdown">
+                                <a data-bind="value: $data.Name, text: $data.Name" class="dropdown-item" href="#"></a>
+                            </div>
+                            </div>
                         </div>
                         <div class="col-sm-5">
                             <select data-bind="value: magnification" class="form-control input-sm inline-dropdown">
@@ -138,7 +137,41 @@
                     <button data-bind="click: function() { submit($root, true); }" type="button" class="btn btn-primary">Upload Image</button>
                     <div class="progress">
                         <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%"></div>
+                    </div>                    
+
+                    <ul data-bind="foreach: validationErrors">
+                        <li data-bind="text: $data"></li>
+                    </ul> -->
+
+                    <h5>Upload a focusable image</h5>
+                    <p>Select all focus level images below</p>
+                    <input type="file" multiple="multiple" class="upload btn" data-bind="event: { change: function() { createFocusImageViewer($element); } }" />
+                    <div id="focus-image-previewer-container"></div>
+                    
+                    <div class="card" id="slidedetail-focus-year-section" data-bind="visible: loadedFocusImages">
+                        <div class="card-block">
+                            <div class="form-group row">
+                                <label for="digitisedYearFocus" class="col-sm-4 col-form-label">Year Image Taken</label>
+                                <div class="col-sm-8">
+                                    <input data-bind="value: digitisedYear" id="digitisedYearFocus" class="form-control" />
+                                    <small class="help">In which calendar year was this image taken?</small>
+                                </div>
+                            </div>
+                        </div>
                     </div>
+                    <div class="card" data-bind="visible: loadedFocusImages">
+                        <div class="card-block">
+                            <div class="row">
+                                <div class="col-sm-9 progress" id="slidedetail-focus-upload-progress">
+                                    <div data-bind="visible: uploadPercentage, attr: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }" class="progress-bar progress-bar-striped progress-bar-animated" id="slidedetail-focus-upload-progressbar" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+                                </div>
+                                <div class="col-sm-3">
+                                    <button data-bind="click: function() { submit($root, false); }, enable: isValidFocusRequest" type="button" class="btn btn-primary">Upload Image</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>

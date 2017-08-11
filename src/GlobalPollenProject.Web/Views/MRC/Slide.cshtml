@@ -21,13 +21,9 @@
 scripts {
 
 <script src="/lib/d3/d3.min.js"></script>
-
 <script src="/js/viewer/viewer.js"></script>
-
 <script src="/js/viewer/focusslider.js"></script>
-
 <script src="/js/viewer/scalebar.js"></script>
-
 <script>
 
 var viewer;
@@ -35,14 +31,18 @@ var slider;
 var scaleBar;
 
 $(function () {
-    viewer = new Viewer("#viewer-container",
+    viewer = new Viewer("#viewer-container", "#viewer-canvas",
             $("#viewer-container").width(), 500, [
                 "@Model.Images[0].Frames[0]"
             ]
         );
 
-    slider = new FocusSlider(viewer);
-    scaleBar = new ScaleBar(viewer, 0.5);
+    @if(Model.Images[0].Frames.Length > 1) {
+        <text>
+        slider = new FocusSlider(viewer, "#viewer-focus-slider");
+        </text>
+    }
+    scaleBar = new ScaleBar(viewer, "#viewer-scalebar", @Model.Images[0].PixelWidth);
 
 });
 

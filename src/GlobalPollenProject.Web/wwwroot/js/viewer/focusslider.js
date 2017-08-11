@@ -64,8 +64,6 @@ function FocusSlider(viewer, sliderId) {
             .attr("y", ly)
             .attr("width", 4)
             .attr("height", lh)
-            .attr("rx", 3)
-            .attr("ry", 3)
             .attr("fill", "white");
 
         var tickArray = Array.apply(null, {
@@ -122,4 +120,11 @@ function FocusSlider(viewer, sliderId) {
                 })
             );
     });
+
+    /**
+     * Cleanly disposes of the slider
+     */
+    self.dispose = function() {
+        $(self.id).remove();
+    }
 }
