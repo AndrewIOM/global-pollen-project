@@ -5,6 +5,7 @@
 }
 
 <link rel="stylesheet" href="/css/digitise.css" >
+<link rel="stylesheet" href="/lib/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" >
 
 @* Header *@
 @section headerSection {
@@ -18,9 +19,11 @@
     <script src="/lib/d3/d3.min.js"></script>
     <script src="/lib/nouislider/distribute/nouislider.min.js"></script>
     <script src="/lib/knockout/dist/knockout.js"></script>
+    <script src="/lib/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
     <script src="/js/viewer/viewer.js"></script>
     <script src="/js/viewer/scalebar.js"></script>
     <script src="/js/viewer/focusslider.js"></script>
+    <script src="/js/viewer/measuringline.js"></script>
     <script src="/js/digitise/app.js"></script>
 }
 
@@ -37,43 +40,73 @@
 
 <div class="row">
     <div class="col-md-3">
-        <label>My Collections</label>
-        <ul class="list-group backbone-list" data-bind="foreach: myCollections">
-            <li data-bind="text: Name, click: function() { $parent.switchView(CurrentView.DETAIL, $data) }"></li>
-        </ul>
+        <div class="card" id="collection-list-card">
+            <div class="card-header">
+                My Collections
+            </div>
+            <div class="card-block">
+                <span id="collection-loading-spinner">Loading...</span>
+                <ul class="list-group backbone-list" id="collection-list" data-bind="foreach: myCollections" style="display: none;">
+                    <li class="list-group-item" data-bind="text: Name, click: function() { $parent.switchView(CurrentView.DETAIL, $data); $parent.setActiveCollectionTab($element); }"></li>
+                </ul>
+            </div>
+        </div>
     </div>
 
     <div class="col-md-9" data-bind="visible: activeCollection, if: activeCollection">
-        <h3 data-bind="text: activeCollection().Name"></h3>
-        <hr/>
+        <div class="card" id="collection-detail-card">
+            <div class="card-header">
+                <span data-bind="text: activeCollection().Name"></span>
+            </div>
+            <div class="card-block">
+                <div class="card-title row">
+                    <div class="col-md-5">
+                        <p data-bind="text: activeCollection().Description"></p>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <button data-bind="click: function() { switchView(CurrentView.ADD_SLIDE_RECORD, $data) }" class="btn btn-primary" id="collection-add-slide-button">
+                                    <i class="fa fa-plus-square" aria-hidden="true"></i>
+                                    Add new Slide
+                                </button>
+                            </div>
+                            <div class="col-md-7">
+                                <button data-bind="click: publish" class="btn btn-primary" id="collection-publish-button">
+                                    <i class="fa fa-beer" aria-hidden="true"></i>
+                                    Request Publication
+                                </button>  
+                            </div>
+                        </div>
+                    </div>
+                </div>              
 
-        <button data-bind="click: function() { switchView(CurrentView.ADD_SLIDE_RECORD, $data) }" class="btn btn-primary">Add new Slide</button>
-        <button data-bind="click: publish" class="btn btn-primary">Request Publication</button>
-        <p data-bind="text: activeCollection().Description"></p>
-
-        <table class="table">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Family</th>
-                    <th>Genus</th>
-                    <th>Species</th>
-                    <th>Current Taxon</th>
-                    <th>Image Count</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody data-bind="foreach: activeCollection().Slides">
-                <tr>
-                    <td data-bind="text: $data.CollectionSlideId"></td>
-                    <td data-bind="text: $data.FamilyOriginal"></td>
-                    <td data-bind="text: $data.GenusOriginal"></td>
-                    <td data-bind="text: $data.SpeciesOriginal"></td>
-                    <td data-bind="text: $data.CurrentFamily + ' ' + $data.CurrentGenus + ' ' + $data.CurrentSpecies + ' ' + $data.CurrentSpAuth"></td>
-                    <td data-bind="text: $data.Images.length"></td>
-                    <td><button data-bind="click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }" class="btn btn-default">Upload Image</button></td>
-                </tr>
-            </tbody>
-        </table>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Family</th>
+                            <th>Genus</th>
+                            <th>Species</th>
+                            <th>Current Taxon</th>
+                            <th>Image Count</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody data-bind="foreach: activeCollection().Slides">
+                        <tr>
+                            <td data-bind="text: $data.CollectionSlideId"></td>
+                            <td data-bind="text: $data.FamilyOriginal"></td>
+                            <td data-bind="text: $data.GenusOriginal"></td>
+                            <td data-bind="text: $data.SpeciesOriginal"></td>
+                            <td data-bind="text: $data.CurrentFamily + ' ' + $data.CurrentGenus + ' ' + $data.CurrentSpecies + ' ' + $data.CurrentSpAuth"></td>
+                            <td data-bind="text: $data.Images.length"></td>
+                            <td><button data-bind="click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }"
+                                    class="btn btn-default collection-slide-upload-image-button">Upload Image</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 </div>

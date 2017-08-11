@@ -18,11 +18,11 @@ module DomainToDto =
     let unwrapAuthor (Scientific a) = a
     let unwrapColVer (ColVersion a) = a
 
-    let image getMag (domainImage:Image) : SlideImage =
+    let image getMag toAbsoluteUrl (domainImage:Image) : SlideImage =
         match domainImage with
         | SingleImage (i,cal) ->
             { Id = 0
-              Frames = [i |> Url.unwrapRelative]
+              Frames = [i |> toAbsoluteUrl |> Url.unwrap]
               PixelWidth = 2. }
         | FocusImage (urls,stepping,calId) ->
             let magnification = getMag calId
@@ -30,7 +30,7 @@ module DomainToDto =
             | None -> invalidOp "DTO validation failed"
             | Some (mag:Magnification) ->
                 { Id = 0
-                  Frames = urls |> List.map Url.unwrapRelative
+                  Frames = urls |> List.map (toAbsoluteUrl >> Url.unwrap)
                   PixelWidth = mag.PixelWidth }
 
 module DtoToDomain =

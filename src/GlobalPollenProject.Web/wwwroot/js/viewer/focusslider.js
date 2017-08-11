@@ -2,14 +2,15 @@
  * Add-on for a slide viewer - adds a slider to the right hand side, 
  * which calls the "setFocusLevel" function of the viewer, to flick between
  * focus levels
- * @param {Viewer} viewer the Viewer object to attach the slider to
+ * @param {Viewer} viewer   the Viewer object to attach the slider to
+ * @param {String} sliderId the desired slider object id
  */
-function FocusSlider(viewer) {
+function FocusSlider(viewer, sliderId) {
     var self = this;
 
     self.viewer = viewer;
 
-    self.id = "#viewer-focusslider";
+    self.id = sliderId;
     self.scale = null;
 
     // initialise after the images are loaded
@@ -63,8 +64,6 @@ function FocusSlider(viewer) {
             .attr("y", ly)
             .attr("width", 4)
             .attr("height", lh)
-            .attr("rx", 3)
-            .attr("ry", 3)
             .attr("fill", "white");
 
         var tickArray = Array.apply(null, {
@@ -121,4 +120,11 @@ function FocusSlider(viewer) {
                 })
             );
     });
+
+    /**
+     * Cleanly disposes of the slider
+     */
+    self.dispose = function() {
+        $(self.id).remove();
+    }
 }

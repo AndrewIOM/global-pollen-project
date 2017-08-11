@@ -35,8 +35,8 @@ let route
 
     e
     |> feed (TaxonomicBackbone.handle get getSortedList set setSortedList)
-    >>= feed (Digitisation.handle get getList set setList generateThumb)
-    >>= feed (Calibration.handle get getList set setList)
+    >>= feed (Digitisation.handle get getList set setList generateThumb toAbsoluteUrl)
+    >>= feed (Calibration.handle get getList set setList toAbsoluteUrl)
     >>= feed UserProfile.handle
     >>= feed (ReferenceCollectionReadOnly.handle get set setList)
     >>= feed Slide.handle
