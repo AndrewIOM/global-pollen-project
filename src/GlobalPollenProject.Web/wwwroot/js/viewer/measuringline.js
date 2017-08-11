@@ -19,7 +19,7 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
     self.customText = customText;
 
     // the component's state
-    self.state = MeasuringLine.STATE_DEACTIVATED;
+    self.state = MeasuringLine.STATE_INACTIVE;
 
     // line geometry
     self.line = null;
@@ -34,7 +34,7 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
     self.savedTransformY = null;
 
     self.activate = function () {
-        self.state = MeasuringLine.STATE_ACTIVATED;
+        self.state = MeasuringLine.STATE_ACTIVE;
 
         self.svg = d3.select(self.viewer.containerId).append("svg")
             .attr("width", self.viewer.width)
@@ -42,7 +42,7 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
             .attr("id", self.id.substr(1))
             .on("mousedown", function () {
                 var m = d3.mouse(this);
-                if (self.state == MeasuringLine.STATE_ACTIVATED) {
+                if (self.state == MeasuringLine.STATE_ACTIVE) {
                     self.startLine(m[0], m[1]);
                 } else if (self.state == MeasuringLine.STATE_DRAWING) {
                     self.endLine(m[0], m[1]);
@@ -98,6 +98,7 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
         self.endX = x;
         self.endY = y;
         self.redrawLine();
+        $(self).trigger(MeasuringLine.EVENT_DRAWING);
     }
 
     self.endLine = function (x, y) {
@@ -110,10 +111,39 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
         self.savedTransformY = self.viewer.getTransformY();
 
         $(self.id).css("pointer-events", "none");
+        $(self).trigger(MeasuringLine.EVENT_DRAWN);
+    }
+
+    self.getPixelPoints = function() {
+        if(self.startX == null || self.startY == null || self.endX == null || self.endY == null) return null;
+
+        return [
+            [self.startX / self.viewer.getZoom(), self.startY / self.viewer.getZoom()],
+            [self.endX / self.viewer.getZoom(), self.endY / self.viewer.getZoom()]
+        ];
+    }
+
+    self.getPixelLength = function() {
+        var points = self.getPixelPoints();
+
+        return Math.sqrt((points[0][0] - points[1][0]) * 
+            (points[0][0] - points[1][0]) + 
+            (points[0][1] - points[1][1]) *
+            (points[0][1] - points[1][1]));
+    }
+
+    /**
+     * Cleanly disposes of the viewer
+     */
+    self.dispose = function() {
+        $(self.id).remove();
     }
 }
 
-MeasuringLine.STATE_DEACTIVATED = 0;
-MeasuringLine.STATE_ACTIVATED = 1;
+MeasuringLine.STATE_INACTIVE = 0;
+MeasuringLine.STATE_ACTIVE = 1;
 MeasuringLine.STATE_DRAWING = 2;
 MeasuringLine.STATE_DRAWN = 3;
+
+MeasuringLine.EVENT_DRAWING = "drawing";
+MeasuringLine.EVENT_DRAWN = "drawn";

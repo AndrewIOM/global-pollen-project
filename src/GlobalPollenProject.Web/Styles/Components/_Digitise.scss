@@ -41,3 +41,8 @@
 
 #static-image-previewer-measuring-line {
 }
+
+span.year.active {
+    background-color: $primary-color !important;
+    background-image: none !important;
+}

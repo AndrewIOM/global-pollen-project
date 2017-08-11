@@ -15,17 +15,17 @@
             <div class="modal-body">
                 <ul class="nav nav-tabs">
                     <li class="nav-item">
-                        <a class="nav-link" href="#" data-bind="click: function() { currentTab(SlideDetailTab.OVERVIEW) }, css: { active: currentTab() == SlideDetailTab.OVERVIEW }">
+                        <a class="nav-link" href="#" data-bind="click: function() { switchTab(SlideDetailTab.OVERVIEW) }, css: { active: currentTab() == SlideDetailTab.OVERVIEW }">
                             Overview
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" data-bind="click: function() { currentTab(SlideDetailTab.UPLOAD_STATIC) }, css: { active: currentTab() == SlideDetailTab.UPLOAD_STATIC }">
+                        <a class="nav-link" href="#" data-bind="click: function() { switchTab(SlideDetailTab.UPLOAD_STATIC) }, css: { active: currentTab() == SlideDetailTab.UPLOAD_STATIC }">
                             Upload static image
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#" data-bind="click: function() { currentTab(SlideDetailTab.UPLOAD_FOCUSABLE) }, css: { active: currentTab() == SlideDetailTab.UPLOAD_FOCUSABLE }">
+                        <a class="nav-link" href="#" data-bind="click: function() { switchTab(SlideDetailTab.UPLOAD_FOCUSABLE) }, css: { active: currentTab() == SlideDetailTab.UPLOAD_FOCUSABLE }">
                             Upload focusable image
                         </a>
                     </li>
@@ -51,20 +51,24 @@
                     <h5>Upload a static image</h5>
                     <p>A static image uses a floating calibration to discren size within the image. You must complete the calibration step for every image.</p>
                     <input type="file" class="upload btn" data-bind="event: { change: function() { createStaticImageViewer($element); } }" />
-                    <div id="static-image-previewer">
+                    <div id="static-image-previewer-container"></div>
 
-                    </div>
-                    
                     <div class="card" id="slidedetail-measurement-section" data-bind="visible: loadedImage">
+                        <div class="card-header">
+                            Draw a line on the loaded image of known length
+                        </div>
                         <div class="card-block">
                             <div class="form-group row">
                                 <div class="col-sm-3">
-                                    <button data-bind="click: function() { activateMeasuringLine(); }" type="button" class="btn btn-primary">Measure Line</button>        
+                                    <button data-bind="click: function() { activateMeasuringLine(); }" type="button" class="btn btn-primary" id="slidedetail-draw-line-button">Draw Line</button>        
                                 </div>
                                 <label for="measuredDistance" class="col-sm-3 col-form-label">Measured Distance</label>
                                 <div class="col-sm-6">
-                                    <input data-bind="value: measuredDistance" id="measuredDistance" class="form-control" />
-                                    <small class="help">Enter the length of your measurement line in micrometres (um)</small>
+                                    <div class="input-group">
+                                        <input data-bind="value: measuredDistance" id="measuredDistance" class="form-control" />
+                                        <span class="input-group-addon">μm</span>
+                                    </div>
+                                    <small class="help">Enter the length of your measurement line in micrometres (μm)</small>
                                 </div>
                             </div>
                         </div>
@@ -72,8 +76,8 @@
                     <div class="card" id="slidedetail-year-section" data-bind="visible: loadedImage">
                         <div class="card-block">
                             <div class="form-group row">
-                                <label for="digitisedYear" class="col-sm-2 col-form-label">Year Image Taken</label>
-                                <div class="col-sm-10">
+                                <label for="digitisedYear" class="col-sm-4 col-form-label">Year Image Taken</label>
+                                <div class="col-sm-8">
                                     <input data-bind="value: digitisedYear" id="digitisedYear" class="form-control" />
                                     <small class="help">In which calendar year was this image taken?</small>
                                 </div>
@@ -87,7 +91,7 @@
                                     <div class="progress-bar progress-bar-striped progress-bar-animated" id="slidedetail-static-upload-progressbar" role="progressbar" aria-valuenow="70" aria-valuemin="0" aria-valuemax="100" style="width: 70%"></div>
                                 </div>
                                 <div class="col-sm-3">
-                                    <button data-bind="click: function() { submit($root, false); }" type="button" class="btn btn-primary" data-bind="active: loadedImage">Upload Image</button>
+                                    <button data-bind="click: function() { submit($root, false); }, enable: isValidStaticRequest" type="button" class="btn btn-primary">Upload Image</button>
                                 </div>
                             </div>
                         </div>
