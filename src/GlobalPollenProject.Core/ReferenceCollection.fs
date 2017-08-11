@@ -143,10 +143,10 @@ let uploadImage (command:UploadSlideImage) state =
         match slide with
         | None -> invalidOp "Slide does not exist"
         | Some s ->
-            match isFullyDigitised s with
+            match isFullyDigitised {s with Images = command.Image :: s.Images } with
             | true -> [SlideImageUploaded (command.Id, command.Image); SlideFullyDigitised command.Id]
             | false -> [SlideImageUploaded (command.Id, command.Image)]
- 
+
 let handle deps = 
     function
     | CreateCollection c -> create c
@@ -205,7 +205,15 @@ type State with
                 let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
-                | Some s -> state //TODO
+                | Some s ->
+                    let currentIds = 
+                        match s.Identification with
+                        | Unidentified -> []
+                        | Partial ids -> ids
+                        | Confirmed (ids,t) -> ids
+                    let updatedSlide = { s with Identification = Confirmed (currentIds,tid) }
+                    let updatedSlides = c.Slides |> List.map (fun x -> if x.Id = s.Id then updatedSlide else x)
+                    Draft { c with Slides = updatedSlides }
 
         | SlideFullyDigitised event ->
             match state with
@@ -215,7 +223,10 @@ type State with
                 let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId event)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
-                | Some s -> state //TODO
+                | Some s ->
+                    let updatedSlide = { s with IsFullyDigitised = true }
+                    let updatedSlides = c.Slides |> List.map (fun x -> if x.Id = s.Id then updatedSlide else x)
+                    Draft { c with Slides = updatedSlides }
 
         | SlideImageUploaded (id,image) ->
             match state with
