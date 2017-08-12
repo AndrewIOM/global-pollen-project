@@ -509,7 +509,7 @@ module Digitisation =
                 Images = [] }
             RepositoryBase.setSingle (colId.ToString()) { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
 
-    let imageUploaded getKey setKey generateThumbnail id image =
+    let imageUploaded getKey setKey generateThumbnail toAbsoluteUrl id image =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
         let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
         match col with
@@ -531,7 +531,7 @@ module Digitisation =
                     | Ok u -> u |> Url.unwrap
                     | Error e -> ""
                 let getMag a = None //TODO enable fetching of magnification calibrations
-                let imageDto = Converters.DomainToDto.image getMag image
+                let imageDto = Converters.DomainToDto.image getMag toAbsoluteUrl image
                 let updatedSlide = { s with Images = imageDto :: s.Images; Thumbnail = thumbnailUrl }
                 let updatedSlides = 
                     c.Slides 
@@ -583,13 +583,13 @@ module Digitisation =
         | Ok c -> 
             RepositoryBase.setSingle (colId.ToString()) { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time } setKey serialise
 
-    let handle get getSortedList set setList generateThumb (e:string*obj) =
+    let handle get getSortedList set setList generateThumb toAbsoluteUrl (e:string*obj) =
         match snd e with
         | :? ReferenceCollection.Event as e ->
             match e with
             | ReferenceCollection.Event.DigitisationStarted e -> started set setList e
             | ReferenceCollection.Event.SlideRecorded e -> recordSlide get set e
-            | ReferenceCollection.Event.SlideImageUploaded (s,i) -> imageUploaded get set generateThumb s i
+            | ReferenceCollection.Event.SlideImageUploaded (s,i) -> imageUploaded get set generateThumb toAbsoluteUrl s i
             | ReferenceCollection.Event.SlideFullyDigitised e -> digitised get set e
             | ReferenceCollection.Event.SlideGainedIdentity (s,t) -> gainedIdentity get set s t
             | ReferenceCollection.Event.CollectionPublished (id,d,v) -> published get set id d v
@@ -622,7 +622,7 @@ module Calibration =
 
     let removeUnitFloat (x:float<_>) = float x
 
-    let calibrated get set e =
+    let calibrated get set toAbsoluteUrl e =
         let calId : Guid = e.Id |> unwrapCalId
         let cal = RepositoryBase.getSingle (calId.ToString()) get deserialise<Calibration> 
         match cal with
@@ -630,15 +630,15 @@ module Calibration =
         | Ok c ->
             let newMag = {
                 Level = e.Magnification |> removeUnitInt
-                Image = e.Image |> Url.unwrapRelative
+                Image = e.Image |> toAbsoluteUrl |> Url.unwrap
                 PixelWidth = e.PixelWidth |> removeUnitFloat
             }
             RepositoryBase.setSingle (calId.ToString()) { c with Magnifications = newMag :: c.Magnifications } set serialise
 
-    let handle get getList set setList (e:string*obj) =
+    let handle get getList set setList toAbsoluteUrl (e:string*obj) =
         match snd e with
         | :? Event as e ->
             match e with
             | Event.SetupMicroscope e -> setup set setList e
-            | Event.CalibratedMag e -> calibrated get set e
+            | Event.CalibratedMag e -> calibrated get set toAbsoluteUrl e
         | _ -> Ok()

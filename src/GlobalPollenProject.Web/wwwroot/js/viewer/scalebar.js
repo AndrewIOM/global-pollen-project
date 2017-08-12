@@ -2,15 +2,16 @@
  * Add-on for a slide viewer - adds a scale bar to the bottom left of the
  * display. Automatically sizes based on viewer zoom level and pixel scale
  * @param {Viewer} viewer   the Viewer object to attach the scalebar to
+ * @param {String} barId    the desired scalebar object id
  * @param {Float} scale     how many micrometers a single pixel represents
  */
-function ScaleBar(viewer, scale) {
+function ScaleBar(viewer, barId, scale) {
     var self = this;
 
     self.viewer = viewer;
     self.scale = scale;
 
-    self.id = "#viewer-scalebar";
+    self.id = barId;
     self.svg = null;
     self.line = null;
     self.startText = null;

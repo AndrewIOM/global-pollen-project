@@ -1,0 +1,52 @@
+#collection-list > li.list-group-item:hover {
+    cursor: pointer;
+}
+
+#collection-list > li.list-group-item.active:hover {
+    cursor: default;
+}
+
+#collection-add-slide-button {
+    width: 100%;
+}
+
+#collection-publish-button {
+    width: 100%;
+}
+
+#slidedetail-static-measurement-section {
+    margin-bottom: 10px;
+}
+
+#slidedetail-static-year-section {
+    margin-bottom: 10px;
+}
+
+#slidedetail-static-upload-progress {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
+#slidedetail-static-upload-progressbar {
+    height: 100%;
+}
+
+#static-image-previewer {
+    margin: 20px auto;
+}
+
+#static-image-previewer-canvas {
+    
+}
+
+#static-image-previewer-measuring-line {
+}
+
+#slidedetail-focus-year-section {
+    margin-bottom: 10px;
+}
+
+span.year.active {
+    background-color: $primary-color !important;
+    background-image: none !important;
+}

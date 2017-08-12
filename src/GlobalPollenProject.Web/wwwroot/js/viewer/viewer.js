@@ -1,15 +1,16 @@
 /**
  * Creates a new slide image canvas - allows panning and zooming, and ensures the slide is always visible
  * @param {String} containerId  the parent object's id
+ * @param {String} canvasId     the desired canvas object id
  * @param {Int} width           the desired width of the canvas
  * @param {Int} height          the desired height of the canvas
  * @param {[String]} imagePaths an array of image paths
  * @return {Viewer}             the relevant viewer object
  */
-function Viewer(containerId, width, height, imagePaths) {
+function Viewer(containerId, canvasId, width, height, imagePaths) {
     var self = this;
 
-    self.id = "#viewer-canvas";
+    self.id = canvasId;
 
     // holds the function parameters
     self.containerId = containerId;
@@ -105,7 +106,7 @@ function Viewer(containerId, width, height, imagePaths) {
                     [-self.imgWidth / 2, -self.imgHeight / 2],
                     [self.imgWidth + self.imgWidth / 2, self.imgHeight + self.imgHeight / 2]
                 ])
-                .scaleExtent([0.5, 4])
+                .scaleExtent([1, 10])
                 .on("zoom", function() {
                     zoomed();
                     self.render();
@@ -114,8 +115,13 @@ function Viewer(containerId, width, height, imagePaths) {
                     $(self.id).css("cursor", "grab");
                 }));
         self.transform = d3.zoomIdentity;
+        self.transform.k = Math.min(self.width / self.imgWidth, self.height / self.imgHeight) - 0.1;
+        self.transform.x = self.width / 2 - self.imgWidth / 2 * self.transform.k;
+        self.transform.y = self.height / 2 - self.imgHeight / 2 * self.transform.k;
+
         self.context = self.canvas.node().getContext("2d");
 
+        $(self.id).css("position", "absolute");
         $(self.id).css("cursor", "grab"); // set the cursor to "grab" initially
 
         // stop the page from scrolling when zooming with the mouse wheel
@@ -174,7 +180,32 @@ function Viewer(containerId, width, height, imagePaths) {
         return self.transform.k;
     }
 
+    /**
+     * Returns the current X transform (panning)
+     */
+    self.getTransformX = function() {
+        return self.transform.x;
+    }
+
+    /**
+     * Returns the current Y transform (panning)
+     */
+    self.getTransformY = function() {
+        return self.transform.y;
+    }
+
+    /**
+     * Cleanly disposes of the viewer
+     */
+    self.dispose = function() {
+        $(self.id).remove();
+    }
+
     // ENTRY POINT - functions have all been defined
+    $(self.containerId).css("position", "relative");
+    $(self.containerId).css("width", self.width);
+    $(self.containerId).css("height", self.height);
+
     self.loadImages(function() {
         self.createCanvas(function() {
             self.render();

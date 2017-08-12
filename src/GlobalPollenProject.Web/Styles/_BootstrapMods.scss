@@ -1,11 +1,14 @@
 /* Bootstrap 4 Customisations for GPP */
+
 body {
     line-height: 1.8em;
     font-size: 14px;
     color: $clr-text-primary;
 }
 
-h3 { font-size: 1.5rem; }
+h3 {
+    font-size: 1.5rem;
+}
 
 .navbar-toggle {
     margin-top: 15px;
@@ -15,7 +18,8 @@ h3 { font-size: 1.5rem; }
     .navbar-header {
         float: none;
     }
-    .navbar-left,.navbar-right {
+    .navbar-left,
+    .navbar-right {
         float: none !important;
     }
     .navbar-toggle {
@@ -23,29 +27,29 @@ h3 { font-size: 1.5rem; }
     }
     .navbar-collapse {
         border-top: 1px solid transparent;
-        box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
     }
     .navbar-fixed-top {
-		top: 0;
-		border-width: 0 0 1px;
-	}
+        top: 0;
+        border-width: 0 0 1px;
+    }
     .navbar-collapse.collapse {
         display: none!important;
     }
     .navbar-nav {
         float: none!important;
-		margin-top: 7.5px;
-	}
-	.navbar-nav>li {
+        margin-top: 7.5px;
+    }
+    .navbar-nav>li {
         float: none;
     }
     .navbar-nav>li>a {
         padding-top: 10px;
         padding-bottom: 10px;
     }
-    .collapse.in{
-  		display:block !important;
-	}
+    .collapse.in {
+        display: block !important;
+    }
 }
 
 li.nav-item {
@@ -67,32 +71,44 @@ div.card {
 }
 
 .panel-primary {
-    border-color: #83296f;
+    border-color: $primary-color-accent;
 }
 
-    .panel-primary > .panel-heading {
-        background-color: #83296f;
-        border-color: #83296f;
-    }
+.panel-primary>.panel-heading {
+    background-color: $primary-color-accent;
+    border-color: $primary-color-accent;
+}
 
 a {
-    color: #a8699a;
+    color: $primary-color;
 }
 
-    a:hover, a:focus {
-        color: #83296f;
-    }
+a:hover,
+a:focus {
+    color: $primary-color-accent;
+}
 
 body {
-font-family: 'Hind', sans-serif;
+    font-family: 'Hind', sans-serif;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-family: Montserrat, "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
-input.form-control, textarea.form-control {
+input.form-control,
+textarea.form-control {
     border-radius: 0;
+}
+
+.progress-bar {
+    border-radius: 0;
+    background-color: $primary-color !important;
 }
 
 .btn {
@@ -100,15 +116,28 @@ input.form-control, textarea.form-control {
     border: 1px solid lightgrey;
 }
 
+.btn:hover {
+    cursor: pointer;
+}
+
 .btn-primary {
-    background-color: #a8699a;
+    background-color: $primary-color;
     border: none;
 }
 
-    .btn-primary:hover, .btn-primary:focus, .btn-primary:active, .btn-primary.active, .open .dropdown-toggle.btn-primary {
-        background-color: #83296f;
-        border-color: #000;
-    }
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active,
+.btn-primary.active,
+.open .dropdown-toggle.btn-primary {
+    background-color: $primary-color-accent;
+    border-color: #000;
+}
+
+.list-group-item.active {
+    background-color: $primary-color !important;
+    border-color: $primary-color !important;
+}
 
 .navbar {
     background-color: white;
@@ -117,7 +146,7 @@ input.form-control, textarea.form-control {
     font-family: Montserrat, "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-weight: 400;
     border-color: #e7e7e7;
-    border-bottom: 2px solid #9b538b;
+    border-bottom: 2px solid $primary-color;
 }
 
 .top {
@@ -128,7 +157,7 @@ input.form-control, textarea.form-control {
 
 .bottom {
     text-align: center;
-    color: #9b538b;
+    color: $primary-color;
 }
 
 .navbar-toggle {
@@ -136,36 +165,44 @@ input.form-control, textarea.form-control {
     border-radius: 0;
 }
 
-.navbar-inverse .navbar-nav > li > a:hover, .navbar-inverse .navbar-nav > li > a:focus {
+.navbar-inverse .navbar-nav>li>a:hover,
+.navbar-inverse .navbar-nav>li>a:focus {
     color: black;
 }
 
-.dropdown-menu > li > a:hover, .dropdown-menu > li > a:focus {
-    background-color: #83296F;
+.dropdown-menu>li>a:hover,
+.dropdown-menu>li>a:focus {
+    background-color: $primary-color-accent;
 }
 
 .form-control:focus {
-    border-color: #83296F;
+    border-color: $primary-color-accent;
     border-width: 0.1em;
 }
 
-.navbar-inverse .navbar-nav > .dropdown > a:hover .caret {
+.navbar-inverse .navbar-nav>.dropdown>a:hover .caret {
     border-top-color: black;
     border-bottom-color: black;
 }
 
-.navbar-inverse .navbar-nav > .open > a:hover .caret {
+.navbar-inverse .navbar-nav>.open>a:hover .caret {
     border-top-color: white;
     border-bottom-color: white;
 }
 
-.navbar-inverse .navbar-brand:hover, .navbar-inverse .navbar-brand:focus {
+.navbar-inverse .navbar-brand:hover,
+.navbar-inverse .navbar-brand:focus {
     color: black;
 }
 
-.pagination > .active > a, .pagination > .active > span, .pagination > .active > a:hover, .pagination > .active > span:hover, .pagination > .active > a:focus, .pagination > .active > span:focus {
-    background-color:#83296f;
-    border-color: #83296f;
+.pagination>.active>a,
+.pagination>.active>span,
+.pagination>.active>a:hover,
+.pagination>.active>span:hover,
+.pagination>.active>a:focus,
+.pagination>.active>span:focus {
+    background-color: $primary-color-accent;
+    border-color: $primary-color-accent;
 }
 
 .breadcrumb {
