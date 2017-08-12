@@ -501,6 +501,7 @@ module Digitisation =
                 CurrentTaxonId = None
                 CurrentFamily = ""
                 CurrentGenus = ""
+                CurrentTaxonStatus = ""
                 CurrentSpecies = ""
                 CurrentSpAuth = ""
                 IsFullyDigitised = false
@@ -564,12 +565,12 @@ module Digitisation =
             match slide with
             | None -> readModelErrorHandler()
             | Some s ->
-                let f,g,sp,auth = 
+                let f,g,sp,auth,status = 
                     let bbTaxon = RepositoryBase.getSingle ((taxonId |> unwrapTaxonId).ToString()) getKey deserialise<BackboneTaxon>
                     match bbTaxon with
                     | Error e -> readModelErrorHandler()
-                    | Ok t -> t.Family, t.Genus, t.Species, t.NamedBy
-                let updatedSlide = { s with CurrentFamily = f; CurrentGenus = g; CurrentSpecies = sp; CurrentSpAuth = auth; CurrentTaxonId = taxonId |> Converters.DomainToDto.unwrapTaxonId |> Some }
+                    | Ok t -> t.Family, t.Genus, t.Species, t.NamedBy, t.TaxonomicStatus
+                let updatedSlide = { s with CurrentTaxonStatus = status; CurrentFamily = f; CurrentGenus = g; CurrentSpecies = sp; CurrentSpAuth = auth; CurrentTaxonId = taxonId |> Converters.DomainToDto.unwrapTaxonId |> Some }
                 let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
                 let updatedCol = { c with Slides = updatedSlides }
                 RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise

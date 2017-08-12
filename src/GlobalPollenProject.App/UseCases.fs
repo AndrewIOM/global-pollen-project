@@ -133,7 +133,14 @@ module Digitise =
         |> lift issueCommand
         |> toAppResult
 
-    let uploadSlideImage request = 
+    let uploadSlideImage (request:SlideImageRequest) = 
+
+        let fetchCalibration calId =
+            ReadStore.RepositoryBase.getSingle<Calibration> calId readStoreGet deserialise
+
+        let tryGetMagnification (cal:Calibration) =
+            cal.Magnifications
+            |> List.tryFind (fun m -> m.Level = request.Magnification)
 
         let imageForUploadOrError =
             match request.IsFocusImage with
@@ -143,7 +150,7 @@ module Digitise =
                 | 1 -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["A focus image must have at least two frames"]}]
                 | _ ->
                     let framesBase64 = request.FramesBase64 |> List.map Base64Image //TODO validation in create function
-                    let calId = request.CalibrationId |> CalibrationId //TODO validation
+                    let calId = request.CalibrationId |> CalibrationId
                     let magId = (calId,request.Magnification) |> MagnificationId //TODO validation
                     ImageForUpload.Focus (framesBase64,Stepping.Variable,magId)
                     |> Ok

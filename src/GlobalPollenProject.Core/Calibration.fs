@@ -41,8 +41,6 @@ and CalState = {
 
 and ImageState = {
     Image: RelativeUrl
-    // Height: int<pixels>
-    // Width: int<pixels>
     ImageScaleFactor: float<um>
 }
 

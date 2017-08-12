@@ -104,6 +104,7 @@ type SlideDetail = {
     CurrentGenus:       string
     CurrentSpecies:     string
     CurrentSpAuth:      string
+    CurrentTaxonStatus: string
     Rank:               string
     IsFullyDigitised:   bool
     Images:             List<SlideImage>
