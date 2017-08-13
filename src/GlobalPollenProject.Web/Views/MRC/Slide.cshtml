@@ -1,54 +1,47 @@
-@model ReadModels.SlideDetail
-
-@{
-    Layout = "_Layout";
-    ViewBag.Title = "Individual Slide";
+@model ReadModels.SlideDetail 
+@{ 
+    Layout = "_Layout"; 
+    ViewBag.Title = "Individual Slide"; 
     ViewData["Title"] = Model.CollectionSlideId;
-    ViewData["Subtitle"] = "It's a slide, yo";
-    ViewData["Description"] = "";
-}
+    ViewData["Subtitle"] = ""; 
+    ViewData["Description"] = ""; 
+} 
 
 @section headerSection {
-    <header>
-        <div class="container">
-            <h2 id="about">@ViewData["Title"]</h2>
-            <p>@ViewData["Subtitle"]</p>
-        </div>
-    </header>
-}
+<header>
+    <div class="container">
+        <h2 id="about">@ViewData["Title"]</h2>
+        <p>@ViewData["Subtitle"]</p>
+    </div>
+</header>
+} 
 
-@section
-scripts {
-
+@functions { public string GetSpecificEphitet(string latinName) { return latinName.Split(' ').Last(); } }
+@section scripts {
 <script src="/lib/d3/d3.min.js"></script>
 <script src="/js/viewer/viewer.js"></script>
 <script src="/js/viewer/focusslider.js"></script>
 <script src="/js/viewer/scalebar.js"></script>
 <script>
+    var viewer;
+    var slider;
+    var scaleBar;
 
-var viewer;
-var slider;
-var scaleBar;
-
-$(function () {
-    viewer = new Viewer("#viewer-container", "#viewer-canvas",
+    $(function () {
+        viewer = new Viewer("#viewer-container", "#viewer-canvas",
             $("#viewer-container").width(), 500, [
                 "@Model.Images[0].Frames[0]"
             ]
         );
 
-    @if(Model.Images[0].Frames.Length > 1) {
-        <text>
-        slider = new FocusSlider(viewer, "#viewer-focus-slider");
-        </text>
-    }
-    scaleBar = new ScaleBar(viewer, "#viewer-scalebar", @Model.Images[0].PixelWidth);
-
-});
-
+        @if(Model.Images[0].Frames.Length > 1) { 
+            <text>slider = new FocusSlider(viewer, "#viewer-focus-slider"); </text>
+        }
+        scaleBar = new ScaleBar(viewer, "#viewer-scalebar", @Model.Images[0].PixelWidth);
+    });
 </script>
 
-}
+} 
 
 @* Breadcrumb *@
 <div class="row">
@@ -57,18 +50,16 @@ $(function () {
             <li class="breadcrumb-item"><a href="/">Home</a></li>
             <li class="breadcrumb-item"><a href="/Taxon">Master Reference Collection</a></li>
             @if (Model.Rank == "Family") {
-                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
+            } @if (Model.Rank == "Genus") {
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">@Model.CurrentGenus</a></li>
+            } @if (Model.Rank == "Species") {
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">@Model.CurrentGenus</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@GetSpecificEphitet(Model.CurrentSpecies)">@Model.CurrentSpecies</a></li>
             }
-            @if (Model.Rank == "Genus") {
-                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
-                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">@Model.CurrentGenus</a></li>
-            }
-            @if (Model.Rank == "Species") {
-                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
-                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">@Model.CurrentGenus</a></li>
-                <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@Model.CurrentSpecies">@Model.CurrentSpecies</a></li>
-            }
-            <li class="breadcrumb-item active">Cool Slide</li>
+            <li class="breadcrumb-item active">Slide</li>
         </ol>
     </div>
 </div>
@@ -76,8 +67,52 @@ $(function () {
 <div class="row">
     <div class="col-md-8" id="viewer-container"></div>
     <div class="col-md-4">
+        <p>This reference slide has been digitised with @Model.Images.Length images. Each image may contain one or more pollen
+            grains. </p>
+        <p>Images have been provided at magnifications of 40x and 100x.</p>
+
+        <div class="card">
+            <div class="card-header">
+                Origin
+            </div>
+            <div class="card-block">
+                <dl class="row">
+                    <dt class="col-sm-5">Material Origin</dt>
+                    <dd class="col-sm-7">Subsample of plant material identified botanically and harvested.</dd>
+
+                    <dt class="col-sm-5">Year in which plant was harvested</dt>
+                    <dd class="col-sm-7">Unknown</dd>
+
+                    <dt class="col-sm-5">Collected by</dt>
+                    <dd class="col-sm-7">Unknown</dd>
+
+                    <dt class="col-sm-5">Location from which plant was taken</dt>
+                    <dd class="col-sm-7">Unknown</dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Slide Preperation Details
+            </div>
+            <div class="card-block">
+                <dl class="row">
+                    <dt class="col-sm-5">Chemical Treatments</dt>
+                    <dd class="col-sm-7">Acetolesis</dd>
+
+                    <dt class="col-sm-5">Slide Creation Date</dt>
+                    <dd class="col-sm-7">30th July 2005</dd>
+
+                    <dt class="col-sm-5">Mounting Medium</dt>
+                    <dd class="col-sm-7">Silicone Oil</dd>
+                </dl>
+
+            </div>
+        </div>
+
         <a href="/Taxon/@Model.CurrentFamily">Family: @Model.CurrentFamily</a>
         <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">Genus: @Model.CurrentGenus</a>
-        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@Model.CurrentSpecies">Species: @Model.CurrentSpecies</a>
+        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@GetSpecificEphitet(Model.CurrentSpecies)">Species: @Model.CurrentSpecies</a>
     </div>
 </div>

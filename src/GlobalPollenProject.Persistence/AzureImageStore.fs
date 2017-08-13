@@ -54,6 +54,16 @@ let scaleImage maxDimension maxDpi (stream:Stream) =
     memoryStream.Position <- int64(0)
     memoryStream
 
+let getImageDimensions' (stream:Stream) =
+    use image = ImageSharp.Image.Load<Rgba32>(stream)
+    image.Height,image.Width
+
+let getImageDimensions base64 =
+    base64
+    |> base64ToByte
+    |> lift (fun x -> new MemoryStream(x))
+    |> lift getImageDimensions'
+
 let uploadToAzure' blobRef baseUrl base64 =
     base64ToByte base64
     |> lift (fun x -> new MemoryStream(x))

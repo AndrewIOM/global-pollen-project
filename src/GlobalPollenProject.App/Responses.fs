@@ -8,6 +8,7 @@ type ValidationError = {
 
 type ServiceError =
 | Core
+| InvalidRequestFormat
 | Validation of ValidationError list
 | Persistence
 | NotFound

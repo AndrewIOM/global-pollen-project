@@ -52,6 +52,8 @@ function DigitiseViewModel(users, analyses) {
     self.slideDetailVM = ko.observable(null);
     self.calibrateVM = ko.observable(null);
 
+    self.dt = $("#slides-data-table").dataTable();
+
     self.refreshCollectionList = function () {
         $.ajax({
             url: apiPrefix + "collection/list",
@@ -79,6 +81,7 @@ function DigitiseViewModel(users, analyses) {
                     .done(function (col) {
                         self.activeCollection(col);
                         self.currentView(view);
+                        self.dt.dataTable();
                     })
                 break;
             case CurrentView.ADD_COLLECTION:

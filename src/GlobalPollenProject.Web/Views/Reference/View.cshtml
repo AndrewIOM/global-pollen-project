@@ -4,6 +4,18 @@
     Layout = "_Layout";
     ViewData["Title"] = Model.Name;
 }
+@functions { public string GetSpecificEphitet(string latinName) { return latinName.Split(' ').Last(); } }
+
+@section scripts {
+    <script src="/lib/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#reference-table').DataTable({
+                paging: false
+            });
+        })
+    </script>
+}
 
 @* Header *@
 @section headerSection {
@@ -25,22 +37,35 @@
 </div>
 
 @* Slide Table *@
-<table class="table">
+<table class="table" id="reference-table" data-page-length='100'>
   <thead class="thead-default">
     <tr>
       <th>#</th>
-      <th>Original Taxon</th>
-      <th>Current Taxon</th>
-      <th>Digitised?</th>
+      <th>Family</th>
+      <th>Genus</th>
+      <th>Species</th>
+      <th>Digitisation Status</th>
+      <th>Actions</th>
     </tr>
   </thead>
   <tbody>
       @foreach (var slide in Model.Slides) {
-        <tr>
+        <tr class="taxon-status-@slide.CurrentTaxonStatus">
             <th scope="row">@slide.CollectionSlideId</th>
-            <td>@slide.FamilyOriginal > @slide.GenusOriginal > @slide.SpeciesOriginal</td>
-            <td><a href="/Taxon/@slide.CurrentFamily">@slide.CurrentFamily</a> > <a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus">@slide.CurrentGenus</a> > <a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus/@slide.CurrentSpecies">@slide.CurrentSpecies @slide.CurrentSpAuth</a></td>
-            <td>@slide.IsFullyDigitised</td>
+            @if (slide.CurrentTaxonStatus == "accepted" && slide.IsFullyDigitised) {
+                <td><a href="/Taxon/@slide.CurrentFamily">@slide.CurrentFamily</a><em>@slide.FamilyOriginal</em></td>
+                <td><a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus">@slide.CurrentGenus</a><em>@slide.GenusOriginal</em></td>
+                <td><a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus/@GetSpecificEphitet(slide.CurrentSpecies)">@slide.CurrentSpecies @slide.CurrentSpAuth</a><em>@slide.SpeciesOriginal</em></td>
+            } else {
+                <td><span>@slide.CurrentFamily</span><em>@slide.FamilyOriginal</em></td>
+                <td><span>@slide.CurrentGenus</span><em>@slide.GenusOriginal</em></td>
+                <td><span>@slide.CurrentSpecies @slide.CurrentSpAuth</span><em>@slide.SpeciesOriginal</em></td>
+            }
+            <td>
+                @if (slide.IsFullyDigitised) { <span>Fully digitised, with @slide.Images.Length images.</span> }
+                @if (!slide.IsFullyDigitised) { <span>Not digitised.</span> }
+            </td>
+            <td></td>
         </tr>
       }
   </tbody>

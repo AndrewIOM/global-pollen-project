@@ -83,13 +83,20 @@ let import (command:Import) validateInBackbone state =
                 Status = command.Status
                 Reference = command.Reference } ]
 
-let connectDatabase id database connector state =
+let connectNeotoma (connector:LinkRequest->int option) state =
+    // Must get family, genus, and species names for this taxon... crawl the taxonomic heirarchy
+    []
+
+let connectGbif (connector:LinkRequest->int option) state =
     []
 
 let handle deps = 
     function
     | ImportFromBackbone c -> import c deps.ValidateTaxon
-    | ConnectToExternalDatabase (id,db) -> connectDatabase id db deps.GetGbifId
+    | ConnectToExternalDatabase (id,db) ->
+        match db with
+        | Neotoma -> connectNeotoma deps.GetNeotomaId
+        | GlobalBiodiversityInformationFacility -> connectGbif deps.GetGbifId
 
 type State with
     static member Evolve state = function

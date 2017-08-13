@@ -43,7 +43,7 @@ type LoginRequest = {
 
 [<CLIMutable>]
 type StartCollectionRequest = {
-    [<Required>] Name: string
+    [<Required>] [<StringLength(50,MinimumLength=10)>] Name: string
     [<Required>] Description: string 
 }
 
@@ -57,8 +57,8 @@ type SlideRecordRequest = {
     OriginalSpecies: string
     OriginalAuthor: string
     ExistingId: string
-    YearCollected: System.Nullable<int>
-    YearSlideMade: System.Nullable<int>
+    [<Range(1700,2017)>] YearCollected: System.Nullable<int>
+    [<Range(1950,2017)>] YearSlideMade: System.Nullable<int>
     LocationRegion: string
     LocationCountry: string
     PreperationMethod: string
@@ -71,20 +71,20 @@ type SlideImageRequest = {
     [<Required>] SlideId: string
     [<Required>] IsFocusImage: bool
     [<Required>] FramesBase64: string list
-    FloatingCalPointOneX: Nullable<int>
-    FloatingCalPointOneY: Nullable<int>
-    FloatingCalPointTwoX: Nullable<int>
-    FloatingCalPointTwoY: Nullable<int>
-    MeasuredDistance: Nullable<float>
+    [<Range(0,Int32.MaxValue)>] FloatingCalPointOneX: Nullable<int>
+    [<Range(0,Int32.MaxValue)>] FloatingCalPointOneY: Nullable<int>
+    [<Range(0,Int32.MaxValue)>] FloatingCalPointTwoX: Nullable<int>
+    [<Range(0,Int32.MaxValue)>] FloatingCalPointTwoY: Nullable<int>
+    [<Range(0,Int32.MaxValue)>] MeasuredDistance: Nullable<float>
     CalibrationId: System.Guid
-    Magnification: int
-    DigitisedYear: Nullable<int>
+    [<Range(0,10000)>] Magnification: int
+    [<Range(1950,2017)>] DigitisedYear: Nullable<int>
 }
 
 [<CLIMutable>]
 type BackboneSearchRequest = {
-    [<Required>]LatinName: string
-    [<Required>]Rank: string
+    [<Required>] LatinName: string
+    [<Required>] Rank: string
     Family: string
     Genus: string
     Species: string
@@ -92,12 +92,22 @@ type BackboneSearchRequest = {
 }
 
 [<CLIMutable>]
+type FloatingCalibrationImage = {
+    [<Required>] PngBase64: string
+    [<Required>] [<Range(1, Int32.MaxValue)>] X1: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] X2: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] Y1: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] Y2: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] MeasuredLength: float
+}
+
+[<CLIMutable>]
 type AddUnknownGrainRequest = {
-    StaticImagesBase64: string list
+    [<Required>] Images: FloatingCalibrationImage list
+    [<Required>] SampleType: string
     [<Required>] LatitudeDD: float
     [<Required>] LongitudeDD: float
-    [<Required>] SampleType: string
-    Year: int option
+    Year: Nullable<int>
     YearType: string
 }
 

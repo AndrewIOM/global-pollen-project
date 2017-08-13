@@ -175,7 +175,11 @@ type BackboneQuery =
 | Validate of TaxonomicIdentity
 | ValidateById of TaxonId
 
-type LinkRequest = {Family:string;Genus:string option;Species:string option;Identity:TaxonomicIdentity}
+type LinkRequest = {
+    Family:     string
+    Genus:      string option
+    Species:    string option
+    Identity:   TaxonomicIdentity }
 
 [<AutoOpen>]
 module ColVersion =

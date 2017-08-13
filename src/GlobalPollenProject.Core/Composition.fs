@@ -65,3 +65,13 @@ let lift f result =
 
 let (<*>) = apply
 let (<!>) = lift
+
+let retn = Ok
+
+let rec mapResult f list =
+    let cons head tail = head :: tail
+    match list with
+    | [] -> 
+        retn []
+    | head::tail ->
+        retn cons <*> (f head) <*> (mapResult f tail)

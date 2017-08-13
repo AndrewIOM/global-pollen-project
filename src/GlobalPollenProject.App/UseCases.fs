@@ -106,10 +106,32 @@ let toPersistenceError domainResult =
     | Ok r -> Ok r
     | Error str -> Error ServiceError.Persistence
 
+let toValidationError domainResult =
+    match domainResult with
+    | Ok r -> Ok r
+    | Error str -> Error <| ServiceError.Validation [{ Property = ""; Errors = [str]}]
+
+
 module Digitise =
 
     open GlobalPollenProject.Core.Aggregates.ReferenceCollection
     open Converters
+   
+    let myCollections getCurrentUser = 
+        let userId = getCurrentUser()
+        let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("CollectionAccessList:" + (userId.ToString())) readStoreGetList deserialiseGuid
+        match cols with
+        | Error e -> Error Persistence
+        | Ok clist -> 
+            let getCol id = ReadStore.RepositoryBase.getSingle<EditableRefCollection> (id.ToString()) readStoreGet deserialise
+            clist 
+            |> List.map getCol 
+            |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
+            |> Ok
+
+    let getCollection id =
+        ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<EditableRefCollection>
+        |> toAppResult
 
     let private issueCommand = 
         let aggregate = { initial = State.Initial; evolve = State.Evolve; handle = handle; getId = getId }
@@ -129,75 +151,14 @@ module Digitise =
 
     let addSlideRecord request = 
         request
-        |> DtoToDomain.dtoToAddSlideCommand
+        |> Dto.toAddSlideCommand
         |> lift issueCommand
         |> toAppResult
 
     let uploadSlideImage (request:SlideImageRequest) = 
-
-        let fetchCalibration calId =
-            ReadStore.RepositoryBase.getSingle<Calibration> calId readStoreGet deserialise
-
-        let tryGetMagnification (cal:Calibration) =
-            cal.Magnifications
-            |> List.tryFind (fun m -> m.Level = request.Magnification)
-
-        let imageForUploadOrError =
-            match request.IsFocusImage with
-            | true ->  
-                match request.FramesBase64.Length with
-                | 0 -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["No frames were submitted"]}]
-                | 1 -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["A focus image must have at least two frames"]}]
-                | _ ->
-                    let framesBase64 = request.FramesBase64 |> List.map Base64Image //TODO validation in create function
-                    let calId = request.CalibrationId |> CalibrationId
-                    let magId = (calId,request.Magnification) |> MagnificationId //TODO validation
-                    ImageForUpload.Focus (framesBase64,Stepping.Variable,magId)
-                    |> Ok
-            | false ->
-                match request.FramesBase64.Length with
-                | 0 -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["No frames were submitted"]}]
-                | 1 -> 
-                    match request.FloatingCalPointOneX.HasValue
-                       && request.FloatingCalPointOneY.HasValue
-                       && request.FloatingCalPointTwoX.HasValue
-                       && request.FloatingCalPointTwoY.HasValue 
-                       && request.MeasuredDistance.HasValue with
-                        | true ->
-                            let calibration : FloatingCalibration = {
-                                Point1 = request.FloatingCalPointOneX.Value, request.FloatingCalPointOneY.Value
-                                Point2 = request.FloatingCalPointTwoX.Value, request.FloatingCalPointTwoY.Value
-                                MeasuredDistance = request.MeasuredDistance.Value * 1.0<um>
-                            }
-                            let base64 = request.FramesBase64.Head |> Base64Image
-                            ImageForUpload.Single (base64,calibration) |> Ok
-                        | false -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["You submitted more than one frame"]}]
-                | _ -> Error <| Validation [{ Property = "FramesBase64"; Errors = ["You submitted more than one frame"]}]
-
-        let slideId = SlideId ((CollectionId request.CollectionId), request.SlideId) //TODO proper validation
-        imageForUploadOrError
-        |> bind (saveImage >> toPersistenceError)
-        |> lift (fun saved -> UploadSlideImage { Id = slideId; Image = saved; DateTaken = DateTime.Now }) //TODO parse year from request
+        request
+        |> Converters.Dto.toAddSlideImageCommand readStoreGet saveImage
         |> lift issueCommand
-
-
-    let listCollections () = 
-        ReadStore.RepositoryBase.getAll<ReferenceCollectionSummary> All readStoreGetList deserialise
-   
-    let myCollections getCurrentUser = 
-        let userId = getCurrentUser()
-        let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("CollectionAccessList:" + (userId.ToString())) readStoreGetList deserialiseGuid
-        match cols with
-        | Error e -> Error Persistence
-        | Ok clist -> 
-            let getCol id = ReadStore.RepositoryBase.getSingle<EditableRefCollection> (id.ToString()) readStoreGet deserialise
-            clist 
-            |> List.map getCol 
-            |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
-            |> Ok
-
-    let getCollection id =
-        ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<EditableRefCollection>
         |> toAppResult
 
 
@@ -270,30 +231,13 @@ module UnknownGrains =
         let aggregate = { initial = State.InitialState; evolve = State.Evolve; handle = handle; getId = getId }
         eventStore.Value.MakeCommandHandler "Specimen" aggregate domainDependencies
 
-    // let submitUnknownGrain grainId (images:string list) age (lat:float) lon =
-    //     let id = GrainId grainId
-    //     let uploadedImages = images |> List.map (fun x -> SingleImage (Url.create x))
-    //     let spatial = Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>)
-    //     let temporal = CollectionDate (age * 1<CalYr>)
-    //     let userId = UserId (Guid.NewGuid())
-    //     issueCommand <| SubmitUnknownGrain {Id = id; Images = uploadedImages; SubmittedBy = userId; Temporal = Some temporal; Spatial = spatial }
-    //     Ok id
-
     let submitUnknownGrain getCurrentUser (request:AddUnknownGrainRequest) =
-
-        // let upload base64Strings = 
-        //     base64Strings
-        //     |> List.map (Base64Image >> ImageForUpload.Single >> saveImage)
-        //     |> Ok
-
-        // let currentUser = Ok(UserId <| getCurrentUser())
-        // let newId = Ok(GrainId <| domainDependencies.GenerateId())
-
-        // request
-        // |> Converters.DtoToDomain.dtoToGrain newId currentUser
-        // <*> (upload request.StaticImagesBase64)
-        // |> Result.map issueCommand
-        Ok()
+        let id = domainDependencies.GenerateId() |> GrainId
+        let user = getCurrentUser() |> UserId
+        request
+        |> Dto.toSubmitUnknownGrain id user saveImage
+        |> lift issueCommand
+        |> toAppResult
 
     let getDetail grainId =
         ReadStore.RepositoryBase.getSingle<GrainSummary> grainId readStoreGet deserialise
@@ -374,7 +318,7 @@ module Backbone =
     open GlobalPollenProject.Core.Aggregates.Taxonomy
     open ImportTaxonomy
 
-    let private issueCommand = 
+    let issueCommand = 
         let aggregate = { initial = State.InitialState; evolve = State.Evolve; handle = handle; getId = getId }
         eventStore.Value.MakeCommandHandler "Taxon" aggregate domainDependencies
 
@@ -421,13 +365,13 @@ module Backbone =
 
     let searchNames (request:BackboneSearchRequest) =
         request
-        |> DtoToDomain.backboneSearchToIdentity
+        |> Converters.Taxonomy.backboneSearchToIdentity
         |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.search s readLex deserialise)
         |> toAppResult
 
     let tryMatch (request:BackboneSearchRequest) =
         request
-        |> DtoToDomain.backboneSearchToIdentity
+        |> Converters.Taxonomy.backboneSearchToIdentity
         |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.findMatches s readStoreGetSortedList readStoreGet deserialise)
 
     // Traces a backbone taxon to its most recent name (e.g. synonym -> synonym -> accepted name)
@@ -500,3 +444,10 @@ module User =
         let id = UserId (getUserId())
         issueCommand <| Register { Id = id; Title = newUser.Title; FirstName = newUser.FirstName; LastName = newUser.LastName }
         Ok id
+
+// Additional event handlers:
+
+eventStore.Value.SaveEvent 
+:> IObservable<string*obj>
+|> Observable.subscribe (EventHandlers.ExternalConnections.refresh readStoreGet Backbone.issueCommand)
+|> ignore

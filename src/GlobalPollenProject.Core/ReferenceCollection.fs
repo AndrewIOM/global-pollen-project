@@ -11,7 +11,7 @@ type Command =
 | Publish of CollectionId
 
 and CreateCollection = {Id:CollectionId; Name:string; Owner:UserId; Description: string}
-and UploadSlideImage = {Id:SlideId; Image:Image; DateTaken:DateTime }
+and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int }
 and AddSlide = 
     {Collection:        CollectionId
      Taxon:             TaxonIdentification

@@ -6,6 +6,7 @@
 
 <link rel="stylesheet" href="/css/digitise.css" >
 <link rel="stylesheet" href="/lib/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" >
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap4.min.css" >
 
 @* Header *@
 @section headerSection {
@@ -24,6 +25,7 @@
     <script src="/js/viewer/scalebar.js"></script>
     <script src="/js/viewer/focusslider.js"></script>
     <script src="/js/viewer/measuringline.js"></script>
+    <script src="/lib/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="/js/digitise/app.js"></script>
 }
 
@@ -81,7 +83,7 @@
                     </div>
                 </div>              
 
-                <table class="table">
+                <table class="table" id="slides-data-table">
                     <thead>
                         <tr>
                             <th>ID</th>

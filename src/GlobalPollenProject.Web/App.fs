@@ -67,15 +67,17 @@ let toApiResult ctx result =
         (setStatusCode 400 >=>
             match e with
             | Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
+            | InvalidRequest -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
             | _ -> json <| { Message = "Internal error"; Errors = [] } )
 
-let jsonToModel<'a> (ctx:HttpContext) =
-    ctx.BindJson<'a>()
-    |> Async.RunSynchronously
+let bindJson<'a> (ctx:HttpContext) =
+    try ctx.BindJson<'a>() |> Async.RunSynchronously |> Ok
+    with
+    | _ -> Error InvalidRequestFormat
 
 let jsonRequestToApiResponse<'a> appService ctx =
-    jsonToModel<'a> ctx
-    |> validateModel
+    bindJson<'a> ctx
+    |> bind validateModel
     |> Result.bind appService
     |> toApiResult ctx
 
@@ -167,9 +169,8 @@ let listCollectionsHandler ctx =
     |> toApiResult ctx
 
 let startCollectionHandler (ctx:HttpContext) =
-    ctx.BindJson<StartCollectionRequest>()
-    |> Async.RunSynchronously
-    |> validateModel
+    bindJson<StartCollectionRequest> ctx
+    |> bind validateModel
     |> Result.bind (Digitise.startNewCollection (currentUserId ctx))
     |> toApiResult ctx
 
@@ -179,9 +180,9 @@ let publishCollectionHandler (ctx:HttpContext) =
     text "Ok" ctx
 
 let addSlideHandler (ctx:HttpContext) =
-    ctx.BindJson<SlideRecordRequest>()
-    |> Async.RunSynchronously
-    |> Digitise.addSlideRecord
+    bindJson<SlideRecordRequest> ctx
+    |> bind validateModel
+    |> bind Digitise.addSlideRecord
     |> toApiResult ctx
 
 let addImageHandler (ctx:HttpContext) =
@@ -201,15 +202,13 @@ let getCalibrationsHandler (ctx:HttpContext) =
     |> toApiResult ctx
 
 let setupMicroscopeHandler (ctx:HttpContext) =
-    ctx.BindJson<AddMicroscopeRequest>()
-    |> Async.RunSynchronously
-    |> Calibrations.setupMicroscope (currentUserId ctx)
+    bindJson<AddMicroscopeRequest> ctx
+    |> bind (Calibrations.setupMicroscope (currentUserId ctx))
     |> toApiResult ctx
 
 let calibrateHandler (ctx:HttpContext) =
-    ctx.BindJson<CalibrateRequest>()
-    |> Async.RunSynchronously
-    |> Calibrations.calibrateMagnification
+    bindJson<CalibrateRequest> ctx
+    |> bind Calibrations.calibrateMagnification
     |> toApiResult ctx
 
 let listGrains ctx =
