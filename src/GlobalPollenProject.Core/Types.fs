@@ -156,12 +156,16 @@ type TaxonomicStatus =
 | Synonym of TaxonId
 
 // Taxonomic Identity
+type Person = Initial list * LastName
+and Initial = string
+and LastName = string
+
 type IdentificationSource =
    | Unknown
    | Book of string
 
 type TaxonIdentification =
-    | Botanical of TaxonId * IdentificationSource
+    | Botanical of TaxonId * IdentificationSource * Person
     | Environmental of TaxonId
     | Morphological of TaxonId
 

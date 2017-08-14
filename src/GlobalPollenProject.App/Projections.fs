@@ -589,7 +589,7 @@ module Digitisation =
             match e with
             | ReferenceCollection.Event.DigitisationStarted e -> started set setList e
             | ReferenceCollection.Event.SlideRecorded e -> recordSlide get set e
-            | ReferenceCollection.Event.SlideImageUploaded (s,i) -> imageUploaded get set generateThumb toAbsoluteUrl s i
+            | ReferenceCollection.Event.SlideImageUploaded (s,i,y) -> imageUploaded get set generateThumb toAbsoluteUrl s i
             | ReferenceCollection.Event.SlideFullyDigitised e -> digitised get set e
             | ReferenceCollection.Event.SlideGainedIdentity (s,t) -> gainedIdentity get set s t
             | ReferenceCollection.Event.CollectionPublished (id,d,v) -> published get set id d v

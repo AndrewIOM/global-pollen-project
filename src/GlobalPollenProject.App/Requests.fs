@@ -58,9 +58,15 @@ type SlideRecordRequest = {
     OriginalAuthor: string
     ExistingId: string
     [<Range(1700,2017)>] YearCollected: System.Nullable<int>
+    CollectedByInitials: char list
+    CollectedBySurname: string
     [<Range(1950,2017)>] YearSlideMade: System.Nullable<int>
+    [<Required>] LocationType: string
+    LocationLocality: string
+    LocationDistrict: string
     LocationRegion: string
     LocationCountry: string
+    LocationContinent: string
     PreperationMethod: string
     MountingMaterial: string
 }
