@@ -42,6 +42,15 @@
 #static-image-previewer-measuring-line {
 }
 
+#slidedetail-no-calibrations-alert {
+    margin-top: 10px;
+}
+
+#slidedetail-microscope-section {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
 #slidedetail-focus-year-section {
     margin-bottom: 10px;
 }
@@ -49,4 +58,27 @@
 span.year.active {
     background-color: $primary-color !important;
     background-image: none !important;
+}
+
+.paginate_button {
+    padding: 5px 5px;
+    margin: 2px 2px;
+}
+
+.paginate_button:hover {
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.paginate_button.disabled {
+    color: $clr-text-primary;
+}
+
+.paginate_button.disabled:hover {
+    text-decoration: none;
+    cursor: default;
+}
+
+#focus-image-previewer {
+    margin: 20px auto;
 }

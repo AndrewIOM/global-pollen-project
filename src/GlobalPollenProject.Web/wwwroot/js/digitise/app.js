@@ -52,7 +52,7 @@ function DigitiseViewModel(users, analyses) {
     self.slideDetailVM = ko.observable(null);
     self.calibrateVM = ko.observable(null);
 
-    self.dt = $("#slides-data-table").dataTable();
+    self.dt = null;
 
     self.refreshCollectionList = function () {
         $.ajax({
@@ -81,8 +81,10 @@ function DigitiseViewModel(users, analyses) {
                     .done(function (col) {
                         self.activeCollection(col);
                         self.currentView(view);
-                        self.dt.dataTable();
                     })
+                    .always(function(d) {
+                        self.dt = $("#slides-data-table").dataTable();
+                    });
                 break;
             case CurrentView.ADD_COLLECTION:
                 self.newCollectionVM(new AddCollectionViewModel());
@@ -470,7 +472,8 @@ function SlideDetailViewModel(detail) {
     }
 
     self.createFocusImageViewer = function (element) {
-        $("#focus-image-previewer-container").html("<div id=\"focus-image-previewer\"></div>");
+        $("#focus-image-previewer-container").empty();
+        $("#focus-image-previewer-container").html("<div id=\"focus-image-previewer\" style=\"width: 100%\"></div>");
         $("#digitisedYearFocus").datepicker({
             format: " yyyy",
             viewMode: "years",
@@ -489,6 +492,11 @@ function SlideDetailViewModel(detail) {
         var readers = [];
         var base64s = [];
 
+        if(files.length < 2) {
+            alert("You must upload at least 2 images (shift-click/ctrl-click files to select multiple)");
+            return;
+        }
+
         for (var i = 0; i < files.length; i++) {
             readers.push(new FileReader());
 
@@ -499,10 +507,18 @@ function SlideDetailViewModel(detail) {
                 if (loaded >= files.length) {
                     self.viewer = new Viewer("#focus-image-previewer",
                         "#focus-image-previewer-canvas",
-                        $("#focus-image-previewer").width() * 0.8, 500, base64s
+                        $("#focus-image-previewer-container").width() * 0.8, 500, base64s
                     );
                     self.slider = new FocusSlider(self.viewer, "#focus-image-previewer-slider");
                     self.loadedFocusImages(true);
+
+                    $(self.viewer).on(Viewer.EVENT_IMAGES_MISMATCHED_SIZE, function() {
+                        self.loadedFocusImages(false);
+                        $("#focus-image-previewer-container").empty();
+                        self.viewer.dispose();
+                        self.slider.dispose();
+                        alert("Error - images must all have the same dimensions (width x height)");
+                    });
                 }
             }
             if (files[i]) {
