@@ -61,7 +61,12 @@ module Identity =
 module Spatial =
 
     let createPoint lat lon : Result<Site,ServiceError> =
-        Ok <| (Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>))
+        match lat with
+        | y when y > -90. && y < 90. ->
+            match lon with
+            | x when x > -180. && x < 180. -> (Latitude (y * 1.0<DD>), Longitude (x * 1.0<DD>)) |> Ok
+            | _ -> validationError "Longitude" "Longitude must be in decimal degrees (i.e. between -180 and 180)"
+        | _ -> validationError "Latitude" "Latitude must be in decimal degrees (i.e. between -90 and 90)"
 
     let createLocality locality district region country =
         match String.IsNullOrEmpty country with
@@ -72,9 +77,9 @@ module Spatial =
         | true -> None |> Ok
 
     let createCountry country =
-        Country country
-        |> Some
-        |> Ok
+        match String.IsNullOrEmpty country with
+        | true -> validationError "Country" "Country cannot be empty"
+        | false -> country |> Country |> Some |> Ok
 
     let createContinent continent =
         match continent with
@@ -197,10 +202,16 @@ module Taxonomy =
         | "Species" -> Ok <| Species (LatinName dto.LatinName,SpecificEphitet dto.Species,Scientific "")
         | _ -> Error "DTO validation failed"
 
-    let createIdentification samplingMethod taxonId =
+    let createPerson initials lastName =
+        if String.IsNullOrEmpty lastName then Person.Unknown
+        else 
+            let i = initials |> List.map (fun c -> c.ToString())
+            Person (i,lastName)
+
+    let createIdentification samplingMethod initials surname taxonId =
         match samplingMethod with
         | "botanical" ->
-            let person : Person = [ "F"; "G" ], "Harris"
+            let person = createPerson initials surname
             Ok <| Botanical (taxonId, Unknown, person)
         | "environmental" -> Ok <| Environmental taxonId
         | "morphological" -> Ok <| Morphological taxonId
@@ -273,7 +284,7 @@ module Dto =
 
         let taxonOrError =
             taxonIdOrError
-            |> bind (Taxonomy.createIdentification dto.SamplingMethod)
+            |> bind (Taxonomy.createIdentification dto.SamplingMethod dto.CollectedByInitials dto.CollectedBySurname)
 
         createAddSlideCommand (CollectionId dto.Collection) existingId dto.OriginalFamily dto.OriginalGenus dto.OriginalSpecies dto.OriginalAuthor
         <!> taxonOrError

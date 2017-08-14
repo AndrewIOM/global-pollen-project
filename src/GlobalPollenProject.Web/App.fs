@@ -67,7 +67,7 @@ let toApiResult ctx result =
         (setStatusCode 400 >=>
             match e with
             | Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
-            | InvalidRequest -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
+            | InvalidRequestFormat -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
             | _ -> json <| { Message = "Internal error"; Errors = [] } )
 
 let bindJson<'a> (ctx:HttpContext) =

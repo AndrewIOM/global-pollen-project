@@ -156,9 +156,11 @@ type TaxonomicStatus =
 | Synonym of TaxonId
 
 // Taxonomic Identity
-type Person = Initial list * LastName
-and Initial = string
-and LastName = string
+type Initial = string
+type LastName = string
+type Person = 
+| Person of Initial list * LastName
+| Unknown
 
 type IdentificationSource =
    | Unknown
