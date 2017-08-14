@@ -151,7 +151,7 @@ module Digitise =
 
     let addSlideRecord request = 
         request
-        |> Dto.toAddSlideCommand
+        |> Dto.toAddSlideCommand readStoreGet
         |> lift issueCommand
         |> toAppResult
 

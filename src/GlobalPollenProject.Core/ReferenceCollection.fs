@@ -11,7 +11,7 @@ type Command =
 | Publish of CollectionId
 
 and CreateCollection = {Id:CollectionId; Name:string; Owner:UserId; Description: string}
-and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int }
+and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int<CalYr> }
 and AddSlide = 
     {Collection:        CollectionId
      Taxon:             TaxonIdentification
@@ -30,7 +30,7 @@ type Event =
 | DigitisationStarted of DigitisationStarted
 | CollectionPublished of CollectionId * DateTime * ColVersion
 | SlideRecorded of SlideRecorded
-| SlideImageUploaded of SlideId * Image
+| SlideImageUploaded of SlideId * Image * int<CalYr>
 | SlideFullyDigitised of SlideId
 | SlideGainedIdentity of SlideId * TaxonId
 
@@ -68,12 +68,16 @@ and SlideState = {
     OriginalSpecies: string
     OriginalAuthor: string
     Identification: IdentificationStatus
-    Images: Image list
+    Images: ImageState list
     Place: SamplingLocation option
     Time: Age option
     PrepMethod: ChemicalTreatment option
     PrepDate: int<CalYr> option
     Mounting: MountingMedium option }
+and ImageState = {
+    Image: Image
+    YearTaken: int<CalYr>
+}
 
 let getSlideId (SlideId (c,x)) = x
 
@@ -143,9 +147,10 @@ let uploadImage (command:UploadSlideImage) state =
         match slide with
         | None -> invalidOp "Slide does not exist"
         | Some s ->
-            match isFullyDigitised {s with Images = command.Image :: s.Images } with
-            | true -> [SlideImageUploaded (command.Id, command.Image); SlideFullyDigitised command.Id]
-            | false -> [SlideImageUploaded (command.Id, command.Image)]
+            let imageState = { Image = command.Image; YearTaken = command.YearTaken }
+            match isFullyDigitised {s with Images = imageState :: s.Images } with
+            | true -> [SlideImageUploaded (command.Id, command.Image, command.YearTaken); SlideFullyDigitised command.Id]
+            | false -> [SlideImageUploaded (command.Id, command.Image, command.YearTaken)]
 
 let handle deps = 
     function
@@ -228,7 +233,7 @@ type State with
                     let updatedSlides = c.Slides |> List.map (fun x -> if x.Id = s.Id then updatedSlide else x)
                     Draft { c with Slides = updatedSlides }
 
-        | SlideImageUploaded (id,image) ->
+        | SlideImageUploaded (id,image,year) ->
             match state with
             | Initial -> invalidOp "Collection has not been started"
             | Published c
@@ -237,7 +242,8 @@ type State with
                 match slide with
                 | None -> invalidOp "Slide does not exist"
                 | Some s ->
-                    let newSlides = c.Slides |> List.map (fun x -> if x.Id = (getSlideId id) then { x with Images = image :: x.Images } else x)
+                    let newImage = { Image = image; YearTaken = year }
+                    let newSlides = c.Slides |> List.map (fun x -> if x.Id = (getSlideId id) then { x with Images = newImage :: x.Images } else x)
                     Draft { c with Slides = newSlides }
 
 let getId = 

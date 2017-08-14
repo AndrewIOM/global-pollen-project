@@ -130,17 +130,32 @@
                 <hr/>
                 <div class="row">
                     <div class="col-sm-3">
-                        <input data-bind="value: locality" class="form-control" id="locationLocality" placeholder="Locality" />
+                        <label>Accuracy of Location</label>
+                        <select data-bind="value: locationType" class="form-control input-sm inline-dropdown">
+                            <option value="Unknown">Unknown</option>
+                            <option value="Continent">Continent</option>
+                            <option value="Country">Country</option>
+                            <option value="Locality">Locality</option>
+                        </select>
                     </div>
                     <div class="col-sm-3">
-                        <input data-bind="value: district" class="form-control" id="locationDistrict" placeholder="District" />
+                        <input data-bind="value: locality, visible: locationType() == 'Locality'" class="form-control" id="locationLocality" placeholder="Locality" />
+                    </div>
+                    <div class="col-sm-3">
+                        <input data-bind="value: district, visible: locationType() == 'Locality'" class="form-control" id="locationDistrict" placeholder="District" />
                         <small class="form-text text-muted">An administrative area within a country.</small>
                     </div>
                     <div class="col-sm-3">
-                        <input data-bind="value: country" class="form-control" id="locationCountry" placeholder="Country" />
+                        <input data-bind="value: region, visible: locationType() == 'Locality'" class="form-control" id="locationRegion" placeholder="Region" />
                     </div>
                     <div class="col-sm-3">
-                        <input data-bind="value: region" class="form-control" id="locationRegion" placeholder="Region" />
+                        <input data-bind="value: country, visible: locationType() == 'Locality' || locationType() == 'Country'" class="form-control" id="locationCountry" placeholder="Country" />
+                    </div>
+                    <div class="col-sm-3">
+                        <select data-bind="value: continent, visible: locationType() == 'Continent'" class="form-control input-sm inline-dropdown">
+                            <option value="Europe">Europe</option>
+                            <option value="Asia">Asia</option>
+                        </select>
                     </div>
                 </div>
                 <small id="location-help" class="form-text text-muted">Please be as accurate as possible.</small>

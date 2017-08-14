@@ -187,10 +187,12 @@ function RecordSlideViewModel(currentCollection) {
     self.existingId = ko.observable();
     self.yearCollected = ko.observable();
     self.nameOfCollector = ko.observable();
+    self.locationType = ko.observable();
     self.locality = ko.observable();
     self.district = ko.observable();
+    self.region = ko.observable();    
     self.country = ko.observable();
-    self.region = ko.observable();
+    self.continent = ko.observable();
     self.yearPrepared = ko.observable();
     self.preperationMethod = ko.observable();
     self.mountingMaterial = ko.observable();
@@ -251,8 +253,10 @@ function RecordSlideViewModel(currentCollection) {
             SamplingMethod: self.collectionMethod(),
             YearCollected: parseInt(self.yearCollected()),
             YearSlideMade: parseInt(self.yearPrepared()),
+            LocationType: self.locationType(),
             LocationRegion: self.region(),
             LocationCountry: self.country(),
+            LocationContinent: self.continent(),
             PreperationMethod: self.preperationMethod(),
             MountingMaterial: self.mountingMaterial()
         };

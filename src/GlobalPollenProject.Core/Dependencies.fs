@@ -7,7 +7,7 @@ let calculateTaxonomicIdentity backbone (ids:TaxonIdentification list) =
 
     let idWeights = 
         ids |> Seq.map (fun id -> match id with
-                                  | Botanical (b,i) -> b, 0.95
+                                  | Botanical (b,i,p) -> b, 0.95
                                   | Environmental e -> e, 0.25
                                   | Morphological m -> m, 0.25 ) |> Seq.toList
 

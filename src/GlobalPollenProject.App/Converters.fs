@@ -53,18 +53,53 @@ module Identity =
             |> Option.map (fun s -> SlideId (CollectionId c.Id, slide))
             |> optionToResult
 
+    let existingBackboneTaxonOrError get (taxon:Guid) =
+        match RepositoryBase.getSingle<BackboneTaxon> (taxon.ToString()) get deserialise with
+        | Error e -> validationError "TaxonId" "The specified taxon does not exist"
+        | Ok t -> t.Id |> TaxonId |> Ok
+
 module Spatial =
 
     let createPoint lat lon : Result<Site,ServiceError> =
-        Ok <| (Latitude (lat * 1.0<DD>), Longitude (lon * 1.0<DD>))
+        match lat with
+        | y when y > -90. && y < 90. ->
+            match lon with
+            | x when x > -180. && x < 180. -> (Latitude (y * 1.0<DD>), Longitude (x * 1.0<DD>)) |> Ok
+            | _ -> validationError "Longitude" "Longitude must be in decimal degrees (i.e. between -180 and 180)"
+        | _ -> validationError "Latitude" "Latitude must be in decimal degrees (i.e. between -90 and 90)"
 
-    let createRegion region country =
+    let createLocality locality district region country =
         match String.IsNullOrEmpty country with
         | false ->
             match String.IsNullOrEmpty region with
-            | false -> Some (PlaceName ("","",region,country)) |> Ok
+            | false -> Some (PlaceName (locality,district,region,country)) |> Ok
             | true -> Some (Country country) |> Ok
         | true -> None |> Ok
+
+    let createCountry country =
+        match String.IsNullOrEmpty country with
+        | true -> validationError "Country" "Country cannot be empty"
+        | false -> country |> Country |> Some |> Ok
+
+    let createContinent continent =
+        match continent with
+        | "Africa" -> Continent Africa |> Some |> Ok
+        | "Asia" -> Continent Asia |> Some |> Ok
+        | "Europe" -> Continent Europe |> Some |> Ok
+        | "NorthAmerica" -> Continent NorthAmerica |> Some |> Ok
+        | "SouthAmerica" -> Continent SouthAmerica |> Some |> Ok
+        | "Antarctica" -> Continent Antarctica |> Some |> Ok
+        | "Australia" -> Continent Australia |> Some |> Ok
+        | _ -> validationError "Location" "The continent specified was not valid"
+
+     // Locality, country, continent, unknown
+    let createLocation locationType locality district region country continent =
+        match locationType with
+        | "Locality" -> createLocality locality district region country
+        | "Country" -> createCountry country
+        | "Continent" -> createContinent continent
+        | "Unknown" -> None |> Ok
+        | _ -> validationError "Location" "The specified location type was not valid"
 
 module Temporal =
 
@@ -167,6 +202,21 @@ module Taxonomy =
         | "Species" -> Ok <| Species (LatinName dto.LatinName,SpecificEphitet dto.Species,Scientific "")
         | _ -> Error "DTO validation failed"
 
+    let createPerson initials lastName =
+        if String.IsNullOrEmpty lastName then Person.Unknown
+        else 
+            let i = initials |> List.map (fun c -> c.ToString())
+            Person (i,lastName)
+
+    let createIdentification samplingMethod initials surname taxonId =
+        match samplingMethod with
+        | "botanical" ->
+            let person = createPerson initials surname
+            Ok <| Botanical (taxonId, Unknown, person)
+        | "environmental" -> Ok <| Environmental taxonId
+        | "morphological" -> Ok <| Morphological taxonId
+        | _ -> validationError "SamplingMethod" ("Not a valid sampling method: " + samplingMethod)
+
 module Dto =
 
     let createUnknownGrainCommand id user images temporal spatial =
@@ -216,7 +266,7 @@ module Dto =
         <*> ageOrError
         <*> spaceOrError
 
-    let toAddSlideCommand (dto:SlideRecordRequest) =
+    let toAddSlideCommand get (dto:SlideRecordRequest) =
 
         let existingId =
             match String.IsNullOrEmpty dto.ExistingId with
@@ -227,26 +277,14 @@ module Dto =
             Temporal.createSampleAge dto.YearCollected dto.SamplingMethod
 
         let placeOrError =
-            Spatial.createRegion dto.LocationRegion dto.LocationCountry
+            Spatial.createLocation dto.LocationType dto.LocationLocality dto.LocationDistrict dto.LocationRegion dto.LocationCountry dto.LocationContinent
 
-        let taxonIdOrError : Result<TaxonId,ServiceError> =
-            // Check taxon exists
-            // Check 'original' values are valid
-            // Check original matches taxon through trace to ensure concurrent info
-            dto.ValidatedTaxonId
-            |> TaxonId
-            |> Ok
-
-        let taxon t =
-            match dto.SamplingMethod with
-            | "botanical" -> Ok <| Botanical (t, Unknown)
-            | "environmental" -> Ok <| Environmental t
-            | "morphological" -> Ok <| Morphological t
-            | _ -> validationError "SamplingMethod" ("Not a valid sampling method: " + dto.SamplingMethod)
+        let taxonIdOrError =
+            Identity.existingBackboneTaxonOrError get dto.ValidatedTaxonId 
 
         let taxonOrError =
             taxonIdOrError
-            >>= taxon
+            |> bind (Taxonomy.createIdentification dto.SamplingMethod dto.CollectedByInitials dto.CollectedBySurname)
 
         createAddSlideCommand (CollectionId dto.Collection) existingId dto.OriginalFamily dto.OriginalGenus dto.OriginalSpecies dto.OriginalAuthor
         <!> taxonOrError
@@ -283,7 +321,7 @@ module Dto =
             Identity.existingSlideIdOrError readStoreGet request.CollectionId request.SlideId
 
         let yearTakenOrError =
-            1970 |> Ok
+            1970<CalYr> |> Ok
 
         let createUploadImageCommand id image yearTaken =
             GlobalPollenProject.Core.Aggregates.ReferenceCollection.Command.UploadSlideImage {
