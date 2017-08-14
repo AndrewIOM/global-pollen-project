@@ -17,7 +17,7 @@ let Given = Given a domainDefaultDeps
 // Default values for test parameters
 let currentUser = UserId (Guid.NewGuid())
 let collection = CollectionId (Guid.NewGuid())
-let person = ["A"; "C"], "McTest"
+let person = Person (["A"; "C"], "McTest")
 let id = Botanical (TaxonId (Guid.NewGuid()), Unknown, person)
 let place = Country "Nigeria"
 let age = CollectionDate 1987<CalYr>
