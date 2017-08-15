@@ -25,15 +25,17 @@
 
 <div class="row">
     <div class="col-md-9">
-        <ul>
-        @foreach (var col in Model) {
-            <li>
-                <a href="/Reference/@col.Id/@col.Version" class="display-4">@col.Name<small> Version @col.Version</small></a>
-                <span>Number of Slides: @col.SlideCount</span><span>Published @col.Published</span>
-                <p>@col.Description</p>
-            </li>
-        }
-        </ul>
+        <div class="card-deck">
+            @foreach (var col in Model) {
+                <div class="card">
+                    <div class="card-block">
+                    <h4 class="card-title"><a href="/Reference/@col.Id/@col.Version">@col.Name</a></h4>
+                    <p class="card-text">@col.Description</p>
+                    <p class="card-text"><small class="text-muted">Last updated on @col.Published</small></p>
+                    </div>
+                </div>
+            }
+        </div>
     </div>
     <div class="col-md-3">
         <div class="card">

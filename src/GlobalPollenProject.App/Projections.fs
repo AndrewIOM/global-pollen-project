@@ -40,6 +40,7 @@ module Checkpoint =
 module GrainLocation =
 
     let insertLocation (submitted:Grain.GrainSubmitted) =
+        // Use redis geoadd on point coordinate
         // Convert domain to dto (spatial)
         // Add to redis list
         Ok()
@@ -54,14 +55,43 @@ module GrainLocation =
 
 module Statistics =
 
-    // Statistic:GrainTotal
+    // Statistic:UnknownSpecimenTotal
+    // Statistic:UnknownSpecimenRemaining
+    // Statistic:UnknownSpecimenIdentificationsTotal
     // Statistic:SlideTotal
+    // Statistic:SlideDigitisedTotal
     // Statistic:Representation:Families:gppCount
     // Statistic:Representation:Families:backboneCount
     // Statistic:BackboneTaxa:Total
 
-    // Should have a statistic for each taxonomic group (family, genus) - current/total
-    let x = 2
+    let incrementStat key get set =
+        RepositoryBase.getKey<int> key get deserialise
+        |> bind (fun i -> RepositoryBase.setKey (i + 1) key set serialise)
+
+    let decrementStat key get set =
+        RepositoryBase.getKey<int> key get deserialise
+        |> bind (fun i -> RepositoryBase.setKey (i - 1) key set serialise)
+
+    let handle get getSortedList set setSortedList (e:string*obj) =
+        match snd e with
+        | :? Grain.Event as e ->
+            match e with
+            | Grain.Event.GrainSubmitted e -> 
+                incrementStat "Statistic:UnknownSpecimenTotal" get set |> ignore
+                incrementStat "Statistic:UnknownSpecimenRemaining" get set
+            | Grain.Event.GrainIdentityConfirmed e ->
+                decrementStat "Statistic:UnknownSpecimenRemaining" get set
+            | Grain.Event.GrainIdentified e ->
+                incrementStat "Statistic:UnknownSpecimenIdentificationsTotal" get set
+            | Grain.Event.GrainIdentityUnconfirmed e ->
+                incrementStat "Statistic:UnknownSpecimenRemaining" get set
+            | _ -> Ok()
+        | :? Taxonomy.Event as e ->
+            match e with
+            | Taxonomy.Event.Imported e -> incrementStat "Statistic:BackboneTaxa:Total" get set
+            | _ -> Ok()
+        | _ -> Ok()
+
 
 module MasterReferenceCollection =
 
@@ -218,6 +248,12 @@ module MasterReferenceCollection =
                 let slidePublishedId = sprintf "%s:%s" (slide.CollectionId.ToString()) slide.CollectionSlideId
                 RepositoryBase.setSingle slidePublishedId slide set serialise |> ignore
 
+                // Statistics
+                Statistics.incrementStat "Statistic:SlideTotal" get set |> ignore
+                match slide.IsFullyDigitised with
+                | true -> Statistics.incrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
+                | false -> ()
+
                 let update (summaryRM:Result<TaxonSummary,string>) (detailRM:Result<TaxonDetail,string>) =
                     match detailRM with
                     | Ok d ->
@@ -273,11 +309,33 @@ module Grain =
             Id = Converters.DomainToDto.unwrapGrainId e.Id 
             Thumbnail = thumbUrl }
 
+        let removeUnit (x:float<_>) = float x
+        let removeUnitInt (x:int<_>) = int x
+        let unwrapLat (Latitude x) = x |> removeUnit
+        let unwrapLon (Longitude x) = x |> removeUnit
+        let lat,lon =
+            match e.Spatial with
+            | Site (la,lo) -> unwrapLat la, unwrapLon lo
+            | _ -> 0.,0.
+
+        let ageType,age =
+            match e.Temporal with
+            | None -> "",0
+            | Some a ->
+                match a with
+                | CollectionDate calYr -> "Calendar", calYr |> removeUnitInt
+                | Radiocarbon ybp -> "Radiocarbon", ybp |> removeUnitInt
+                | Lead210 ybp -> "Lead210", ybp |> removeUnitInt
+
         let detail = {
             Id = Converters.DomainToDto.unwrapGrainId e.Id
             Images = [ ]
             FocusImages = []
             Identifications = []
+            Latitude = lat
+            Longitude = lon
+            AgeType = ageType
+            Age = age
             ConfirmedFamily = ""
             ConfirmedGenus = ""
             ConfirmedSpecies = "" }
@@ -285,7 +343,24 @@ module Grain =
         ReadStore.RepositoryBase.setSingle (summary.Id.ToString()) summary setReadModel serialise |> ignore
         ReadStore.RepositoryBase.setSingle (detail.Id.ToString()) detail setReadModel serialise
 
-    let identified e =
+    let identified (e:GrainIdentified) =
+        // let id : Guid = Converters.DomainToDto.unwrapGrainId e.Id
+        // let existing = ReadStore.RepositoryBase.getSingle<GrainDetail> (id.ToString()) get deserialise
+
+        // let taxonId : Guid = e.Taxon |> Converters.DomainToDto.unwrapTaxonId
+        // let taxon = ReadStore.RepositoryBase.getSingle<BackboneTaxon> (taxonId.ToString()) 
+
+        // let identificationDto = {
+        //     User = Guid
+        //     IdentificationMethod = string
+        //     Rank = string
+        //     Family = string
+        //     Genus = string
+        //     Species = string
+        //     SpAuth = string
+        // }
+
+        // let updated = { existing with Grain}
 
         // Load detail read model for unknown grain
         // Add this identification as a morphological identification
@@ -299,27 +374,15 @@ module Grain =
         // | -> ()
         ()
 
-    let handle set generateThumb (e:string*obj) =
+    let handle get set generateThumb (e:string*obj) =
         match snd e with
         | :? Grain.Event as e ->
             match e with
             | Grain.Event.GrainSubmitted e -> submit set generateThumb e
-            | Grain.Event.GrainIdentified e -> invalidOp "Cool"
+            | Grain.Event.GrainIdentified e -> invalidOp "Cool"//identified get set e 
             | Grain.Event.GrainIdentityChanged e -> invalidOp "Help"
             | Grain.Event.GrainIdentityConfirmed e -> invalidOp "Help"
             | Grain.Event.GrainIdentityUnconfirmed e -> invalidOp "Help"
-        | _ -> Ok()
-
-
-module Slide =
-
-    let rcUpdate = function
-    | ReferenceCollection.Event.CollectionPublished (id,time,version) -> Ok()
-    | _ -> Ok()
-
-    let handle (e:string*obj) =
-        match snd e with
-        | :? ReferenceCollection.Event as e -> rcUpdate e
         | _ -> Ok()
 
 
@@ -365,12 +428,13 @@ module TaxonomicBackbone =
                     f.LatinName, genus.LatinName, species,"Species", species,Converters.DomainToDto.unwrapAuthor n
                 | Error e -> readModelErrorHandler()
 
+        let unwrapTaxonId t : Guid = Converters.DomainToDto.unwrapTaxonId t
         let status,alias =
             match event.Status with
             | Accepted -> "accepted",""
             | Doubtful -> "doubtful",""
-            | Misapplied id -> "misapplied",id.ToString()
-            | Synonym id -> "synonym",id.ToString()
+            | Misapplied id -> "misapplied",(id |> unwrapTaxonId).ToString()
+            | Synonym id -> "synonym",(id |> unwrapTaxonId).ToString()
 
         let projection = 
             {   Id = Converters.DomainToDto.unwrapTaxonId event.Id
@@ -386,16 +450,12 @@ module TaxonomicBackbone =
                 ReferenceUrl = referenceUrl }
         ReadStore.TaxonomicBackbone.import setKey setSortedList serialise projection
 
-    let connect getSingle (e:EstablishedConnection) =
-        // This connection should occur on GPP MRC taxa, not on backbone taxa?
-        Ok()
-
     let handle get getSortedList set setSortedList (e:string*obj) =
         match snd e with
         | :? Taxonomy.Event as e -> 
             match e with
             | Taxonomy.Event.Imported t -> addToBackbone get getSortedList set setSortedList serialise deserialise t
-            | Taxonomy.Event.EstablishedConnection c -> connect get c
+            | Taxonomy.Event.EstablishedConnection c -> Ok()
         | _ -> Ok()
 
 
@@ -604,23 +664,14 @@ module Calibration =
     // Calibration:User:{UserId}   : CalId list
     // Calibration:{CalId}         : Calibration
 
+    let removeUnitInt (x:int<_>) = int x
+    let removeUnitFloat (x:float<_>) = float x
+
     let setup set setList (e:SetupMicroscope) =
-        let cal = {
-            Id              = e.Id |> unwrapCalId
-            User            = e.User |> unwrapUserId
-            Name            = e.FriendlyName
-            Camera          = "Unknown"
-            Ocular          = 0
-            Objectives      = []
-            Magnifications  = [] }
+        let cal = Converters.DomainToDto.calibration e.Id e.User e.FriendlyName e.Microscope
         let id = (e.Id |> unwrapCalId).ToString()
-        
         RepositoryBase.setSingle id cal set serialise |> ignore
         RepositoryBase.setListItem id ("Calibration:User:" + ((e.User |> unwrapUserId).ToString())) setList
-
-    let removeUnitInt (x:int<_>) = int x
-
-    let removeUnitFloat (x:float<_>) = float x
 
     let calibrated get set toAbsoluteUrl e =
         let calId : Guid = e.Id |> unwrapCalId

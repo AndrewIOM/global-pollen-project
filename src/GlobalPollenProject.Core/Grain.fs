@@ -7,6 +7,7 @@ open GlobalPollenProject.Core.DomainTypes
 type Command =
     | SubmitUnknownGrain of SubmitUnknownGrain
     | IdentifyUnknownGrain of IdentifyUnknownGrain
+    | ReportAsMultiGrain of GrainId
 
 and SubmitUnknownGrain = {
     Id: GrainId
@@ -35,6 +36,8 @@ and GrainSubmitted = {
     Id: GrainId
     Images: Image list
     Owner: UserId
+    Temporal: Age option
+    Spatial: SamplingLocation
 }
 
 and GrainIdentified = {
@@ -97,6 +100,8 @@ let submitGrain (command: SubmitUnknownGrain) state =
     | InitialState ->
         [ GrainSubmitted { Id = command.Id
                            Owner = command.SubmittedBy
+                           Spatial = SamplingLocation.Site command.Spatial
+                           Temporal = command.Temporal
                            Images = command.Images }]
     | _ -> 
         invalidOp "This grain has already been submitted"
@@ -144,6 +149,7 @@ let private unwrap (GrainId e) = e
 let getId = function
     | SubmitUnknownGrain c -> unwrap c.Id
     | IdentifyUnknownGrain c -> unwrap c.Id
+    | ReportAsMultiGrain id -> unwrap id
 
 // Apply decisions already taken (rebuild)
 type State with
