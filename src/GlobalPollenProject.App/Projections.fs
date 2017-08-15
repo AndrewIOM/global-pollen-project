@@ -336,53 +336,89 @@ module Grain =
             Longitude = lon
             AgeType = ageType
             Age = age
+            ConfirmedRank = ""
             ConfirmedFamily = ""
             ConfirmedGenus = ""
-            ConfirmedSpecies = "" }
+            ConfirmedSpecies = ""
+            ConfirmedSpAuth = "" }
 
         ReadStore.RepositoryBase.setSingle (summary.Id.ToString()) summary setReadModel serialise |> ignore
         ReadStore.RepositoryBase.setSingle (detail.Id.ToString()) detail setReadModel serialise
 
-    let identified (e:GrainIdentified) =
-        // let id : Guid = Converters.DomainToDto.unwrapGrainId e.Id
-        // let existing = ReadStore.RepositoryBase.getSingle<GrainDetail> (id.ToString()) get deserialise
+    let identified get set (e:GrainIdentified) =
+        let id : Guid = Converters.DomainToDto.unwrapGrainId e.Id
+        let grain = ReadStore.RepositoryBase.getSingle<GrainDetail> (id.ToString()) get deserialise
+        let taxon = ReadStore.TaxonomicBackbone.getById e.Taxon get deserialise
 
-        // let taxonId : Guid = e.Taxon |> Converters.DomainToDto.unwrapTaxonId
-        // let taxon = ReadStore.RepositoryBase.getSingle<BackboneTaxon> (taxonId.ToString()) 
+        let toHeirarchy (taxon:BackboneTaxon) =
+            taxon.Family,taxon.Genus,taxon.Species,taxon.NamedBy,taxon.Rank
 
-        // let identificationDto = {
-        //     User = Guid
-        //     IdentificationMethod = string
-        //     Rank = string
-        //     Family = string
-        //     Genus = string
-        //     Species = string
-        //     SpAuth = string
-        // }
+        let idMethod = "Morphological"
 
-        // let updated = { existing with Grain}
+        let createIdentification userId idMethod heirarchy =
+            let family,genus,species,namedBy,rank = heirarchy
+            { User = userId |> Converters.DomainToDto.unwrapUserId 
+              IdentificationMethod = idMethod
+              Rank = rank
+              Family = family
+              Genus = genus
+              Species = species
+              SpAuth = namedBy }
 
-        // Load detail read model for unknown grain
-        // Add this identification as a morphological identification
-        ()
+        let identification =
+            createIdentification e.IdentifiedBy idMethod
+            <!> (taxon |> lift toHeirarchy)
 
-    let identityChanged e = 
+        let addId id grain = { grain with Identifications = id :: grain.Identifications }
+        let save grain = ReadStore.RepositoryBase.setSingle (id.ToString()) grain set serialise
 
-        // match e with
-        // | GrainIdentityConfirmed ce ->
-        //     ce.Taxon
-        // | -> ()
-        ()
+        addId
+        <!> identification
+        <*> grain
+        |> save
+
+    let identityChanged get set (taxon:TaxonId option) grainId = 
+        let id : Guid = Converters.DomainToDto.unwrapGrainId grainId
+        let grain = ReadStore.RepositoryBase.getSingle<GrainDetail> (id.ToString()) get deserialise
+        let save grain = ReadStore.RepositoryBase.setSingle (id.ToString()) grain set serialise
+
+        match taxon with
+        | Some t ->
+            let taxon = ReadStore.TaxonomicBackbone.getById t get deserialise
+            let toHeirarchy (taxon:BackboneTaxon) =
+                taxon.Family,taxon.Genus,taxon.Species,taxon.NamedBy,taxon.Rank
+            let switchCurrentTaxon heirarchy grain =
+                let family,genus,species,namedBy,rank = heirarchy
+                { grain with ConfirmedFamily = family
+                             ConfirmedGenus = genus
+                             ConfirmedSpecies = species
+                             ConfirmedSpAuth = namedBy
+                             ConfirmedRank = rank }
+            switchCurrentTaxon
+            <!> (taxon |> lift toHeirarchy)
+            <*> grain
+            |> save
+        
+        | None ->
+            let update grain = { grain with ConfirmedFamily = ""
+                                            ConfirmedGenus = ""
+                                            ConfirmedSpecies = ""
+                                            ConfirmedSpAuth = ""
+                                            ConfirmedRank = "" }
+            grain
+            |> lift update
+            |> bind save
+
 
     let handle get set generateThumb (e:string*obj) =
         match snd e with
         | :? Grain.Event as e ->
             match e with
             | Grain.Event.GrainSubmitted e -> submit set generateThumb e
-            | Grain.Event.GrainIdentified e -> invalidOp "Cool"//identified get set e 
-            | Grain.Event.GrainIdentityChanged e -> invalidOp "Help"
-            | Grain.Event.GrainIdentityConfirmed e -> invalidOp "Help"
-            | Grain.Event.GrainIdentityUnconfirmed e -> invalidOp "Help"
+            | Grain.Event.GrainIdentified e -> identified get set e 
+            | Grain.Event.GrainIdentityChanged e -> identityChanged get set (Some e.Taxon) e.Id
+            | Grain.Event.GrainIdentityConfirmed e -> identityChanged get set (Some e.Taxon) e.Id
+            | Grain.Event.GrainIdentityUnconfirmed e -> identityChanged get set None e.Id
         | _ -> Ok()
 
 
@@ -412,35 +448,43 @@ module TaxonomicBackbone =
                 | ref,Some u -> ref,Url.unwrap u
                 | ref,None -> ref,""
 
-        let family,genus,species,rank,ln,namedBy =
+        let family,genus,species,rank,ln,namedBy,fId,gId,sId =
             match event.Identity with
             | Family ln -> 
-                Converters.DomainToDto.unwrapLatin ln,"","", "Family", Converters.DomainToDto.unwrapLatin ln,""
+                let fId = Converters.DomainToDto.unwrapTaxonId event.Id
+                Converters.DomainToDto.unwrapLatin ln,"","", "Family", Converters.DomainToDto.unwrapLatin ln,"",fId,Nullable<Guid>(),Nullable<Guid>()
             | Genus ln ->
                 let family = getById getKey event.Parent
-                family.LatinName,Converters.DomainToDto.unwrapLatin ln,"", "Genus", Converters.DomainToDto.unwrapLatin ln,""
+                let fId = family.Id
+                let gId = Converters.DomainToDto.unwrapTaxonId event.Id
+                family.LatinName,Converters.DomainToDto.unwrapLatin ln,"", "Genus", Converters.DomainToDto.unwrapLatin ln,"",fId,Nullable<Guid>(gId),Nullable<Guid>()
             | Species (g,s,n) -> 
                 let species = sprintf "%s %s" (Converters.DomainToDto.unwrapLatin g) (Converters.DomainToDto.unwrapEph s)
                 let genus = getById getKey event.Parent
                 let family = getFamily genus.Family
                 match family with
                 | Ok f ->
-                    f.LatinName, genus.LatinName, species,"Species", species,Converters.DomainToDto.unwrapAuthor n
+                    let fId = f.Id
+                    let gId = genus.Id
+                    let sId = Converters.DomainToDto.unwrapTaxonId event.Id
+                    f.LatinName, genus.LatinName, species,"Species", species,Converters.DomainToDto.unwrapAuthor n,fId,Nullable<Guid>(gId),Nullable<Guid>(sId)
                 | Error e -> readModelErrorHandler()
 
-        let unwrapTaxonId t : Guid = Converters.DomainToDto.unwrapTaxonId t
         let status,alias =
             match event.Status with
             | Accepted -> "accepted",""
             | Doubtful -> "doubtful",""
-            | Misapplied id -> "misapplied",(id |> unwrapTaxonId).ToString()
-            | Synonym id -> "synonym",(id |> unwrapTaxonId).ToString()
+            | Misapplied id -> "misapplied",(id |> Converters.DomainToDto.unwrapTaxonId).ToString()
+            | Synonym id -> "synonym",(id |> Converters.DomainToDto.unwrapTaxonId).ToString()
 
         let projection = 
             {   Id = Converters.DomainToDto.unwrapTaxonId event.Id
                 Family = family
                 Genus = genus
                 Species = species
+                FamilyId = fId
+                GenusId = gId
+                SpeciesId = sId
                 LatinName = ln
                 NamedBy = namedBy
                 TaxonomicStatus = status

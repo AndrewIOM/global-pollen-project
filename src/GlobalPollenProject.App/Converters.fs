@@ -336,14 +336,13 @@ module Dto =
 
 
 module DomainToDto =
-    let unwrapGrainId (GrainId e) = e
-    let unwrapTaxonId (TaxonId e) = e
-    let unwrapUserId (UserId e) = e
+    let unwrapGrainId (GrainId e) : Guid = e
+    let unwrapTaxonId (TaxonId e) : Guid = e
+    let unwrapUserId (UserId e) : Guid = e
     let unwrapRefId (CollectionId e) : Guid = e
-    let unwrapCalId (CalibrationId e) = e
+    let unwrapCalId (CalibrationId e) : Guid = e
     let unwrapSlideId (SlideId (e,f)) = e,f
     let unwrapLatin (LatinName ln) = ln
-    let unwrapId (TaxonId id) = id
     let unwrapEph (SpecificEphitet e) = e
     let unwrapAuthor (Scientific a) = a
     let unwrapColVer (ColVersion a) = a
