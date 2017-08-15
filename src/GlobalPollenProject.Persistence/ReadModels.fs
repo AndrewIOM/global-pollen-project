@@ -78,14 +78,29 @@ type TaxonDetail = {
 // - Grains split out of digitised slides
 
 [<CLIMutable>]
+type IdentificationSummary = {
+    User: Guid
+    IdentificationMethod: string
+    Rank: string
+    Family: string
+    Genus: string
+    Species: string
+    SpAuth: string
+}
+
+[<CLIMutable>]
 type GrainDetail = {
     Id:                 Guid
     Images:             StandardImage list
     FocusImages:        FocusableImage list
-    Identifications:    Guid list
+    Identifications:    IdentificationSummary list
     ConfirmedFamily:    string
     ConfirmedGenus:     string
     ConfirmedSpecies:   string
+    Latitude:           float
+    Longitude:          float
+    AgeType:            string
+    Age:                int
 }
 
 // Reference Slides
@@ -170,13 +185,12 @@ type Magnification = {
 
 [<CLIMutable>]
 type Calibration = {
-    Id:             Guid
-    User:           Guid
-    Name:           string
-    Camera:         string
-    Ocular:         int
-    Objectives:     int list
-    Magnifications: Magnification list
+    Id:                 Guid
+    User:               Guid
+    Name:               string
+    Camera:             string
+    UncalibratedMags:   int list
+    Magnifications:     Magnification list
 }
 
 [<CLIMutable>]

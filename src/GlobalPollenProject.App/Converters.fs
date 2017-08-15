@@ -362,3 +362,20 @@ module DomainToDto =
                 { Id = 0
                   Frames = urls |> List.map (toAbsoluteUrl >> Url.unwrap)
                   PixelWidth = mag.PixelWidth }
+
+    let calibration id user name microscope =
+
+        let magnifications,cameraName =
+            match microscope with
+            | Light lm ->
+                match lm with
+                | Compound (ocular,objectives,camName) -> objectives |> List.map ((*) ocular), camName
+                | Single (mag,camName) -> [ int mag ], camName
+                | Digital (mag,camName) -> [ int mag ], camName
+
+        { Id                = id |> unwrapCalId
+          User              = user |> unwrapUserId
+          Name              = name
+          Camera            = cameraName
+          UncalibratedMags  = magnifications
+          Magnifications    = [] }

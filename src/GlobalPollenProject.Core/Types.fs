@@ -95,7 +95,7 @@ type Longitude = Longitude of float<DD>
 type Point = Latitude * Longitude
 type Polygon = Point list
 
-type Site = Latitude * Longitude
+type Site = Point
 type Country = string
 type District = string
 type Locality = string

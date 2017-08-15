@@ -39,8 +39,7 @@ let route
     >>= feed (Calibration.handle get getList set setList toAbsoluteUrl)
     >>= feed UserProfile.handle
     >>= feed (ReferenceCollectionReadOnly.handle get set setList)
-    >>= feed Slide.handle
-    >>= feed (Grain.handle set generateThumb)
+    >>= feed (Grain.handle get set generateThumb)
     >>= MasterReferenceCollection.handle get getSortedList set setSortedList
 
 
