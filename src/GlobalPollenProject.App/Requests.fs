@@ -137,3 +137,9 @@ type CalibrateRequest = {
     [<Required>] [<Range(1, Int32.MaxValue)>] MeasuredLength: float
     [<Required>] ImageBase64: string
 }
+
+[<CLIMutable>]
+type IdentifyGrainRequest = {
+    [<Required>] TaxonId: Guid
+    [<Required>] GrainId: Guid
+}

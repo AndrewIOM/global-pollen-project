@@ -242,9 +242,17 @@ module UnknownGrains =
     let getDetail grainId =
         ReadStore.RepositoryBase.getSingle<GrainSummary> grainId readStoreGet deserialise
 
-    let identifyUnknownGrain grainId taxonId =
-        invalidOp "Not Implemented"
-        handle (IdentifyUnknownGrain { Id = GrainId grainId; Taxon = TaxonId taxonId; IdentifiedBy = UserId (Guid.NewGuid()) })
+    let identifyUnknownGrain getCurrentUser (req:IdentifyGrainRequest) =
+        let taxonIdOrError = Converters.Identity.existingBackboneTaxonOrError readStoreGet req.TaxonId
+        let grainIdOrError = Converters.Identity.existingGrainOrError readStoreGet req.GrainId
+        let user = getCurrentUser() |> UserId
+        let createCommand userId grainId taxonId =
+            IdentifyUnknownGrain { Id = grainId; Taxon = taxonId; IdentifiedBy = userId }
+        createCommand user
+        <!> grainIdOrError
+        <*> taxonIdOrError
+        |> lift issueCommand
+        |> toAppResult
 
     let listUnknownGrains =
         ReadStore.RepositoryBase.getAll<GrainSummary> All readStoreGetList deserialise

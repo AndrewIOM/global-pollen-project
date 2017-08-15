@@ -32,6 +32,11 @@ module Identity =
         | Ok u -> u.UserId |> UserId |> Ok
         | Error e -> NotFound |> Error
 
+    let existingGrainOrError get (id:Guid) =
+        match RepositoryBase.getSingle<GrainDetail> (id.ToString()) get deserialise with
+        | Ok u -> u.Id |> GrainId |> Ok
+        | Error e -> NotFound |> Error
+
     let tryGetMagnification (cal:Calibration) mag =
         cal.Magnifications
         |> List.tryFind (fun m -> m.Level = mag)
