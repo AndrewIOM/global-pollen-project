@@ -73,18 +73,18 @@ let uploadToAzure' blobRef baseUrl base64 =
 
 let uploadToAzure baseUrl conName connString generateName (image:ImageForUpload) =
     let container = getContainer connString conName
-    let blobRef = 
-        (generateName() + ".png")
+    let blobRef (frameNumber:int) = 
+        generateName() + "_" + (frameNumber.ToString()) + ".png"
         |> getBlob container
     match image with
     | ImageForUpload.Single (i,floatingCal) ->
-        uploadToAzure' blobRef baseUrl i
+        uploadToAzure' (blobRef 1) baseUrl i
         |> lift (fun url -> SingleImage (url,floatingCal))
     | ImageForUpload.Focus (b64s,stepping,magId) ->
         let frames = b64s |> List.length
         let imgs =
             b64s
-            |> List.map (uploadToAzure' blobRef baseUrl)
+            |> List.mapi (fun frame i -> uploadToAzure' (blobRef (frame + 1)) baseUrl i)
             |> List.choose (fun x -> match x with | Ok o -> Some o | Error e -> None )
         match imgs.Length with
         | i when i = frames -> Image.FocusImage (imgs,stepping,magId) |> Ok

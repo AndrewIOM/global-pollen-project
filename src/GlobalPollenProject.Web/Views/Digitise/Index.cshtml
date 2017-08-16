@@ -48,7 +48,7 @@
             </div>
             <div class="card-block">
                 <span id="collection-loading-spinner">Loading...</span>
-                <ul class="list-group backbone-list" id="collection-list" data-bind="foreach: myCollections" style="display: none;">
+                <ul class="list-group" id="collection-list" data-bind="foreach: myCollections" style="display: none;">
                     <li class="list-group-item" data-bind="text: Name, click: function() { $parent.switchView(CurrentView.DETAIL, $data); $parent.setActiveCollectionTab($element); }"></li>
                 </ul>
             </div>

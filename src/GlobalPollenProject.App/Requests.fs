@@ -76,7 +76,7 @@ type SlideImageRequest = {
     [<Required>] CollectionId: System.Guid
     [<Required>] SlideId: string
     [<Required>] IsFocusImage: bool
-    [<Required>] FramesBase64: string list
+    [<Required>] FramesBase64: List<string>
     [<Range(0,Int32.MaxValue)>] FloatingCalPointOneX: Nullable<int>
     [<Range(0,Int32.MaxValue)>] FloatingCalPointOneY: Nullable<int>
     [<Range(0,Int32.MaxValue)>] FloatingCalPointTwoX: Nullable<int>

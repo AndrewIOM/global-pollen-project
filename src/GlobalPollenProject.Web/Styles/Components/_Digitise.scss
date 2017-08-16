@@ -82,3 +82,39 @@ span.year.active {
 #focus-image-previewer {
     margin: 20px auto;
 }
+
+.calibration-dropdown {
+    width: 100%;
+}
+
+.calibration-dropdown-list {
+    width: 100%;
+}
+
+.calibration-option:hover {
+    cursor: pointer;
+}
+
+#calibration-list > li.list-group-item:hover {
+    cursor: pointer;
+}
+
+#calibration-list > li.list-group-item.active:hover {
+    cursor: default;
+}
+
+#calibration-add-new-button {
+    margin: 10px auto;
+}
+
+#calibration-list-card {
+    
+}
+
+#calibration-static-measurement-section {
+    margin-bottom: 10px;
+}
+
+#calibration-viewer-container {
+    margin: 10px auto;
+}

@@ -25,8 +25,7 @@ function ScaleBar(viewer, barId, scale) {
         self.endText.attr("x", 10 + Math.round(self.viewer.width * 0.35) - self.endText.node().getComputedTextLength());
     }
 
-    // initialise after the images are loaded
-    $(self.viewer).on(Viewer.EVENT_LOADED_IMAGES, function () {
+    self.initialise = function() {
         self.svg = d3.select(self.viewer.containerId).append("svg")
             .attr("width", self.viewer.width)
             .attr("height", 50)
@@ -61,9 +60,21 @@ function ScaleBar(viewer, barId, scale) {
             .attr("fill", "black");
 
         self.redraw();
+    }
+
+    // initialise after the images are loaded
+    $(self.viewer).on(Viewer.EVENT_LOADED_IMAGES, function () {
+        self.initialise();
     });
 
     $(self.viewer).on(Viewer.EVENT_ZOOMED, function () {
         self.redraw();
     });
+
+    /**
+     * Cleanly disposes of the viewer
+     */
+    self.dispose = function() {
+        $(self.id).remove();
+    }
 }

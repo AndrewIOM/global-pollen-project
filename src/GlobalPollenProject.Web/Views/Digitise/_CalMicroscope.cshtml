@@ -8,10 +8,10 @@
         </div>
         <label>Microscope type</label>
         <select data-bind="value: microscopeType" class="form-control input-sm inline-dropdown">
-                                    <option value="Compound">Compound</option>
-                                    <option value="Single">Single</option>
-                                    <option value="Digital">Digital</option>
-                                </select>
+            <option value="Compound">Compound</option>
+            <option value="Single">Single</option>
+            <option value="Digital">Digital</option>
+        </select>
 
         <div data-bind='foreach: magnifications'>
             <input class='required' data-bind='value: $data, uniqueName: true' />

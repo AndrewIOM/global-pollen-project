@@ -30,7 +30,9 @@
     $(function () {
         viewer = new Viewer("#viewer-container", "#viewer-canvas",
             $("#viewer-container").width(), 500, [
-                "@Model.Images[0].Frames[0]"
+                @foreach (var frame in Model.Images[0].Frames) {
+                    <text>"@frame",</text>
+                }
             ]
         );
 
