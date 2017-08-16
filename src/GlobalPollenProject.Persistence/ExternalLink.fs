@@ -6,6 +6,7 @@ open System.IO
 open System.Net.Http
 open System.Net.Http.Headers
 open Newtonsoft.Json
+open ReadModels
 
 [<CLIMutable>]
 type GbifTaxonResult = 
@@ -37,7 +38,18 @@ let getRequest baseUri (query:string) =
 let unwrap (LatinName l) = l
 let unwrapS (SpecificEphitet s) = s
 
-let getGbifId (req:LinkRequest) : int option =
+let toLinkRequest (taxon:BackboneTaxon) =
+    match taxon.Rank with
+    | "Family" -> { Family = taxon.Family; Genus = None; Species = None; Identity = Family (LatinName taxon.Family) } |> Ok
+    | "Genus" -> { Family = taxon.Family; Genus = Some taxon.Genus; Species = None; Identity = Genus (LatinName taxon.Genus) } |> Ok
+    | "Species" -> { Family = taxon.Family; 
+                     Genus = Some taxon.Genus; 
+                     Species = Some taxon.Species; 
+                     Identity = Species (LatinName taxon.Genus,SpecificEphitet taxon.Species,Scientific taxon.NamedBy) } 
+                     |> Ok
+    | _ -> Error "Backbone taxon read model was not formatted correctly"
+
+let getGbifId (req:LinkRequest) =
     let query =
         let qbase = sprintf "species/match?status=accepted&strict=true&kingdom=Plantae&family=%s" req.Family
         let q1 = match req.Genus with

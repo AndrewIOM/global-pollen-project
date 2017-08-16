@@ -128,6 +128,8 @@ module MasterReferenceCollection =
             Grains = []
             Parent = parent
             Children = []
+            NeotomaId = 0
+            GbifId = 0
         }
 
     let getBackboneParent getSortedListKey getKey deserialise backboneTaxon =
@@ -273,6 +275,19 @@ module MasterReferenceCollection =
             |> ignore
             Ok()
 
+    let establishConnection get set id externalId =
+        let getExisting (id:Guid) = RepositoryBase.getSingle<TaxonDetail> (id.ToString()) get deserialise
+        let save (taxon:TaxonDetail) = RepositoryBase.setSingle (taxon.Id.ToString()) taxon set serialise
+        let updateId taxon =
+            match externalId with
+            | Taxonomy.ThirdPartyTaxonId.NeotomaId i -> {taxon with NeotomaId = i}
+            | Taxonomy.ThirdPartyTaxonId.GbifId i -> {taxon with GbifId = i}
+        id
+        |> Converters.DomainToDto.unwrapTaxonId
+        |> getExisting
+        |> lift updateId
+        |> bind save
+
     let handle get getSortedList set setSortedList (e:string*obj) =
         match snd e with
         | :? ReferenceCollection.Event as e -> 
@@ -284,6 +299,10 @@ module MasterReferenceCollection =
             | Grain.Event.GrainIdentityConfirmed e -> invalidOp "Help"
             | Grain.Event.GrainIdentityChanged e -> invalidOp "Help" //Get current taxon and remove grain from this taxon. Assign to new taxon.
             | Grain.Event.GrainIdentityUnconfirmed e -> invalidOp "Help" //Get current taxon and remove grain from this taxon
+            | _ -> Ok()
+        | :? Taxonomy.Event as e ->
+            match e with
+            | Taxonomy.Event.EstablishedConnection (id,exId) -> establishConnection get set id exId
             | _ -> Ok()
         | _ -> Ok()
 
@@ -499,7 +518,7 @@ module TaxonomicBackbone =
         | :? Taxonomy.Event as e -> 
             match e with
             | Taxonomy.Event.Imported t -> addToBackbone get getSortedList set setSortedList serialise deserialise t
-            | Taxonomy.Event.EstablishedConnection c -> Ok()
+            | _ -> Ok()
         | _ -> Ok()
 
 

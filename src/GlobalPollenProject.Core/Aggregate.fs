@@ -7,11 +7,11 @@ type DomainError =
 | NotAllowed
 
 type Dependencies =  {
-    GenerateId:        unit -> Guid; 
+    GenerateId:        unit -> Guid
     Log:               LogMessage -> unit
     ValidateTaxon:     BackboneQuery -> TaxonId option
-    GetGbifId:         LinkRequest -> int option
-    GetNeotomaId:      LinkRequest -> int option
+    GetGbifId:         TaxonId -> Result<int option,string>
+    GetNeotomaId:      TaxonId -> Result<int option,string>
     GetTime:           unit -> DateTime
     CalculateIdentity: TaxonIdentification list -> TaxonId option }
 

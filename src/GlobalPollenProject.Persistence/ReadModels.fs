@@ -71,6 +71,8 @@ type TaxonDetail = {
     Children:   Node list
     Slides:     SlideSummary list
     Grains:     GrainSummary list
+    NeotomaId:  int
+    GbifId:     int
 }
 
 // Grains

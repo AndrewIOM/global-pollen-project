@@ -87,10 +87,19 @@ let domainDependencies =
         | Ok t -> Some (TaxonId t.Id)
         | Error e -> None
 
+    let neotomaLink id = 
+        TaxonomicBackbone.getById id readStoreGet deserialise
+        |> bind ExternalLink.toLinkRequest
+        |> lift ExternalLink.getNeotomaId
+    let gbifLink id =
+        TaxonomicBackbone.getById id readStoreGet deserialise
+        |> bind ExternalLink.toLinkRequest
+        |> lift ExternalLink.getGbifId
+
     { GenerateId          = Guid.NewGuid
       Log                 = log
-      GetGbifId           = ExternalLink.getGbifId
-      GetNeotomaId        = ExternalLink.getNeotomaId
+      GetGbifId           = gbifLink
+      GetNeotomaId        = neotomaLink
       GetTime             = (fun x -> DateTime.Now)
       ValidateTaxon       = isValidTaxon
       CalculateIdentity   = calculateIdentity }
@@ -210,7 +219,7 @@ module Calibrations =
         }
         let id = req.CalibrationId |> CalibrationId
         let generateCommand url =
-            Calibrate (id,400<timesMagnified>, { Image = url ; 
+            Calibrate (id,req.Magnification * 1<timesMagnified>, { Image = url ; 
                                                  StartPoint = floatingCalibration.Point1; 
                                                  EndPoint = floatingCalibration.Point2; 
                                                  MeasureLength = floatingCalibration.MeasuredDistance })
