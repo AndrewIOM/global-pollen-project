@@ -21,9 +21,13 @@ and ThirdParty =
 | Neotoma
 | GlobalBiodiversityInformationFacility
 
+and ThirdPartyTaxonId =
+| NeotomaId of int
+| GbifId of int
+
 type Event =
 | Imported of Imported
-| EstablishedConnection of EstablishedConnection
+| EstablishedConnection of TaxonId * ThirdPartyTaxonId
 
 and Imported = {
     Id: TaxonId
@@ -34,32 +38,20 @@ and Imported = {
     Reference: (string * Url option) option
 }
 
-and EstablishedConnection = {
-    Id: TaxonId
-    LinkTo: ThirdParty
-    ForeignId: string
-}
-
 type State =
 | InitialState
 | ValidatedByBackbone of TaxonState
 
 and TaxonState = {
+    Id: TaxonId
     Identity: TaxonomicIdentity
     Parent: TaxonId option
     Status: TaxonomicStatus
     Children: TaxonId list
-    Links: ExternalLink list
+    Links: ThirdPartyTaxonId list
     Reference: (string * Url option) option
     ValidatedAt: DateTime
 }
-
-and ExternalLink = {
-    ServiceName: ThirdParty
-    ServiceId: string
-    LastChecked: DateTime
-}
-
 
 let import (command:Import) validateInBackbone state =
     match command.Identity with
@@ -83,25 +75,35 @@ let import (command:Import) validateInBackbone state =
                 Status = command.Status
                 Reference = command.Reference } ]
 
-let connectNeotoma (connector:LinkRequest->int option) state =
-    // Must get family, genus, and species names for this taxon... crawl the taxonomic heirarchy
-    []
+let connect thirdParty (connector:TaxonId->Result<int option,string>) state =
+    match state with
+    | InitialState -> invalidOp "Taxon does not exist"
+    | ValidatedByBackbone t ->
+        let apiResult = connector t.Id
+        match apiResult with
+        | Error e -> []
+        | Ok externalId ->
+            match externalId with
+            | Some i ->
+                match thirdParty with
+                | Neotoma -> [ EstablishedConnection (t.Id, NeotomaId i) ]
+                | GlobalBiodiversityInformationFacility -> [ EstablishedConnection (t.Id, GbifId i) ]
+            | None -> []
 
-let connectGbif (connector:LinkRequest->int option) state =
-    []
 
 let handle deps = 
     function
     | ImportFromBackbone c -> import c deps.ValidateTaxon
     | ConnectToExternalDatabase (id,db) ->
         match db with
-        | Neotoma -> connectNeotoma deps.GetNeotomaId
-        | GlobalBiodiversityInformationFacility -> connectGbif deps.GetGbifId
+        | Neotoma -> connect Neotoma deps.GetNeotomaId
+        | GlobalBiodiversityInformationFacility -> connect GlobalBiodiversityInformationFacility deps.GetGbifId
 
 type State with
     static member Evolve state = function
         | Imported event ->
             ValidatedByBackbone {
+                Id = event.Id
                 ValidatedAt = DateTime.UtcNow
                 Identity = event.Identity
                 Parent = event.Parent
@@ -110,12 +112,11 @@ type State with
                 Children = []
                 Links = [] }
 
-        | EstablishedConnection e ->
+        | EstablishedConnection (id,exId) ->
             match state with
             | InitialState -> invalidOp "Taxon does not exist"
             | ValidatedByBackbone vs ->
-                let link = { ServiceName = e.LinkTo; ServiceId = e.ForeignId; LastChecked = DateTime.Now } //TODO remove DateTime from here
-                ValidatedByBackbone { vs with Links = link :: vs.Links }
+                ValidatedByBackbone { vs with Links = exId :: vs.Links }
 
 let private unwrap (TaxonId e) = e
 let getId = function

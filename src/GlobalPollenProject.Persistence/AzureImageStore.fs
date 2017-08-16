@@ -64,6 +64,11 @@ let getImageDimensions base64 =
     |> lift (fun x -> new MemoryStream(x))
     |> lift getImageDimensions'
 
+let scaleFloatingCal scaleFactor (fc:FloatingCalibration) =
+    let p1 = (fst fc.Point1) * scaleFactor, (snd fc.Point1) * scaleFactor
+    let p2 = (fst fc.Point2) * scaleFactor, (snd fc.Point2) * scaleFactor
+    { fc with Point1 = p1; Point2 = p2}
+
 let uploadToAzure' blobRef baseUrl base64 =
     base64ToByte base64
     |> lift (fun x -> new MemoryStream(x))
@@ -73,8 +78,8 @@ let uploadToAzure' blobRef baseUrl base64 =
 
 let uploadToAzure baseUrl conName connString generateName (image:ImageForUpload) =
     let container = getContainer connString conName
-    let blobRef (frameNumber:int) = 
-        generateName() + "_" + (frameNumber.ToString()) + ".png"
+    let blobRef (frame:int) = 
+        (generateName() + "_" + (frame.ToString()) + ".png")
         |> getBlob container
     match image with
     | ImageForUpload.Single (i,floatingCal) ->
@@ -84,7 +89,7 @@ let uploadToAzure baseUrl conName connString generateName (image:ImageForUpload)
         let frames = b64s |> List.length
         let imgs =
             b64s
-            |> List.mapi (fun frame i -> uploadToAzure' (blobRef (frame + 1)) baseUrl i)
+            |> List.mapi (fun frame img -> uploadToAzure' (blobRef frame) baseUrl img)
             |> List.choose (fun x -> match x with | Ok o -> Some o | Error e -> None )
         match imgs.Length with
         | i when i = frames -> Image.FocusImage (imgs,stepping,magId) |> Ok

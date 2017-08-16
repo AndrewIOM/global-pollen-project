@@ -87,10 +87,19 @@ let domainDependencies =
         | Ok t -> Some (TaxonId t.Id)
         | Error e -> None
 
+    let neotomaLink id = 
+        TaxonomicBackbone.getById id readStoreGet deserialise
+        |> bind ExternalLink.toLinkRequest
+        |> lift ExternalLink.getNeotomaId
+    let gbifLink id =
+        TaxonomicBackbone.getById id readStoreGet deserialise
+        |> bind ExternalLink.toLinkRequest
+        |> lift ExternalLink.getGbifId
+
     { GenerateId          = Guid.NewGuid
       Log                 = log
-      GetGbifId           = ExternalLink.getGbifId
-      GetNeotomaId        = ExternalLink.getNeotomaId
+      GetGbifId           = gbifLink
+      GetNeotomaId        = neotomaLink
       GetTime             = (fun x -> DateTime.Now)
       ValidateTaxon       = isValidTaxon
       CalculateIdentity   = calculateIdentity }
@@ -210,7 +219,7 @@ module Calibrations =
         }
         let id = req.CalibrationId |> CalibrationId
         let generateCommand url =
-            Calibrate (id,400<timesMagnified>, { Image = url ; 
+            Calibrate (id,req.Magnification * 1<timesMagnified>, { Image = url ; 
                                                  StartPoint = floatingCalibration.Point1; 
                                                  EndPoint = floatingCalibration.Point2; 
                                                  MeasureLength = floatingCalibration.MeasuredDistance })
@@ -242,9 +251,17 @@ module UnknownGrains =
     let getDetail grainId =
         ReadStore.RepositoryBase.getSingle<GrainSummary> grainId readStoreGet deserialise
 
-    let identifyUnknownGrain grainId taxonId =
-        invalidOp "Not Implemented"
-        handle (IdentifyUnknownGrain { Id = GrainId grainId; Taxon = TaxonId taxonId; IdentifiedBy = UserId (Guid.NewGuid()) })
+    let identifyUnknownGrain getCurrentUser (req:IdentifyGrainRequest) =
+        let taxonIdOrError = Converters.Identity.existingBackboneTaxonOrError readStoreGet req.TaxonId
+        let grainIdOrError = Converters.Identity.existingGrainOrError readStoreGet req.GrainId
+        let user = getCurrentUser() |> UserId
+        let createCommand userId grainId taxonId =
+            IdentifyUnknownGrain { Id = grainId; Taxon = taxonId; IdentifiedBy = userId }
+        createCommand user
+        <!> grainIdOrError
+        <*> taxonIdOrError
+        |> lift issueCommand
+        |> toAppResult
 
     let listUnknownGrains =
         ReadStore.RepositoryBase.getAll<GrainSummary> All readStoreGetList deserialise

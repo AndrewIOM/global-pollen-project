@@ -219,10 +219,15 @@ let showGrainDetail id ctx =
     UnknownGrains.getDetail id
     |> toViewResult "Identify/View" ctx
 
-let grainUploadHandler (ctx:HttpContext) =
+let submitGrainHandler (ctx:HttpContext) =
     ctx.BindForm<AddUnknownGrainRequest>()
     |> Async.RunSynchronously
     |> UnknownGrains.submitUnknownGrain (currentUserId ctx)
+    |> toApiResult ctx
+
+let submitIdentificationHandler (ctx:HttpContext) =
+    bindJson<IdentifyGrainRequest> ctx
+    |> bind (UnknownGrains.identifyUnknownGrain (currentUserId ctx))
     |> toApiResult ctx
 
 /////////////////////////
@@ -256,7 +261,6 @@ let webApp =
         choose [
             POST >=> route  "/Login"            >=> loginHandler "/"
             POST >=> route  "/Register"         >=> registerHandler
-            POST >=> route  "/Upload"           >=> grainUploadHandler
             POST >=> route  "/Logout"           >=> signOff authScheme >=> redirectTo true "/"
             GET  >=> route  "/Register"         >=> renderView "Account/Register" None
             GET  >=> route  "/Login"            >=> renderView "Account/Login" None
@@ -278,11 +282,12 @@ let webApp =
         ]
 
     let identify =
-        GET >=>
         choose [
-            route   ""                          >=> listGrains
-            route   "/Upload"                   >=> renderView "Identify/Add" None
-            route   "/%s"                       >=> renderView "NotFound" None
+            POST >=> route  "/Upload"           >=> submitGrainHandler
+            POST >=> route  "/Identify"         >=> submitIdentificationHandler
+            GET  >=> route  ""                  >=> listGrains
+            GET  >=> route  "/Upload"           >=> renderView "Identify/Add" None
+            GET  >=> route  "/%s"               >=> renderView "NotFound" None
         ]
 
     // Main router

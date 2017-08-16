@@ -71,6 +71,8 @@ type TaxonDetail = {
     Children:   Node list
     Slides:     SlideSummary list
     Grains:     GrainSummary list
+    NeotomaId:  int
+    GbifId:     int
 }
 
 // Grains
@@ -97,6 +99,8 @@ type GrainDetail = {
     ConfirmedFamily:    string
     ConfirmedGenus:     string
     ConfirmedSpecies:   string
+    ConfirmedSpAuth:    string
+    ConfirmedRank:      string
     Latitude:           float
     Longitude:          float
     AgeType:            string
@@ -133,6 +137,9 @@ type BackboneTaxon = {
     Family:         string
     Genus:          string
     Species:        string
+    FamilyId:       Guid
+    GenusId:        Nullable<Guid>
+    SpeciesId:      Nullable<Guid>
     NamedBy:        string
     LatinName:      string
     Rank:           string
