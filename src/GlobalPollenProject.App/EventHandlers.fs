@@ -2,9 +2,9 @@ module GlobalPollenProject.App.EventHandlers
 
 open System
 
-let deserialise<'a> json = 
+let inline deserialise< ^a> json = 
     let unwrap (ReadStore.Json j) = j
-    Serialisation.deserialiseCli<'a> (unwrap json)
+    Serialisation.deserialise< ^a> (unwrap json)
 
 module ExternalConnections =
 

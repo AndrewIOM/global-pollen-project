@@ -11,12 +11,12 @@ open ReadModels
 let readModelErrorHandler() =
     invalidOp "The read model is corrupt or out-of-sync. Rebuild now."
 
-let deserialise<'a> json = 
+let inline deserialise< ^a> json = 
     let unwrap (ReadStore.Json j) = j
-    Serialisation.deserialiseCli<'a> (unwrap json)
+    Serialisation.deserialise< ^a> (unwrap json)
 
 let serialise s = 
-    let result = Serialisation.serialiseCli s
+    let result = Serialisation.serialise s
     match result with
     | Ok r -> Ok <| ReadStore.Json r
     | Error e -> Error e

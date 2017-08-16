@@ -23,9 +23,9 @@ module Identity =
 
     open ReadStore
 
-    let deserialise<'a> json = 
+    let inline deserialise< ^a> json = 
         let unwrap (ReadStore.Json j) = j
-        Serialisation.deserialiseCli<'a> (unwrap json)
+        Serialisation.deserialise< ^a> (unwrap json)
 
     let existingUserOrError get (id:Guid) =
         match RepositoryBase.getSingle<PublicProfile> (id.ToString()) get deserialise with
