@@ -41,34 +41,43 @@
 
 <div class="row">
     <div class="col-md-6">
-
+        @if (Model.Grains.Length > 0) {
         <div class="panel panel-white">
-            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Specimens</div>
+            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Individual Grains</div>
             <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <label>Digitised Reference Slides</label>
-                        <ul class="grain-grid columns-8">
-                            @foreach (var slide in Model.Slides) {
-                            <li>
-                                <a href="/Taxon/Slide/@slide.ColId/@slide.SlideId">
-                                    <div class="img-container">
-                                        <img src="@slide.Thumbnail"/>
-                                    </div>
-                                </a>
-                            </li>
-                            }
-                        </ul>
-                        <hr />
-                        <label>User Submissions</label>
-                        <ul class="grain-grid columns-8">
-                            <li>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                <ul class="grain-grid columns-8">
+                    @foreach (var grain in Model.Grains) {
+                    <li>
+                        <a href="/Taxon/Grain/@grain.Id">
+                            <div class="img-container">
+                                <img src="@grain.Thumbnail"/>
+                            </div>
+                        </a>
+                    </li>
+                    }
+                </ul>
             </div>
-        </div>
+        </div> }
+
+        @if (Model.Slides.Length > 0) {
+        <div class="panel panel-white">
+            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Digitised Records</div>
+            <div class="panel-body">
+                <p>There are @Model.Slides.Length digitised records in the GPP. Each record may contain multiple individual grains.</p>
+                <ul class="grain-grid columns-8">
+                    @foreach (var slide in Model.Slides) {
+                    <li>
+                        <a href="/Taxon/Slide/@slide.ColId/@slide.SlideId">
+                            <div class="img-container">
+                                <img src="@slide.Thumbnail"/>
+                            </div>
+                        </a>
+                    </li>
+                    }
+                </ul>
+            </div>
+        </div> }
+
     </div>
     <div class="col-md-6">
 

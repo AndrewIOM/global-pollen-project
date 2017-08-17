@@ -11,7 +11,7 @@ type Command =
 | Publish of CollectionId
 
 and CreateCollection = {Id:CollectionId; Name:string; Owner:UserId; Description: string}
-and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int<CalYr> }
+and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int<CalYr> option }
 and AddSlide = 
     {Collection:        CollectionId
      Taxon:             TaxonIdentification
@@ -30,7 +30,7 @@ type Event =
 | DigitisationStarted of DigitisationStarted
 | CollectionPublished of CollectionId * DateTime * ColVersion
 | SlideRecorded of SlideRecorded
-| SlideImageUploaded of SlideId * Image * int<CalYr>
+| SlideImageUploaded of SlideId * Image * int<CalYr> option
 | SlideFullyDigitised of SlideId
 | SlideGainedIdentity of SlideId * TaxonId
 
@@ -76,7 +76,7 @@ and SlideState = {
     Mounting: MountingMedium option }
 and ImageState = {
     Image: Image
-    YearTaken: int<CalYr>
+    YearTaken: int<CalYr> option
 }
 
 let getSlideId (SlideId (c,x)) = x

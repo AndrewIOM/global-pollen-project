@@ -124,19 +124,14 @@
 
     <h4>Temporal Context</h4>
     <div class="form-group">
-        <label for="exampleInputEmail1">Age Type</label>
-        <input type="email" class="form-control-static" asp-for="YearType" aria-describedby="emailHelp" value="CollectedBotanically">
-        <small id="emailHelp" class="form-text text-muted">We'll never share your email with anyone else.</small>
+        <label for="YearType">Age Type</label>
+        <input type="email" class="form-control-static" asp-for="YearType" value="CollectedBotanically">
     </div>
     <div class="form-group">
-        <label asp-for="Year" class="col-2 col-form-label">Date</label>
-        <input asp-for="Year" class="form-control" type="date" value="2011-08-19" id="example-date-input">
+        <label asp-for="Year" class="col-2 col-form-label">Year</label>
+        <input asp-for="Year" class="form-control" />
         <small class="form-text text-muted">Environmental Sample. Please enter the date when the sample was collected.</small>
     </div>
-
-
-        <input type="submit">
-
 
     <div class="addgrain-section savesection">
         <div class="container">
