@@ -130,6 +130,8 @@ module MasterReferenceCollection =
             Children = []
             NeotomaId = 0
             GbifId = 0
+            ReferenceName = backboneTaxon.ReferenceName
+            ReferenceUrl = backboneTaxon.ReferenceUrl
         }
 
     let getBackboneParent getSortedListKey getKey deserialise backboneTaxon =

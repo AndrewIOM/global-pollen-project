@@ -71,6 +71,8 @@ module ``When serialising read models`` =
             Children    = [ { Id = Guid.NewGuid(); Name = "Fraxinus excelsior b."; Rank = "Subspecies"} ]
             Slides      = [ { ColId = Guid.NewGuid(); SlideId = "GPP2"; LatinName = "Test"; Rank = "Genus"; Thumbnail = "http://test.test/test.test"} ]
             Grains      = []
+            ReferenceName = "Test et al., Some test manuscript. In Testy test: Trees of Europe"
+            ReferenceUrl = "https://sometest.test/test?r89y89cbq"
             NeotomaId   = 0
             GbifId      = 2841145 }
         let result =

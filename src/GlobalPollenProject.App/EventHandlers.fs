@@ -28,17 +28,32 @@ module ExternalConnections =
     let getCol get (id:Guid) = 
         RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
 
-    let toGppTaxa (collection:EditableRefCollection) =
+    let nullableToOption (n:Nullable<'a>) =
+        if n.HasValue then Some n.Value else None
+
+    let getHeirarchyIds get (slide:SlideDetail) =
+        match slide.CurrentTaxonId with
+        | None -> Ok []
+        | Some i ->
+            RepositoryBase.getSingle<BackboneTaxon> (i.ToString()) get deserialise
+            |> lift (fun t -> [Some t.FamilyId; nullableToOption t.GenusId; nullableToOption t.SpeciesId] )
+            |> lift (List.choose id)
+
+    let toGppTaxa get (collection:EditableRefCollection) =
         collection.Slides
-        |> List.choose (fun s -> s.CurrentTaxonId)
-        |> List.map TaxonId
+        |> List.filter (fun s -> s.IsFullyDigitised)
+        |> List.map (fun s -> getHeirarchyIds get s)
+        |> mapResult id
+        |> lift (fun x -> x |> List.concat)
+        |> lift List.distinct
+        |> lift (List.map TaxonId)
 
     let refreshPublishedTaxa get issueCommand colId =
         let taxa =
             colId 
             |> Converters.DomainToDto.unwrapRefId
             |> getCol get
-            |> lift toGppTaxa
+            |> bind (toGppTaxa get)
         taxa |> lift (List.map (refreshGbifConnection issueCommand)) |> ignore
         taxa |> lift (List.map (refreshNeotomaConnection issueCommand)) |> ignore
 

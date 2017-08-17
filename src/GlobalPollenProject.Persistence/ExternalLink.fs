@@ -51,7 +51,7 @@ let toLinkRequest (taxon:BackboneTaxon) =
 
 let getGbifId (req:LinkRequest) =
     let query =
-        let qbase = sprintf "species/match?status=accepted&strict=true&kingdom=Plantae&family=%s" req.Family
+        let qbase = sprintf "species/match?status=accepted&kingdom=Plantae&family=%s" req.Family
         let q1 = match req.Genus with
                  | Some g -> sprintf "%s&genus=%s" qbase g
                  | None -> qbase
@@ -71,15 +71,15 @@ let getGbifId (req:LinkRequest) =
         let jsonMessage = (new StreamReader(responseStream)).ReadToEnd()
         let gbifResult : GbifTaxonResult = JsonConvert.DeserializeObject<GbifTaxonResult>(jsonMessage)
         match gbifResult.MatchType with
-        | "Exact" -> Some gbifResult.GbifId
+        | "EXACT" -> Some gbifResult.GbifId
         | _ -> None
 
 let getNeotomaId (req:LinkRequest) =
     let query = match req.Identity with
                 | Family f -> unwrap f
                 | Genus g -> unwrap g
-                | Species (g,s,_) -> sprintf "%s %s" (unwrap g) (unwrapS s)
-    let response = getRequest "http://api.neotomadb.org/v1/" query
+                | Species (g,s,_) -> unwrapS s
+    let response = getRequest "http://api.neotomadb.org/v1/data/" ("taxa?taxonname=" + query)
     match response.IsSuccessStatusCode with
     | false -> None
     | true ->
@@ -90,5 +90,5 @@ let getNeotomaId (req:LinkRequest) =
         | 0 -> None
         | _ ->
             match neoResult.Result.Length with
-            | 1 -> None
-            | _ -> Some neoResult.Result.Head.TaxonId
+            | 1 -> Some neoResult.Result.Head.TaxonId
+            | _ -> None
