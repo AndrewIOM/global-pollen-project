@@ -3,6 +3,7 @@
 @{
     Layout = "_Layout";
     ViewBag.Title = Model.LatinName + " (" + Model.Rank + ") - Master Reference Collection";
+    var subname = Model.Rank == "Family" ? "Genera" : "Species";
 }
 
 <link rel="stylesheet" href="~/lib/nouislider/distribute/nouislider.min.css"> @* TODO Move this *@
@@ -138,29 +139,21 @@
                     <dt class="col-sm-3">GPP UUID</dt>
                     <dd class="col-sm-9">@Model.Id</dd>
                 </dl>
-                <div class="row">
-                    <div class="col-md-12">
-                        <hr />
-                        @if (Model.Children.Length > 0)
+                <dl class="row">
+                    <dt class="col-sm-3">GPP Parent</dt>
+                    <dd class="col-sm-9"></dd>
+                </dl>
+                <dl class="row">
+                    <dt class="col-sm-3">GPP @subname</dt>
+                    <dd class="col-sm-9">
+                        <ul class="list-inline">
+                        @foreach (var subTaxon in Model.Children.OrderBy(m => m.Name))
                         {
-                            <dl class="dl-horizontal">
-                                @if (Model.Rank == "Family") {
-                                    <dt>Genera</dt>
-                                } else {
-                                    <dt>Species</dt>
-                                }
-                                <dd>
-                                    <ul class="list-inline">
-                                        @foreach (var subTaxon in Model.Children.OrderBy(m => m.Name))
-                                        {
-                                            <li><a href="/Taxon/Id/@subTaxon.Id">@subTaxon.Name</a></li>
-                                        }
-                                    </ul>
-                                </dd>
-                            </dl>
+                            <li><a href="/Taxon/Id/@subTaxon.Id">@subTaxon.Name</a></li>
                         }
-                    </div>
-                </div>
+                        </ul>
+                    </dd>
+                </dl>
             </div>
         </div>
 

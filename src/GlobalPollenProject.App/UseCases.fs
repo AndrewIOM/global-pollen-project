@@ -63,7 +63,7 @@ let projectionHandler e =
     let result = (ProjectionHandler.readModelAgent router readStoreGet redisSet getEventCount).PostAndReply(fun rc -> e, rc)
     match result with 
     | Ok r -> ()
-    | Error e -> invalidOp "Read model is corrupt"
+    | Error e -> invalidOp ("Read model is corrupt: " + e)
 
 eventStore.Value.SaveEvent 
 :> IObservable<string*obj>
