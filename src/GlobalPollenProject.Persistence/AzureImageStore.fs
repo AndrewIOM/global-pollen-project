@@ -42,11 +42,10 @@ let getContainer connectionString name =
 let getBlob (container:CloudBlobContainer) fileName = 
     container.GetBlockBlobReference(fileName)
 
-let scaleImage maxDimension maxDpi (stream:Stream) =
-    use image = ImageSharp.Image.Load<Rgba32>(stream)
+let scaleImage maxDimension (stream:Stream) =
+    use image = ImageSharp.Image.Load<ImageSharp.PixelFormats.Rgb24>(stream)
     let resizeRatio = calcScale maxDimension (float image.Height) (float image.Width)
     let mutable memoryStream = new MemoryStream()
-    //image.MetaData.VerticalResolution <- maxDpi
     let memoryStream = new MemoryStream ()
     let h = (float image.Height) * resizeRatio
     let w = (float image.Width) * resizeRatio
@@ -64,15 +63,25 @@ let getImageDimensions base64 =
     |> lift (fun x -> new MemoryStream(x))
     |> lift getImageDimensions'
 
+let getScaleFactor' maxDimension (stream:Stream) =
+    use image = ImageSharp.Image.Load<ImageSharp.PixelFormats.Rgb24>(stream)
+    calcScale maxDimension (float image.Height) (float image.Width)
+
+let getScaleFactor maxDimension base64 =
+    base64
+    |> base64ToByte
+    |> lift (fun x -> new MemoryStream(x))
+    |> lift (getScaleFactor' maxDimension)
+
 let scaleFloatingCal scaleFactor (fc:FloatingCalibration) =
-    let p1 = (fst fc.Point1) * scaleFactor, (snd fc.Point1) * scaleFactor
-    let p2 = (fst fc.Point2) * scaleFactor, (snd fc.Point2) * scaleFactor
+    let p1 = float (fst fc.Point1) * scaleFactor |> int, float (snd fc.Point1) * scaleFactor |> int
+    let p2 = float (fst fc.Point2) * scaleFactor |> int, float (snd fc.Point2) * scaleFactor |> int
     { fc with Point1 = p1; Point2 = p2}
 
-let uploadToAzure' blobRef baseUrl base64 =
+let uploadToAzure' maxResolution blobRef baseUrl base64 =
     base64ToByte base64
     |> lift (fun x -> new MemoryStream(x))
-    |> lift (scaleImage 1600. 150.)
+    |> lift (scaleImage maxResolution)
     |> bind (fun x -> uploadFromStream blobRef x |> Async.RunSynchronously)
     |> bind (Url.createRelative baseUrl)
 
@@ -83,13 +92,15 @@ let uploadToAzure baseUrl conName connString generateName (image:ImageForUpload)
         |> getBlob container
     match image with
     | ImageForUpload.Single (i,floatingCal) ->
-        uploadToAzure' (blobRef 1) baseUrl i
-        |> lift (fun url -> SingleImage (url,floatingCal))
+        let createSingle url scaleFactor = SingleImage (url, scaleFloatingCal scaleFactor floatingCal)
+        createSingle
+        <!> uploadToAzure' 2000. (blobRef 1) baseUrl i
+        <*> getScaleFactor 2000. i
     | ImageForUpload.Focus (b64s,stepping,magId) ->
         let frames = b64s |> List.length
         let imgs =
             b64s
-            |> List.mapi (fun frame img -> uploadToAzure' (blobRef frame) baseUrl img)
+            |> List.mapi (fun frame img -> uploadToAzure' 2000. (blobRef frame) baseUrl img)
             |> List.choose (fun x -> match x with | Ok o -> Some o | Error e -> None )
         match imgs.Length with
         | i when i = frames -> Image.FocusImage (imgs,stepping,magId) |> Ok
@@ -113,6 +124,6 @@ let generateThumbnail baseUrl conName connString (fullSizeFile:RelativeUrl) =
         memoryStream.Position <- int64(0)
         let thumbBlob = fullSizeFile |> Url.unwrapRelative |> toBlobName conName |> toThumbnailName |> getBlob container
         memoryStream
-        |> scaleImage 200. 72.
+        |> scaleImage 200.
         |> uploadFromStream thumbBlob
         |> Async.RunSynchronously

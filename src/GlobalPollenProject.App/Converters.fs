@@ -355,12 +355,20 @@ module DomainToDto =
     let unwrapColVer (ColVersion a) = a
     let unwrapMagId (MagnificationId (a,b)) : Guid * int = a |> unwrapCalId,b
 
+    let getPixelWidth p1 p2 dist =
+        let removeUnit (x:float<_>) = float x
+        let x1,y1 = p1
+        let x2,y2 = p2
+        let pixelDistance = sqrt ((((float x2)-(float x1))**2.) + (((float y2)-(float y1))**2.))
+        let scale (actual:float<_>) image = actual / image
+        scale (removeUnit dist) pixelDistance
+
     let image getMag toAbsoluteUrl (domainImage:Image) : SlideImage =
         match domainImage with
         | SingleImage (i,cal) ->
             { Id = 0
               Frames = [i |> toAbsoluteUrl |> Url.unwrap]
-              PixelWidth = 2. }
+              PixelWidth = getPixelWidth cal.Point1 cal.Point2 cal.MeasuredDistance }
         | FocusImage (urls,stepping,magId) ->
             let magnification = getMag magId
             match magnification with
