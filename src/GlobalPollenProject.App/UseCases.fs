@@ -270,23 +270,30 @@ module Taxonomy =
 
     open GlobalPollenProject.Core.Aggregates.Taxonomy
 
-    let list (request:PageRequest) =
+    let toSearchResult (name:string) =
+        let parts = name.Split(':')
+        match parts.Length with
+        | 1 -> { LatinName = parts.[0]; Rank = "Family"; Heirarchy = [parts.[0]] } |> Ok
+        | 2 -> { LatinName = parts.[0]; Rank = "Genus"; Heirarchy = [parts.[1]; parts.[0]] } |> Ok
+        | 3 -> { LatinName = parts.[0]; Rank = "Species"; Heirarchy = [parts.[2]; parts.[1]; parts.[0]] } |> Ok
+        | _ -> Error "The read model format was different to that expected"
+
+    let autocomplete (req:TaxonAutocompleteRequest) =
+        KeyValueStore.getLexographic "Autocomplete:Taxon" req.Name readLex
+        |> bind (mapResult toSearchResult)
+        |> toAppResult
+
+    let list (request:TaxonPageRequest) =
         let req = Paged {ItemsPerPage = request.PageSize; Page = request.Page }
-        let key = "TaxonSummary:Genus"
+        let key = "TaxonSummary:" + request.Rank
         let unwrapJson (Json x) : Result<string,string> = x |> Ok
-        let namesOnPage = RepositoryBase.getListKey<string> req key readStoreGetSortedList unwrapJson
-        match namesOnPage with
-        | Error e -> Error e
-        | Ok names ->
+        let getSummary (name:string) =
+            let reversedTaxonomy = name.Split(':') |> Array.rev |> Array.fold (fun acc x -> acc + ":" + x) ""
+            RepositoryBase.getKey<Guid> ("Taxon" + reversedTaxonomy) readStoreGet deserialise
+            |> bind (fun x -> RepositoryBase.getKey<TaxonSummary> ("TaxonSummary:" + (x.ToString())) readStoreGet deserialise)
 
-            let getSummary name =
-                RepositoryBase.getKey<Guid> ("Taxon:" + name) readStoreGet deserialise
-                |> bind (fun x -> RepositoryBase.getKey<TaxonSummary> ("TaxonSummary:" + (x.ToString())) readStoreGet deserialise)
-
-            names
-            |> List.map getSummary
-            |> List.choose ( fun x -> match x with | Ok r -> Some r | Error e -> None )
-            |> Ok
+        KeyValueStore.getLexographic key request.Lex readLex
+        |> bind (mapResult getSummary)
         |> toAppResult
 
     let private toNameSearchKey family genus species =

@@ -16,7 +16,8 @@
             <p>The Open Platform for Pollen Identification</p>
 
             <form action="/Taxon" method="get" class="form-inline search-big">
-                <input name="Query" title="Search by latin name" id="ref-collection-search" type="search" class="form-control form-control-lg" placeholder="Search by Latin Name" />
+                <input hidden="hidden" id="Rank" value="Genus" />
+                <input name="lex" title="Search by latin name" id="ref-collection-search" type="search" autocomplete="off" class="form-control form-control-lg" placeholder="Search by Latin Name" />
                 <div class="dropdown-menu" id="suggestList" style="display:none"></div>
                 <button type="submit" title="Search" class="btn btn-primary btn-lg">Go</button>
             </form>

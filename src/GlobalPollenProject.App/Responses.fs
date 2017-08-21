@@ -13,7 +13,6 @@ type ServiceError =
 | Persistence
 | NotFound
 
-type PageRequest = { Page: int; PageSize: int }
 type PagedResult<'TProjection> = {
     Items: 'TProjection list
     CurrentPage: int

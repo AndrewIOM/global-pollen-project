@@ -186,8 +186,8 @@ module MasterReferenceCollection =
     let generateLookupValue (taxon:BackboneTaxon) =
         match taxon.Rank with 
         | "Family" -> taxon.Family
-        | "Genus" -> sprintf "%s:%s" taxon.Family taxon.Genus
-        | "Species" -> sprintf "%s:%s:%s" taxon.Family taxon.Genus taxon.Species
+        | "Genus" -> sprintf "%s:%s" taxon.Genus taxon.Family
+        | "Species" -> sprintf "%s:%s:%s" taxon.Species taxon.Genus taxon.Family
         | _ -> "Unknown"
 
     let getRankKey (t:BackboneTaxon) =
@@ -218,6 +218,7 @@ module MasterReferenceCollection =
             RepositoryBase.setSortedListItem (generateLookupValue t) ("TaxonSummary:" + readModel.Summary.Rank) 0. setSortedList |> ignore
             RepositoryBase.setSingle (id.ToString()) readModel.Detail set serialise |> ignore
             RepositoryBase.setSortedListItem t.LatinName ("Autocomplete:Taxon:" + t.Rank) 0. setSortedList |> ignore
+            RepositoryBase.setSortedListItem (generateLookupValue t) ("Autocomplete:Taxon") 0. setSortedList |> ignore
             RepositoryBase.setKey (id.ToString()) (getRankKey t) set serialise
 
     let initTaxon get backboneId : Result<TaxonReadModel,string> =

@@ -78,6 +78,13 @@ type TaxonDetail = {
     ReferenceUrl:   string
 }
 
+[<CLIMutable>]
+type TaxonAutocompleteItem = {
+    LatinName: string
+    Rank: string
+    Heirarchy: string list
+}
+
 // Grains
 // - Crowdsourced / Unknown Grains
 // - Grains split out of digitised slides

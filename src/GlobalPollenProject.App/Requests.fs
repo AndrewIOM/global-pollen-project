@@ -143,3 +143,17 @@ type IdentifyGrainRequest = {
     [<Required>] TaxonId: Guid
     [<Required>] GrainId: Guid
 }
+
+[<CLIMutable>]
+type TaxonPageRequest = {
+    Page: int
+    PageSize: int
+    Rank: string
+    Lex: string
+}
+
+[<CLIMutable>]
+type TaxonAutocompleteRequest = {
+    PageSize: int
+    Name: string
+}

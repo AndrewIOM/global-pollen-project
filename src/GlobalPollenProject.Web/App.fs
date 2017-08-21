@@ -160,8 +160,15 @@ let individualCollection (colId:string) version ctx =
     IndividualReference.getDetail colId version
     |> toViewResult "Reference/View" ctx
 
-let pagedTaxonomyHandler ctx =
-    Taxonomy.list {Page = 1; PageSize = 20}
+let defaultIfNull (req:TaxonPageRequest) =
+    match String.IsNullOrEmpty req.Rank with
+    | true -> { Page = 1; PageSize = 40; Rank = "Genus"; Lex = "" }
+    | false -> req
+
+let pagedTaxonomyHandler (ctx:HttpContext) =
+    ctx.BindQueryString<TaxonPageRequest>()
+    |> defaultIfNull
+    |> Taxonomy.list
     |> toViewResult "MRC/Index" ctx
 
 let listCollectionsHandler ctx =
@@ -241,6 +248,7 @@ let webApp =
             // route   "/backbone/match"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
             route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
             route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
+            route   "/taxon/search"             >=> queryRequestToApiResponse<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
         ]
 
     let digitiseApi =
