@@ -377,14 +377,19 @@ function SlideDetailViewModel(detail) {
             SlideId: self.slideDetail().CollectionSlideId,
             IsFocusImage: base64Array.length > 1,
             FramesBase64: base64Array,
-            FloatingCalPointOneX: self.floatingCal() == null ? 0 : Math.round(self.floatingCal()[0][0]),
-            FloatingCalPointOneY: self.floatingCal() == null ? 0 : Math.round(self.floatingCal()[0][1]),
-            FloatingCalPointTwoX: self.floatingCal() == null ? 0 : Math.round(self.floatingCal()[1][0]),
-            FloatingCalPointTwoY: self.floatingCal() == null ? 0 : Math.round(self.floatingCal()[1][1]),
-            MeasuredDistance: self.measuredDistance(),
-            CalibrationId: self.selectedMagnification() == null ? 0 : self.selectedMicroscope().Id,
-            Magnification: self.selectedMagnification() == null ? 0 : self.selectedMagnification().Level,
-            DigitisedYear: self.digitisedYear()
+            DigitisedYear: parseInt(self.digitisedYear())
+        }
+        if(base64Array.length == 1) {
+            request["FloatingCalPointOneX"] = Math.round(self.floatingCal()[0][0]);
+            request["FloatingCalPointOneY"] = Math.round(self.floatingCal()[0][1]);
+            request["FloatingCalPointTwoX"] = Math.round(self.floatingCal()[1][0]);
+            request["FloatingCalPointTwoY"] = Math.round(self.floatingCal()[1][1]);
+            request["MeasuredDistance"] = parseFloat(self.measuredDistance());
+        } else if (base64Array.length > 1) {
+            request["CalibrationId"] = self.selectedMicroscope().Id;
+            request["Magnification"] = self.selectedMagnification().Level;
+        } else {
+            return;
         }
         console.log(request);
 
