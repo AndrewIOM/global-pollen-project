@@ -52,8 +52,6 @@ function DigitiseViewModel(users, analyses) {
     self.slideDetailVM = ko.observable(null);
     self.calibrateVM = ko.observable(null);
 
-    self.dt = null;
-
     self.refreshCollectionList = function () {
         $.ajax({
             url: apiPrefix + "collection/list",
@@ -81,9 +79,6 @@ function DigitiseViewModel(users, analyses) {
                     .done(function (col) {
                         self.activeCollection(col);
                         self.currentView(view);
-                    })
-                    .always(function (d) {
-                        self.dt = $("#slides-data-table").dataTable();
                     });
                 break;
             case CurrentView.ADD_COLLECTION:
@@ -738,6 +733,10 @@ function ImageCalibrationViewModel(currentMicroscope) {
         return true;
     }
 
+    self.magName = function(data) {
+        return data.Level + 'x';
+    }
+
     self.submit = function (parent) {
         if (self.viewer == null) return;
 
@@ -791,6 +790,7 @@ function ImageCalibrationViewModel(currentMicroscope) {
     }
 
     self.createViewer = function (element) {
+        console.log(self.microscope());
         if (self.viewer != null) self.viewer.dispose();
 
         var file = element.files[0];

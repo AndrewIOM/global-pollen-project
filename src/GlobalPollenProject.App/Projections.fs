@@ -653,9 +653,10 @@ module Digitisation =
                     match result with
                     | Ok u -> u |> Url.unwrap
                     | Error e -> ""
-                let getMag calId mag = 
+                let getMag mag = 
+                    let calId,level = Converters.DomainToDto.unwrapMagId mag
                     RepositoryBase.getSingle<Calibration> (calId.ToString()) getKey deserialise
-                    |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = mag))
+                    |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
                 let imageDto = Converters.DomainToDto.image getMag toAbsoluteUrl image
                 let updatedSlide = { s with Images = imageDto :: s.Images; Thumbnail = thumbnailUrl }
                 let updatedSlides = 

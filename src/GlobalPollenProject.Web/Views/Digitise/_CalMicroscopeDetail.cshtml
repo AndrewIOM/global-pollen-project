@@ -3,10 +3,18 @@
 
         <h3 data-bind="text: microscope().Name"></h3>
 
-        <label>Magnification Level</label>
-        <select data-bind="value: magnification, foreach: microscope().UncalibratedMags">
-            <option data-bind="value: $data, text: $data"></option>
-        </select>
+        <label>Already calibrated: </label>
+        <span style="font-style: italic;" data-bind="visible: microscope().Magnifications.length == 0">None</span>
+        <ul data-bind="foreach: microscope().Magnifications">
+            <li data-bind="text: $parent.magName($data)"></li>
+        </ul>
+
+        <div data-bind="visible: microscope().UncalibratedMags.length > 0">
+            <label>Magnification Level</label>
+            <select data-bind="value: magnification, foreach: microscope().UncalibratedMags">
+                <option data-bind="value: $data, text: $data"></option>
+            </select>
+        </div>
         <br>
         <input type="file" class="upload" data-bind="event: { change: function() { createViewer($element) } }" />
         <div id="calibration-viewer-container"></div>
