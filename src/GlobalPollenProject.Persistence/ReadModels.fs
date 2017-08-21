@@ -38,6 +38,13 @@ type GrainSummary = {
 }
 
 [<CLIMutable>]
+type Node = {
+    Id:         Guid
+    Name:       string
+    Rank:       string
+}
+
+[<CLIMutable>]
 type TaxonSummary = {
     Id:         Guid
     Family:     string
@@ -49,13 +56,7 @@ type TaxonSummary = {
     SlideCount: int
     GrainCount: int
     ThumbnailUrl:string
-}
-
-[<CLIMutable>]
-type Node = {
-    Id:         Guid
-    Name:       string
-    Rank:       string
+    DirectChildren:Node list
 }
 
 [<CLIMutable>]
@@ -73,6 +74,8 @@ type TaxonDetail = {
     Grains:     GrainSummary list
     NeotomaId:  int
     GbifId:     int
+    ReferenceName:  string
+    ReferenceUrl:   string
 }
 
 // Grains
@@ -134,6 +137,7 @@ type SlideDetail = {
 [<CLIMutable>]
 type BackboneTaxon = {
     Id:             Guid
+    Group:          string
     Family:         string
     Genus:          string
     Species:        string

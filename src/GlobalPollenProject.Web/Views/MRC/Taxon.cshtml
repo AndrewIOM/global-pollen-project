@@ -3,10 +3,7 @@
 @{
     Layout = "_Layout";
     ViewBag.Title = Model.LatinName + " (" + Model.Rank + ") - Master Reference Collection";
-
-    // TODO
-    var neotomaId = 0;
-    var gbifId = 0;
+    var subname = Model.Rank == "Family" ? "Genera" : "Species";
 }
 
 <link rel="stylesheet" href="~/lib/nouislider/distribute/nouislider.min.css"> @* TODO Move this *@
@@ -45,34 +42,43 @@
 
 <div class="row">
     <div class="col-md-6">
-
+        @if (Model.Grains.Length > 0) {
         <div class="panel panel-white">
-            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Specimens</div>
+            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Individual Grains</div>
             <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <label>Digitised Reference Slides</label>
-                        <ul class="grain-grid columns-8">
-                            @foreach (var slide in Model.Slides) {
-                            <li>
-                                <a href="/Taxon/Slide/@slide.ColId/@slide.SlideId">
-                                    <div class="img-container">
-                                        <img src="@slide.Thumbnail"/>
-                                    </div>
-                                </a>
-                            </li>
-                            }
-                        </ul>
-                        <hr />
-                        <label>User Submissions</label>
-                        <ul class="grain-grid columns-8">
-                            <li>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+                <ul class="grain-grid columns-8">
+                    @foreach (var grain in Model.Grains) {
+                    <li>
+                        <a href="/Taxon/Grain/@grain.Id">
+                            <div class="img-container">
+                                <img src="@grain.Thumbnail"/>
+                            </div>
+                        </a>
+                    </li>
+                    }
+                </ul>
             </div>
-        </div>
+        </div> }
+
+        @if (Model.Slides.Length > 0) {
+        <div class="panel panel-white">
+            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Digitised Records</div>
+            <div class="panel-body">
+                <p>There are @Model.Slides.Length digitised records in the GPP. Each record may contain multiple individual grains.</p>
+                <ul class="grain-grid columns-8">
+                    @foreach (var slide in Model.Slides) {
+                    <li>
+                        <a href="/Taxon/Slide/@slide.ColId/@slide.SlideId">
+                            <div class="img-container">
+                                <img src="@slide.Thumbnail"/>
+                            </div>
+                        </a>
+                    </li>
+                    }
+                </ul>
+            </div>
+        </div> }
+
     </div>
     <div class="col-md-6">
 
@@ -91,8 +97,8 @@
                 </div>
             <div class="panel-body">
 
-                <input hidden="hidden" id="NeotomaId" value="@neotomaId" />
-                <input hidden="hidden" id="GbifId" value="@gbifId" />
+                <input hidden="hidden" id="NeotomaId" value="@Model.NeotomaId" />
+                <input hidden="hidden" id="GbifId" value="@Model.GbifId" />
 
                 <div class="row" id="warnings-container" style="display:none">
                     <div class="col-md-12">
@@ -120,7 +126,7 @@
         </div>
 
         <div class="panel panel-white">
-            <div class="panel-heading"><i class="fa fa-book" aria-hidden="true"></i> Definition <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://gbif.org/species/@gbifId" target="_blank">View at GBIF</a></div>
+            <div class="panel-heading"><i class="fa fa-book" aria-hidden="true"></i> Definition <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://gbif.org/species/@Model.GbifId" target="_blank">View at GBIF</a></div>
             <div class="panel-body">
                 <div class="row">
                     <div class="col-md-12">
@@ -133,36 +139,35 @@
                     <dt class="col-sm-3">GPP UUID</dt>
                     <dd class="col-sm-9">@Model.Id</dd>
                 </dl>
-                <div class="row">
-                    <div class="col-md-12">
-                        <hr />
-                        @if (Model.Children.Length > 0)
+                <dl class="row">
+                    <dt class="col-sm-3">GPP Parent</dt>
+                    <dd class="col-sm-9"></dd>
+                </dl>
+                <dl class="row">
+                    <dt class="col-sm-3">GPP @subname</dt>
+                    <dd class="col-sm-9">
+                        <ul class="list-inline">
+                        @foreach (var subTaxon in Model.Children.OrderBy(m => m.Name))
                         {
-                            <dl class="dl-horizontal">
-                                @if (Model.Rank == "Family") {
-                                    <dt>Genera</dt>
-                                } else {
-                                    <dt>Species</dt>
-                                }
-                                <dd>
-                                    <ul class="list-inline">
-                                        @foreach (var subTaxon in Model.Children.OrderBy(m => m.Name))
-                                        {
-                                            <li><a href="/Taxon/Id/@subTaxon.Id">@subTaxon.Name</a></li>
-                                        }
-                                    </ul>
-                                </dd>
-                            </dl>
+                            <li><a href="/Taxon/Id/@subTaxon.Id">@subTaxon.Name</a></li>
                         }
-                    </div>
-                </div>
+                        </ul>
+                    </dd>
+                </dl>
             </div>
         </div>
 
         <div class="panel panel-green" data-bind="with: taxonomicStatus">
             <div class="panel-heading">Taxonomic Status <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName" target="_blank">View on The Plant List</a></div>
             <div class="panel-body">
-                <span style="font-size: 2em;display: block;">Confirmed</span>
+                <p>This taxon is confirmed in our taxonomic backbone.</p>
+                @if (!string.IsNullOrEmpty(Model.ReferenceName)) {
+                    if (!string.IsNullOrEmpty(Model.ReferenceUrl)) {
+                        <p><strong>Reference: </strong><a href="@Model.ReferenceUrl" target="_blank">@Model.ReferenceName</a></p>
+                    } else {
+                        <p><strong>Reference: </strong>@Model.ReferenceName</p>
+                    }
+                }
             </div>
         </div>
 

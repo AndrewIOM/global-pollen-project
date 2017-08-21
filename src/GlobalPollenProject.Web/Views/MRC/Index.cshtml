@@ -29,6 +29,11 @@
         <a class="header-toggle">Family</a>
         <a class="header-toggle header-toggle-active">Genus</a>
         <a class="header-toggle">Species</a>
+        <div class="alphabet-index"><a href="/Taxon">All</a>
+            @for (char c = 'A'; c <= 'Z'; c++) {
+                <a href="/Taxon?lex=@c">@c</a>
+            }
+        </div>
     </div>
 </div>
 
@@ -53,6 +58,21 @@
                         <li class="list-inline-item"><i class="fa fa-object-group" aria-hidden="true"></i> @taxon.SlideCount</li>
                     </ul>
                 </div>
+                @if (taxon.DirectChildren.Count() > 0)
+                {
+                    <div class="taxon-toggle">
+                        <a class="subtaxa-button" role="button" data-toggle="collapse" data-target="#taxon-@taxon.Id" aria-expanded="false" aria-controls="taxon-@taxon.Id"><i class="fa fa-list" aria-hidden="true"></i></a>
+                    </div>
+                }
+                <ul id="taxon-@taxon.Id" class="panel-collapse collapse" role="tabpanel">
+                    @foreach (var subTaxa in taxon.DirectChildren.OrderBy(m => m.Name))
+                    {
+                        <li>
+                            <a href="/Taxon/ID/@subTaxa.Id})">@subTaxa.Name</a>
+                        </li>
+                    }
+                </ul>
+
             </div>
         </div>
     }

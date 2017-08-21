@@ -11,12 +11,12 @@ open ReadModels
 let readModelErrorHandler() =
     invalidOp "The read model is corrupt or out-of-sync. Rebuild now."
 
-let deserialise<'a> json = 
+let inline deserialise< ^a> json = 
     let unwrap (ReadStore.Json j) = j
-    Serialisation.deserialiseCli<'a> (unwrap json)
+    Serialisation.deserialise< ^a> (unwrap json)
 
 let serialise s = 
-    let result = Serialisation.serialiseCli s
+    let result = Serialisation.serialise s
     match result with
     | Ok r -> Ok <| ReadStore.Json r
     | Error e -> Error e
@@ -101,6 +101,17 @@ module MasterReferenceCollection =
     // Taxon:{Family}:{Genus}:{species} : Guid
     // Autocomplete:Taxon:{Rank}        : string list
 
+    type SlideDiff =
+    | Add of SlideDetail                
+    | Remove of SlideDetail
+    | Replace of SlideDetail * SlideDetail
+    | NoChange
+    
+    type TaxonReadModel = {
+        Summary: TaxonSummary
+        Detail: TaxonDetail
+    }
+
     let initTaxonSummary (backboneTaxon:BackboneTaxon) : TaxonSummary =
         {
             Id = backboneTaxon.Id
@@ -113,6 +124,7 @@ module MasterReferenceCollection =
             SlideCount = 0
             GrainCount = 0
             ThumbnailUrl = ""
+            DirectChildren = []
         }
 
     let initTaxonDetail (backboneTaxon:BackboneTaxon) parent : TaxonDetail =
@@ -128,20 +140,48 @@ module MasterReferenceCollection =
             Grains = []
             Parent = parent
             Children = []
+            ReferenceName = ""
+            ReferenceUrl = ""
             NeotomaId = 0
             GbifId = 0
         }
 
-    let getBackboneParent getSortedListKey getKey deserialise backboneTaxon =
-        match backboneTaxon.Rank with
+    let getLatinName (s:SlideDetail) =
+        match s.Rank with
+        | "Family" -> s.CurrentFamily
+        | "Genus" -> s.CurrentGenus
+        | "Species" -> s.CurrentSpecies
+        | _ -> ""
+
+    let slideDetailToSummary slide = {
+        ColId       = slide.CollectionId
+        SlideId     = slide.CollectionSlideId
+        LatinName   = getLatinName slide
+        Rank        = slide.Rank
+        Thumbnail   = slide.Thumbnail
+    }
+
+    let toParentNode bbTaxon =
+        match bbTaxon.Rank with
         | "Family" -> None |> Ok
-        | "Genus" -> 
-            ReadStore.TaxonomicBackbone.tryFindByLatinName backboneTaxon.Family None None getSortedListKey getKey deserialise
-            |> lift (fun x -> Some { Id = x.Id ; Name = x.LatinName; Rank = "Family" })
-        | "Species" ->
-            ReadStore.TaxonomicBackbone.tryFindByLatinName backboneTaxon.Family (Some backboneTaxon.Genus) None getSortedListKey getKey deserialise
-            |> lift (fun x -> Some { Id = x.Id ; Name = x.LatinName; Rank = "Genus" })
-        | _ -> Error "Invalid taxonomic rank"
+        | "Genus" -> Some { Id = bbTaxon.FamilyId; Name = bbTaxon.Family; Rank = "Family" } |> Ok
+        | "Species" -> Some { Id = bbTaxon.GenusId.Value; Name = bbTaxon.Genus; Rank = "Genus" } |> Ok //TODO handle nullable<Guid>
+        | _ -> Error "The taxonomic backbone is corrupt"
+
+    let getBackboneHeirarchy get bbTaxon =
+        let rec traverse (taxa:BackboneTaxon list) =
+            let parent = taxa.Head |> toParentNode
+            match parent with
+            | Ok p ->
+                match p with
+                | Some n -> 
+                    let parentTaxon = TaxonomicBackbone.getById (TaxonId n.Id) get deserialise
+                    match parentTaxon with
+                    | Ok t -> t :: taxa |> traverse
+                    | Error e -> Error e
+                | None -> Ok taxa
+            | Error e -> Error e
+        traverse [ bbTaxon ]
 
     let generateLookupValue (taxon:BackboneTaxon) =
         match taxon.Rank with 
@@ -150,130 +190,184 @@ module MasterReferenceCollection =
         | "Species" -> sprintf "%s:%s:%s" taxon.Family taxon.Genus taxon.Species
         | _ -> "Unknown"
 
-    let updateTaxon get set setSortedList backboneId (summary:TaxonSummary) (detail:TaxonDetail) =
+    let getRankKey (t:BackboneTaxon) =
+        match t.Rank with
+        | "Family" -> sprintf "Taxon:%s" t.Family
+        | "Genus" -> sprintf "Taxon:%s:%s" t.Family t.Genus
+        | "Species" -> sprintf "Taxon:%s:%s:%s" t.Family t.Genus t.Species
+        | _ -> invalidOp "Invalid rank"
+
+    let getTaxon' get taxonId =
+        let id : Guid = taxonId |> Converters.DomainToDto.unwrapTaxonId
+        let summary = RepositoryBase.getSingle<TaxonSummary> (id.ToString()) get deserialise
+        let detail = RepositoryBase.getSingle<TaxonDetail> (id.ToString()) get deserialise
+        match summary with
+        | Error e -> Error e
+        | Ok s ->
+            match detail with
+            | Error e -> Error e
+            | Ok d -> { Summary = s; Detail = d } |> Ok
+
+    let setTaxon get set setSortedList backboneId (readModel:TaxonReadModel) =
         let id : Guid = backboneId |> Converters.DomainToDto.unwrapTaxonId
         let bbTaxon = TaxonomicBackbone.getById backboneId get deserialise
         match bbTaxon with
         | Error e -> Error e
         | Ok t ->
-            RepositoryBase.setSingle (id.ToString()) summary set serialise |> ignore
-            RepositoryBase.setSortedListItem (generateLookupValue t) ("TaxonSummary:" + summary.Rank) 0. setSortedList |> ignore
-            RepositoryBase.setSingle (id.ToString()) detail set serialise |> ignore
+            RepositoryBase.setSingle (id.ToString()) readModel.Summary set serialise |> ignore
+            RepositoryBase.setSortedListItem (generateLookupValue t) ("TaxonSummary:" + readModel.Summary.Rank) 0. setSortedList |> ignore
+            RepositoryBase.setSingle (id.ToString()) readModel.Detail set serialise |> ignore
             RepositoryBase.setSortedListItem t.LatinName ("Autocomplete:Taxon:" + t.Rank) 0. setSortedList |> ignore
-            let rankKey =
-                match t.Rank with
-                | "Family" -> sprintf "Taxon:%s" t.Family
-                | "Genus" -> sprintf "Taxon:%s:%s" t.Family t.Genus
-                | "Species" -> sprintf "Taxon:%s:%s:%s" t.Family t.Genus t.Species
-                | _ -> invalidOp "Invalid rank"
-            RepositoryBase.setKey (id.ToString()) rankKey set serialise
+            RepositoryBase.setKey (id.ToString()) (getRankKey t) set serialise
 
-    let createTaxon get getSortedList set setSortedList backboneId =
+    let initTaxon get backboneId : Result<TaxonReadModel,string> =
         let bbTaxon = TaxonomicBackbone.getById backboneId get deserialise
-        let parentNode = bbTaxon |> bind (getBackboneParent getSortedList get deserialise)
+        let parentNode = bbTaxon |> bind toParentNode
         let summary = bbTaxon |> lift initTaxonSummary
         let detail = 
             initTaxonDetail 
             <!> bbTaxon 
             <*> parentNode 
-        updateTaxon get set setSortedList backboneId 
-        <!> summary 
-        <*> detail
-        |> ignore
-        summary,detail
+        match summary with
+        | Error e -> Error e
+        | Ok s ->
+            match detail with
+            | Error e -> Error e
+            | Ok d -> { Summary = s; Detail = d } |> Ok
 
-    let getTaxon get taxonId =
-        let id : Guid = taxonId |> Converters.DomainToDto.unwrapTaxonId
-        RepositoryBase.getSingle<TaxonSummary> (id.ToString()) get deserialise,
-        RepositoryBase.getSingle<TaxonDetail> (id.ToString()) get deserialise
+    let getTaxon get backboneId : Result<TaxonReadModel,string> =
+        let existing = getTaxon' get backboneId
+        match existing with 
+        | Ok s -> existing
+        | Error e -> initTaxon get backboneId
 
-    let ensureCreatedRecursive get getSortedList set setSortedList backboneId =
+    let appendChild (child:TaxonReadModel) (taxon:TaxonReadModel) =
+        let newChild = { Id = child.Summary.Id; Name = child.Summary.LatinName; Rank = child.Summary.Rank }
+        { taxon with 
+            Summary = { taxon.Summary with DirectChildren = newChild :: taxon.Summary.DirectChildren }; 
+            Detail = { taxon.Detail with Children = newChild :: taxon.Detail.Children } }
 
-        let create id =
-            createTaxon get getSortedList set setSortedList id
+    let getHeirarchy get backboneId =
+        let bbTaxon = TaxonomicBackbone.getById backboneId get deserialise
+        match bbTaxon with
+        | Error e -> Error e
+        | Ok t ->
+            let heirarchy = getBackboneHeirarchy get t
+            match heirarchy with
+            | Error e -> Error e
+            | Ok h ->
+                let getParent (c:TaxonReadModel) (p:Guid) =
+                    getTaxon get (p |> TaxonId)
+                    |> lift (appendChild c)
+                let rec getParents (remaining:BackboneTaxon list) (stashed:TaxonReadModel list) child =
+                    match remaining |> List.length with
+                    | 0 -> child :: stashed |> Ok
+                    | _ ->
+                        let parent = getParent child remaining.Head.Id
+                        match parent with
+                        | Error e -> Error e
+                        | Ok p -> getParents remaining.Tail (child :: stashed) p
+                let reversed = h |> List.rev
+                getTaxon get (reversed.Head.Id |> TaxonId)
+                |> bind (getParents reversed.Tail [])
 
-        let getHeirarchy backboneId =
-            let rec traverse (ids: TaxonId list) =
-                let current = TaxonomicBackbone.getById ids.Head get deserialise
-                match current with
-                | Ok p -> 
-                    let parent = getBackboneParent getSortedList get deserialise p
-                    match parent with
-                    | Ok o ->
-                        match o with
-                        | Some p -> traverse ((p.Id |> TaxonId) :: ids)
-                        | None -> ids
-                    | Error e -> [] //TODO
-                | Error e -> [] //TODO
-            traverse [backboneId]
+    let setDiff previous current =
+        set current - set previous |> Set.toList
 
-        let ensureMRCViewModel id =
-            let summary,detail = getTaxon get id
-            match summary with
-            | Ok s -> summary,detail // If exists, return
-            | Error e -> create id
+    let toSlideIds = List.map (fun s -> s.CollectionSlideId)
 
-        // TODO Ensure taxon is confirmed ONLY
-        // TODO connect together view models
+    let getAddedSlides previous current =
+        let addedIds = setDiff (previous |> toSlideIds) (current |> toSlideIds)
+        current
+        |> List.filter(fun s -> addedIds |> List.contains s.CollectionSlideId)
+        |> List.map Add
 
-        let h = getHeirarchy backboneId
-        let vms = h |> List.map ensureMRCViewModel
-        vms |> Ok
+    let getRemovedSlides previous current =
+        let removedIds = setDiff (current |> toSlideIds) (previous |> toSlideIds)
+        previous
+        |> List.filter(fun s -> removedIds |> List.contains s.CollectionSlideId)
+        |> List.map Remove
 
-    let publishCollection id get getSortedList set setSortedList =
-        let getBackboneTaxon (id:string) = ReadStore.TaxonomicBackbone.getById (TaxonId <| Guid id) get deserialise
+    let getChangedSlides (previous:SlideDetail list) (current:SlideDetail list) =
+        previous
+        |> List.map (fun prev -> prev, current |> List.tryFind (fun c -> c.CollectionSlideId = prev.CollectionSlideId))
+        |> List.choose(fun (p,c) -> match c with | None -> None | Some s -> Some (p,s))
+        |> List.map(fun (p,c) -> Replace (p,c))
+
+    let computeDifferences (previousVersion:ReferenceCollectionDetail) (currentVersion:EditableRefCollection) : SlideDiff list =
+        let prev = previousVersion.Slides |> List.filter (fun s -> s.IsFullyDigitised)
+        let curr = currentVersion.Slides |> List.filter (fun s -> s.IsFullyDigitised)
+        let added = getAddedSlides prev curr
+        let changed = getChangedSlides prev curr
+        let removed = getRemovedSlides prev curr
+        [added; changed; removed]
+        |> List.concat
+
+    let addSlide get set setSortedList (s:SlideDetail) = 
+        match s.CurrentTaxonId with
+        | None -> Error "Taxon did not exist"
+        | Some bbId ->
+            let slideSummary = slideDetailToSummary s
+            let add (slide:SlideSummary) (taxon:TaxonReadModel) =
+                let summary = { taxon.Summary with SlideCount = taxon.Summary.SlideCount + 1; ThumbnailUrl = slide.Thumbnail }
+                let detail = { taxon.Detail with Slides = slide :: taxon.Detail.Slides }
+                { Summary = summary; Detail = detail }
+            getHeirarchy get (bbId |> TaxonId)
+            |> lift (List.map (add slideSummary))
+            |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
+            |> lift ignore
+
+    let removeSlide get set setSortedList s = 
+        match s.CurrentTaxonId with
+        | None -> Error "Taxon did not exist"
+        | Some bbId ->
+            let slideSummary = slideDetailToSummary s
+            let remove (slide:SlideSummary) (taxon:TaxonReadModel) =
+                let summary = { taxon.Summary with SlideCount = taxon.Summary.SlideCount - 1 }
+                let detail = { taxon.Detail with Slides = taxon.Detail.Slides |> List.filter (fun s -> not (s = slide)) }
+                { Summary = summary; Detail = detail }
+            getHeirarchy get (bbId |> TaxonId)
+            |> lift (List.map (remove slideSummary))
+            |> bind (mapResult (setTaxon get set setSortedList (bbId |> TaxonId)))
+            |> lift ignore
+
+    let updateSlide get set setSortedList (oldSlide:SlideDetail) (newSlide:SlideDetail) = 
+        match oldSlide = newSlide with
+        | true -> Ok()
+        | false ->
+            // TODO proper error handling here
+            removeSlide get set setSortedList oldSlide |> ignore
+            addSlide get set setSortedList newSlide |> ignore
+            Ok()
+
+    let execute get set setSortedList diff =
+        match diff with
+        | NoChange -> Ok()
+        | Add s -> addSlide get set setSortedList s
+        | Remove s -> removeSlide get set setSortedList s
+        | Replace (o,n) -> updateSlide get set setSortedList o n
+
+    let publishCollection id version get getSortedList set setSortedList =
         let colId : Guid = id |> Converters.DomainToDto.unwrapRefId
         let col = RepositoryBase.getSingle (colId.ToString()) get deserialise<EditableRefCollection>
+        let ver = version |> Converters.DomainToDto.unwrapColVer
         match col with
         | Error e -> Error e
-        | Ok c -> 
-            let processSlide slide =
-                let taxonId = 
-                    match slide.CurrentTaxonId with
-                    | Some i -> Ok <| TaxonId i
-                    | None -> Error "Invalid taxon ID"
-                let getLatinName (s:SlideDetail) =
-                    match s.Rank with
-                    | "Family" -> s.CurrentFamily
-                    | "Genus" -> s.CurrentGenus
-                    | "Species" -> s.CurrentSpecies
-                    | _ -> ""
-                let slideSummaryRM = {
-                    ColId       = slide.CollectionId
-                    SlideId     = slide.CollectionSlideId
-                    LatinName   = getLatinName slide
-                    Rank        = slide.Rank
-                    Thumbnail   = slide.Thumbnail
-                }
-
-                // Publish slide read model for detail pages
-                let slidePublishedId = sprintf "%s:%s" (slide.CollectionId.ToString()) slide.CollectionSlideId
-                RepositoryBase.setSingle slidePublishedId slide set serialise |> ignore
-
-                // Statistics
-                Statistics.incrementStat "Statistic:SlideTotal" get set |> ignore
-                match slide.IsFullyDigitised with
-                | true -> Statistics.incrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
-                | false -> ()
-
-                let update (summaryRM:Result<TaxonSummary,string>) (detailRM:Result<TaxonDetail,string>) =
-                    match detailRM with
-                    | Ok d ->
-                        let updatedDetail = { d with Slides = slideSummaryRM :: d.Slides }
-                        match summaryRM with 
-                        | Ok s ->
-                            let updatedSummary = { s with SlideCount = s.SlideCount + 1; ThumbnailUrl = slideSummaryRM.Thumbnail }
-                            updateTaxon get set setSortedList (d.Id |> TaxonId) updatedSummary updatedDetail 
-                        | Error e -> Error e
-                    | Error e -> Error e
-                taxonId
-                |> bind (ensureCreatedRecursive get getSortedList set setSortedList)
-                |> bind (fun tlist -> tlist |> List.map (fun (s,d) -> update s d) |> Ok )
-            c.Slides 
-            |> List.filter (fun s -> s.IsFullyDigitised)
-            |> List.map processSlide
-            |> ignore
-            Ok()
+        | Ok c ->
+            match ver with
+            | 1 ->
+                c.Slides
+                |> List.map Add
+                |> mapResult (execute get set setSortedList)
+                |> lift ignore
+            | _ ->
+                let previousVersion = RepositoryBase.getKey<ReferenceCollectionDetail> (sprintf "ReferenceCollectionDetail:%s:V%i" (colId.ToString()) ((ver) - 1)) get deserialise
+                match previousVersion with
+                | Error e -> Error e
+                | Ok prevC ->
+                    computeDifferences prevC c
+                    |> mapResult (execute get set setSortedList)
+                    |> lift ignore
 
     let establishConnection get set id externalId =
         let getExisting (id:Guid) = RepositoryBase.getSingle<TaxonDetail> (id.ToString()) get deserialise
@@ -292,7 +386,7 @@ module MasterReferenceCollection =
         match snd e with
         | :? ReferenceCollection.Event as e -> 
             match e with
-            | ReferenceCollection.Event.CollectionPublished (id,date,ver) -> publishCollection id get getSortedList set setSortedList
+            | ReferenceCollection.Event.CollectionPublished (id,date,ver) -> publishCollection id ver get getSortedList set setSortedList
             | _ -> Ok()
         | :? Grain.Event as e ->
             match e with
@@ -496,8 +590,16 @@ module TaxonomicBackbone =
             | Misapplied id -> "misapplied",(id |> Converters.DomainToDto.unwrapTaxonId).ToString()
             | Synonym id -> "synonym",(id |> Converters.DomainToDto.unwrapTaxonId).ToString()
 
+        let group =
+            match event.Group with
+            | TaxonomicGroup.Angiosperm -> "Angiosperm"
+            | TaxonomicGroup.Bryophyte -> "Bryophyte"
+            | TaxonomicGroup.Gymnosperm -> "Gymnosperm"
+            | TaxonomicGroup.Pteridophyte -> "Pteridophyte"
+
         let projection = 
             {   Id = Converters.DomainToDto.unwrapTaxonId event.Id
+                Group = group
                 Family = family
                 Genus = genus
                 Species = species
@@ -527,6 +629,10 @@ module ReferenceCollectionReadOnly =
     // ReferenceCollectionSummary:{Guid}            : ReferenceCollectionSummary
     // ReferenceCollectionDetail:{Guid}:V{Version}  : ReferenceCollectionDetail
 
+    let updateSlideReadModel set slide =
+        let slidePublishedId = sprintf "%s:%s" (slide.CollectionId.ToString()) slide.CollectionSlideId
+        RepositoryBase.setSingle slidePublishedId slide set serialise
+
     let published get set setList (colId:CollectionId) time version =
         let id : Guid = colId |> Converters.DomainToDto.unwrapRefId
         let col = RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
@@ -553,6 +659,7 @@ module ReferenceCollectionReadOnly =
             RepositoryBase.setSingle (id.ToString()) summary set serialise |> ignore
             RepositoryBase.setKey detail (sprintf "ReferenceCollectionDetail:%s:V%i" (id.ToString()) v) set serialise |> ignore
             RepositoryBase.setListItem (id.ToString()) "ReferenceCollectionSummary:index" setList |> ignore
+            c.Slides |> List.map (updateSlideReadModel set) |> ignore
             Ok()
         | Error e -> Error e
 

@@ -23,7 +23,7 @@
     background-color: #83296f;
 }
 
-.taxon-toggle span {
+.taxon-toggle i {
     width: 100%;
     height: 100%;
     color: white;
@@ -69,4 +69,13 @@
     padding-left: 9em;
     padding-top: 0.75em;
     border-top: 0.2px dotted #9b538b;
+}
+
+.alphabet-index {
+    margin-bottom: 1.5em;
+    font-size: 1.5em;
+
+    a {
+        margin-right: 0.25em;
+    }
 }

@@ -140,8 +140,8 @@ let createImportCommands (taxon:ParsedTaxon) (allParsed:ParsedTaxon seq) (curren
             match s with
             | Accepted -> Accepted
             | Doubtful -> Doubtful
-            | Misapplied id -> Doubtful // TODO handle alternative cases
-            | Synonym id -> Doubtful // TODO handle alternative cases
+            | Misapplied id -> Doubtful
+            | Synonym id -> Doubtful
 
         let family : Command option * TaxonId = 
             let exsitingFamily = currentCommands |> List.tryFind (fun c -> 

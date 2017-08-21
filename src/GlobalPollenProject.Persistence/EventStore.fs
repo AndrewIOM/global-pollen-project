@@ -19,9 +19,9 @@ type IEventStoreConnection with
     member this.SaveEvent = newEvent.Publish
 
 let serialise (event:'a) = 
-    let typeName, data = Serialisation.serializeUnion event
+    let typeName, data = Serialisation.serialiseEventToBytes event
     EventData(Guid.NewGuid(), typeName, true, data, null)
-let deserialise<'TEvent> (event:ResolvedEvent) : 'TEvent option = Serialisation.deserializeUnion event.Event.EventType event.Event.Data
+let deserialise<'TEvent> (event:ResolvedEvent) : 'TEvent option = Serialisation.deserialiseEventFromBytes event.Event.EventType event.Event.Data
 
 let connect host port username userpass = 
     async {

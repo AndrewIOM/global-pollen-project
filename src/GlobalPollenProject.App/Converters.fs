@@ -23,9 +23,9 @@ module Identity =
 
     open ReadStore
 
-    let deserialise<'a> json = 
+    let inline deserialise< ^a> json = 
         let unwrap (ReadStore.Json j) = j
-        Serialisation.deserialiseCli<'a> (unwrap json)
+        Serialisation.deserialise< ^a> (unwrap json)
 
     let existingUserOrError get (id:Guid) =
         match RepositoryBase.getSingle<PublicProfile> (id.ToString()) get deserialise with
@@ -136,7 +136,7 @@ module Temporal =
         | "botanical" ->
             if (year.HasValue) 
                 then Ok (Some <| CollectionDate (year.Value * 1<CalYr>)) 
-                else validationError "Year" "The year of botanical collection was missing"
+                else Ok <| None
         | "environmental" -> validationError "SamplingMethod" "Not supported"
         | "morphological" -> validationError "SamplingMethod" "not supported"
         | _ -> validationError "SamplingMethod" "The sampling method was not valid"
@@ -326,7 +326,9 @@ module Dto =
             Identity.existingSlideIdOrError readStoreGet request.CollectionId request.SlideId
 
         let yearTakenOrError =
-            1970<CalYr> |> Ok
+            match request.DigitisedYear.HasValue with
+            | true -> Some (request.DigitisedYear.Value * 1<CalYr>) |> Ok
+            | false -> None |> Ok
 
         let createUploadImageCommand id image yearTaken =
             GlobalPollenProject.Core.Aggregates.ReferenceCollection.Command.UploadSlideImage {
