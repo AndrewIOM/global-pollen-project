@@ -761,7 +761,10 @@ module Digitisation =
                     match result with
                     | Ok u -> u |> Url.unwrap
                     | Error e -> ""
-                let getMag a = None //TODO enable fetching of magnification calibrations
+                let getMag mag = 
+                    let calId,level = Converters.DomainToDto.unwrapMagId mag
+                    RepositoryBase.getSingle<Calibration> (calId.ToString()) getKey deserialise
+                    |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
                 let imageDto = Converters.DomainToDto.image getMag toAbsoluteUrl image
                 let updatedSlide = { s with Images = imageDto :: s.Images; Thumbnail = thumbnailUrl }
                 let updatedSlides = 
@@ -855,7 +858,11 @@ module Calibration =
                 Image = e.Image |> toAbsoluteUrl |> Url.unwrap
                 PixelWidth = e.PixelWidth |> removeUnitFloat
             }
-            RepositoryBase.setSingle (calId.ToString()) { c with Magnifications = newMag :: c.Magnifications } set serialise
+            let updated = { 
+                c with
+                    Magnifications = newMag :: c.Magnifications
+                    UncalibratedMags = c.UncalibratedMags |> List.filter (fun m -> not (m = (e.Magnification |> removeUnitInt))) }
+            RepositoryBase.setSingle (calId.ToString()) updated set serialise
 
     let handle get getList set setList toAbsoluteUrl (e:string*obj) =
         match snd e with

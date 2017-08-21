@@ -37,6 +37,7 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
      */
     self.loadImages = function (callback) {
         // loop through all image paths (focus levels), and load the images
+        var error = false;
         for (var i = 0; i < self.imagePaths.length; i++) {
             var img = new Image();
             img.onload = function () {
@@ -46,6 +47,12 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
                         console.error("Focus images are not of equal size! Size of image #" + i + ": " +
                             this.width + "x" + this.height + " - expected size: " + 
                             self.imgWidth + "x" + self.imgHeight);
+                        if(!error) {
+                            // only trigger once!
+                            error = true;
+                            $(self).trigger(Viewer.EVENT_IMAGES_MISMATCHED_SIZE);
+                        }
+                        return;
                     }
                 } else {
                     self.imgWidth = this.width;
@@ -95,6 +102,8 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
             $(self).trigger(Viewer.EVENT_ZOOMED);
         }
 
+        var defaultZoom = Math.min(self.width / self.imgWidth, self.height / self.imgHeight);
+
         // create the canvas element
         self.base = d3.select(self.containerId);
         self.canvas = self.base.append("canvas")
@@ -106,7 +115,7 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
                     [-self.imgWidth / 2, -self.imgHeight / 2],
                     [self.imgWidth + self.imgWidth / 2, self.imgHeight + self.imgHeight / 2]
                 ])
-                .scaleExtent([1, 10])
+                .scaleExtent([defaultZoom * 0.4, defaultZoom * 10])
                 .on("zoom", function() {
                     zoomed();
                     self.render();
@@ -115,7 +124,7 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
                     $(self.id).css("cursor", "grab");
                 }));
         self.transform = d3.zoomIdentity;
-        self.transform.k = Math.min(self.width / self.imgWidth, self.height / self.imgHeight) - 0.1;
+        self.transform.k = defaultZoom - 0.1;
         self.transform.x = self.width / 2 - self.imgWidth / 2 * self.transform.k;
         self.transform.y = self.height / 2 - self.imgHeight / 2 * self.transform.k;
 
@@ -215,3 +224,4 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
 
 Viewer.EVENT_LOADED_IMAGES = "loadedImages";
 Viewer.EVENT_ZOOMED = "zoomed";
+Viewer.EVENT_IMAGES_MISMATCHED_SIZE = "imagesMismatchedSize";

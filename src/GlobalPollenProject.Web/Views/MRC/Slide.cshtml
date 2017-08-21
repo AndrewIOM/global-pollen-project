@@ -22,25 +22,13 @@
 <script src="/js/viewer/viewer.js"></script>
 <script src="/js/viewer/focusslider.js"></script>
 <script src="/js/viewer/scalebar.js"></script>
+<script src="/js/mrc/slide.js"></script>
 <script>
-    var viewer;
-    var slider;
-    var scaleBar;
-
-    $(function () {
-        viewer = new Viewer("#viewer-container", "#viewer-canvas",
-            $("#viewer-container").width(), 500, [
-                "@Model.Images[0].Frames[0]"
-            ]
-        );
-
-        @if(Model.Images[0].Frames.Length > 1) { 
-            <text>slider = new FocusSlider(viewer, "#viewer-focus-slider"); </text>
-        }
-        scaleBar = new ScaleBar(viewer, "#viewer-scalebar", @Model.Images[0].PixelWidth);
+    $(function() {
+        var frames = ("@Model.Images[0].Frames").slice(1, -1).split(";");
+        createViewer(frames, @Model.Images[0].PixelWidth);
     });
 </script>
-
 } 
 
 @* Breadcrumb *@
@@ -65,7 +53,25 @@
 </div>
 
 <div class="row">
-    <div class="col-md-8" id="viewer-container"></div>
+    <div class="col-md-8">
+        <div id="viewer-container">
+
+        </div>
+        <div class="card">
+            <div class="card-header">
+                Select Image:
+            </div>
+            <div class="card-block">
+                <div class="row" id="slide-gallery">
+                    @foreach(var img in Model.Images) {
+                        <div class="slide-gallery-item col-md-3" data-frames="@img.Frames" data-pixelwidth="@img.PixelWidth">
+                            <img src="@img.Frames[0]" alt="Image preview">
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="col-md-4">
         <p>This reference slide has been digitised with @Model.Images.Length images. Each image may contain one or more pollen
             grains. </p>

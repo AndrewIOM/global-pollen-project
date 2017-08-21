@@ -1,0 +1,30 @@
+.slide-gallery-item {
+    text-align: center;
+    height: 100px;
+    padding: 2px 2px;
+}
+
+.slide-gallery-item.active {
+    cursor: default;
+    background-color: #eceeef;
+}
+
+.slide-gallery-item:hover {
+    cursor: pointer;
+}
+
+.slide-gallery-item.active:hover {
+    cursor: default;
+}
+
+.slide-gallery-item > img {
+    pointer-events: none;
+    user-select: none;
+    -moz-user-select: none;
+    max-width: 100%;
+    max-height: 100%;
+}
+
+#viewer-container {
+    margin-bottom: 10px;
+}

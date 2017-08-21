@@ -193,9 +193,8 @@ let addSlideHandler (ctx:HttpContext) =
     |> toApiResult ctx
 
 let addImageHandler (ctx:HttpContext) =
-    ctx.BindJson<SlideImageRequest>()
-    |> Async.RunSynchronously
-    |> validateModel
+    bindJson<SlideImageRequest> ctx
+    |> bind validateModel
     |> Result.bind Digitise.uploadSlideImage
     |> toApiResult ctx
 

@@ -353,6 +353,7 @@ module DomainToDto =
     let unwrapEph (SpecificEphitet e) = e
     let unwrapAuthor (Scientific a) = a
     let unwrapColVer (ColVersion a) = a
+    let unwrapMagId (MagnificationId (a,b)) : Guid * int = a |> unwrapCalId,b
 
     let image getMag toAbsoluteUrl (domainImage:Image) : SlideImage =
         match domainImage with
@@ -360,14 +361,17 @@ module DomainToDto =
             { Id = 0
               Frames = [i |> toAbsoluteUrl |> Url.unwrap]
               PixelWidth = 2. }
-        | FocusImage (urls,stepping,calId) ->
-            let magnification = getMag calId
+        | FocusImage (urls,stepping,magId) ->
+            let magnification = getMag magId
             match magnification with
-            | None -> invalidOp "DTO validation failed"
-            | Some (mag:Magnification) ->
-                { Id = 0
-                  Frames = urls |> List.map (toAbsoluteUrl >> Url.unwrap)
-                  PixelWidth = mag.PixelWidth }
+            | Error e -> invalidOp "DTO validation failed"
+            | Ok o ->
+                match o with
+                | None -> invalidOp "DTO validation failed"
+                | Some (mag:Magnification) ->
+                    { Id = 0
+                      Frames = urls |> List.map (toAbsoluteUrl >> Url.unwrap)
+                      PixelWidth = mag.PixelWidth }
 
     let calibration id user name microscope =
 
