@@ -66,7 +66,6 @@ and FloatingCalibration = {
 
 type Microscope =
 | Light of LightMicroscope
-| ScanningElectron
 
 and LightMicroscope =
 | Single of Magnification * CameraModel

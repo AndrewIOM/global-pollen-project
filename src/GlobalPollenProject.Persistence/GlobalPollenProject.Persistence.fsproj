@@ -16,6 +16,7 @@
     <Compile Include="ReadStore.fs" />
     <Compile Include="AzureImageStore.fs" />
     <Compile Include="ExternalLink.fs" />
+    <Compile Include="Email.fs" />
   </ItemGroup>
 
   <ItemGroup>

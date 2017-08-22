@@ -20,10 +20,18 @@ type GetCurrentUser = unit -> Guid
 
 // Load AppSettings
 let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build()
+let getAppSetting name =
+    match String.IsNullOrEmpty appSettings.[name] with
+    | true -> invalidOp "Appsetting is missing: " + name
+    | false -> appSettings.[name]
+
+// Communication
+let sendEmail correspondingEmail subject messageHtml = 
+    EmailSender.Cloud.send (getAppSetting "SendGridKey") (getAppSetting "EmailFromName") (getAppSetting "EmailFromAddress") correspondingEmail subject messageHtml
 
 // Image Store
-let saveImage = AzureImageStore.uploadToAzure appSettings.["imagestore:baseurl"] appSettings.["imagestore:container"] appSettings.["imagestore:azureconnectionstring"] (fun x -> Guid.NewGuid().ToString())
-let generateThumbnail = AzureImageStore.generateThumbnail appSettings.["imagestore:baseurl"] appSettings.["imagestore:containerthumbnail"] appSettings.["imagestore:azureconnectionstring"]
+let saveImage = AzureImageStore.uploadToAzure (getAppSetting "imagestore:baseurl") (getAppSetting "imagestore:container") (getAppSetting "imagestore:azureconnectionstring") (fun x -> Guid.NewGuid().ToString())
+let generateThumbnail = AzureImageStore.generateThumbnail (getAppSetting "imagestore:baseurl") (getAppSetting "imagestore:containerthumbnail") (getAppSetting "imagestore:azureconnectionstring")
 let toAbsoluteUrl = Url.relativeToAbsolute appSettings.["imagestore:baseurl"]
 
 // Write (Event) Store

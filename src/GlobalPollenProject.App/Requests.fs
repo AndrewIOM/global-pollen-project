@@ -35,6 +35,57 @@ type NewAppUserRequest = {
 }
 
 [<CLIMutable>]
+type ExternalLoginConfirmationViewModel = {
+    [<Required>] [<Display(Name ="Title")>] Title: string
+    [<Required>] [<Display(Name = "Forename(s)")>] FirstName: string
+    [<Required>] [<Display(Name = "Surname")>] LastName: string
+    [<Required>] [<Display(Name = "Organisation")>] Organisation: string
+    [<Required>] [<EmailAddress>] [<Display(Name = "Email")>] Email: string
+
+    [<Required>] 
+    [<EmailAddress>] 
+    [<Compare("Email", ErrorMessage = "The email and confirmation email do not match.")>] 
+    [<Display(Name = "Confirm Email")>] 
+    EmailConfirmation: string
+}
+
+[<CLIMutable>]
+type ConfirmEmailRequest = {
+    UserId: string
+    Code: string
+}
+
+[<CLIMutable>]
+type ExternalLoginRequest = {
+    [<Required>] Provider: string
+}
+
+[<CLIMutable>]
+type ResetPasswordViewModel = {
+    [<Required>] 
+    [<EmailAddress>] 
+    [<Display(Name = "Email")>] 
+    Email: string
+
+    Code: string
+
+    [<Required>]
+    [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
+    [<DataType(DataType.Password)>]
+    Password: string
+
+    [<DataType(DataType.Password)>]
+    [<Display(Name = "Confirm password")>]
+    [<Compare("Password", ErrorMessage = "The password and confirmation password do not match.")>]
+    ConfirmPassword: string
+}
+
+[<CLIMutable>]
+type ForgotPasswordViewModel = {
+    [<Required>] [<EmailAddress>] Email: string
+}
+
+[<CLIMutable>]
 type LoginRequest = {
     [<Required>] [<EmailAddress>] Email: string
     [<Required>] [<DataType(DataType.Password)>] Password: string

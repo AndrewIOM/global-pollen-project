@@ -3,7 +3,7 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Master Reference Collection";
-    var rankFilter = Context.Request.Query["rank"];
+    var rankFilter = Context.Request.Query["rank"] == null ? "Genus" : Context.Request.Query["rank"];
 }
 
 @* Header *@
