@@ -397,3 +397,49 @@ module DomainToDto =
           Camera            = cameraName
           UncalibratedMags  = magnifications
           Magnifications    = [] }
+
+    let age (domainAge:Age option) =
+        let removeUnit (x:int<_>) = int x
+        match domainAge with
+        | None -> "Unknown",0
+        | Some a ->
+            match a with
+            | CollectionDate d -> "Calendar", d |> removeUnit
+            | Radiocarbon d -> "Radiocarbon", d |> removeUnit
+            | Lead210 d -> "Lead210", d |> removeUnit
+
+    let location (domainLocation:SamplingLocation option) =
+        match domainLocation with
+        | None -> "Unknown", ""
+        | Some l ->
+            match l with
+            | Site (lat,lon) -> 
+                let removeDD (l:float<_>) : string = (float l).ToString()
+                let unwrapLat (Latitude l) = l
+                let unwrapLon (Longitude l) = l
+                "Site", sprintf "Latitude = %s; Longitude = %s" (unwrapLat lat |> removeDD) (unwrapLon lon |> removeDD)
+            | Area poly -> "Area", ""
+            | PlaceName (lo,d,r,c) -> "Place name", sprintf "Locality = %s; District = %s; Region = %s; Country = %s" lo d r c 
+            | Country c -> "Country", c
+            | Ecoregion e -> "Ecoregion", e
+            | Continent c ->
+                match c with
+                | Africa -> "Continent", "Africa"
+                | Asia -> "Continent", "Asia"
+                | Europe -> "Continent", "Europe"
+                | NorthAmerica -> "Continent", "North America"
+                | SouthAmerica -> "Continent", "South America"
+                | Antarctica -> "Continent", "Antarctica"
+                | Australia -> "Continent", "Australia"
+
+    let person (p:Person) =
+        match p with
+        | Person (firstNames,surname) ->
+            let initials = firstNames |> List.map (fun n -> n |> Seq.take 1) |> Seq.map string |> String.concat ". "
+            initials + surname
+        | Person.Unknown -> "Unknown"
+
+    let collectorName (identification:TaxonIdentification) =
+        match identification with
+        | Botanical (id,src,p) -> person p
+        | _ -> "Unknown"

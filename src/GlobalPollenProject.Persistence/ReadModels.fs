@@ -137,6 +137,13 @@ type SlideDetail = {
     Rank:               string
     IsFullyDigitised:   bool
     Images:             List<SlideImage>
+    Age:                int
+    AgeType:            string
+    Location:           string
+    LocationType:       string
+    PrepDate:           string
+    PrepMethod:         string
+    CollectorName:      string
 }
 
 // Taxonomic Backbone
@@ -184,13 +191,21 @@ type ReferenceCollectionDetail = {
 }
 
 // User Profiles
+[<CLIMutable>]
+type GroupSummary = {
+    Id: string
+    Name: string
+}
 
 [<CLIMutable>]
 type PublicProfile = {
     UserId:     Guid
     IsPublic:   bool
+    Title:      string
     FirstName:  string
     LastName:   string
+    Score:      float
+    Groups:     GroupSummary list
 }
 
 // Digitisation Features
