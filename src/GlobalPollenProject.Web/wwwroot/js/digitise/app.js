@@ -142,11 +142,21 @@ function AddCollectionViewModel() {
     let self = this;
     self.name = ko.observable();
     self.description = ko.observable();
-
+    self.curatorFirstNames = ko.observable();
+    self.curatorSurname = ko.observable();
+    self.institutionName = ko.observable();
+    self.email = ko.observable();
+    self.externalUrl = ko.observable();
+    
     self.submit = function (rootVM) {
         let req = {
             Name: self.name(),
-            Description: self.description()
+            Description: self.description(),
+            CuratorFirstNames: self.curatorFirstNames(),
+            CuratorSurname: self.curatorSurname(),
+            Institution: self.institutionName(),
+            CuratorEmail: self.email(),
+            ExternalUrl: self.externalUrl()
         };
         $.ajax({
             url: "/api/v1/digitise/collection/start",
@@ -181,7 +191,8 @@ function RecordSlideViewModel(currentCollection) {
     self.collectionMethod = ko.observable();
     self.existingId = ko.observable();
     self.yearCollected = ko.observable();
-    self.nameOfCollector = ko.observable();
+    self.collectorFirstNames = ko.observable();
+    self.collectorLastName = ko.observable();
     self.locationType = ko.observable();
     self.locality = ko.observable();
     self.district = ko.observable();
@@ -237,6 +248,7 @@ function RecordSlideViewModel(currentCollection) {
     }
 
     self.getRequest = function () {
+        let firstNames = self.collectorFirstNames() == "" ? self.collectorFirstNames().split(' ') : [];
         let request = {
             Collection: self.collection().Id,
             ExistingId: self.existingId(),
@@ -253,7 +265,9 @@ function RecordSlideViewModel(currentCollection) {
             LocationCountry: self.country(),
             LocationContinent: self.continent(),
             PreperationMethod: self.preperationMethod(),
-            MountingMaterial: self.mountingMaterial()
+            MountingMaterial: self.mountingMaterial(),
+            CollectedByFirstNames: firstNames,
+            CollectedBySurname: self.collectorLastName()
         };
         return request;
     }

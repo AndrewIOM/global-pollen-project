@@ -222,6 +222,28 @@ module Taxonomy =
         | "morphological" -> Ok <| Morphological taxonId
         | _ -> validationError "SamplingMethod" ("Not a valid sampling method: " + samplingMethod)
 
+module Metadata =
+
+    let createChemicalTreatment method =
+        match method with
+        | "acetolysis" -> Acetolysis |> Some |> Ok
+        | "fresh" -> FreshGrains |> Some |> Ok
+        | "hf" -> HydrofluoricAcid |> Some |> Ok
+        | "unknown" -> None |> Ok
+        | _ -> validationError "ChemicalTreatment" "An unrecognised chemical treatment was specified"
+
+    let createPrepDate (date:Nullable<int>) =
+        match date.HasValue with
+        | false -> None |> Ok
+        | true -> date.Value * 1<CalYr> |> Some |> Ok
+
+    let createMountingMethod method =
+        match method with
+        | "glycerol" -> GlycerineJelly |> Some |> Ok
+        | "siliconeoil" -> SiliconeOil |> Some |> Ok
+        | "unknown" -> None |> Ok
+        | _ -> validationError "MountingMaterial" "An unrecognised mounting method was specified"
+
 module Dto =
 
     let createUnknownGrainCommand id user images temporal spatial =
@@ -232,7 +254,7 @@ module Dto =
                 Temporal = temporal
                 Spatial = spatial }
 
-    let createAddSlideCommand colId id f g s auth taxon place age =
+    let createAddSlideCommand colId id f g s auth taxon place age treatment treatmentDate mounting =
         GlobalPollenProject.Core.Aggregates.ReferenceCollection.Command.AddSlide {
             Collection = colId
             ExistingId = id
@@ -243,9 +265,9 @@ module Dto =
             OriginalSpecies = s
             OriginalAuthor = auth
             Time = age
-            PrepMethod = None
-            PrepDate = None
-            Mounting = None
+            PrepMethod = treatment
+            PrepDate = treatmentDate
+            Mounting = mounting
         }
 
     let toSubmitUnknownGrain grainId userId saveImage (request:AddUnknownGrainRequest) =
@@ -289,12 +311,24 @@ module Dto =
 
         let taxonOrError =
             taxonIdOrError
-            |> bind (Taxonomy.createIdentification dto.SamplingMethod dto.CollectedByInitials dto.CollectedBySurname)
+            |> bind (Taxonomy.createIdentification dto.SamplingMethod dto.CollectedByFirstNames dto.CollectedBySurname)
+
+        let treatmentOrError =
+            Metadata.createChemicalTreatment dto.PreperationMethod
+
+        let prepDateOrError = 
+            Metadata.createPrepDate dto.YearSlideMade
+
+        let mountingOrError =
+            Metadata.createMountingMethod dto.MountingMaterial
 
         createAddSlideCommand (CollectionId dto.Collection) existingId dto.OriginalFamily dto.OriginalGenus dto.OriginalSpecies dto.OriginalAuthor
         <!> taxonOrError
         <*> placeOrError
         <*> ageOrError
+        <*> treatmentOrError
+        <*> prepDateOrError
+        <*> mountingOrError
 
     let toAddSlideImageCommand readStoreGet saveImage (request:SlideImageRequest) =
         let imageForUploadOrError =
@@ -433,13 +467,33 @@ module DomainToDto =
                 | Australia -> "Continent", "Australia"
 
     let person (p:Person) =
+        let toString : char seq -> string = Seq.map string >> String.concat ""
         match p with
         | Person (firstNames,surname) ->
-            let initials = firstNames |> List.map (fun n -> n |> Seq.take 1) |> Seq.map string |> String.concat ". "
-            initials + surname
+            match firstNames.Length with
+            | 0 -> surname
+            | _ -> 
+                let initials = firstNames |> List.map (Seq.take 1 >> toString) |> String.concat ". "
+                initials + ". " + surname
         | Person.Unknown -> "Unknown"
 
     let collectorName (identification:TaxonIdentification) =
         match identification with
         | Botanical (id,src,p) -> person p
         | _ -> "Unknown"
+
+    let prepMethod method =
+        match method with
+        | None -> "Unknown"
+        | Some m ->
+            match m with
+            | Acetolysis -> "acetolysis"
+            | FreshGrains -> "fresh"
+            | HydrofluoricAcid -> "hf"
+
+    let prepDate date =
+        match date with
+        | None -> "Unknown"
+        | Some y ->
+            let removeYr (l:int<_>) : string = (int l).ToString()
+            removeYr y

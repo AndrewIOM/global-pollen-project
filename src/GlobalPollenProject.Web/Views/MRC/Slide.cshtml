@@ -73,10 +73,7 @@
         </div>
     </div>
     <div class="col-md-4">
-        <p>This reference slide has been digitised with @Model.Images.Length images. Each image may contain one or more pollen
-            grains. </p>
-        <p>Images have been provided at magnifications of 40x and 100x.</p>
-
+        <p>This reference slide has been digitised with @Model.Images.Length image(s). Each image may contain one or more pollen grains.</p>
         <div class="card">
             <div class="card-header">
                 Origin
@@ -87,13 +84,20 @@
                     <dd class="col-sm-7">Subsample of plant material identified botanically and harvested.</dd>
 
                     <dt class="col-sm-5">Year in which plant was harvested</dt>
-                    <dd class="col-sm-7">Unknown</dd>
+                    <dd class="col-sm-7">@Model.AgeType @Model.Age</dd>
+
+                    <dt class="col-sm-5">Taxonomic Identification</dt>
+                    <dd class="col-sm-7">
+                        <a href="/Taxon/@Model.CurrentFamily">Family: @Model.CurrentFamily</a><br/>
+                        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">Genus: @Model.CurrentGenus</a><br/>
+                        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@GetSpecificEphitet(Model.CurrentSpecies)">Species: @Model.CurrentSpecies</a>
+                    </dd>
 
                     <dt class="col-sm-5">Collected by</dt>
-                    <dd class="col-sm-7">Unknown</dd>
+                    <dd class="col-sm-7">@Model.CollectorName</dd>
 
                     <dt class="col-sm-5">Location from which plant was taken</dt>
-                    <dd class="col-sm-7">Unknown</dd>
+                    <dd class="col-sm-7">@Model.LocationType @Model.Location</dd>
                 </dl>
             </div>
         </div>
@@ -105,20 +109,15 @@
             <div class="card-block">
                 <dl class="row">
                     <dt class="col-sm-5">Chemical Treatments</dt>
-                    <dd class="col-sm-7">Acetolesis</dd>
+                    <dd class="col-sm-7">@Model.PrepMethod</dd>
 
                     <dt class="col-sm-5">Slide Creation Date</dt>
-                    <dd class="col-sm-7">30th July 2005</dd>
+                    <dd class="col-sm-7">@Model.PrepYear</dd>
 
                     <dt class="col-sm-5">Mounting Medium</dt>
-                    <dd class="col-sm-7">Silicone Oil</dd>
+                    <dd class="col-sm-7">Unknown</dd>
                 </dl>
-
             </div>
         </div>
-
-        <a href="/Taxon/@Model.CurrentFamily">Family: @Model.CurrentFamily</a>
-        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">Genus: @Model.CurrentGenus</a>
-        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@GetSpecificEphitet(Model.CurrentSpecies)">Species: @Model.CurrentSpecies</a>
     </div>
 </div>

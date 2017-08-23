@@ -9,8 +9,7 @@
         </button>
             </div>
             <div class="modal-body">
-                <p>Please tell us about the reference collection you wish to digitise. You can edit this information later if
-                    necessary.</p>
+                <p>Please tell us about the reference collection you wish to digitise. You can edit this information later if necessary.</p>
                 <div class="form-group">
                     <label>Collection Name</label>
                     <input data-bind="textInput: name" class="form-control" id="name" />
@@ -21,6 +20,31 @@
                     <textarea data-bind="textInput: description" class="form-control" id="description" rows="3"></textarea>
                     <small id="name-help" class="form-text text-muted">Your collection description could include the motivation for creating the collection, geographical coverage, or the nature of the material, for example.</small>
                 </div>
+                <div class="form-group">
+                    <label>Who is the curator?</label>
+                    <input data-bind="textInput: curatorFirstNames" class="form-control" />
+                    <input data-bind="textInput: curatorSurname" class="form-control" />
+                    <small class="form-text text-muted">This person may have collated the material for this collection, or an employee with responsibility for its upkeep.</small>
+                </div>
+                <div class="form-group">
+                    <label>Institution Where Collection is Located</label>
+                    <input data-bind="textInput: institutionName" class="form-control" />
+                    <small class="form-text text-muted">Where are the physical slides for this collection located? Be sure to include any specific identifiers, for example a group or department name.</small>
+                </div>
+
+                <h4>Outreach and Contact</h4>
+                <hr/>
+                <div class="form-group">
+                    <label>Email Address for Enquiries</label>
+                    <input data-bind="textInput: email" type="email" class="form-control" />
+                    <small class="form-text text-muted">You may wish to specify a contact point for obtaining further information about this collection.</small>
+                </div>
+                <div class="form-group">
+                    <label>Website Address</label>
+                    <input data-bind="textInput: externalUrl" type="url" class="form-control" />
+                    <small class="form-text text-muted">If there is further information on your own website, paste a link here.</small>
+                </div>
+
             </div>
             <div class="modal-footer">
                 <button data-bind="click: function() { submit($root) }" type="button" class="btn btn-primary">Create</button>

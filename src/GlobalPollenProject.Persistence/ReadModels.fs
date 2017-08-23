@@ -141,7 +141,7 @@ type SlideDetail = {
     AgeType:            string
     Location:           string
     LocationType:       string
-    PrepDate:           string
+    PrepYear:           string
     PrepMethod:         string
     CollectorName:      string
 }
