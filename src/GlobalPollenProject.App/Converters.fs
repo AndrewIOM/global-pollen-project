@@ -108,27 +108,27 @@ module Spatial =
 
 module Temporal =
 
-    let createAge (year:int option) yearType =
+    let createAge (year:Nullable<int>) yearType =
         match yearType with
             | "Calendar" -> 
-                match year with
-                | Some y -> 
+                match year.HasValue with
+                | true -> 
                     // Age cannot be in the future
                     // Age cannot be before 1600
-                    Ok (Some <| CollectionDate (y * 1<CalYr>))
-                | None -> validationError "Year" "The year of botanical collection was missing"
+                    Ok (Some <| CollectionDate (year.Value * 1<CalYr>))
+                | false -> validationError "Year" "The year of botanical collection was missing"
             | "Radiocarbon" ->
-                match year with
-                | None -> validationError "Year" "An approximate radiocarbon age is required"
-                | Some y -> 
+                match year.HasValue with
+                | false -> validationError "Year" "An approximate radiocarbon age is required"
+                | true -> 
                     // Radiocarbon dates are based on 1950, so negatives are allowed up to present year minus 1950 (e.g. -67)
-                    Ok (Some <| Radiocarbon (y * 1<YBP>))
+                    Ok (Some <| Radiocarbon (year.Value * 1<YBP>))
             | "Lead210" ->
-                match year with
-                | None -> validationError "Year" "An approximate lead210 age is required"
-                | Some y -> 
+                match year.HasValue with
+                | false -> validationError "Year" "An approximate lead210 age is required"
+                | true -> 
                     // Lead210 dates are based on 1950, so negatives are allowed up to present year minus 1950.
-                    Ok (Some <| Lead210 (y * 1<YBP>))
+                    Ok (Some <| Lead210 (year.Value * 1<YBP>))
             | _ -> validationError "YearType" "The dating type was not in a correct format"
 
     let createSampleAge (year:Nullable<int>) samplingMethod =
@@ -261,7 +261,7 @@ module Dto =
                 |> bind (mapResult (saveImage >> toPersistenceError))
 
         let ageOrError =
-            Temporal.createSampleAge request.Year request.YearType
+            Temporal.createAge request.Year request.YearType
 
         let spaceOrError =
             Spatial.createPoint request.LatitudeDD request.LongitudeDD

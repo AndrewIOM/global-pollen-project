@@ -100,10 +100,10 @@ type BackboneSearchRequest = {
 [<CLIMutable>]
 type FloatingCalibrationImage = {
     [<Required>] PngBase64: string
-    [<Required>] [<Range(1, Int32.MaxValue)>] X1: int
-    [<Required>] [<Range(1, Int32.MaxValue)>] X2: int
-    [<Required>] [<Range(1, Int32.MaxValue)>] Y1: int
-    [<Required>] [<Range(1, Int32.MaxValue)>] Y2: int
+    [<Required>] [<Range(0, Int32.MaxValue)>] X1: int
+    [<Required>] [<Range(0, Int32.MaxValue)>] X2: int
+    [<Required>] [<Range(0, Int32.MaxValue)>] Y1: int
+    [<Required>] [<Range(0, Int32.MaxValue)>] Y2: int
     [<Required>] [<Range(1, Int32.MaxValue)>] MeasuredLength: float
 }
 
@@ -114,7 +114,7 @@ type AddUnknownGrainRequest = {
     [<Required>] LatitudeDD: float
     [<Required>] LongitudeDD: float
     Year: Nullable<int>
-    YearType: string
+    [<Required>] YearType: string
 }
 
 [<CLIMutable>]

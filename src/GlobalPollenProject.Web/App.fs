@@ -211,7 +211,7 @@ let calibrateHandler (ctx:HttpContext) =
     |> toApiResult ctx
 
 let listGrains ctx =
-    UnknownGrains.listUnknownGrains
+    UnknownGrains.listUnknownGrains()
     |> toViewResult "Identify/Index" ctx
 
 let showGrainDetail id ctx =
@@ -219,9 +219,8 @@ let showGrainDetail id ctx =
     |> toViewResult "Identify/View" ctx
 
 let submitGrainHandler (ctx:HttpContext) =
-    ctx.BindForm<AddUnknownGrainRequest>()
-    |> Async.RunSynchronously
-    |> UnknownGrains.submitUnknownGrain (currentUserId ctx)
+    bindJson<AddUnknownGrainRequest> ctx
+    >>= UnknownGrains.submitUnknownGrain (currentUserId ctx)
     |> toApiResult ctx
 
 let submitIdentificationHandler (ctx:HttpContext) =
@@ -286,7 +285,7 @@ let webApp =
             POST >=> route  "/Identify"         >=> submitIdentificationHandler
             GET  >=> route  ""                  >=> listGrains
             GET  >=> route  "/Upload"           >=> renderView "Identify/Add" None
-            GET  >=> route  "/%s"               >=> renderView "NotFound" None
+            GET  >=> routef "/%s"               (fun id -> showGrainDetail id)
         ]
 
     // Main router

@@ -4,16 +4,6 @@ open System
 
 // Helper DTOs
 [<CLIMutable>]
-type FocusableImage = {
-    FrameUrls:  string list
-}
-
-[<CLIMutable>]
-type StandardImage = {
-    Url:        string
-}
-
-[<CLIMutable>]
 type SlideImage = {
     Id:                     int
     Frames:                 List<string>
@@ -96,8 +86,7 @@ type IdentificationSummary = {
 [<CLIMutable>]
 type GrainDetail = {
     Id:                 Guid
-    Images:             StandardImage list
-    FocusImages:        FocusableImage list
+    Images:             SlideImage list
     Identifications:    IdentificationSummary list
     ConfirmedFamily:    string
     ConfirmedGenus:     string

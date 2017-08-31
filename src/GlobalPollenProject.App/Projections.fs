@@ -405,7 +405,7 @@ module Grain =
 
     open GlobalPollenProject.Core.Aggregates.Grain
 
-    let submit setReadModel generateThumbnail (e:GrainSubmitted) =
+    let submit getKey setReadModel setList generateThumbnail toAbsoluteUrl (e:GrainSubmitted) =
         let thumbUrl = 
             let result = 
                 match e.Images.Head with
@@ -440,10 +440,15 @@ module Grain =
                 | Radiocarbon ybp -> "Radiocarbon", ybp |> removeUnitInt
                 | Lead210 ybp -> "Lead210", ybp |> removeUnitInt
 
+        let getMag mag = 
+            let calId,level = Converters.DomainToDto.unwrapMagId mag
+            RepositoryBase.getSingle<Calibration> (calId.ToString()) getKey deserialise
+            |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
+
+        let imgs =  e.Images |> List.map (Converters.DomainToDto.image getMag toAbsoluteUrl)
         let detail = {
             Id = Converters.DomainToDto.unwrapGrainId e.Id
-            Images = [ ]
-            FocusImages = []
+            Images = imgs
             Identifications = []
             Latitude = lat
             Longitude = lon
@@ -456,7 +461,8 @@ module Grain =
             ConfirmedSpAuth = "" }
 
         ReadStore.RepositoryBase.setSingle (summary.Id.ToString()) summary setReadModel serialise |> ignore
-        ReadStore.RepositoryBase.setSingle (detail.Id.ToString()) detail setReadModel serialise
+        ReadStore.RepositoryBase.setSingle (detail.Id.ToString()) detail setReadModel serialise |> ignore
+        RepositoryBase.setListItem (summary.Id.ToString()) "GrainSummary:index" setList
 
     let identified get set (e:GrainIdentified) =
         let id : Guid = Converters.DomainToDto.unwrapGrainId e.Id
@@ -523,11 +529,11 @@ module Grain =
             |> bind save
 
 
-    let handle get set generateThumb (e:string*obj) =
+    let handle get set setList generateThumb toAbsoluteUrl (e:string*obj) =
         match snd e with
         | :? Grain.Event as e ->
             match e with
-            | Grain.Event.GrainSubmitted e -> submit set generateThumb e
+            | Grain.Event.GrainSubmitted e -> submit get set setList generateThumb toAbsoluteUrl e
             | Grain.Event.GrainIdentified e -> identified get set e 
             | Grain.Event.GrainIdentityChanged e -> identityChanged get set (Some e.Taxon) e.Id
             | Grain.Event.GrainIdentityConfirmed e -> identityChanged get set (Some e.Taxon) e.Id

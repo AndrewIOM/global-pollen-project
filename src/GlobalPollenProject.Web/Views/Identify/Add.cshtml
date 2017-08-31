@@ -13,137 +13,134 @@
     </div></header>
 }
 
+<link rel="stylesheet" href="/lib/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" >
+
 @section scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script type="text/javascript" src="~/lib/fabric/dist/fabric.min.js"></script>
-    <script type="text/javascript" src="~/lib/darkroomjs/build/darkroom.js"></script>
-    <script type="text/javascript" src="~/js/grain/UploadForm.js"></script>
+
+    <script src="/lib/bootstrap/dist/js/bootstrap.min.js"></script>
+    <script src="/lib/d3/d3.min.js"></script>
+    <script src="/lib/Jcrop/js/Jcrop.min.js"></script>
+    <script src="/js/viewer/viewer.js"></script>
+    <script src="/js/viewer/measuringline.js"></script>
+    <script src="/lib/bootstrap-datepicker/dist/js/bootstrap-datepicker.min.js"></script>
+    <script src="/js/identify/add.js"></script>
 }
 
-<link rel="stylesheet" href="~/lib/darkroomjs/build/darkroom.css" />
+<form id="add-grain-form" novalidate>
 
-<form href="/Identify/Upload" method="POST" id="addGrainForm">
-
-    <div asp-validation-summary="All" role="alert"></div>
-
-    <!-- 1. Sample Method -->
-    <fieldset class="form-group row">
-      <legend class="col-form-legend col-sm-2">Sampling Method</legend>
-      <div class="col-sm-10">
-        <div class="form-check">
-          <label class="form-check-label">
-            <input class="form-check-input" asp-for="SampleType" type="radio" value="fossil">
-            A fossil pollen grain, or spore, obtained from a sedimentary sequence. 
-          </label>
+    <div class="card identify-form-section" id="identify-sampling-section">
+        <div class="card-header">
+            1 - Choose Sampling Method    
         </div>
-        <div class="form-check">
-          <label class="form-check-label">
-            <input class="form-check-input" type="radio" asp-for="SampleType" value="environmental">
-            A pollen grain collected from the environment, for example from a pollen trap, bee, honey, or soil. This grain has not been fossilised.
-          </label>
-        </div>
-        <div class="form-check disabled">
-          <label class="form-check-label">
-            <input class="form-check-input" type="radio" asp-for="SampleType" value="botanical" disabled>
-            A pollen grain, or spore, taken directly from a living plant. 
-          </label>
-        </div>
-      </div>
-    </fieldset>
-
-    <!-- 2. Images -->
-    @* Images are a string list in JSON in GPP vNext *@
-    <div class="row">
-        <div class="fileUpload btn btn-default">
-            <span class="glyphicon glyphicon-cloud-upload" aria-hidden="true"></span><span> Select Your Images</span>
-            <input type="file" multiple="multiple" class="upload" onchange="handleFiles(this);" />
-        </div>
-        <div class="photoUrls" style="display:none">
-            <textarea id="ImageOne"></textarea>
-            <textarea id="ImageTwo"></textarea>
-            <textarea id="ImageThree"></textarea>
-            <textarea id="ImageFour"></textarea>
-        </div>
-        <div class="row">
-            <div class="col-md-2"><label>Current Uploads: </label></div>
-            <div class="col-md-10">
-                <div class="row" id="image-thumbnails">
-                    <div class="col-md-12">None</div>
+        <div class="card-block">
+            <fieldset class="form-group row" id="identify-sampling-method">
+                <div class="col-sm-10">
+                    <div class="form-check">
+                        <label class="form-check-label">
+                        <input class="form-check-input" id="identify-sampling-method-fossil" asp-for="SampleType" type="radio" value="fossil" checked>
+                            A fossil pollen grain, or spore, obtained from a sedimentary sequence. 
+                        </label>
+                    </div>
+                    <div class="form-check">
+                        <label class="form-check-label">
+                        <input class="form-check-input" id="identify-sampling-method-environmental" type="radio" asp-for="SampleType" value="environmental">
+                            A pollen grain collected from the environment, for example from a pollen trap, bee, honey, or soil. This grain has not been fossilised.
+                        </label>
+                    </div>
+                    <div class="form-check disabled">
+                        <label class="form-check-label">
+                        <input class="form-check-input" id="identify-sampling-method-botanical" type="radio" asp-for="SampleType" value="botanical" disabled>
+                            A pollen grain, or spore, taken directly from a living plant. 
+                        </label>
+                    </div>
                 </div>
-            </div>
+            </fieldset>
         </div>
-        <br />
     </div>
 
-
-    <div class="addgrain-section mapsection">
-        <div class="container">
-            <div class="row">
-                <h3><span class="numberCircle">2</span> Location</h3>
-            </div>
-            <div class="row">
-                <div class="col-md-2">
-                    <label>Where was the pollen grain collected from?</label>
+    <div class="card identify-form-section" id="identify-image-section">
+        <div class="card-header">
+            2 - Upload Image(s)
+        </div>
+        <div class="card-block">
+            <label for="identify-image-upload-button">Select image(s) (Shift-Click/Ctrl-Click to select multiple)</label>
+            <br>
+            <input type="file" multiple="multiple" class="upload btn" id="identify-image-upload-button" />
+            <div id="identify-image-configuration" style="display: none">
+                <ul class="nav nav-tabs" id="identify-image-config-tabs" role="tablist">
+                </ul>
+                <div class="tab-content" id="identify-image-config-content">
                 </div>
-                <div class="col-md-10">
-                    <script type="text/javascript" src="http://maps.google.com/maps/api/js?sensor=false&key=AIzaSyAgqtjZFFlVtjmCIAwzNpYJBE2ltdaUhu8"></script>
+            </div>
+        </div>
+    </div>
+
+    <div class="card identify-form-section" id="identify-location-section">
+        <div class="card-header">
+            3 - Location
+        </div>
+        <div class="card-block">
+            <div class="row">
+                <div class="col-md-3">
+                    <label>Where was the pollen grain collected from? Click on the map to drop a pin in the correct location.</label>
+                    <hr>
+                    <div class="input-group">
+                        <input type="text" readonly="readonly" asp-for="LatitudeDD" class="form-control" placeholder="Latitude" />
+                        <span class="input-group-addon">°</span>
+                    </div>
+                    <div class="input-group">
+                        <input type="text" readonly="readonly" asp-for="LongitudeDD" class="form-control" placeholder="Longitude" />
+                        <span class="input-group-addon">°</span>
+                    </div>
+                </div>
+                <div class="col-md-9">
+                    <script type="text/javascript" src="http://maps.google.com/maps/api/js?key=AIzaSyAgqtjZFFlVtjmCIAwzNpYJBE2ltdaUhu8"></script>
                     <div id="map"></div>
                     <br />
                 </div>
             </div>
-            <div class="row" style="display:none">
-                <div class="col-md-2">
-                    @Html.LabelFor(m => m.LatitudeDD)
-                </div>
-                <div class="col-md-10">
-                    <div class="input-group">
-                        <input type="text" readonly="readonly" asp-for="LatitudeDD" class="form-control" placeholder="Latitude" />
-                        <span class="input-group-addon">Decimal Degrees</span>
+        </div>
+    </div>
+    <div class="card identify-form-section" id="identify-temporal-section">
+        <div class="card-header">
+            4 - Temporal Context
+        </div>
+        <div class="card-block">
+            <div id="identify-temporal-fossil">
+                <fieldset class="form-group" id="identify-temporal-fossil-type">
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="radio" name="identify-temporal-fossil-type" id="identify-temporal-fossil-radiocarbon" value="radiocarbon"> Radiocarbon (ybp)
+                        </label>
                     </div>
-                    <span asp-validation-for="LatitudeDD" class="text-danger"></span>
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="radio" name="identify-temporal-fossil-type" id="identify-temporal-fossil-lead" value="lead"> Lead210 (ybp)
+                        </label>
+                    </div>
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label">
+                            <input class="form-check-input" type="radio" name="identify-temporal-fossil-type" id="identify-temporal-fossil-unknown" value="unknown" checked> Unknown
+                        </label>
+                    </div>
+                </fieldset>
+                <div id="identify-temporal-fossil-value-section" style="display: none">
+                    <hr>
+                    <label for="identify-temporal-fossil-ybp">Years before present: </label>
+                    <input type="number" name="identify-temporal-fossil-ybp" id="identify-temporal-fossil-ybp" placeholder="0"/>
+                    <br>
+                    <span><i>Baseline year is 1950</i></span>
                 </div>
             </div>
-            <div class="row" style="display:none">
-                <div class="col-md-2">
-                    @Html.LabelFor(m => m.LongitudeDD)
-                </div>
-                <div class="col-md-10">
-                    <div class="input-group">
-                        <input type="text" readonly="readonly" asp-for="LongitudeDD" class="form-control" placeholder="Longitude" />
-                        <span class="input-group-addon">Decimal Degrees</span>
-                    </div>
-                    <span asp-validation-for="LongitudeDD" class="text-danger"></span>
-                </div>
-                <div class="col-md-4">
-                </div>
-                <div class="col-md-4">
+            <div id="identify-temporal-environmental" style="display: none">
+                <div class="form-group">
+                    <label for="identify-temporal-environmental-year">What year was this sample collected?</label>
+                    <input id="identify-temporal-environmental-year" class="form-control" />
                 </div>
             </div>
         </div>
     </div>
-
-    <h4>Temporal Context</h4>
-    <div class="form-group">
-        <label for="YearType">Age Type</label>
-        <input type="email" class="form-control-static" asp-for="YearType" value="CollectedBotanically">
-    </div>
-    <div class="form-group">
-        <label asp-for="Year" class="col-2 col-form-label">Year</label>
-        <input asp-for="Year" class="form-control" />
-        <small class="form-text text-muted">Environmental Sample. Please enter the date when the sample was collected.</small>
-    </div>
-
-    <div class="addgrain-section savesection">
-        <div class="container">
-            <div class="row">
-                <a id="submit" class="btn btn-primary" href="javascript: uploadFile()">Add My Grain!</a>
-            </div>
-            <br />
-            <div class="row">
-                <div class="progress" style="display:none;">
-                    <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="45" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
-                </div>
-            </div>
-        </div>
-    </div>
+    <br>
+    <a id="submit" class="btn btn-primary" href="javascript: uploadGrain()">Add My Grain</a>
 </form>

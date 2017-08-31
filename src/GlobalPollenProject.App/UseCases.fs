@@ -249,7 +249,7 @@ module UnknownGrains =
         |> toAppResult
 
     let getDetail grainId =
-        ReadStore.RepositoryBase.getSingle<GrainSummary> grainId readStoreGet deserialise
+        ReadStore.RepositoryBase.getSingle<GrainDetail> grainId readStoreGet deserialise
 
     let identifyUnknownGrain getCurrentUser (req:IdentifyGrainRequest) =
         let taxonIdOrError = Converters.Identity.existingBackboneTaxonOrError readStoreGet req.TaxonId
@@ -263,8 +263,17 @@ module UnknownGrains =
         |> lift issueCommand
         |> toAppResult
 
-    let listUnknownGrains =
-        ReadStore.RepositoryBase.getAll<GrainSummary> All readStoreGetList deserialise
+    let listUnknownGrains () =
+        let grainIds = RepositoryBase.getListKey<Guid> All "GrainSummary:index" readStoreGetList deserialiseGuid
+        match grainIds with
+        | Error e -> Error Persistence
+        | Ok clist -> 
+            let getCol id = ReadStore.RepositoryBase.getSingle<GrainSummary> (id.ToString()) readStoreGet deserialise
+            clist 
+            |> List.map getCol 
+            |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
+            |> Ok
+
 
 module Taxonomy =
 
