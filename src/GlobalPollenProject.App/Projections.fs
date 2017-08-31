@@ -186,8 +186,8 @@ module MasterReferenceCollection =
     let generateLookupValue (taxon:BackboneTaxon) =
         match taxon.Rank with 
         | "Family" -> taxon.Family
-        | "Genus" -> sprintf "%s:%s" taxon.Family taxon.Genus
-        | "Species" -> sprintf "%s:%s:%s" taxon.Family taxon.Genus taxon.Species
+        | "Genus" -> sprintf "%s:%s" taxon.Genus taxon.Family
+        | "Species" -> sprintf "%s:%s:%s" taxon.Species taxon.Genus taxon.Family
         | _ -> "Unknown"
 
     let getRankKey (t:BackboneTaxon) =
@@ -218,6 +218,7 @@ module MasterReferenceCollection =
             RepositoryBase.setSortedListItem (generateLookupValue t) ("TaxonSummary:" + readModel.Summary.Rank) 0. setSortedList |> ignore
             RepositoryBase.setSingle (id.ToString()) readModel.Detail set serialise |> ignore
             RepositoryBase.setSortedListItem t.LatinName ("Autocomplete:Taxon:" + t.Rank) 0. setSortedList |> ignore
+            RepositoryBase.setSortedListItem (generateLookupValue t) ("Autocomplete:Taxon") 0. setSortedList |> ignore
             RepositoryBase.setKey (id.ToString()) (getRankKey t) set serialise
 
     let initTaxon get backboneId : Result<TaxonReadModel,string> =
@@ -680,17 +681,27 @@ module ReferenceCollectionReadOnly =
 
 module UserProfile =
 
-    let registered user =
-        Ok()
+    open GlobalPollenProject.Core.Aggregates.User
 
-    let handle (e:string*obj) =
+    let registered set (user:UserRegistered) =
+        let profile = {
+            UserId = user.Id |> Converters.DomainToDto.unwrapUserId
+            Title = user.Title
+            FirstName = user.FirstName
+            LastName = user.LastName
+            Score = 0.
+            Groups = []
+            IsPublic = true }
+        RepositoryBase.setSingle (profile.UserId.ToString()) profile set serialise
+
+    let handle set (e:string*obj) =
         match snd e with
         | :? User.Event as e ->
             match e with
             | User.Event.JoinedClub (x,y) -> invalidOp "Cool"
             | User.Event.ProfileHidden x -> invalidOp "Cool"
             | User.Event.ProfileMadePublic x -> invalidOp "Cool"
-            | User.Event.UserRegistered x -> registered x
+            | User.Event.UserRegistered u -> registered set u
         | _ -> Ok()
 
 
@@ -727,6 +738,11 @@ module Digitisation =
                 if String.IsNullOrEmpty e.OriginalGenus then "Family"
                 else if String.IsNullOrEmpty e.OriginalSpecies then "Genus"
                 else "Species" 
+            let ageType,age = Converters.DomainToDto.age e.Time
+            let locationType,location = Converters.DomainToDto.location e.Place
+            let collectorName = Converters.DomainToDto.collectorName e.Taxon
+            let prepDate = Converters.DomainToDto.prepDate e.PrepDate
+            let prepMethod = Converters.DomainToDto.prepMethod e.PrepMethod
             let slide = {
                 CollectionId = e.Id |> unwrapSlideId |> fst |> unwrapRefId
                 CollectionSlideId = e.Id |> unwrapSlideId |> snd
@@ -742,7 +758,14 @@ module Digitisation =
                 CurrentSpAuth = ""
                 IsFullyDigitised = false
                 Thumbnail = ""
-                Images = [] }
+                Images = []
+                Age = age
+                AgeType = ageType
+                PrepYear = prepDate
+                PrepMethod = prepMethod
+                CollectorName = collectorName
+                Location = location
+                LocationType = locationType }
             RepositoryBase.setSingle (colId.ToString()) { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
 
     let imageUploaded getKey setKey generateThumbnail toAbsoluteUrl id image =

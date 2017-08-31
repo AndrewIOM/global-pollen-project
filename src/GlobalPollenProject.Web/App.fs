@@ -10,6 +10,7 @@ open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.Identity.EntityFrameworkCore
+open Microsoft.AspNetCore.WebUtilities
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 
@@ -40,6 +41,8 @@ let authScheme = "Cookie"
 let accessDenied = setStatusCode 401 >=> razorHtmlView "AccessDenied" None
 let mustBeLoggedIn = requiresAuthentication accessDenied
 let mustBeAdmin ctx = requiresRole "Admin" accessDenied ctx
+
+let getBaseUrl (ctx:HttpContext) = sprintf "%s://%s:%i" ctx.Request.Scheme ctx.Request.Host.Host ctx.Request.Host.Port.Value
 
 let currentUserId (ctx:HttpContext) () =
     async {
@@ -111,6 +114,13 @@ let loginHandler redirectUrl =
                    return! renderView "Account/Login" loginRequest ctx
         }
 
+open Microsoft.AspNetCore.Mvc.ModelBinding
+
+let identityErrorsToModelState (identityResult:IdentityResult) =
+    let dict = ModelStateDictionary()
+    for error in identityResult.Errors do dict.AddModelError("",error.Description)
+    dict
+
 let registerHandler (ctx:HttpContext) =
     async {
         let! model = ctx.BindForm<NewAppUserRequest>()
@@ -125,11 +135,112 @@ let registerHandler (ctx:HttpContext) =
             match register with
             | Error msg -> return! renderView "Account/Register" model ctx
             | Ok r -> 
-                do! signInManager.SignInAsync(user, isPersistent = false) |> Async.AwaitTask
                 (ctx.GetLogger()).LogInformation "User created a new account with password."
-                return! redirectTo true "/" ctx
+                let! code = userManager.GenerateEmailConfirmationTokenAsync(user) |> Async.AwaitTask
+                let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
+                let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s" (getBaseUrl ctx) user.Id codeBase64
+                let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
+                let! response = sendEmail model.Email "Reset Password" html
+                return! renderView "Account/AwaitingEmailConfirmation" None ctx
         | false -> 
-            return! renderView "Account/Register" model ctx
+            return! razorHtmlViewWithModelState "Account/Register" (identityErrorsToModelState result) model ctx
+    }
+
+let confirmEmailHandler (ctx:HttpContext) =
+    async {
+        let model = ctx.BindQueryString<ConfirmEmailRequest>()
+        if isNull model.Code || isNull model.UserId then return! renderView "Error" None ctx
+        else
+            let manager = ctx.GetService<UserManager<ApplicationUser>>()
+            let! user = manager.FindByIdAsync(model.UserId) |> Async.AwaitTask
+            if isNull user then return! renderView "Error" None ctx
+            else
+                let decodedCode = WebEncoders.Base64UrlDecode(model.Code) |> Encoding.UTF8.GetString
+                let! result = manager.ConfirmEmailAsync(user,decodedCode) |> Async.AwaitTask
+                if result.Succeeded
+                then return! renderView "Account/ConfirmEmail" None ctx
+                else return! renderView "Error" None ctx
+    }
+
+let challengeWithProperties (authScheme : string) (properties:Authentication.AuthenticationProperties) (ctx : HttpContext) =
+    async {
+        let auth = ctx.Authentication
+        do! auth.ChallengeAsync(authScheme,properties) |> Async.AwaitTask
+        return Some ctx }
+
+let externalLoginHandler (ctx:HttpContext) =
+    let provider = ctx.BindForm<ExternalLoginRequest>() |> Async.RunSynchronously
+    let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+    let returnUrl = "/"
+    let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,returnUrl)
+    challengeWithProperties provider.Provider properties ctx
+
+let externalLoginCallback returnUrl (ctx:HttpContext) =
+    let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+    async {
+        let! info = signInManager.GetExternalLoginInfoAsync() |> Async.AwaitTask
+        if isNull info then return! redirectTo false "Account/Login" ctx
+        else
+            let! result = signInManager.ExternalLoginSignInAsync(info.LoginProvider, info.ProviderKey, false) |> Async.AwaitTask
+            if result.Succeeded then return! redirectTo false returnUrl ctx
+            else if result.IsLockedOut then return! renderView "Account/Lockout" None ctx
+            else
+                let email = info.Principal.FindFirstValue(ClaimTypes.Email)
+                let model : ExternalLoginConfirmationViewModel = {
+                    Email = email
+                    FirstName = ""
+                    LastName = ""
+                    Title = ""
+                    Organisation = ""
+                    EmailConfirmation = ""
+                }
+                return! renderView "Account/ExternalLoginConfirmation" model ctx
+    }
+
+let forgotPasswordHandler (ctx:HttpContext) =
+    async {
+        let! model = ctx.BindForm<ForgotPasswordViewModel>()
+        let isValid,errors = validateModel' model
+        match isValid with
+        | false -> return! ctx |> razorHtmlViewWithModelState "Account/ForgotPassword" errors model
+        | true ->
+            let manager = ctx.GetService<UserManager<ApplicationUser>>()
+            let! user = manager.FindByNameAsync(model.Email) |> Async.AwaitTask
+            let! confirmed = manager.IsEmailConfirmedAsync(user) |> Async.AwaitTask 
+            if isNull user || not confirmed
+            then return! renderView "Account/ForgotPasswordConfirmation" None ctx
+            else
+                let! code = manager.GeneratePasswordResetTokenAsync(user) |> Async.AwaitTask
+                let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
+                let callbackUrl = sprintf "%s/Account/ResetPassword?userId=%s&code=%s" (getBaseUrl ctx) user.Id codeBase64
+                let html = sprintf "Please reset your password by clicking here: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
+                let! response = sendEmail model.Email "Reset Password" html
+                return! renderView "Account/ForgotPasswordConfirmation" None ctx
+    }
+
+let resetPasswordView (ctx:HttpContext) =
+    match ctx.TryGetQueryStringValue "code" with
+    | None -> renderView "Error" None ctx
+    | Some c -> 
+        let decodedCode = c |> WebEncoders.Base64UrlDecode |> Encoding.UTF8.GetString
+        let model = { Email =""; Code = decodedCode; Password = ""; ConfirmPassword = "" }
+        renderView "Account/ResetPassword" model ctx
+
+let resetPasswordHandler (ctx:HttpContext) =
+    async {
+        let! model = ctx.BindForm<ResetPasswordViewModel>()
+        let isValid,errors = validateModel' model
+        match isValid with
+        | false -> return! ctx |> razorHtmlViewWithModelState "Account/ResetPassword" errors model
+        | true ->
+            let manager = ctx.GetService<UserManager<ApplicationUser>>()
+            let! user = manager.FindByNameAsync(model.Email) |> Async.AwaitTask
+            if isNull user then return! redirectTo false "Account/ResetPasswordConfirmation" ctx
+            else
+                let! result = manager.ResetPasswordAsync(user, model.Code, model.Password) |> Async.AwaitTask
+                match result.Succeeded with
+                | true -> return! redirectTo false "/Account/ResetPasswordConfirmation" ctx
+                | false -> return! renderView "Account/ResetPassword" None ctx
     }
 
 let slideViewHandler (id:string) ctx =
@@ -160,8 +271,15 @@ let individualCollection (colId:string) version ctx =
     IndividualReference.getDetail colId version
     |> toViewResult "Reference/View" ctx
 
-let pagedTaxonomyHandler ctx =
-    Taxonomy.list {Page = 1; PageSize = 20}
+let defaultIfNull (req:TaxonPageRequest) =
+    match String.IsNullOrEmpty req.Rank with
+    | true -> { Page = 1; PageSize = 40; Rank = "Genus"; Lex = "" }
+    | false -> req
+
+let pagedTaxonomyHandler (ctx:HttpContext) =
+    ctx.BindQueryString<TaxonPageRequest>()
+    |> defaultIfNull
+    |> Taxonomy.list
     |> toViewResult "MRC/Index" ctx
 
 let listCollectionsHandler ctx =
@@ -239,6 +357,7 @@ let webApp =
             // route   "/backbone/match"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
             route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
             route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
+            route   "/taxon/search"             >=> queryRequestToApiResponse<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
         ]
 
     let digitiseApi =
@@ -257,11 +376,27 @@ let webApp =
 
     let accountManagement =
         choose [
-            POST >=> route  "/Login"            >=> loginHandler "/"
-            POST >=> route  "/Register"         >=> registerHandler
-            POST >=> route  "/Logout"           >=> signOff authScheme >=> redirectTo true "/"
-            GET  >=> route  "/Register"         >=> renderView "Account/Register" None
-            GET  >=> route  "/Login"            >=> renderView "Account/Login" None
+            POST >=> route  "/Login"                        >=> loginHandler "/"
+            POST >=> route  "/ExternalLogin"                >=> externalLoginHandler
+            POST >=> route  "/Register"                     >=> registerHandler
+            POST >=> route  "/Logout"                       >=> signOff authScheme >=> redirectTo true "/"
+            POST >=> route  "/ForgotPassword"               >=> forgotPasswordHandler
+            POST >=> route  "/ResetPassword"                >=> resetPasswordHandler
+
+            GET  >=> route  "/Login"                        >=> renderView "Account/Login" None
+            GET  >=> route  "/Register"                     >=> renderView "Account/Register" None
+            GET  >=> route  "/ResetPassword"                >=> resetPasswordView
+            GET  >=> route  "/ResetPasswordConfirmation"    >=> renderView "Account/ResetPasswordConfirmation" None
+            GET  >=> route  "/ForgotPassword"               >=> renderView "Account/ForgotPassword" None
+            GET  >=> route  "/ConfirmEmail"                 >=> confirmEmailHandler
+            GET  >=> route  "/ExternalLoginCallback"        >=> (fun x -> invalidOp "Not implemented")
+            GET  >=> route  "/ExternalLoginConfirmation"    >=> (fun x -> invalidOp "Not implemented")
+            GET  >=> route  "/LinkLogin"                    >=> (fun x -> invalidOp "Not implemented")
+            GET  >=> route  "/LinkLoginCallback"            >=> (fun x -> invalidOp "Not implemented")
+            GET  >=> route  "/ManageLogins"                 >=> (fun x -> invalidOp "Not implemented")
+            GET  >=> route  "/SetPassword"                  >=> (fun x -> invalidOp "Not implemented")
+            GET  >=> route  "/ChangePassword"               >=> (fun x -> invalidOp "Not implemented")
+            GET  >=> route  "/RemoveLogin"                  >=> (fun x -> invalidOp "Not implemented")
         ]
 
     let masterReferenceCollection =
@@ -312,9 +447,19 @@ let webApp =
 /// Configuration
 /////////////////////////
 
+let fbOpt = FacebookOptions()
+fbOpt.AppId <- getAppSetting "Authentication:Facebook:AppId"
+fbOpt.AppSecret <- getAppSetting "Authentication:Facebook:AppSecret"
+
+let twitOpt = TwitterOptions()
+twitOpt.ConsumerKey <- getAppSetting "Authentication:Twitter:ConsumerKey"
+twitOpt.ConsumerSecret <- getAppSetting "Authentication:Twitter:ConsumerSecret"
+
 let configureApp (app : IApplicationBuilder) = 
     app.UseGiraffeErrorHandler(errorHandler)
     app.UseIdentity() |> ignore
+    app.UseFacebookAuthentication fbOpt |> ignore
+    app.UseTwitterAuthentication twitOpt |> ignore
     app.UseStaticFiles() |> ignore
     app.UseGiraffe(webApp)
 
@@ -325,6 +470,7 @@ let configureServices (services : IServiceCollection) =
 
     services.AddSingleton<UserDbContext>() |> ignore
     services.AddIdentity<ApplicationUser, IdentityRole>(fun opt -> 
+        opt.SignIn.RequireConfirmedEmail <- true
         opt.Cookies.ApplicationCookie.LoginPath <- PathString "/Account/Login"
         opt.Cookies.ApplicationCookie.AuthenticationScheme <- "Cookie"
         opt.Cookies.ApplicationCookie.AutomaticAuthenticate <- true)

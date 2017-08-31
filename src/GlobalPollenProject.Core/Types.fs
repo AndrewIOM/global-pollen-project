@@ -66,7 +66,6 @@ and FloatingCalibration = {
 
 type Microscope =
 | Light of LightMicroscope
-| ScanningElectron
 
 and LightMicroscope =
 | Single of Magnification * CameraModel
@@ -157,10 +156,10 @@ type TaxonomicStatus =
 | Synonym of TaxonId
 
 // Taxonomic Identity
-type Initial = string
-type LastName = string
+type FirstName = string
+type Surname = string
 type Person = 
-| Person of Initial list * LastName
+| Person of FirstName list * Surname
 | Unknown
 
 type IdentificationSource =

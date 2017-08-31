@@ -72,11 +72,12 @@ div.card {
 
 .panel-primary {
     border-color: $primary-color-accent;
-}
 
-.panel-primary>.panel-heading {
-    background-color: $primary-color-accent;
-    border-color: $primary-color-accent;
+    .panel-heading {
+        background-color: $primary-color-accent;
+        border-color: $primary-color-accent;    
+        color: #fff;
+    }
 }
 
 a {

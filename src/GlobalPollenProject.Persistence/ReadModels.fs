@@ -68,6 +68,13 @@ type TaxonDetail = {
     ReferenceUrl:   string
 }
 
+[<CLIMutable>]
+type TaxonAutocompleteItem = {
+    LatinName: string
+    Rank: string
+    Heirarchy: string list
+}
+
 // Grains
 // - Crowdsourced / Unknown Grains
 // - Grains split out of digitised slides
@@ -119,6 +126,13 @@ type SlideDetail = {
     Rank:               string
     IsFullyDigitised:   bool
     Images:             List<SlideImage>
+    Age:                int
+    AgeType:            string
+    Location:           string
+    LocationType:       string
+    PrepYear:           string
+    PrepMethod:         string
+    CollectorName:      string
 }
 
 // Taxonomic Backbone
@@ -166,13 +180,21 @@ type ReferenceCollectionDetail = {
 }
 
 // User Profiles
+[<CLIMutable>]
+type GroupSummary = {
+    Id: string
+    Name: string
+}
 
 [<CLIMutable>]
 type PublicProfile = {
     UserId:     Guid
     IsPublic:   bool
+    Title:      string
     FirstName:  string
     LastName:   string
+    Score:      float
+    Groups:     GroupSummary list
 }
 
 // Digitisation Features

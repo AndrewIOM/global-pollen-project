@@ -37,7 +37,7 @@ let route
     |> feed (TaxonomicBackbone.handle get getSortedList set setSortedList)
     >>= feed (Digitisation.handle get getList set setList generateThumb toAbsoluteUrl)
     >>= feed (Calibration.handle get getList set setList toAbsoluteUrl)
-    >>= feed UserProfile.handle
+    >>= feed (UserProfile.handle set)
     >>= feed (ReferenceCollectionReadOnly.handle get set setList)
     >>= feed (Grain.handle get set setList generateThumb toAbsoluteUrl)
     >>= MasterReferenceCollection.handle get getSortedList set setSortedList
