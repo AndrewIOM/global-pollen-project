@@ -28,7 +28,16 @@
 }
 
 <form id="add-grain-form" novalidate>
-
+    <div class="alert alert-danger" id="errors-box">
+        <div class="row">
+            <div class="col-md-1">
+                <i class="fa fa-exclamation-triangle" aria-hidden="true" style="font-size: 2em; width: 100%; text-align: center"></i>
+            </div>
+            <div class="col-md-11">
+                <p id="errors"></p>
+            </div>
+        </div>
+    </div>
     <div class="card identify-form-section" id="identify-sampling-section">
         <div class="card-header">
             1 - Choose Sampling Method    
@@ -38,19 +47,19 @@
                 <div class="col-sm-10">
                     <div class="form-check">
                         <label class="form-check-label">
-                        <input class="form-check-input" id="identify-sampling-method-fossil" asp-for="SampleType" type="radio" value="fossil" checked>
+                        <input class="form-check-input" name="identify-method-radio" id="identify-sampling-method-fossil" type="radio" value="fossil" checked>
                             A fossil pollen grain, or spore, obtained from a sedimentary sequence. 
                         </label>
                     </div>
                     <div class="form-check">
                         <label class="form-check-label">
-                        <input class="form-check-input" id="identify-sampling-method-environmental" type="radio" asp-for="SampleType" value="environmental">
+                        <input class="form-check-input" name="identify-method-radio" id="identify-sampling-method-environmental" type="radio" value="environmental">
                             A pollen grain collected from the environment, for example from a pollen trap, bee, honey, or soil. This grain has not been fossilised.
                         </label>
                     </div>
                     <div class="form-check disabled">
                         <label class="form-check-label">
-                        <input class="form-check-input" id="identify-sampling-method-botanical" type="radio" asp-for="SampleType" value="botanical" disabled>
+                        <input class="form-check-input" name="identify-method-radio" id="identify-sampling-method-botanical" type="radio" value="botanical" disabled>
                             A pollen grain, or spore, taken directly from a living plant. 
                         </label>
                     </div>
@@ -86,11 +95,11 @@
                     <label>Where was the pollen grain collected from? Click on the map to drop a pin in the correct location.</label>
                     <hr>
                     <div class="input-group">
-                        <input type="text" readonly="readonly" asp-for="LatitudeDD" class="form-control" placeholder="Latitude" />
+                        <input type="text" readonly="readonly" id="latitude-input" class="form-control" placeholder="Latitude" />
                         <span class="input-group-addon">°</span>
                     </div>
                     <div class="input-group">
-                        <input type="text" readonly="readonly" asp-for="LongitudeDD" class="form-control" placeholder="Longitude" />
+                        <input type="text" readonly="readonly" id="longitude-input" class="form-control" placeholder="Longitude" />
                         <span class="input-group-addon">°</span>
                     </div>
                 </div>

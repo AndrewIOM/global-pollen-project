@@ -21,6 +21,9 @@ var ImageObject = function () {
 // should the interface be "locked" (e.g. should be locked when drawing measuring line)
 var locked = false;
 
+// has at least one image uploaded?
+var hasUploaded = false;
+
 /**
  * (Re-)creates the tabs shown on the add unknown grain interface
  * One tab for each image supplied
@@ -158,7 +161,82 @@ var createImageViewer = function (images, imageNo) {
     });
 }
 
+/**
+ * Checks that all required fields in the form have been filled in
+ */
+var canUpload = function () {
+    var output = "";
+    var e = function(t) { output += (t + "<br>") };
+
+    // check that the first radio buttons have a value
+    if (!$("input[name='identify-method-radio']:checked").val()) {
+        e("Sampling method must be defined (step 1)");
+    }
+
+    if(!hasUploaded) {
+        e("You must upload at least one image of your grain (step 2)");
+    }
+
+    var nocrop = false;
+    var noline = false;
+    var novalue = false;
+    $(".tab-pane").each(function() {
+        if(!nocrop) {
+            if($(this).find(".identify-image-viewer").find("canvas").length == 0) {
+                // this tab has not cropped
+                nocrop = true;
+                e("Each uploaded image must be cropped to fit just the grain (step 2)");
+            }
+        }
+
+        if(!noline) {
+            if($(this).find(".identify-image-viewer").find("canvas").data("measuring-line") == undefined) {
+                e("Each uploaded image must have a calibration measurement line (step 2)")
+                noline = true;
+            }
+        }
+
+        if(!novalue) {
+            if($(this).find(".identify-image-viewer").find(".identify-measured-distance").val() == "") {
+                e("Each uploaded image must have a known distance typed in (step 2)")
+                novalue = true;
+            }
+        }
+    });
+
+    if($("#latitude-input").val() == "" || $("#longitude-input").val() == "") {
+        e("You must specify where the grain was collected from (step 3)")
+    }
+
+    if($("#identify-sampling-method-environmental").is(":checked")) {
+        if($("#identify-temporal-environmental-year").val() == "") {
+            e("You must specify the year the sample was collected (step 4)");
+        }
+    } else if($("#identify-sampling-method-fossil").is(":checked")) {
+        if(!$("#identify-temporal-fossil-unknown").is(":checked")) {
+            if($("#identify-temporal-fossil-ybp").val() == "") {
+                e("You must specify the temporal context (step 4)");
+            }
+        }
+    }
+
+    if(output == "") {
+        // no errors found - return null
+        return null;
+    } else {
+        return output;
+    }
+}
+
 var uploadGrain = function () {
+    var error = canUpload();
+    if(error) {
+        $("#errors").html(error);
+        $("#errors-box").show();
+        $("html, body").animate({ scrollTop: 0 }, "slow");
+        return;
+    }
+
     $('#submit').prop('disabled', true);
     $('#submit').addClass('disabled');
 
@@ -224,7 +302,9 @@ var uploadGrain = function () {
             output[vid]["MeasuredLength"] = parseFloat($(vid).parent().parent().parent().find(".identify-measured-distance").val());
         }
 
-        var outputArray = Object.keys(output).map(function(v) { return output[v]; });
+        var outputArray = Object.keys(output).map(function (v) {
+            return output[v];
+        });
 
         var request = {
             Images: outputArray,
@@ -272,6 +352,7 @@ $(function () {
     // array of image objects
     var images = [];
 
+    $("#errors-box").hide();
     $("#add-grain-form").trigger("reset");
 
     // form is completed in stages
@@ -314,6 +395,7 @@ $(function () {
 
                 if (loaded == files.length) {
                     // all images loaded, so create the tabs
+                    hasUploaded = true;
                     createTabs(images);
                 }
             }
@@ -343,9 +425,6 @@ $(function () {
                 title: "Pollen Sample Location",
                 draggable: true
             });
-            google.maps.event.addListener(marker, 'dragend', function (event) {
-                updateLocationFormFields(event.latLng);
-            });
         }
     }
 
@@ -365,8 +444,8 @@ $(function () {
     function updateLocationFormFields(latLng) {
         var lat = latLng.lat().toFixed(4);
         var lon = latLng.lng().toFixed(4);
-        document.getElementById('LatitudeDD').value = lat;
-        document.getElementById('LongitudeDD').value = lon;
+        document.getElementById('latitude-input').value = lat;
+        document.getElementById('longitude-input').value = lon;
     }
 
 });
