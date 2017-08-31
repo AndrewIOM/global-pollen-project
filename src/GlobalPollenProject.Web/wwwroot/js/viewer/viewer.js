@@ -1,13 +1,14 @@
 /**
  * Creates a new slide image canvas - allows panning and zooming, and ensures the slide is always visible
- * @param {String} containerId  the parent object's id
- * @param {String} canvasId     the desired canvas object id
- * @param {Int} width           the desired width of the canvas
- * @param {Int} height          the desired height of the canvas
- * @param {[String]} imagePaths an array of image paths
- * @return {Viewer}             the relevant viewer object
+ * @param {String} containerId      the parent object's id
+ * @param {String} canvasId         the desired canvas object id
+ * @param {Int} width               the desired width of the canvas
+ * @param {Int} height              the desired height of the canvas
+ * @param {[String]} imagePaths     an array of image paths
+ * @param {{x,y,w,h}} crop          an optional object representing the cropped region to draw (represented as percentage decimals)
+ * @return {Viewer}                 the relevant viewer object
  */
-function Viewer(containerId, canvasId, width, height, imagePaths) {
+function Viewer(containerId, canvasId, width, height, imagePaths, crop=null) {
     var self = this;
 
     self.id = canvasId;
@@ -16,7 +17,8 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
     self.containerId = containerId;
     self.width = width;
     self.height = height;
-    self.imagePaths = imagePaths
+    self.imagePaths = imagePaths;
+    self.crop = crop;
 
     // stores the loaded image objects
     self.images = [];
@@ -29,6 +31,9 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
     self.imgWidth = null; // stores the width of the slide image
     self.imgHeight = null; // stores the height of the slide image
     
+    self.nativeWidth = null;
+    self.nativeHeight = null;
+
     self.focusLevel = 0; // holds the current focus level (image to draw)
 
     /**
@@ -55,12 +60,21 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
                         return;
                     }
                 } else {
-                    self.imgWidth = this.width;
-                    self.imgHeight = this.height;
+                    self.imgWidth = self.nativeWidth = this.width;
+                    self.imgHeight = self.nativeHeight = this.height;
                 }
 
                 self.loadedCounter++;
                 if (self.loadedCounter == self.imagePaths.length) {
+                    // override imgWidth and imgHeight if a crop has been defined
+                    if(self.crop != null) {
+                        self.nativeWidth = self.imgWidth;
+                        self.nativeHeight = self.imgHeight;
+
+                        self.imgWidth *= self.crop.w;
+                        self.imgHeight *= self.crop.h;
+                    }
+
                     // proceed if all images have been loaded - trigger a jQuery function too
                     callback();
                     $(self).trigger(Viewer.EVENT_LOADED_IMAGES);
@@ -129,7 +143,9 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
         self.transform.y = self.height / 2 - self.imgHeight / 2 * self.transform.k;
 
         self.context = self.canvas.node().getContext("2d");
-
+        
+        $(self.id).data("viewer", self);
+        
         $(self.id).css("position", "absolute");
         $(self.id).css("cursor", "grab"); // set the cursor to "grab" initially
 
@@ -160,7 +176,20 @@ function Viewer(containerId, canvasId, width, height, imagePaths) {
         self.context.shadowBlur = 20;
         self.context.shadowOffsetX = 15;
         self.context.shadowOffsetY = 15;
-        self.context.drawImage(self.images[self.focusLevel], 0, 0);
+        if(self.crop == null) {
+            self.context.drawImage(self.images[self.focusLevel], 0, 0);
+        } else {
+            self.context.drawImage(
+                self.images[self.focusLevel], 
+                self.crop.x * self.nativeWidth, 
+                self.crop.y * self.nativeHeight,
+                self.imgWidth,
+                self.imgHeight, 
+                0, 0, 
+                self.imgWidth,
+                self.imgHeight
+            );
+        }
 
         self.context.restore();
     }

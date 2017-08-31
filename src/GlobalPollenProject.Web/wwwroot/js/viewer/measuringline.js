@@ -93,6 +93,7 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
 
     self.startLine = function (x, y) {
         self.state = MeasuringLine.STATE_DRAWING;
+        
         self.startX = x;
         self.startY = y;
         self.endX = x;
