@@ -28,7 +28,7 @@
     <div class="col-md-8">
         @foreach (var grain in Model)
         {
-            <p><a href="@Url.Action("Identify", "Grain", new {id = @grain.Id})">@grain.Thumbnail</a></p>
+            <p><a href="/Identify/@grain.Id"><img src="@grain.Thumbnail"/></a></p>
         }
     </div>
     @* Filters *@

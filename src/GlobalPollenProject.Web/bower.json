@@ -16,5 +16,8 @@
     "leaflet": "0.7.7",
     "nouislider": "8.2.1",
     "wnumb": "1.0.2"
+  },
+  "devDependencies": {
+    "Jcrop": "^2.0.4"
   }
 }
