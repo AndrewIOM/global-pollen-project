@@ -436,9 +436,10 @@ let webApp =
         choose [
             route   "/"                         >=> renderView "Home/Index" None
             route   "/Guide"                    >=> renderView "Home/Guide" None
-            route   "/Api"                      >=> renderView "Home/Api" None
             route   "/Statistics"               >=> renderView "Statistics/Index" None
             route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
+            route   "/Api"                      >=> renderView "Home/Api" None
+            route   "/Tools"                    >=> renderView "Tools/Index" None
         ]
         setStatusCode 404 >=> renderView "NotFound" None 
     ]
