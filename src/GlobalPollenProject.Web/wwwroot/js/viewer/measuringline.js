@@ -93,6 +93,7 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
 
     self.startLine = function (x, y) {
         self.state = MeasuringLine.STATE_DRAWING;
+        
         self.startX = x;
         self.startY = y;
         self.endX = x;
@@ -118,8 +119,8 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
         if(self.startX == null || self.startY == null || self.endX == null || self.endY == null) return null;
 
         return [
-            [self.startX / self.viewer.getZoom(), self.startY / self.viewer.getZoom()],
-            [self.endX / self.viewer.getZoom(), self.endY / self.viewer.getZoom()]
+            [(self.startX - self.savedTransformX) / self.viewerZoom, (self.startY - self.savedTransformY) / self.viewerZoom],
+            [(self.endX - self.savedTransformX) / self.viewerZoom, (self.endY - self.savedTransformY) / self.viewerZoom]
         ];
     }
 

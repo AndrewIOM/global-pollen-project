@@ -4,7 +4,7 @@
 $(document).ready(function () {
     $('#ref-collection-search').keyup(function () {
         var val = $.trim(this.value);
-        if (val.length > 1) {
+        if (val.length > 0) {
             var results = Suggest(val);
         } else {
             $('#suggestList').fadeOut();
@@ -23,11 +23,26 @@ function Suggest(searchTerm) {
             taxaList.innerHTML = "";
             $('#suggestList').css('display', 'block');
             for (var i = 0; i < resultJson.length; i++) {
-                var option = document.createElement('li');
+                var linkUrl = "";
+                if (resultJson[i].Rank == "Family") { linkUrl = "/Taxon/" + resultJson[i].LatinName; }
+                else if (resultJson[i].Rank == "Genus") { linkUrl = "/Taxon/" + resultJson[i].Heirarchy[0] + "/" + resultJson[i].Heirarchy[1] }
+                else if (resultJson[i].Rank == "Species") { linkUrl = "/Taxon/" + resultJson[i].Heirarchy[0] + "/" + resultJson[i].Heirarchy[1] + "/" + (resultJson[i].Heirarchy[2].split(' ')[1]); }
+                var option = document.createElement('li');            
+                var headerDiv = document.createElement('div');
+                headerDiv.className = "taxon-name";
+                option.appendChild(headerDiv);
                 var link = document.createElement('a');
-                option.appendChild(link);
-                link.innerHTML = resultJson[i];
-                link.href = '/Taxon/View/' + resultJson[i];
+                headerDiv.appendChild(link);
+                var rank = document.createElement('span');
+                rank.className = "taxon-rank";
+                rank.innerHTML = resultJson[i].Rank;
+                var heirarchy = document.createElement('div');
+                heirarchy.className = "heirarchy";
+                heirarchy.innerHTML = resultJson[i].Heirarchy.join(" > ");
+                headerDiv.appendChild(rank);
+                option.appendChild(heirarchy);
+                link.innerHTML = resultJson[i].LatinName;
+                link.href = linkUrl;
                 link.addEventListener('click', function (e) {
                     var name = this.innerHTML;
                     $('#ref-collection-search').val(name);
@@ -37,6 +52,6 @@ function Suggest(searchTerm) {
             }
         }
     }
-    ajax.open("GET", "/api/v1/backbone/search?rank=Species&latinName=" + searchTerm);
+    ajax.open("GET", "/api/v1/taxon/search?pageSize=10&name=" + searchTerm);
     ajax.send();
 }

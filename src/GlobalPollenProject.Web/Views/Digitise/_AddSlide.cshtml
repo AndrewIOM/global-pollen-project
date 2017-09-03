@@ -15,6 +15,15 @@
                     Please fill these in below. For more information, <a href="/Guide" target="_blank">please refer to the GPP guide</a>.
                 </p>
 
+                <div class="form-group row">
+                    <label for="inputExistingId" class="col-sm-2 col-form-label">Existing ID</label>
+                    <div class="col-sm-10">
+                        <input data-bind="value: existingId" class="form-control" id="inputExistingId" placeholder="Identifier" />
+                        <small class="form-text text-muted">If you have already assigned IDs to your slides, you can specify this here. 
+                    Your ID will be used in place of a Global Pollen Project ID wihtin this collection.</small>
+                    </div>
+                </div>
+
                 <h5>1. Taxonomic Identity</h5>
                 <hr/>
                 <p>This reference slide is of
@@ -84,9 +93,7 @@
                             </p>
                         </div>
                     </div>
-
                 </div>
-
 
                 <h5>2. Collection of Plant Material</h5>
                 <hr/>
@@ -114,23 +121,26 @@
                 <div class="form-group row">
                     <label for="inputCollectionYear" class="col-sm-2 col-form-label">Year Sample Taken</label>
                     <div class="col-sm-5">
-                        <input data-bind="value: yearCollected" class="form-control" id="inputCollectionYear" placeholder="Year" />
-                        <div class="input-group-addon">Calendar Year</div>
+                        <div class="input-group">
+                            <input id="inputCollectionYear" data-bind="value: yearCollected" type="number" class="form-control" aria-describedby="year-addon"/>
+                            <span class="input-group-addon" id="year-addon">Calendar Year</span>
+                        </div>
                     </div>
                 </div>
 
                 <div class="form-group row">
-                    <label for="inputCollectorName" class="col-sm-2 col-form-label">Name of Collector</label>
-                    <div class="col-sm-5">
-                        <input data-bind="value: nameOfCollector" class="form-control" id="inputCollectorName" />
+                    <label class="col-sm-2 col-form-label">Name of Collector</label>
+                    <div class="col-sm-2">
+                        <input data-bind="value: collectorFirstNames" placeholder="Forenames" class="form-control" />
+                    </div>
+                    <div class="col-sm-2">
+                        <input data-bind="value: collectorLastName" placeholder="Surname" class="form-control" />
                     </div>
                 </div>
 
-                <h5>3. Location</h5>
-                <hr/>
-                <div class="row">
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Location</label>
                     <div class="col-sm-3">
-                        <label>Accuracy of Location</label>
                         <select data-bind="value: locationType" class="form-control input-sm inline-dropdown">
                             <option value="Unknown">Unknown</option>
                             <option value="Continent">Continent</option>
@@ -143,7 +153,7 @@
                     </div>
                     <div class="col-sm-3">
                         <input data-bind="value: district, visible: locationType() == 'Locality'" class="form-control" id="locationDistrict" placeholder="District" />
-                        <small class="form-text text-muted">An administrative area within a country.</small>
+                        <small data-bind="visible: locationType() == 'Locality'" class="form-text text-muted">An administrative area within a country.</small>
                     </div>
                     <div class="col-sm-3">
                         <input data-bind="value: region, visible: locationType() == 'Locality'" class="form-control" id="locationRegion" placeholder="Region" />
@@ -156,35 +166,44 @@
                             <option value="Europe">Europe</option>
                             <option value="Asia">Asia</option>
                         </select>
-                    </div>
+                    </div>                
                 </div>
-                <small id="location-help" class="form-text text-muted">Please be as accurate as possible.</small>
 
-                <h5>4. Slide Preperation</h5>
+                <h5>3. Slide Preperation</h5>
                 <hr/>
 
                 <div class="form-group row">
-                    <label for="preperationMethod" class="col-sm-2 col-form-label">Preperation Method</label>
+                    <label for="preperationMethod" class="col-sm-2 col-form-label">Chemical Treatment</label>
                     <div class="col-sm-10">
-                        <input data-bind="value: preperationMethod" class="form-control" id="preperationMethod" />
+                        <select data-bind="value: preperationMethod" class="form-control input-sm inline-dropdown">
+                            <option value="unknown">Unknown</option>
+                            <option value="fresh">Fresh Grains (no processing)</option>
+                            <option value="acetolysis">Acetolysis</option>
+                            <option value="hf">Hydroflouric Acid (HF)</option>
+                        </select>
+                        <small class="form-text text-muted">If you have not applied any chemical treatments, please select 'Fresh Grains'.</small>
                     </div>
                 </div>
 
                 <div class="form-group row">
-                    <label for="inputCollectionYear" class="col-sm-2 col-form-label">Year of Slide Creation</label>
+                    <label class="col-sm-2 col-form-label">Mounting Material</label>
+                    <div class="col-sm-10">
+                        <select data-bind="value: mountingMaterial" class="form-control input-sm inline-dropdown">
+                            <option value="unknown">Unknown</option>
+                            <option value="siliconeoil">Silicone Oil</option>
+                            <option value="glycerol">Glycerol</option>
+                        </select>
+                        <small class="form-text text-muted">Which fixant was used to prepare the slide?</small>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">When was this slide made from the plant material?</label>
                     <div class="col-sm-5">
-                        <input data-bind="value: yearPrepared" class="form-control" id="inputCollectionYear" placeholder="Year">
-                        <div class="input-group-addon">Calendar Year</div>
-                        </input>
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label for="inputExistingId" class="col-sm-2 col-form-label">Existing ID</label>
-                    <div class="col-sm-10">
-                        <input data-bind="value: existingId" class="form-control" id="inputExistingId" placeholder="Identifier" />
-                        <small class="form-text text-muted">If you have already assigned IDs to your slides, you can specify this here. 
-                    Your ID will be used in place of a Global Pollen Project ID wihtin this collection.</small>
+                        <div class="input-group">
+                        <input data-bind="value: yearPrepared" type="number" class="form-control" aria-describedby="year-addon">
+                        <span class="input-group-addon" id="year-addon">Calendar Year</span>
+                        </div>
                     </div>
                 </div>
 

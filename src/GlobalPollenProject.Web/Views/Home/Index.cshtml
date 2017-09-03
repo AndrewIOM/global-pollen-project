@@ -16,7 +16,8 @@
             <p>The Open Platform for Pollen Identification</p>
 
             <form action="/Taxon" method="get" class="form-inline search-big">
-                <input name="Query" title="Search by latin name" id="ref-collection-search" type="search" class="form-control form-control-lg" placeholder="Search by Latin Name" />
+                <input hidden="hidden" id="Rank" value="Genus" />
+                <input name="lex" title="Search by latin name" id="ref-collection-search" type="search" autocomplete="off" class="form-control form-control-lg" placeholder="Search by Latin Name" />
                 <div class="dropdown-menu" id="suggestList" style="display:none"></div>
                 <button type="submit" title="Search" class="btn btn-primary btn-lg">Go</button>
             </form>
@@ -24,35 +25,42 @@
     </header>
 }
 
-@* Features *@
-<div class="row" style="text-align:center">
-    <div class="col-sm-4">
-        <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Poaceae Grass Pollen Grain">
-        <h3><a href="/Taxon">Browse Our Collection</a></h3>
-        <p>Browse the dynamic and ever expanding reference collection of the Global Pollen Project! Use as a key or as a reference for your own research.</p>
-    </div>
-    <div class="col-sm-4">
-        <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Betula pollen grain">
-        <h3><a href="/Home/Guide#submit">Submit Your Pollen Grains</a></h3>
-        <p>
-            If you are having trouble identifying a pollen grain to family, genus or species level, submit your grain to the Global Pollen Project. Crowd source the identification from others working with pollen across the world.
-        </p>
-    </div>
-    <div class="col-sm-4">
-        <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Asteraceae pollen grain">
-        <h3><a href="/Unknown/Submit">Add Your Expertise</a></h3>
-        <p>Are you a specialist in a particular region or taxon? Help others by providing identifications and earn points on the leader board for your lab group or Institution.</p>
-    </div>
-</div>
-<hr />
+@section nocontainerbody {
+    @Html.Partial("Home/_StatRowSection")
+    <section class="homepage-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-sm-4">
+                    <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Poaceae Grass Pollen Grain">
+                    <h3><a href="/Taxon">A Global Pollen and Spore Reference Set</a></h3>
+                    <p>Browse the dynamic and ever expanding reference collection of the Global Pollen Project! Use as a key or as a reference for your own research.</p>
+                </div>
+                <div class="col-sm-4">
+                    <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Betula pollen grain">
+                    <h3><a href="/Home/Guide#submit">Submit Your Pollen Grains</a></h3>
+                    <p>
+                        If you are having trouble identifying a pollen grain to family, genus or species level, submit your grain to the Global Pollen Project. Crowd source the identification from others working with pollen across the world.
+                    </p>
+                </div>
+                <div class="col-sm-4">
+                    <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Asteraceae pollen grain">
+                    <h3><a href="/Unknown/Submit">Add Your Expertise</a></h3>
+                    <p>Are you a specialist in a particular region or taxon? Help others by providing identifications and earn points on the leader board for your lab group or Institution.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-@* Infographics *@
-<div class="row" id="infographic-row">
-    <div class="col-md-4">
-        <p><span id="unidentified-count">??</span> unidentified grains</p>
-    </div>
-    <div class="col-md-8">
-        <div id="locations-map"></div>
-    </div>
-</div>
-<hr />
+    <section class="homepage-section">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-4">
+                    <p><span id="unidentified-count">??</span> unidentified grains</p>
+                </div>
+                <div class="col-md-8">
+                    <div id="locations-map"></div>
+                </div>
+            </div>
+        </div>
+    </section>
+}

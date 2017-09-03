@@ -1,8 +1,8 @@
 @model FSharpList<ReadModels.GrainSummary>
 @{
     Layout = "_Layout";
-    ViewData["Title"] = "Identify Pollen Grains";
-    ViewData["Subtitle"] = "Pollen grains have been submitted, for which the botanical origin is not known. Can you help with a morphological identification?";
+    ViewData["Title"] = "Unidentified Pollen and Spore Pool";
+    ViewData["Subtitle"] = "Some specimens have been submitted, for which the botanical origin is not known. Can you help with a morphological identification?";
 }
 
 @* Header *@
@@ -26,10 +26,19 @@
 <div class="row">
     @* Grain Grid *@
     <div class="col-md-8">
+        <ul class="grain-grid columns-4">
         @foreach (var grain in Model)
         {
-            <p><a href="@Url.Action("Identify", "Grain", new {id = @grain.Id})">@grain.Thumbnail</a></p>
+            <li>
+                <a href="/Identify/@grain.Id">
+                    <div class="img-container portrait">
+                        <img src="@grain.Thumbnail"/>
+                        <div class="ribbon"><span>?</span></div>
+                    </div>
+                </a>
+            </li>
         }
+        </ul>
     </div>
     @* Filters *@
     <div class="col-md-4">

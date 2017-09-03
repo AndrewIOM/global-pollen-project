@@ -37,7 +37,7 @@
 </div>
 
 @* Slide Table *@
-<table class="table" id="reference-table" data-page-length='100'>
+<table class="table table-responsive" id="reference-table" data-page-length='100'>
   <thead class="thead-default">
     <tr>
       <th>#</th>
@@ -65,7 +65,9 @@
                 @if (slide.IsFullyDigitised) { <span>Fully digitised, with @slide.Images.Length images.</span> }
                 @if (!slide.IsFullyDigitised) { <span>Not digitised.</span> }
             </td>
-            <td></td>
+            <td>
+                @if (!slide.IsFullyDigitised) { <a href="/Taxon/@Model.Id/@slide.CollectionSlideId" class="btn btn-secondary">View Slide</a> }
+            </td>
         </tr>
       }
   </tbody>

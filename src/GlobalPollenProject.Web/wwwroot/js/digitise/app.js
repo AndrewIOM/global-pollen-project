@@ -52,8 +52,6 @@ function DigitiseViewModel(users, analyses) {
     self.slideDetailVM = ko.observable(null);
     self.calibrateVM = ko.observable(null);
 
-    self.dt = $("#slides-data-table").dataTable();
-
     self.refreshCollectionList = function () {
         $.ajax({
             url: apiPrefix + "collection/list",
@@ -81,8 +79,7 @@ function DigitiseViewModel(users, analyses) {
                     .done(function (col) {
                         self.activeCollection(col);
                         self.currentView(view);
-                        self.dt.dataTable();
-                    })
+                    });
                 break;
             case CurrentView.ADD_COLLECTION:
                 self.newCollectionVM(new AddCollectionViewModel());
@@ -145,11 +142,21 @@ function AddCollectionViewModel() {
     let self = this;
     self.name = ko.observable();
     self.description = ko.observable();
-
+    self.curatorFirstNames = ko.observable();
+    self.curatorSurname = ko.observable();
+    self.institutionName = ko.observable();
+    self.email = ko.observable();
+    self.externalUrl = ko.observable();
+    
     self.submit = function (rootVM) {
         let req = {
             Name: self.name(),
-            Description: self.description()
+            Description: self.description(),
+            CuratorFirstNames: self.curatorFirstNames(),
+            CuratorSurname: self.curatorSurname(),
+            Institution: self.institutionName(),
+            CuratorEmail: self.email(),
+            ExternalUrl: self.externalUrl()
         };
         $.ajax({
             url: "/api/v1/digitise/collection/start",
@@ -184,11 +191,12 @@ function RecordSlideViewModel(currentCollection) {
     self.collectionMethod = ko.observable();
     self.existingId = ko.observable();
     self.yearCollected = ko.observable();
-    self.nameOfCollector = ko.observable();
+    self.collectorFirstNames = ko.observable();
+    self.collectorLastName = ko.observable();
     self.locationType = ko.observable();
     self.locality = ko.observable();
     self.district = ko.observable();
-    self.region = ko.observable();    
+    self.region = ko.observable();
     self.country = ko.observable();
     self.continent = ko.observable();
     self.yearPrepared = ko.observable();
@@ -240,6 +248,7 @@ function RecordSlideViewModel(currentCollection) {
     }
 
     self.getRequest = function () {
+        let firstNames = self.collectorFirstNames() == "" ? self.collectorFirstNames().split(' ') : [];
         let request = {
             Collection: self.collection().Id,
             ExistingId: self.existingId(),
@@ -256,7 +265,9 @@ function RecordSlideViewModel(currentCollection) {
             LocationCountry: self.country(),
             LocationContinent: self.continent(),
             PreperationMethod: self.preperationMethod(),
-            MountingMaterial: self.mountingMaterial()
+            MountingMaterial: self.mountingMaterial(),
+            CollectedByFirstNames: firstNames,
+            CollectedBySurname: self.collectorLastName()
         };
         return request;
     }
@@ -280,41 +291,34 @@ function SlideDetailViewModel(detail) {
     self.viewer = null;
     self.slider = null;
     self.measuringLine = null;
+    self.scaleBar = null;
     self.validationErrors = ko.observableArray([]);
 
     self.calibrations = ko.observableArray();
+
+    self.selectedMicroscope = ko.observable(null);
+    self.selectedMagnification = ko.observable(null);
 
     // Add slide request
     self.framesBase64 = ko.observableArray([]);
     self.floatingCal = ko.observable();
     self.measuredDistance = ko.observable();
-    self.calibrationId = ko.observable();
-    self.magnification = ko.observable();
-    self.digitisedYear = ko.observable();
+    self.digitisedYear = ko.observable(null);
 
     self.isValidStaticRequest = ko.computed(function () {
         if (self.floatingCal() == null) return false;
         if (self.measuredDistance() == null) return false;
         if (self.digitisedYear() == null) return false;
+        if (self.measuredDistance() <= 0) return false;
         return true;
     }, self);
 
     self.isValidFocusRequest = ko.computed(function () {
+        if (self.selectedMicroscope() == null) return false;
+        if (self.selectedMagnification() == null) return false;
         if (self.digitisedYear() == null) return false;
         return true;
     }, self);
-
-    self.imageSelected = function (inputElement, viewerId) {
-        let imageUrls = [];
-        Array.prototype.forEach.call(inputElement.files, function (f) {
-            imageUrls.push(window.URL.createObjectURL(f));
-        });
-        self.viewer = new Viewer("#" + viewerId, 500, 500, imageUrls);
-        if (imageUrls.length > 1) {
-            new FocusSlider(self.viewer)
-        };
-        let scaleBar = new ScaleBar(self.viewer, 0.5);
-    }
 
     self.loadCalibrations = function () {
         $.ajax({
@@ -322,6 +326,8 @@ function SlideDetailViewModel(detail) {
                 type: "GET"
             })
             .done(function (cals) {
+                
+                console.log(cals);
                 self.calibrations(cals);
             })
     }
@@ -369,65 +375,94 @@ function SlideDetailViewModel(detail) {
                 endDate: '+0d',
                 minViewMode: "years"
             });
+
+            self.selectedMicroscope(null);
+            self.selectedMagnification(null);
+
+            if (self.scaleBar != null) {
+                self.scaleBar.dispose();
+            }
         }
     }
 
-    self.submit = function (rootVM, isFocusImage) {
-        convertToDataURLviaCanvas(self.viewer.imagePaths[0], function (d) {
-            console.log(d);
-            let request = {
-                CollectionId: self.slideDetail().CollectionId,
-                SlideId: self.slideDetail().CollectionSlideId,
-                IsFocusImage: isFocusImage,
-                FramesBase64: [d], //TODO currently hardcoded static image
-                FloatingCalPointOneX: Math.round(self.floatingCal()[0][0]),
-                FloatingCalPointOneY: Math.round(self.floatingCal()[0][1]),
-                FloatingCalPointTwoX: Math.round(self.floatingCal()[1][0]),
-                FloatingCalPointTwoY: Math.round(self.floatingCal()[1][1]),
-                MeasuredDistance: self.measuredDistance(),
-                CalibrationId: self.calibrationId(),
-                Magnification: self.magnification(),
-                DigitisedYear: self.digitisedYear()
-            }
-            console.log(request);
+    self.submit = function (rootVM, base64Array) {
+        let request = {
+            CollectionId: self.slideDetail().CollectionId,
+            SlideId: self.slideDetail().CollectionSlideId,
+            IsFocusImage: base64Array.length > 1,
+            FramesBase64: base64Array,
+            DigitisedYear: parseInt(self.digitisedYear())
+        }
+        if(base64Array.length == 1) {
+            request["FloatingCalPointOneX"] = Math.round(self.floatingCal()[0][0]);
+            request["FloatingCalPointOneY"] = Math.round(self.floatingCal()[0][1]);
+            request["FloatingCalPointTwoX"] = Math.round(self.floatingCal()[1][0]);
+            request["FloatingCalPointTwoY"] = Math.round(self.floatingCal()[1][1]);
+            request["MeasuredDistance"] = parseFloat(self.measuredDistance());
+        } else if (base64Array.length > 1) {
+            request["CalibrationId"] = self.selectedMicroscope().Id;
+            request["Magnification"] = self.selectedMagnification().Level;
+        } else {
+            return;
+        }
+        console.log(request);
 
-            $.ajax({
-                url: "/api/v1/digitise/collection/slide/addimage",
-                type: "POST",
-                data: JSON.stringify(request),
-                dataType: "json",
-                contentType: "application/json",
-                xhr: function () {
-                    var xhr = $.ajaxSettings.xhr();
-                    xhr.upload.onprogress = function (evt) {
-                        if (evt.lengthComputable) {
-                            var percentComplete = evt.loaded / evt.total;
-                            self.uploadPercentage(percentComplete * 100);
-                            console.log(percentComplete * 100);
-                        }
-                    }
-                    return xhr;
-                },
-                success: function (data) {
-                    console.log(self.slideDetail());
-                    rootVM.switchView(CurrentView.DETAIL, {
-                        Id: self.slideDetail().CollectionId
-                    });
-                },
-                statusCode: {
-                    400: function (err) {
-                        console.log(err);
-                        self.validationErrors([]);
-                        err.responseJSON.Errors.forEach(function (e) {
-                            self.validationErrors().push(e.Errors[0]);
-                            console.log(self.validationErrors());
-                        })
-                    },
-                    500: function (data) {
-                        self.validationErrors(['Internal error. Please try again later.']);
+        $.ajax({
+            url: "/api/v1/digitise/collection/slide/addimage",
+            type: "POST",
+            data: JSON.stringify(request),
+            dataType: "json",
+            contentType: "application/json",
+            xhr: function () {
+                var xhr = $.ajaxSettings.xhr();
+                xhr.upload.onprogress = function (evt) {
+                    if (evt.lengthComputable) {
+                        var percentComplete = evt.loaded / evt.total;
+                        self.uploadPercentage(percentComplete * 100);
+                        console.log(percentComplete * 100);
                     }
                 }
+                return xhr;
+            },
+            success: function (data) {
+                console.log(self.slideDetail());
+                rootVM.switchView(CurrentView.DETAIL, {
+                    Id: self.slideDetail().CollectionId
+                });
+            },
+            statusCode: {
+                400: function (err) {
+                    console.log(err);
+                    self.validationErrors([]);
+                    err.responseJSON.Errors.forEach(function (e) {
+                        self.validationErrors().push(e.Errors[0]);
+                        console.log(self.validationErrors());
+                    })
+                },
+                500: function (data) {
+                    self.validationErrors(['Internal error. Please try again later.']);
+                }
+            }
+        });
+    }
+
+    self.submitFocus = function (rootVM) {
+        var loaded = 0;
+        var base64Array = [];
+        for (var i = 0; i < self.viewer.imagePaths.length; i++) {
+            convertToDataURLviaCanvas(self.viewer.imagePaths[i], function (d) {
+                loaded++;
+                base64Array.push(d);
+                if (loaded == self.viewer.imagePaths.length) {
+                    self.submit(rootVM, base64Array);
+                }
             });
+        }
+    }
+
+    self.submitStatic = function (rootVM) {
+        convertToDataURLviaCanvas(self.viewer.imagePaths[0], function (d) {
+            self.submit(rootVM, [d]);
         });
     }
 
@@ -473,8 +508,48 @@ function SlideDetailViewModel(detail) {
         }
     }
 
+    self.selectedMagnificationName = function () {
+        if (self.selectedMagnification() == null)
+            return "Select magnification"
+
+        return self.selectedMagnification().Level + "x";
+    }
+
+    self.selectedMicroscopeName = function () {
+        if (self.selectedMicroscope() == null)
+            return "Select microscope"
+
+        return self.selectedMicroscope().Name;
+    }
+
+    self.selectedMicroscopeMagnifications = function () {
+        if (self.selectedMicroscope() == null)
+            return [];
+
+        return self.selectedMicroscope().Magnifications;
+    }
+
+    self.selectMicroscope = function (element) {
+        var selected = self.calibrations().find(function (e) {
+            return e.Id == element.Id;
+        });
+
+        self.selectedMicroscope(selected);
+    }
+
+    self.selectMagnification = function (element) {
+        self.selectedMagnification(element);
+
+        self.activateFocusScaleBar();
+    }
+
     self.createFocusImageViewer = function (element) {
-        $("#focus-image-previewer-container").html("<div id=\"focus-image-previewer\"></div>");
+        $("#focus-image-previewer-container").empty();
+        $("#focus-image-previewer-container").html("<div id=\"focus-image-previewer\" style=\"width: 100%\"></div>");
+
+        self.selectedMicroscope(null);
+        self.selectedMagnification(null);
+
         $("#digitisedYearFocus").datepicker({
             format: " yyyy",
             viewMode: "years",
@@ -493,6 +568,11 @@ function SlideDetailViewModel(detail) {
         var readers = [];
         var base64s = [];
 
+        if (files.length < 2) {
+            alert("You must upload at least 2 images (shift-click/ctrl-click files to select multiple)");
+            return;
+        }
+
         for (var i = 0; i < files.length; i++) {
             readers.push(new FileReader());
 
@@ -503,16 +583,37 @@ function SlideDetailViewModel(detail) {
                 if (loaded >= files.length) {
                     self.viewer = new Viewer("#focus-image-previewer",
                         "#focus-image-previewer-canvas",
-                        $("#focus-image-previewer").width() * 0.8, 500, base64s
+                        $("#focus-image-previewer-container").width() * 0.8, 500, base64s
                     );
                     self.slider = new FocusSlider(self.viewer, "#focus-image-previewer-slider");
                     self.loadedFocusImages(true);
+
+                    $(self.viewer).on(Viewer.EVENT_IMAGES_MISMATCHED_SIZE, function () {
+                        self.loadedFocusImages(false);
+                        $("#focus-image-previewer-container").empty();
+                        self.viewer.dispose();
+                        self.slider.dispose();
+                        alert("Error - images must all have the same dimensions (width x height)");
+                    });
                 }
             }
             if (files[i]) {
                 readers[i].readAsDataURL(files[i]);
             }
         }
+    }
+
+    self.activateFocusScaleBar = function () {
+        if (self.viewer == null || self.selectedMagnification() == null) {
+            return;
+        }
+
+        if (self.scaleBar != null) {
+            self.scaleBar.dispose();
+        }
+
+        self.scaleBar = new ScaleBar(self.viewer, "#focus-image-previewer-scalebar", self.selectedMagnification().PixelWidth);
+        self.scaleBar.initialise();
     }
 
     self.activateMeasuringLine = function () {
@@ -585,6 +686,14 @@ function CalibrateViewModel() {
             self.currentView(view);
         }
     }
+
+    self.setActiveCalibrationTab = function (element) {
+        $("#calibration-list").find("li").removeClass("active");
+        
+        if(element != null) {
+            $(element).addClass("active");
+        }
+    }
 }
 
 function MicroscopeViewModel() {
@@ -627,33 +736,99 @@ function MicroscopeViewModel() {
 function ImageCalibrationViewModel(currentMicroscope) {
     let self = this;
     self.microscope = ko.observable(currentMicroscope);
-    self.magnification = ko.observable(40);
-    self.startPoint = ko.observable([2, 5]);
-    self.endPoint = ko.observable([88, 21]);
-    self.measuredLength = ko.observable(10);
-    self.calibrationImage = null;
+    self.magnification = ko.observable();
+    self.floatingCal = ko.observable();
+    self.measuredDistance = ko.observable();
+    self.viewer = null;
+    self.loadedImage = ko.observable(false);
+    self.measuringLine = null;
 
-    self.submitCalibration = function (parent) {
-        let request = {
-            CalibrationId: self.currentMicroscope().Id,
-            Magnification: self.magnification(),
-            X1: self.startPoint()[0],
-            X2: self.endPoint()[0],
-            Y1: self.startPoint()[1],
-            Y2: self.endPoint()[1],
-            MeasuredLength: self.measuredLength(),
-            ImageBase64: self.calibrationImage.getBase64()
+    self.canSubmit = function() {
+        if(!self.loadedImage()) return false;
+        if(self.measuredDistance() == null) return false;
+        if(self.floatingCal() == null) return false;
+        if(self.measuredDistance() <= 0) return false;
+
+        return true;
+    }
+
+    self.magName = function(data) {
+        return data.Level + 'x';
+    }
+
+    self.submit = function (parent) {
+        if (self.viewer == null) return;
+
+        convertToDataURLviaCanvas(self.viewer.imagePaths[0], function (d) {
+            let request = {
+                CalibrationId: self.microscope().Id,
+                Magnification: self.magnification(),
+                X1: Math.round(self.floatingCal()[0][0]),
+                X2: Math.round(self.floatingCal()[1][0]),
+                Y1: Math.round(self.floatingCal()[0][1]),
+                Y2: Math.round(self.floatingCal()[1][1]),
+                MeasuredLength: parseFloat(self.measuredDistance()),
+                ImageBase64: d
+            }
+            $.ajax({
+                    url: "/api/v1/digitise/calibration/use/mag",
+                    type: "POST",
+                    data: JSON.stringify(request),
+                    dataType: "json",
+                    contentType: "application/json"
+                })
+                .done(function (data) {
+                    parent.currentView(CalibrateView.MASTER);
+                })
+        });
+    }
+
+    self.activateMeasuringLine = function () {
+        if (self.measuringLine != null) {
+            // don't do anything if the measuring line is being drawn
+            if (self.measuringLine.state == MeasuringLine.STATE_DRAWING ||
+                self.measuringLine.state == MeasuringLine.STATE_ACTIVE) {
+                return;
+            }
+
+            self.measuringLine.dispose();
         }
-        $.ajax({
-                url: "/api/v1/digitise/calibration/use/mag",
-                type: "POST",
-                data: JSON.stringify(request),
-                dataType: "json",
-                contentType: "application/json"
-            })
-            .done(function (data) {
-                parent.currentView(CalibrateView.MASTER);
-            })
+
+        self.measuringLine = new MeasuringLine(self.viewer,
+            "#calibration-viewer-measuring-line", false, null,
+            "Enter the actual distance below");
+
+        self.measuringLine.activate();
+        $("#calibration-draw-line-button").prop("disabled", true);
+
+        $(self.measuringLine).on(MeasuringLine.EVENT_DRAWN, function () {
+            $("#calibration-draw-line-button").prop("disabled", false);
+
+            self.floatingCal(self.measuringLine.getPixelPoints());
+        });
+    }
+
+    self.createViewer = function (element) {
+        console.log(self.microscope());
+        if (self.viewer != null) self.viewer.dispose();
+
+        var file = element.files[0];
+        var reader = new FileReader();
+
+        reader.onloadend = function (e) {
+            self.base64 = reader.result;
+            self.viewer = new Viewer("#calibration-viewer-container",
+                "#calibration-viewer",
+                $("#calibration-viewer-container").width() * 0.8, 500, [
+                    self.base64
+                ]
+            );
+            self.loadedImage(true);
+        }
+
+        if (file) {
+            reader.readAsDataURL(file);
+        }
     }
 }
 

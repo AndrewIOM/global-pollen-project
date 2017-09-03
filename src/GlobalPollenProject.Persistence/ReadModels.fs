@@ -4,16 +4,6 @@ open System
 
 // Helper DTOs
 [<CLIMutable>]
-type FocusableImage = {
-    FrameUrls:  string list
-}
-
-[<CLIMutable>]
-type StandardImage = {
-    Url:        string
-}
-
-[<CLIMutable>]
 type SlideImage = {
     Id:                     int
     Frames:                 List<string>
@@ -38,6 +28,13 @@ type GrainSummary = {
 }
 
 [<CLIMutable>]
+type Node = {
+    Id:         Guid
+    Name:       string
+    Rank:       string
+}
+
+[<CLIMutable>]
 type TaxonSummary = {
     Id:         Guid
     Family:     string
@@ -49,13 +46,7 @@ type TaxonSummary = {
     SlideCount: int
     GrainCount: int
     ThumbnailUrl:string
-}
-
-[<CLIMutable>]
-type Node = {
-    Id:         Guid
-    Name:       string
-    Rank:       string
+    DirectChildren:Node list
 }
 
 [<CLIMutable>]
@@ -73,6 +64,15 @@ type TaxonDetail = {
     Grains:     GrainSummary list
     NeotomaId:  int
     GbifId:     int
+    ReferenceName:  string
+    ReferenceUrl:   string
+}
+
+[<CLIMutable>]
+type TaxonAutocompleteItem = {
+    LatinName: string
+    Rank: string
+    Heirarchy: string list
 }
 
 // Grains
@@ -93,8 +93,7 @@ type IdentificationSummary = {
 [<CLIMutable>]
 type GrainDetail = {
     Id:                 Guid
-    Images:             StandardImage list
-    FocusImages:        FocusableImage list
+    Images:             SlideImage list
     Identifications:    IdentificationSummary list
     ConfirmedFamily:    string
     ConfirmedGenus:     string
@@ -127,6 +126,13 @@ type SlideDetail = {
     Rank:               string
     IsFullyDigitised:   bool
     Images:             List<SlideImage>
+    Age:                int
+    AgeType:            string
+    Location:           string
+    LocationType:       string
+    PrepYear:           string
+    PrepMethod:         string
+    CollectorName:      string
 }
 
 // Taxonomic Backbone
@@ -174,13 +180,21 @@ type ReferenceCollectionDetail = {
 }
 
 // User Profiles
+[<CLIMutable>]
+type GroupSummary = {
+    Id: string
+    Name: string
+}
 
 [<CLIMutable>]
 type PublicProfile = {
     UserId:     Guid
     IsPublic:   bool
+    Title:      string
     FirstName:  string
     LastName:   string
+    Score:      float
+    Groups:     GroupSummary list
 }
 
 // Digitisation Features

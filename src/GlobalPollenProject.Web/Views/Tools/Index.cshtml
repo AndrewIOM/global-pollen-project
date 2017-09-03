@@ -1,0 +1,118 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Tools";
+    ViewData["Subtitle"] = "";
+    ViewData["Description"] = "";
+}
+
+@section headerSection {
+    <header>
+        <div class="container">
+            <h1 id="about">@ViewData["Title"]</h1>
+            <p>@ViewData["Subtitle"]</p>
+        </div>
+    </header>
+}
+
+@section scripts {
+    <script src="/lib/knockout/dist/knockout.js"></script>
+    <script src="/js/tools/lookup.js"></script>
+    <script>
+    $(document).ready(function () {
+        var vm = new BotanicalLookupToolViewModel();
+        ko.applyBindings(vm);
+    });
+    </script>
+}
+
+<div class="row">
+    <div class="col-md-3">
+        <ul class="nav flex-column">
+            <li class="nav-item">
+                <a class="nav-link" href="#name-tracker">Botanical Name Tracer</a>
+            </li>
+        </ul>
+    </div>
+    <div class="col-md-9">
+        <section id="name-tracker">
+            <h3>Botanical Name Tracer</h3>
+            <hr/>
+            <p>The Global Pollen Project incorporates a taxonomic backbone - a checklist of global plant families, genera, and species. </p>
+
+            <div class="panel">
+                <div class="panel-heading">Botanical Name Tracer</div>
+                <div class="panel-body">
+                <p>Lookup rank: 
+                        <select data-bind="value: rank" class="form-control input-sm inline-dropdown">
+                            <option value="Species">Species</option>
+                            <option value="Genus">Genus</option>
+                            <option value="Family">Family</option>
+                        </select>
+                    </p>
+                    <p>Please enter the original taxonomic identity given to the slide.</p>
+                    <div class="row">
+                        <div class="col-sm-3">
+                            <input data-bind="value: family, event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Family" class="form-control" autocomplete="off" placeholder="Family"
+                                onblur="disable('Family');" onkeyup="suggest(this, 'Family');" />
+                            <div class="dropdown-menu" id="FamilyList" style="display:none"></div>
+                        </div>
+                        <div class="col-sm-3">
+                            <input data-bind="value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Genus" class="form-control" autocomplete="off"
+                                placeholder="Genus" onblur="disable('Genus');" onkeyup="suggest(this, 'Genus');" />
+                            <div class="dropdown-menu" id="GenusList" style="display:none"></div>
+                        </div>
+                        <div class="col-sm-3">
+                            <input data-bind="value: species, disable: rank() != 'Species'" type="text" id="original-Species" class="form-control" autocomplete="off"
+                                placeholder="Species" onblur="disable('Species');" onkeyup="suggest(this, 'Species');" />
+                            <div class="dropdown-menu" id="SpeciesList" style="display:none"></div>
+                        </div>
+                        <div class="col-sm-3"><input data-bind="value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }" type="text" class="form-control" autocomplete="off"
+                                placeholder="Auth." /></div>
+                    </div>
+                    <small id="taxon-help" class="form-text text-muted">This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically.</small>
+
+                    <button class="btn btn-secondary" data-bind="click: validateTaxon, enable: isValidTaxonSearch">Validate taxon</button>
+                    <div data-bind="visible: newSlideTaxonStatus, if: newSlideTaxonStatus">
+
+                        <div data-bind="visible: newSlideTaxonStatus() == 'Error'">There was a problem communicating with the taxonomic backbone.</div>
+
+                        <div data-bind="if: newSlideTaxonStatus() != 'Error'">
+                            <div data-bind="visible: newSlideTaxonStatus()[0].TaxonomicStatus == 'accepted'"> @*Accepted Taxon*@
+                                <p><strong>This taxon is an accepted name.</strong></p>
+                                <p>GPP Taxon:
+                                    <span data-bind="text: newSlideTaxonStatus()[0].Family"></span>
+                                    <span> > </span>
+                                    <span data-bind="text: newSlideTaxonStatus()[0].Genus"></span>
+                                    <em><span data-bind="text: newSlideTaxonStatus()[0].Species"></span></em>
+                                    <span> </span>
+                                    <span data-bind="text: newSlideTaxonStatus()[0].NamedBy"></span>
+                                </p>
+                            </div>
+                            <div data-bind="visible: newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'synonym'"> @*Synonym*@
+                                <p>This taxon is a synonym of <span data-bind="text: newSlideTaxonStatus()[0].LatinName"></span>.</p>
+                            </div>
+                            <div data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length > 1"> @*Synonym of ambiguity (more than one - authorship validation required)*@
+                                <p>There are <span data-bind="text: newSlideTaxonStatus().length"></span> possible taxa in the GPP's
+                                    taxonomic backbone:</p>
+                                <ul data-bind="foreach: newSlideTaxonStatus">
+                                    <li data-bind="text: LatinName + ' ' + NamedBy + ' (' + TaxonomicStatus + ' name)'"></li>
+                                </ul>
+                            </div>
+                            <div data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'doubtful'">
+                                @*Unknown*@
+                                <p>This taxon is currently unverified. We are not confident of it's validity, but will accept this
+                                    slide. The slde will not be visible in the Master Reference Collection until the taxon can
+                                    be verified.</p>
+                            </div>
+                            <div data-bind="visible: newSlideTaxonStatus().length == 0"> @*Invalid*@
+                                <p>This taxon was not recognised. Please check you entered the name correctly, or enquire with us.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+        </section>
+    </div>
+</div>

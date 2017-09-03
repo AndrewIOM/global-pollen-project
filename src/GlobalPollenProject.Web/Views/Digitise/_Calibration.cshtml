@@ -6,21 +6,26 @@
             <div class="modal-header">
                 <h5 class="modal-title">Calibrations</h5>
                 <button type="button" class="close" aria-label="Close" data-bind="click: function() { $parent.switchView(CurrentView.MASTER); }">
-          <span aria-hidden="true">&times;</span>
-        </button>
+                    <span aria-hidden="true">&times;</span>
+                </button>
             </div>
             <div class="modal-body">
 
                 <div class="row">
                     @* List of current microscopes *@
                     <div class="col-md-4">
-                        <label>Your Microscopes</label>
-                        <ul data-bind="foreach: myMicroscopes" class="list-group backbone-list">
-                            <li data-bind="text: Name, click: function() { $parent.changeView(CalibrateView.DETAIL, $data) }"></li>
-                        </ul>
-                        <button data-bind="click: function() { changeView(CalibrateView.ADD_MICROSCOPE); }">Setup new</button>
+                        <div class="card" id="calibration-list-card">
+                            <div class="card-header">
+                                My Microscopes
+                            </div>
+                            <div class="card-block">
+                                <ul class="list-group backbone-list" id="calibration-list" data-bind="foreach: myMicroscopes">
+                                    <li class="list-group-item" data-bind="text: Name, click: function() { $parent.changeView(CalibrateView.DETAIL, $data); $parent.setActiveCalibrationTab($element); }"></li>
+                                </ul>
+                                <button class="btn" id="calibration-add-new-button" data-bind="click: function() { changeView(CalibrateView.ADD_MICROSCOPE); setActiveCalibrationTab(null); }">Add new</button>
+                            </div>
+                        </div>
                     </div>
-
                     <div class="col-md-8">
                         @* Adding microscope *@ @Html.Partial("Digitise/_CalMicroscope")
                         @* Editing microscope *@ @Html.Partial("Digitise/_CalMicroscopeDetail")

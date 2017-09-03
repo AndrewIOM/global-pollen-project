@@ -26,6 +26,9 @@
     <PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="1.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.Cookies" Version="1.1.*" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Twitter" Version="1.1.*" />
+    <PackageReference Include="Microsoft.AspNetCore.WebUtilities" Version="1.1.*" />
     <PackageReference Include="Giraffe" Version="0.1.0-alpha025" />
     <PackageReference Include="Giraffe.Razor" Version="0.1.0-alpha001" />
   </ItemGroup>

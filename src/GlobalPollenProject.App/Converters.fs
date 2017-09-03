@@ -108,27 +108,27 @@ module Spatial =
 
 module Temporal =
 
-    let createAge (year:int option) yearType =
+    let createAge (year:Nullable<int>) yearType =
         match yearType with
             | "Calendar" -> 
-                match year with
-                | Some y -> 
+                match year.HasValue with
+                | true -> 
                     // Age cannot be in the future
                     // Age cannot be before 1600
-                    Ok (Some <| CollectionDate (y * 1<CalYr>))
-                | None -> validationError "Year" "The year of botanical collection was missing"
+                    Ok (Some <| CollectionDate (year.Value * 1<CalYr>))
+                | false -> validationError "Year" "The year of botanical collection was missing"
             | "Radiocarbon" ->
-                match year with
-                | None -> validationError "Year" "An approximate radiocarbon age is required"
-                | Some y -> 
+                match year.HasValue with
+                | false -> validationError "Year" "An approximate radiocarbon age is required"
+                | true -> 
                     // Radiocarbon dates are based on 1950, so negatives are allowed up to present year minus 1950 (e.g. -67)
-                    Ok (Some <| Radiocarbon (y * 1<YBP>))
+                    Ok (Some <| Radiocarbon (year.Value * 1<YBP>))
             | "Lead210" ->
-                match year with
-                | None -> validationError "Year" "An approximate lead210 age is required"
-                | Some y -> 
+                match year.HasValue with
+                | false -> validationError "Year" "An approximate lead210 age is required"
+                | true -> 
                     // Lead210 dates are based on 1950, so negatives are allowed up to present year minus 1950.
-                    Ok (Some <| Lead210 (y * 1<YBP>))
+                    Ok (Some <| Lead210 (year.Value * 1<YBP>))
             | _ -> validationError "YearType" "The dating type was not in a correct format"
 
     let createSampleAge (year:Nullable<int>) samplingMethod =
@@ -136,7 +136,7 @@ module Temporal =
         | "botanical" ->
             if (year.HasValue) 
                 then Ok (Some <| CollectionDate (year.Value * 1<CalYr>)) 
-                else validationError "Year" "The year of botanical collection was missing"
+                else Ok <| None
         | "environmental" -> validationError "SamplingMethod" "Not supported"
         | "morphological" -> validationError "SamplingMethod" "not supported"
         | _ -> validationError "SamplingMethod" "The sampling method was not valid"
@@ -222,6 +222,28 @@ module Taxonomy =
         | "morphological" -> Ok <| Morphological taxonId
         | _ -> validationError "SamplingMethod" ("Not a valid sampling method: " + samplingMethod)
 
+module Metadata =
+
+    let createChemicalTreatment method =
+        match method with
+        | "acetolysis" -> Acetolysis |> Some |> Ok
+        | "fresh" -> FreshGrains |> Some |> Ok
+        | "hf" -> HydrofluoricAcid |> Some |> Ok
+        | "unknown" -> None |> Ok
+        | _ -> validationError "ChemicalTreatment" "An unrecognised chemical treatment was specified"
+
+    let createPrepDate (date:Nullable<int>) =
+        match date.HasValue with
+        | false -> None |> Ok
+        | true -> date.Value * 1<CalYr> |> Some |> Ok
+
+    let createMountingMethod method =
+        match method with
+        | "glycerol" -> GlycerineJelly |> Some |> Ok
+        | "siliconeoil" -> SiliconeOil |> Some |> Ok
+        | "unknown" -> None |> Ok
+        | _ -> validationError "MountingMaterial" "An unrecognised mounting method was specified"
+
 module Dto =
 
     let createUnknownGrainCommand id user images temporal spatial =
@@ -232,7 +254,7 @@ module Dto =
                 Temporal = temporal
                 Spatial = spatial }
 
-    let createAddSlideCommand colId id f g s auth taxon place age =
+    let createAddSlideCommand colId id f g s auth taxon place age treatment treatmentDate mounting =
         GlobalPollenProject.Core.Aggregates.ReferenceCollection.Command.AddSlide {
             Collection = colId
             ExistingId = id
@@ -243,9 +265,9 @@ module Dto =
             OriginalSpecies = s
             OriginalAuthor = auth
             Time = age
-            PrepMethod = None
-            PrepDate = None
-            Mounting = None
+            PrepMethod = treatment
+            PrepDate = treatmentDate
+            Mounting = mounting
         }
 
     let toSubmitUnknownGrain grainId userId saveImage (request:AddUnknownGrainRequest) =
@@ -261,7 +283,7 @@ module Dto =
                 |> bind (mapResult (saveImage >> toPersistenceError))
 
         let ageOrError =
-            Temporal.createSampleAge request.Year request.YearType
+            Temporal.createAge request.Year request.YearType
 
         let spaceOrError =
             Spatial.createPoint request.LatitudeDD request.LongitudeDD
@@ -289,12 +311,24 @@ module Dto =
 
         let taxonOrError =
             taxonIdOrError
-            |> bind (Taxonomy.createIdentification dto.SamplingMethod dto.CollectedByInitials dto.CollectedBySurname)
+            |> bind (Taxonomy.createIdentification dto.SamplingMethod dto.CollectedByFirstNames dto.CollectedBySurname)
+
+        let treatmentOrError =
+            Metadata.createChemicalTreatment dto.PreperationMethod
+
+        let prepDateOrError = 
+            Metadata.createPrepDate dto.YearSlideMade
+
+        let mountingOrError =
+            Metadata.createMountingMethod dto.MountingMaterial
 
         createAddSlideCommand (CollectionId dto.Collection) existingId dto.OriginalFamily dto.OriginalGenus dto.OriginalSpecies dto.OriginalAuthor
         <!> taxonOrError
         <*> placeOrError
         <*> ageOrError
+        <*> treatmentOrError
+        <*> prepDateOrError
+        <*> mountingOrError
 
     let toAddSlideImageCommand readStoreGet saveImage (request:SlideImageRequest) =
         let imageForUploadOrError =
@@ -326,7 +360,9 @@ module Dto =
             Identity.existingSlideIdOrError readStoreGet request.CollectionId request.SlideId
 
         let yearTakenOrError =
-            1970<CalYr> |> Ok
+            match request.DigitisedYear.HasValue with
+            | true -> Some (request.DigitisedYear.Value * 1<CalYr>) |> Ok
+            | false -> None |> Ok
 
         let createUploadImageCommand id image yearTaken =
             GlobalPollenProject.Core.Aggregates.ReferenceCollection.Command.UploadSlideImage {
@@ -351,21 +387,33 @@ module DomainToDto =
     let unwrapEph (SpecificEphitet e) = e
     let unwrapAuthor (Scientific a) = a
     let unwrapColVer (ColVersion a) = a
+    let unwrapMagId (MagnificationId (a,b)) : Guid * int = a |> unwrapCalId,b
+
+    let getPixelWidth p1 p2 dist =
+        let removeUnit (x:float<_>) = float x
+        let x1,y1 = p1
+        let x2,y2 = p2
+        let pixelDistance = sqrt ((((float x2)-(float x1))**2.) + (((float y2)-(float y1))**2.))
+        let scale (actual:float<_>) image = actual / image
+        scale (removeUnit dist) pixelDistance
 
     let image getMag toAbsoluteUrl (domainImage:Image) : SlideImage =
         match domainImage with
         | SingleImage (i,cal) ->
             { Id = 0
               Frames = [i |> toAbsoluteUrl |> Url.unwrap]
-              PixelWidth = 2. }
-        | FocusImage (urls,stepping,calId) ->
-            let magnification = getMag calId
+              PixelWidth = getPixelWidth cal.Point1 cal.Point2 cal.MeasuredDistance }
+        | FocusImage (urls,stepping,magId) ->
+            let magnification = getMag magId
             match magnification with
-            | None -> invalidOp "DTO validation failed"
-            | Some (mag:Magnification) ->
-                { Id = 0
-                  Frames = urls |> List.map (toAbsoluteUrl >> Url.unwrap)
-                  PixelWidth = mag.PixelWidth }
+            | Error e -> invalidOp "DTO validation failed"
+            | Ok o ->
+                match o with
+                | None -> invalidOp "DTO validation failed"
+                | Some (mag:Magnification) ->
+                    { Id = 0
+                      Frames = urls |> List.map (toAbsoluteUrl >> Url.unwrap)
+                      PixelWidth = mag.PixelWidth }
 
     let calibration id user name microscope =
 
@@ -383,3 +431,69 @@ module DomainToDto =
           Camera            = cameraName
           UncalibratedMags  = magnifications
           Magnifications    = [] }
+
+    let age (domainAge:Age option) =
+        let removeUnit (x:int<_>) = int x
+        match domainAge with
+        | None -> "Unknown",0
+        | Some a ->
+            match a with
+            | CollectionDate d -> "Calendar", d |> removeUnit
+            | Radiocarbon d -> "Radiocarbon", d |> removeUnit
+            | Lead210 d -> "Lead210", d |> removeUnit
+
+    let location (domainLocation:SamplingLocation option) =
+        match domainLocation with
+        | None -> "Unknown", ""
+        | Some l ->
+            match l with
+            | Site (lat,lon) -> 
+                let removeDD (l:float<_>) : string = (float l).ToString()
+                let unwrapLat (Latitude l) = l
+                let unwrapLon (Longitude l) = l
+                "Site", sprintf "Latitude = %s; Longitude = %s" (unwrapLat lat |> removeDD) (unwrapLon lon |> removeDD)
+            | Area poly -> "Area", ""
+            | PlaceName (lo,d,r,c) -> "Place name", sprintf "Locality = %s; District = %s; Region = %s; Country = %s" lo d r c 
+            | Country c -> "Country", c
+            | Ecoregion e -> "Ecoregion", e
+            | Continent c ->
+                match c with
+                | Africa -> "Continent", "Africa"
+                | Asia -> "Continent", "Asia"
+                | Europe -> "Continent", "Europe"
+                | NorthAmerica -> "Continent", "North America"
+                | SouthAmerica -> "Continent", "South America"
+                | Antarctica -> "Continent", "Antarctica"
+                | Australia -> "Continent", "Australia"
+
+    let person (p:Person) =
+        let toString : char seq -> string = Seq.map string >> String.concat ""
+        match p with
+        | Person (firstNames,surname) ->
+            match firstNames.Length with
+            | 0 -> surname
+            | _ -> 
+                let initials = firstNames |> List.map (Seq.take 1 >> toString) |> String.concat ". "
+                initials + ". " + surname
+        | Person.Unknown -> "Unknown"
+
+    let collectorName (identification:TaxonIdentification) =
+        match identification with
+        | Botanical (id,src,p) -> person p
+        | _ -> "Unknown"
+
+    let prepMethod method =
+        match method with
+        | None -> "Unknown"
+        | Some m ->
+            match m with
+            | Acetolysis -> "acetolysis"
+            | FreshGrains -> "fresh"
+            | HydrofluoricAcid -> "hf"
+
+    let prepDate date =
+        match date with
+        | None -> "Unknown"
+        | Some y ->
+            let removeYr (l:int<_>) : string = (int l).ToString()
+            removeYr y

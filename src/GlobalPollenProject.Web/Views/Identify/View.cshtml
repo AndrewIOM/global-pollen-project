@@ -1,0 +1,227 @@
+@model ReadModels.GrainDetail
+@inject UserManager<ApplicationUser> UserManager
+
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Unidentified Specimen";
+    ViewData["Subtitle"] = "This individual pollen grain or spore does not have a taxonomic identification. Can you help?";
+
+    var currentUserId = UserManager.GetUserId(User);
+    var myIdentification = Model.Identifications.FirstOrDefault(i => i.User.ToString() == currentUserId);
+}
+
+@* Header *@
+@section headerSection {
+    <header><div class="container">
+    <h1><i class="fa fa-question-circle" aria-hidden="true"></i> @ViewData["Title"]</h1>
+    <p>@ViewData["Subtitle"]</p>
+    </div></header>
+}
+
+@* Breadcrumb *@
+<div class="row">
+    <div class="col-md-12">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Home</a></li>
+            <li class="breadcrumb-item"><a href="/Identify">Pollen of Unknown Identity</a></li>
+            <li class="breadcrumb-item">Unidentified Specimen</li>
+        </ol>
+    </div>
+</div>
+
+@section scripts {
+<script src="/lib/d3/d3.min.js"></script>
+<script src="/js/viewer/viewer.js"></script>
+<script src="/js/viewer/focusslider.js"></script>
+<script src="/js/viewer/scalebar.js"></script>
+<script src="/js/mrc/slide.js"></script>
+<script src="/lib/knockout/dist/knockout.js"></script>
+<script src="/js/tools/lookup.js"></script>
+<script>
+    $(function() {
+        var frames = ("@Model.Images[0].Frames").slice(1, -1).split(";");
+        createViewer(frames, @Model.Images[0].PixelWidth);
+    });
+    $(document).ready(function() { 
+        var vm = new BotanicalLookupToolViewModel(); 
+        ko.applyBindings(vm);
+        });
+</script>
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div id="viewer-container"></div>
+        <div class="card">
+            <div class="card-header">
+                Select Image:
+            </div>
+            <div class="card-block">
+                <div class="row" id="slide-gallery">
+                    @foreach(var img in Model.Images) {
+                        <div class="slide-gallery-item col-md-3" data-frames="@img.Frames" data-pixelwidth="@img.PixelWidth">
+                            <img src="@img.Frames[0]" alt="Image preview">
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+
+        @* Details Pane *@
+        <div class="panel panel-default">
+            <div class="panel-heading"><i class="fa fa-leaf" aria-hidden="true"></i> Context</div>
+            <div class="panel-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Sampling Method</label>
+                    </div>
+                    <div class="col-md-8">
+                        <strong>Fossil.</strong> This grain or spore was taken from a sediment core.
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Age</label>
+                    </div>
+                    <div class="col-md-8">
+                        @Model.AgeType - @Model.Age
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-12">
+                        <hr />
+                        <label>Location</label>
+                        <img style="text-align: left; margin-right: auto; display: block; max-width: 100%" alt="Pollen Location"
+                            src="https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/pin-s-a+9ed4bd(@Model.Longitude,@Model.Latitude)/@Model.Longitude,@Model.Latitude,3/560x200@2x?access_token=pk.eyJ1IjoibWFyZWVwMjAwMCIsImEiOiJjaWppeGUxdm8wMDQ3dmVtNHNhcHh0cHA1In0.OrAULrL8pJaL9N5WerUUDQ" />
+                    </div>
+                </div>
+                <hr />
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Date Added</label>
+                    </div>
+                    <div class="col-md-8">
+                        Unknown
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-4">
+                        <label>Share</label>
+                    </div>
+                    <div class="col-md-8">
+                        <a href="https://twitter.com/intent/tweet?button_hashtag=GlobalPollenProject&text=Help%20identify%20this%20pollen%20grain!" class="twitter-hashtag-button" url="location.href">Tweet this grain</a>
+                        <script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + '://platform.twitter.com/widgets.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'twitter-wjs');</script>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Identification Pane *@
+        <div class="panel panel-primary">
+            <div class="panel-heading"><i class="fa fa-search" aria-hidden="true"></i> Identify</div>
+            <div class="panel-body"> 
+                @if (User.Identity.IsAuthenticated)
+                {
+                    @if (myIdentification != null) {
+                        <span>Thank you for suggesting a taxonomic identification.</span>
+                    } else {
+                    <form method="POST" action="/Identify/Identify">
+                        <p>I can identify this grain to
+                                <select data-bind="value: rank" class="form-control input-sm inline-dropdown">
+                                    <option value="Species">Species</option>
+                                    <option value="Genus">Genus</option>
+                                    <option value="Family">Family</option>
+                                </select> level.
+                            </p>
+                        <div class="row">
+                            <div class="col-sm-3">
+                                <input data-bind="value: family, event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Family" class="form-control" autocomplete="off" placeholder="Family"
+                                    onblur="disable('Family');" onkeyup="suggest(this, 'Family');" />
+                                <div class="dropdown-menu" id="FamilyList" style="display:none"></div>
+                            </div>
+                            <div class="col-sm-3">
+                                <input data-bind="value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Genus" class="form-control" autocomplete="off"
+                                    placeholder="Genus" onblur="disable('Genus');" onkeyup="suggest(this, 'Genus');" />
+                                <div class="dropdown-menu" id="GenusList" style="display:none"></div>
+                            </div>
+                            <div class="col-sm-3">
+                                <input data-bind="value: species, disable: rank() != 'Species'" type="text" id="original-Species" class="form-control" autocomplete="off"
+                                    placeholder="Species" onblur="disable('Species');" onkeyup="suggest(this, 'Species');" />
+                                <div class="dropdown-menu" id="SpeciesList" style="display:none"></div>
+                            </div>
+                            <div class="col-sm-3"><input data-bind="value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }" type="text" class="form-control" autocomplete="off"
+                                    placeholder="Auth." /></div>
+                        </div>
+                        <small id="taxon-help" class="form-text text-muted">This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically.</small>
+                        <button class="btn btn-secondary" data-bind="click: validateTaxon, enable: isValidTaxonSearch">Validate taxon</button>
+                        <div data-bind="visible: newSlideTaxonStatus, if: newSlideTaxonStatus">
+                            <div data-bind="visible: newSlideTaxonStatus() == 'Error'">
+                                <p><i class="fa fa-frown-o" aria-hidden="true"></i> There was a problem communicating with the taxonomic backbone.</p>
+                            </div>
+                            <div data-bind="if: newSlideTaxonStatus() != 'Error'">
+                                <div data-bind="visible: newSlideTaxonStatus().length == 1">
+                                    <p><i class="fa fa-smile-o" aria-hidden="true"></i> Verification successful. The current accepted name is:
+                                        <span data-bind="text: newSlideTaxonStatus()[0].Family"></span>
+                                        <span> > </span>
+                                        <span data-bind="text: newSlideTaxonStatus()[0].Genus"></span>
+                                        <em><span data-bind="text: newSlideTaxonStatus()[0].Species"></span></em>
+                                        <span> </span>
+                                        <span data-bind="text: newSlideTaxonStatus()[0].NamedBy"></span>
+                                    </p>
+                                </div>
+                                <div data-bind="visible: newSlideTaxonStatus().length > 1">
+                                    <p><i class="fa fa-frown-o" aria-hidden="true"></i> Verification unsuccessful. There are <span data-bind="text: newSlideTaxonStatus().length"></span> matching names.</p>
+                                    <ul data-bind="foreach: newSlideTaxonStatus">
+                                        <li data-bind="text: LatinName + ' ' + NamedBy + ' (' + TaxonomicStatus + ' name)'"></li>
+                                    </ul>
+                                </div>
+                                <div data-bind="visible: newSlideTaxonStatus().length == 0">
+                                    <p><i class="fa fa-frown-o" aria-hidden="true"></i> Taxon was not recognised by our taxonomic backbone.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <input hidden="hidden" name="TaxonId" id="TaxonId" data-bind="value: currentTaxon"/>
+                        <input hidden="hidden" name="GrainId" id="GrainId" value="@Model.Id" />
+                        <input type="submit"/>
+                    </form>
+                    }
+                    <hr/>
+
+                    @* Display Current Identifications *@
+                    @if (Model.Identifications.Count() == 0)
+                    {
+                        <p>No current identifications</p>
+                    } else {
+                        <table class="table table-responsive">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Identified as</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var id in Model.Identifications) {
+                                    <tr>
+                                    <td>@id.Rank</td> <td>@id.Family @id.Genus @id.Species @id.SpAuth</td>
+                                    </tr>
+                                }
+                        </table>
+                    }
+                } else {
+                    <p><a href="/Account/Login">Log in</a> to identify this specimen.</p>
+                }
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        @Html.Partial("Identify/_Disqus")
+    </div>
+</div>

@@ -3,12 +3,43 @@
 
         <h3 data-bind="text: microscope().Name"></h3>
 
-        <label>Magnification Level</label>
-        <input data-bind="value: magnification" />
+        <label>Already calibrated: </label>
+        <span style="font-style: italic;" data-bind="visible: microscope().Magnifications.length == 0">None</span>
+        <ul data-bind="foreach: microscope().Magnifications">
+            <li data-bind="text: $parent.magName($data)"></li>
+        </ul>
 
-        <input type="file" class="upload" data-bind="event: { change: function() { calibrationImage.changeImage($element) } }" />
-        <div id="calibration-image-container"></div>
+        <div data-bind="visible: microscope().UncalibratedMags.length > 0">
+            <label>Magnification Level</label>
+            <select data-bind="value: magnification, foreach: microscope().UncalibratedMags">
+                <option data-bind="value: $data, text: $data"></option>
+            </select>
+        </div>
+        <br>
+        <input type="file" class="upload" data-bind="event: { change: function() { createViewer($element) } }" />
+        <div id="calibration-viewer-container"></div>
 
-        <button data-bind="click: function() { submit($parent) }" class="btn btn-primary">Submit</button>
+        <div class="card" id="calibration-static-measurement-section" data-bind="visible: loadedImage">
+            <div class="card-header">
+                Draw a line on the loaded image of known length
+            </div>
+            <div class="card-block">
+                <div class="form-group row">
+                    <div class="col-sm-3">
+                        <button data-bind="click: function() { activateMeasuringLine(); }" type="button" class="btn btn-primary" id="calibration-draw-line-button">Draw Line</button>        
+                    </div>
+                    <label for="measuredDistance" class="col-sm-3 col-form-label">Measured Distance</label>
+                    <div class="col-sm-6">
+                        <div class="input-group">
+                            <input data-bind="value: measuredDistance" id="measuredDistance" class="form-control" />
+                            <span class="input-group-addon">μm</span>
+                        </div>
+                        <small class="help">Enter the length of your measurement line in micrometres (μm)</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <button data-bind="click: function() { submit($parent) }" class="btn btn-primary" data-bind="visible: canSubmit">Submit</button>
     </div>
 </div>

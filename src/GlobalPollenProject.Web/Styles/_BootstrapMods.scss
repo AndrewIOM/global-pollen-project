@@ -72,11 +72,12 @@ div.card {
 
 .panel-primary {
     border-color: $primary-color-accent;
-}
 
-.panel-primary>.panel-heading {
-    background-color: $primary-color-accent;
-    border-color: $primary-color-accent;
+    .panel-heading {
+        background-color: $primary-color-accent;
+        border-color: $primary-color-accent;    
+        color: #fff;
+    }
 }
 
 a {
@@ -211,4 +212,12 @@ textarea.form-control {
 
 input.form-control {
     line-height: inherit;
+}
+
+.btn-primary.disabled, .btn-primary:disabled {
+    background-color: $clr-button-disabled;
+}
+
+.btn-primary.disabled:hover {
+    cursor: not-allowed !important;
 }

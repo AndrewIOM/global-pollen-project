@@ -3,6 +3,7 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Master Reference Collection";
+    var rankFilter = Context.Request.Query["rank"].Count == 0 ? "Genus" : Context.Request.Query["rank"][0];
 }
 
 @* Header *@
@@ -12,6 +13,7 @@
     <p>The Global Pollen Project collates information from independent reference collections into this global reference collection. We use the Global Pollen Project's taxonomic backbone to define botanical names.</p>
     </div></header>
 }
+@functions { public string GetSpecificEphitet(string latinName) { return latinName.Split(' ').Last(); } }
 
 @* Breadcrumb *@
 <div class="row">
@@ -26,9 +28,14 @@
 @* Options *@
 <div class="row">
     <div class="col-md-12">
-        <a class="header-toggle">Family</a>
-        <a class="header-toggle header-toggle-active">Genus</a>
-        <a class="header-toggle">Species</a>
+        <a class="header-toggle" href="/Taxon?rank=Family">Family</a>
+        <a class="header-toggle header-toggle-active" href="/Taxon?rank=Genus">Genus</a>
+        <a class="header-toggle" href="/Taxon?rank=Species">Species</a>
+        <div class="alphabet-index"><a href="/Taxon?rank=@rankFilter">All</a>
+            @for (char c = 'A'; c <= 'Z'; c++) {
+                <a href="/Taxon?lex=@c&rank=@rankFilter">@c</a>
+            }
+        </div>
     </div>
 </div>
 
@@ -36,6 +43,10 @@
 <div class="row">
     @foreach (var taxon in Model)
     {
+        var taxonLink = "";
+        if (rankFilter == "Family") { taxonLink = "/Taxon/" + taxon.Family; }
+        else if (rankFilter == "Genus") { taxonLink = "/Taxon/" + taxon.Family + "/" + taxon.Genus; }
+        else if (rankFilter == "Species") { taxonLink = "/Taxon/" + taxon.Family + "/" + taxon.Genus + "/" + GetSpecificEphitet(taxon.Species); }
         <div class="col-md-6">
             <div class="taxon-list-item">
                 <div class="img-container">
@@ -45,7 +56,8 @@
                     }
                 </div>
                 <div class="taxon-details">
-                    <a href="/Taxon/@taxon.Family/@taxon.Genus">
+                    @if (rankFilter == "Family") {  }
+                    <a href="@taxonLink">
                         <h3>@taxon.LatinName</h3>
                     </a>
                     <ul class="list-inline">
@@ -53,6 +65,21 @@
                         <li class="list-inline-item"><i class="fa fa-object-group" aria-hidden="true"></i> @taxon.SlideCount</li>
                     </ul>
                 </div>
+                @if (taxon.DirectChildren.Count() > 0)
+                {
+                    <div class="taxon-toggle">
+                        <a class="subtaxa-button" role="button" data-toggle="collapse" data-target="#taxon-@taxon.Id" aria-expanded="false" aria-controls="taxon-@taxon.Id"><i class="fa fa-list" aria-hidden="true"></i></a>
+                    </div>
+                }
+                <ul id="taxon-@taxon.Id" class="panel-collapse collapse" role="tabpanel">
+                    @foreach (var subTaxa in taxon.DirectChildren.OrderBy(m => m.Name))
+                    {
+                        <li>
+                            <a href="/Taxon/ID/@subTaxa.Id})">@subTaxa.Name</a>
+                        </li>
+                    }
+                </ul>
+
             </div>
         </div>
     }

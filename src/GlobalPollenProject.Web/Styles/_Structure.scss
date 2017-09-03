@@ -28,10 +28,10 @@
     color: rgba(255, 255, 255, .8);
     background-color: $primary-color;
     background-image: url(/images/pollen-tiles-white.png);
-    margin-bottom: 40px;
     font-size: 20px;
     animation: 300s scroll linear infinite;
     animation-fill-mode: forwards;
+    margin-bottom:0;
 }
 
 @media(max-width:992px) {
@@ -67,6 +67,20 @@
             display: inline-block;
         }
     }
+}
+
+.homepage-section {
+    padding: 2.5em 0;
+    text-align: center;
+
+    .big-number {
+        font-size: 2em;
+        display:block;
+    }
+}
+
+.section-bottomline {
+    border-bottom: 0.75px solid lightgrey;
 }
 
 h1 {
@@ -242,8 +256,32 @@ darkroom-container {
 
 header {
     color: #fff;
-    padding-top:90px;
+    padding-top:100px;
     background-color:#9b538b;
     padding-bottom:1em;
     margin-bottom:1em;
+}
+
+// Dropdowns
+.dropdown-menu {
+    li {
+        margin: 0 1em;
+        border-bottom: 1px solid lightgrey;
+        padding-bottom:0.2em;
+        margin-bottom:0.3em;
+
+        .taxon-name {
+            a {
+                margin-right: 0.2em;
+            }
+            span {
+                font-size: 0.8em;
+            }
+        }
+
+        .heirarchy {
+            font-size: 0.8em;
+            font-style: italic;
+        }
+    }
 }

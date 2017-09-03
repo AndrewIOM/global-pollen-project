@@ -1,0 +1,52 @@
+.identify-form-section {
+    margin-bottom: 10px;
+}
+
+.nav-tabs {
+    overflow-x: auto;
+    overflow-y: hidden;
+    display: -webkit-box;
+    display: -moz-box;
+}
+.nav-tabs > li {
+    float: none;
+}
+.nav-link > img {
+    height: 75px;
+}
+.nav-link.active {
+    background-color: #f7f7f9 !important;
+}
+
+#identify-image-config-content {
+    border: 1px solid rgba(0,0,0,.125);
+    border-top: none;
+    border-right: none;
+}
+
+.identify-image-cropper > canvas {
+    margin: 0px auto;
+    width: 95%;
+}
+
+.jcrop-active {
+    width: 100% !important;
+    height: 100% !important;
+    cursor: crosshair;
+}
+
+.identify-image-cropper-error {
+    padding: 10px;
+    color: red;
+    font-style: italic;
+}
+
+*[id^='identify-image-crop-commit-button'] {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+#identify-temporal-environmental-year {
+    margin: 10px;
+    max-width: 300px;
+}

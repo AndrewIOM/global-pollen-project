@@ -35,6 +35,57 @@ type NewAppUserRequest = {
 }
 
 [<CLIMutable>]
+type ExternalLoginConfirmationViewModel = {
+    [<Required>] [<Display(Name ="Title")>] Title: string
+    [<Required>] [<Display(Name = "Forename(s)")>] FirstName: string
+    [<Required>] [<Display(Name = "Surname")>] LastName: string
+    [<Required>] [<Display(Name = "Organisation")>] Organisation: string
+    [<Required>] [<EmailAddress>] [<Display(Name = "Email")>] Email: string
+
+    [<Required>] 
+    [<EmailAddress>] 
+    [<Compare("Email", ErrorMessage = "The email and confirmation email do not match.")>] 
+    [<Display(Name = "Confirm Email")>] 
+    EmailConfirmation: string
+}
+
+[<CLIMutable>]
+type ConfirmEmailRequest = {
+    UserId: string
+    Code: string
+}
+
+[<CLIMutable>]
+type ExternalLoginRequest = {
+    [<Required>] Provider: string
+}
+
+[<CLIMutable>]
+type ResetPasswordViewModel = {
+    [<Required>] 
+    [<EmailAddress>] 
+    [<Display(Name = "Email")>] 
+    Email: string
+
+    Code: string
+
+    [<Required>]
+    [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
+    [<DataType(DataType.Password)>]
+    Password: string
+
+    [<DataType(DataType.Password)>]
+    [<Display(Name = "Confirm password")>]
+    [<Compare("Password", ErrorMessage = "The password and confirmation password do not match.")>]
+    ConfirmPassword: string
+}
+
+[<CLIMutable>]
+type ForgotPasswordViewModel = {
+    [<Required>] [<EmailAddress>] Email: string
+}
+
+[<CLIMutable>]
 type LoginRequest = {
     [<Required>] [<EmailAddress>] Email: string
     [<Required>] [<DataType(DataType.Password)>] Password: string
@@ -58,7 +109,7 @@ type SlideRecordRequest = {
     OriginalAuthor: string
     ExistingId: string
     [<Range(1700,2017)>] YearCollected: System.Nullable<int>
-    CollectedByInitials: char list
+    CollectedByFirstNames: string list
     CollectedBySurname: string
     [<Range(1950,2017)>] YearSlideMade: System.Nullable<int>
     [<Required>] LocationType: string
@@ -76,7 +127,7 @@ type SlideImageRequest = {
     [<Required>] CollectionId: System.Guid
     [<Required>] SlideId: string
     [<Required>] IsFocusImage: bool
-    [<Required>] FramesBase64: string list
+    [<Required>] FramesBase64: List<string>
     [<Range(0,Int32.MaxValue)>] FloatingCalPointOneX: Nullable<int>
     [<Range(0,Int32.MaxValue)>] FloatingCalPointOneY: Nullable<int>
     [<Range(0,Int32.MaxValue)>] FloatingCalPointTwoX: Nullable<int>
@@ -100,10 +151,10 @@ type BackboneSearchRequest = {
 [<CLIMutable>]
 type FloatingCalibrationImage = {
     [<Required>] PngBase64: string
-    [<Required>] [<Range(1, Int32.MaxValue)>] X1: int
-    [<Required>] [<Range(1, Int32.MaxValue)>] X2: int
-    [<Required>] [<Range(1, Int32.MaxValue)>] Y1: int
-    [<Required>] [<Range(1, Int32.MaxValue)>] Y2: int
+    [<Required>] [<Range(0, Int32.MaxValue)>] X1: int
+    [<Required>] [<Range(0, Int32.MaxValue)>] X2: int
+    [<Required>] [<Range(0, Int32.MaxValue)>] Y1: int
+    [<Required>] [<Range(0, Int32.MaxValue)>] Y2: int
     [<Required>] [<Range(1, Int32.MaxValue)>] MeasuredLength: float
 }
 
@@ -114,7 +165,7 @@ type AddUnknownGrainRequest = {
     [<Required>] LatitudeDD: float
     [<Required>] LongitudeDD: float
     Year: Nullable<int>
-    YearType: string
+    [<Required>] YearType: string
 }
 
 [<CLIMutable>]
@@ -142,4 +193,18 @@ type CalibrateRequest = {
 type IdentifyGrainRequest = {
     [<Required>] TaxonId: Guid
     [<Required>] GrainId: Guid
+}
+
+[<CLIMutable>]
+type TaxonPageRequest = {
+    Page: int
+    PageSize: int
+    Rank: string
+    Lex: string
+}
+
+[<CLIMutable>]
+type TaxonAutocompleteRequest = {
+    PageSize: int
+    Name: string
 }
