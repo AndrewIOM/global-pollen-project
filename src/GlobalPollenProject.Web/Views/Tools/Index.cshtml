@@ -17,6 +17,12 @@
 @section scripts {
     <script src="/lib/knockout/dist/knockout.js"></script>
     <script src="/js/tools/lookup.js"></script>
+    <script>
+    $(document).ready(function () {
+        var vm = new BotanicalLookupToolViewModel();
+        ko.applyBindings(vm);
+    });
+    </script>
 }
 
 <div class="row">

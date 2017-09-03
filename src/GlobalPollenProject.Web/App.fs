@@ -342,8 +342,9 @@ let submitGrainHandler (ctx:HttpContext) =
     |> toApiResult ctx
 
 let submitIdentificationHandler (ctx:HttpContext) =
-    bindJson<IdentifyGrainRequest> ctx
-    |> bind (UnknownGrains.identifyUnknownGrain (currentUserId ctx))
+    ctx.BindForm<IdentifyGrainRequest>()
+    |> Async.RunSynchronously
+    |> UnknownGrains.identifyUnknownGrain (currentUserId ctx)
     |> toApiResult ctx
 
 /////////////////////////

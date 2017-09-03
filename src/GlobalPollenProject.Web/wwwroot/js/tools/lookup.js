@@ -21,7 +21,7 @@ function BotanicalLookupToolViewModel() {
 
     self.isValidTaxonSearch = ko.computed(function () {
         if (self.rank() == "Family" && self.family().length > 0) return true;
-        if (self.rank() == "Genus" && self.family().length > 0 && self.genus().length > 0) return true;
+        if (self.rank() == "Genus" && self.genus().length > 0) return true;
         if (self.rank() == "Species" && self.genus().length > 0 && self.species().length > 0) return true;
         return false;
     }, self);
@@ -48,12 +48,12 @@ function BotanicalLookupToolViewModel() {
     self.capitaliseFirstLetter = function (element) {
         $(element).val($(element).val().charAt(0).toUpperCase() + $(element).val().slice(1));
     }
-}
 
-$(document).ready(function () {
-    var vm = new BotanicalLookupToolViewModel();
-    ko.applyBindings(vm);
-});
+    self.getTaxonIdIfValid = function() {
+        if (self.currentTaxon() != null) return self.currentTaxon();
+        return null;
+    }
+}
 
 // Helpers
 var typingTimer;

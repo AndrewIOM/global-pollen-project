@@ -490,12 +490,12 @@ module Grain =
             <!> (taxon |> lift toHeirarchy)
 
         let addId id grain = { grain with Identifications = id :: grain.Identifications }
-        let save grain = ReadStore.RepositoryBase.setSingle (id.ToString()) grain set serialise
+        let save (grain:GrainDetail) = ReadStore.RepositoryBase.setSingle (id.ToString()) grain set serialise
 
         addId
         <!> identification
         <*> grain
-        |> save
+        |> bind save
 
     let identityChanged get set (taxon:TaxonId option) grainId = 
         let id : Guid = Converters.DomainToDto.unwrapGrainId grainId
