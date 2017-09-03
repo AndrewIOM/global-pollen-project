@@ -496,8 +496,16 @@ module TaxonomicBackbone =
             | Misapplied id -> "misapplied",(id |> Converters.DomainToDto.unwrapTaxonId).ToString()
             | Synonym id -> "synonym",(id |> Converters.DomainToDto.unwrapTaxonId).ToString()
 
+        let group =
+            match event.Group with
+            | TaxonomicGroup.Angiosperm -> "Angiosperm"
+            | TaxonomicGroup.Bryophyte -> "Bryophyte"
+            | TaxonomicGroup.Gymnosperm -> "Gymnosperm"
+            | TaxonomicGroup.Pteridophyte -> "Pteridophyte"
+
         let projection = 
             {   Id = Converters.DomainToDto.unwrapTaxonId event.Id
+                Group = group
                 Family = family
                 Genus = genus
                 Species = species

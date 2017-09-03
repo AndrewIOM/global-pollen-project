@@ -134,6 +134,7 @@ type SlideDetail = {
 [<CLIMutable>]
 type BackboneTaxon = {
     Id:             Guid
+    Group:          string
     Family:         string
     Genus:          string
     Species:        string
