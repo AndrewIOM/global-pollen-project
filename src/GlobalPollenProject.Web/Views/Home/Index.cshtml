@@ -1,3 +1,4 @@
+@model Responses.HomeStatsViewModel
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Home";
@@ -26,14 +27,22 @@
 }
 
 @section nocontainerbody {
-    @Html.Partial("Home/_StatRowSection")
+    <section class="homepage-section section-bottomline">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-3"><span class="big-number">@Model.Species</span>Species</div>
+                <div class="col-md-3"><span class="big-number">@Model.DigitisedSlides</span>Digitised Reference Slides</div>
+                <div class="col-md-3"><span class="big-number">@Model.IndividualGrains</span>Individual Grains and Spores</div>
+            </div>
+        </div>
+    </section>
     <section class="homepage-section">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-sm-4">
                     <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Poaceae Grass Pollen Grain">
                     <h3><a href="/Taxon">A Global Pollen and Spore Reference Set</a></h3>
-                    <p>Browse the dynamic and ever expanding reference collection of the Global Pollen Project! Use as a key or as a reference for your own research.</p>
+                    <p>Browse the dynamic and ever expanding reference collection of the Global Pollen Project.</p>
                 </div>
                 <div class="col-sm-4">
                     <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Betula pollen grain">
@@ -55,7 +64,7 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-4">
-                    <p><span id="unidentified-count">??</span> unidentified grains</p>
+                    <p><span id="unidentified-count">@Model.UnidentifiedGrains</span> unidentified grains</p>
                 </div>
                 <div class="col-md-8">
                     <div id="locations-map"></div>

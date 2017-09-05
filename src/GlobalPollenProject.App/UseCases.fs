@@ -486,6 +486,27 @@ module User =
         issueCommand <| Register { Id = id; Title = newUser.Title; FirstName = newUser.FirstName; LastName = newUser.LastName }
         Ok id
 
+module Statistic =
+
+    let getHomeStatistics() =
+        let createStatModel d s i u =
+            { DigitisedSlides = d
+              Species = s
+              IndividualGrains = i
+              UnidentifiedGrains = u }
+        let getStat key = RepositoryBase.getKey<int> key readStoreGet deserialise
+        createStatModel
+        <!> getStat "Statistic:SlideDigitisedTotal"
+        <*> getStat "Statistic:Taxon:Species:Total"
+        <*> getStat "Statistic:Grain:Total"
+        <*> getStat "Statistic:UnknownSpecimenRemaining"
+
+    let getTopScoringUnknownGrains() =
+        let getCol (id:Guid) = ReadStore.RepositoryBase.getSingle<GrainSummary> (id.ToString()) readStoreGet deserialise
+        RepositoryBase.getListKey<Guid> All "GrainSummary:index" readStoreGetList deserialiseGuid
+        |> bind (mapResult getCol)
+        |> toAppResult
+
 // Additional event handlers:
 
 eventStore.Value.SaveEvent 

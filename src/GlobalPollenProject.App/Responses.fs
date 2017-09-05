@@ -30,3 +30,16 @@ type FailResult = {
     Message: string
     Errors: ValidationError list
 }
+
+type HomeStatsViewModel = {
+    DigitisedSlides: int
+    Species: int
+    IndividualGrains: int
+    UnidentifiedGrains: int
+}
+
+type GrainPositionViewModel = {
+    Latitude: float
+    Longitude: float
+    Id: System.Guid
+}

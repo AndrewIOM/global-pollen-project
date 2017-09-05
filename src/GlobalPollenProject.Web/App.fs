@@ -140,7 +140,7 @@ let registerHandler (ctx:HttpContext) =
                 let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
                 let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s" (getBaseUrl ctx) user.Id codeBase64
                 let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
-                let! response = sendEmail model.Email "Reset Password" html
+                let! response = sendEmail model.Email "Confirm your email" html
                 return! renderView "Account/AwaitingEmailConfirmation" None ctx
         | false -> 
             return! razorHtmlViewWithModelState "Account/Register" (identityErrorsToModelState result) model ctx
@@ -347,6 +347,14 @@ let submitIdentificationHandler (ctx:HttpContext) =
     |> UnknownGrains.identifyUnknownGrain (currentUserId ctx)
     |> toApiResult ctx
 
+let homeHandler (ctx:HttpContext) =
+    Statistic.getHomeStatistics()
+    |> toViewResult "Home/Index" ctx
+
+let topUnknownGrainsHandler (ctx:HttpContext) =
+    Statistic.getTopScoringUnknownGrains()
+    |> toApiResult ctx
+
 /////////////////////////
 /// Routes
 /////////////////////////
@@ -359,6 +367,7 @@ let webApp =
             route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
             route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
             route   "/taxon/search"             >=> queryRequestToApiResponse<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
+            route   "/grain/unknown"            >=> topUnknownGrainsHandler
         ]
 
     let digitiseApi =
@@ -434,7 +443,7 @@ let webApp =
         subRoute    "/Identify"                 identify
         GET >=> 
         choose [
-            route   "/"                         >=> renderView "Home/Index" None
+            route   "/"                         >=> homeHandler
             route   "/Guide"                    >=> renderView "Home/Guide" None
             route   "/Statistics"               >=> renderView "Statistics/Index" None
             route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None

@@ -58,11 +58,13 @@ module Statistics =
     // Statistic:UnknownSpecimenTotal
     // Statistic:UnknownSpecimenRemaining
     // Statistic:UnknownSpecimenIdentificationsTotal
+    // Statistic:GrainTotal
     // Statistic:SlideTotal
     // Statistic:SlideDigitisedTotal
     // Statistic:Representation:Families:gppCount
     // Statistic:Representation:Families:backboneCount
     // Statistic:BackboneTaxa:Total
+    // Statistic:Taxon:Species:Total
 
     let incrementStat key get set =
         RepositoryBase.getKey<int> key get deserialise

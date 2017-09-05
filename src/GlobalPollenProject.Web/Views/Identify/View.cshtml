@@ -189,31 +189,29 @@
                     </form>
                     }
                     <hr/>
-
-                    @* Display Current Identifications *@
-                    @if (Model.Identifications.Count() == 0)
-                    {
-                        <p>No current identifications</p>
-                    } else {
-                        <table class="table table-responsive">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Identified as</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var id in Model.Identifications) {
-                                    <tr>
-                                    <td>@id.Rank</td> <td>@id.Family @id.Genus @id.Species @id.SpAuth</td>
-                                    </tr>
-                                }
-                        </table>
-                    }
                 } else {
                     <p><a href="/Account/Login">Log in</a> to identify this specimen.</p>
                 }
-
+                @* Display Current Identifications *@
+                @if (Model.Identifications.Count() == 0)
+                {
+                    <p>No current identifications</p>
+                } else {
+                    <table class="table table-responsive">
+                        <thead>
+                            <tr>
+                                <th>Rank</th>
+                                <th>Identified as</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var id in Model.Identifications) {
+                                <tr>
+                                <td>@id.Rank</td> <td>@id.Family @id.Genus @id.Species @id.SpAuth</td>
+                                </tr>
+                            }
+                    </table>
+                }
             </div>
         </div>
 
