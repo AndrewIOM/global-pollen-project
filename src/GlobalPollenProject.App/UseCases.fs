@@ -258,6 +258,7 @@ module UnknownGrains =
 
     let getDetail grainId =
         ReadStore.RepositoryBase.getSingle<GrainDetail> grainId readStoreGet deserialise
+        |> toAppResult
 
     let identifyUnknownGrain getCurrentUser (req:IdentifyGrainRequest) =
         let taxonIdOrError = Converters.Identity.existingBackboneTaxonOrError readStoreGet req.TaxonId
@@ -500,6 +501,7 @@ module Statistic =
         <*> getStat "Statistic:Taxon:Species:Total"
         <*> getStat "Statistic:Grain:Total"
         <*> getStat "Statistic:UnknownSpecimenRemaining"
+        |> toAppResult
 
     let getTopScoringUnknownGrains() =
         let getCol (id:Guid) = ReadStore.RepositoryBase.getSingle<GrainSummary> (id.ToString()) readStoreGet deserialise
