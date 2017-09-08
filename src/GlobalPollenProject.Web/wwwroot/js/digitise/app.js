@@ -566,7 +566,7 @@ function SlideDetailViewModel(detail) {
         var files = element.files;
         var loaded = 0;
         var readers = [];
-        var base64s = [];
+        var fileData = [];
 
         if (files.length < 2) {
             alert("You must upload at least 2 images (shift-click/ctrl-click files to select multiple)");
@@ -574,13 +574,26 @@ function SlideDetailViewModel(detail) {
         }
 
         for (var i = 0; i < files.length; i++) {
-            readers.push(new FileReader());
+            var r = new FileReader();
+            readers.push(r);
 
             readers[i].onloadend = function (e) {
                 loaded++;
-                base64s.push(this.result);
-
+                fileData.push({ name: this.file.name, b64: this.result });
+                
                 if (loaded >= files.length) {
+                    // sort by file name
+                    fileData.sort(function(a, b){
+                        if(a.name < b.name) return -1;
+                        if(a.name > b.name) return 1;
+                        return 0;
+                    })
+
+                    var base64s = [];
+                    for(var j = 0; j < fileData.length; j++) {
+                        base64s.push(fileData[j].b64);
+                    }
+                    
                     self.viewer = new Viewer("#focus-image-previewer",
                         "#focus-image-previewer-canvas",
                         $("#focus-image-previewer-container").width() * 0.8, 500, base64s
@@ -598,6 +611,7 @@ function SlideDetailViewModel(detail) {
                 }
             }
             if (files[i]) {
+                readers[i].file = files[i];
                 readers[i].readAsDataURL(files[i]);
             }
         }
