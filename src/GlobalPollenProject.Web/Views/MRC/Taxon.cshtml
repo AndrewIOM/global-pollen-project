@@ -90,7 +90,7 @@
                     <input type="radio" name="distribution" value="recent" autocomplete="off" checked> Recent
                     </label>
                     <label class="btn btn-primary btn-sm">
-                    <input type="radio" name="distribution" value="paleo" autocomplete="off"> Paleo
+                    <input type="radio" name="distribution" value="paleo" autocomplete="off"> Palaeo
                     </label>
                 </div>
 
@@ -151,6 +151,14 @@
                         {
                             <li><a href="/Taxon/Id/@subTaxon.Id">@subTaxon.Name</a></li>
                         }
+                        </ul>
+                    </dd>
+                </dl>
+                <dl class="row">
+                    <dt class="col-sm-3">GPP Completion</dt>
+                    <dd class="col-sm-9">
+                        <ul class="list-inline">
+                            @Model.Children.Length of @Model.BackboneChildren accepted @subname.
                         </ul>
                     </dd>
                 </dl>

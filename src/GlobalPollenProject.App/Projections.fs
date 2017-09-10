@@ -61,14 +61,24 @@ module Statistics =
     // Statistic:GrainTotal
     // Statistic:SlideTotal
     // Statistic:SlideDigitisedTotal
-    // Statistic:Representation:Families:gppCount
-    // Statistic:Representation:Families:backboneCount
+    // Statistic:Representation:Families:GPP
     // Statistic:BackboneTaxa:Total
-    // Statistic:Taxon:Species:Total
+    // Statistic:Taxon:SpeciesTotal
+
+    let init set =
+        RepositoryBase.setKey 0 "Statistic:UnknownSpecimenTotal" set serialise |> ignore
+        RepositoryBase.setKey 0 "Statistic:UnknownSpecimenRemaining" set serialise |> ignore
+        RepositoryBase.setKey 0 "Statistic:UnknownSpecimenIdentificationsTotal" set serialise |> ignore
+        RepositoryBase.setKey 0 "Statistic:Grain:Total" set serialise |> ignore
+        RepositoryBase.setKey 0 "Statistic:SlideTotal" set serialise |> ignore
+        RepositoryBase.setKey 0 "Statistic:SlideDigitisedTotal" set serialise |> ignore
+        RepositoryBase.setKey 0 "Statistic:Representation:Families:GPP" set serialise |> ignore
+        RepositoryBase.setKey 0 "Statistic:Taxon:SpeciesTotal" set serialise
 
     let incrementStat key get set =
-        RepositoryBase.getKey<int> key get deserialise
-        |> bind (fun i -> RepositoryBase.setKey (i + 1) key set serialise)
+        match RepositoryBase.getKey<int> key get deserialise with
+        | Ok i -> RepositoryBase.setKey (i + 1) key set serialise
+        | Error e -> RepositoryBase.setKey 1 key set serialise
 
     let decrementStat key get set =
         RepositoryBase.getKey<int> key get deserialise
@@ -87,10 +97,6 @@ module Statistics =
                 incrementStat "Statistic:UnknownSpecimenIdentificationsTotal" get set
             | Grain.Event.GrainIdentityUnconfirmed e ->
                 incrementStat "Statistic:UnknownSpecimenRemaining" get set
-            | _ -> Ok()
-        | :? Taxonomy.Event as e ->
-            match e with
-            | Taxonomy.Event.Imported e -> incrementStat "Statistic:BackboneTaxa:Total" get set
             | _ -> Ok()
         | _ -> Ok()
 
@@ -129,7 +135,7 @@ module MasterReferenceCollection =
             DirectChildren = []
         }
 
-    let initTaxonDetail (backboneTaxon:BackboneTaxon) parent : TaxonDetail =
+    let initTaxonDetail (backboneTaxon:BackboneTaxon) parent backboneChildCount : TaxonDetail =
         {
             Id = backboneTaxon.Id
             Family = backboneTaxon.Family
@@ -146,6 +152,7 @@ module MasterReferenceCollection =
             ReferenceUrl = ""
             NeotomaId = 0
             GbifId = 0
+            BackboneChildren = backboneChildCount
         }
 
     let getLatinName (s:SlideDetail) =
@@ -223,14 +230,26 @@ module MasterReferenceCollection =
             RepositoryBase.setSortedListItem (generateLookupValue t) ("Autocomplete:Taxon") 0. setSortedList |> ignore
             RepositoryBase.setKey (id.ToString()) (getRankKey t) set serialise
 
+    let getBackboneChildCount get bbTaxon =
+        match bbTaxon.TaxonomicStatus with
+        | "accepted" ->
+            match bbTaxon.Rank with
+            | "Family" -> RepositoryBase.getKey ("Statistic:BackboneTaxa:" + bbTaxon.Family) get deserialise
+            | "Genus" -> RepositoryBase.getKey ("Statistic:BackboneTaxa:" + bbTaxon.Family + ":" + bbTaxon.Genus) get deserialise
+            | "Species" -> 0 |> Ok
+            | _ -> Error "Invalid rank specified"
+        | _ -> Error "Cannot currently import taxa that are not accepted into MRC"
+
     let initTaxon get backboneId : Result<TaxonReadModel,string> =
         let bbTaxon = TaxonomicBackbone.getById backboneId get deserialise
         let parentNode = bbTaxon |> bind toParentNode
         let summary = bbTaxon |> lift initTaxonSummary
+        let bbTaxonChildCount = bbTaxon |> bind (getBackboneChildCount get)
         let detail = 
             initTaxonDetail 
             <!> bbTaxon 
             <*> parentNode 
+            <*> bbTaxonChildCount
         match summary with
         | Error e -> Error e
         | Ok s ->
@@ -315,6 +334,7 @@ module MasterReferenceCollection =
                 let summary = { taxon.Summary with SlideCount = taxon.Summary.SlideCount + 1; ThumbnailUrl = slide.Thumbnail }
                 let detail = { taxon.Detail with Slides = slide :: taxon.Detail.Slides }
                 { Summary = summary; Detail = detail }
+            Statistics.incrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
             getHeirarchy get (bbId |> TaxonId)
             |> lift (List.map (add slideSummary))
             |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
@@ -329,6 +349,7 @@ module MasterReferenceCollection =
                 let summary = { taxon.Summary with SlideCount = taxon.Summary.SlideCount - 1 }
                 let detail = { taxon.Detail with Slides = taxon.Detail.Slides |> List.filter (fun s -> not (s = slide)) }
                 { Summary = summary; Detail = detail }
+            Statistics.decrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
             getHeirarchy get (bbId |> TaxonId)
             |> lift (List.map (remove slideSummary))
             |> bind (mapResult (setTaxon get set setSortedList (bbId |> TaxonId)))
@@ -548,6 +569,15 @@ module TaxonomicBackbone =
 
     open GlobalPollenProject.Core.Aggregates.Taxonomy
 
+    // Statistic:Representation:{Family}:{Genus}
+    // Statistic:BackboneTaxa:{F/G/S/Total}
+
+    let init set =
+        RepositoryBase.setKey 0 "Statistic:BackboneTaxa:Families" set serialise |> ignore     
+        RepositoryBase.setKey 0 "Statistic:BackboneTaxa:Genera" set serialise |> ignore     
+        RepositoryBase.setKey 0 "Statistic:BackboneTaxa:Species" set serialise |> ignore     
+        RepositoryBase.setKey 0 "Statistic:BackboneTaxa:Total" set serialise
+
     let getById getKey id =
         match id with
         | Some id ->
@@ -622,7 +652,22 @@ module TaxonomicBackbone =
                 Rank = rank
                 ReferenceName = reference
                 ReferenceUrl = referenceUrl }
-        ReadStore.TaxonomicBackbone.import setKey setSortedList serialise projection
+        ReadStore.TaxonomicBackbone.import setKey setSortedList serialise projection |> ignore
+
+        match projection.TaxonomicStatus with
+        | "accepted" ->
+            Statistics.incrementStat "Statistic:BackboneTaxa:Total" getKey setKey |> ignore
+            match projection.Rank with
+            | "Family" ->
+                Statistics.incrementStat "Statistic:BackboneTaxa:Families" getKey setKey
+            | "Genus" ->
+                Statistics.incrementStat "Statistic:BackboneTaxa:Genera" getKey setKey |> ignore
+                Statistics.incrementStat ("Statistic:BackboneTaxa:" + projection.Family) getKey setKey
+            | "Species" ->
+                Statistics.incrementStat "Statistic:BackboneTaxa:Species" getKey setKey |> ignore
+                Statistics.incrementStat ("Statistic:BackboneTaxa:" + projection.Family + ":" + projection.Genus) getKey setKey
+            | _ -> Ok()
+        | _ -> Ok()
 
     let handle get getSortedList set setSortedList (e:string*obj) =
         match snd e with

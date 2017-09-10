@@ -44,7 +44,7 @@ let eventStore = lazy(
     EventStore.EventStore(es) )
 
 // Read Model 'Repository'
-let readStoreGet,readStoreGetList,readStoreGetSortedList,readLex,redisSet,redisSetList,redisSetSortedList =
+let readStoreGet,readStoreGetList,readStoreGetSortedList,readLex,redisSet,redisSetList,redisSetSortedList,redisReset =
     let ip = appSettings.["readstore:redisip"]
     let redis = lazy (ReadStore.Redis.connect ip)
     redis.Value |> ReadStore.Redis.get, 
@@ -53,7 +53,8 @@ let readStoreGet,readStoreGetList,readStoreGetSortedList,readLex,redisSet,redisS
     redis.Value |> ReadStore.Redis.lexographicSearch,
     redis.Value |> ReadStore.Redis.set, 
     redis.Value |> ReadStore.Redis.addToList,
-    redis.Value |> ReadStore.Redis.addToSortedList
+    redis.Value |> ReadStore.Redis.addToSortedList,
+    redis.Value |> ReadStore.Redis.reset
 
 let inline deserialise< ^a> json = 
     let unwrap (ReadStore.Json j) = j
@@ -283,6 +284,14 @@ module UnknownGrains =
             |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
             |> Ok
 
+    let getTopScoringUnknownGrains() =
+        let getCol (id:Guid) = 
+            ReadStore.RepositoryBase.getSingle<GrainDetail> (id.ToString()) readStoreGet deserialise
+            |> lift (fun d -> { Id = d.Id; Latitude = d.Latitude; Longitude = d.Longitude })
+        RepositoryBase.getListKey<Guid> All "GrainSummary:index" readStoreGetList deserialiseGuid
+        |> bind (mapResult getCol)
+        |> toAppResult
+
 
 module Taxonomy =
 
@@ -498,16 +507,17 @@ module Statistic =
         let getStat key = RepositoryBase.getKey<int> key readStoreGet deserialise
         createStatModel
         <!> getStat "Statistic:SlideDigitisedTotal"
-        <*> getStat "Statistic:Taxon:Species:Total"
+        <*> getStat "Statistic:Taxon:SpeciesTotal"
         <*> getStat "Statistic:Grain:Total"
         <*> getStat "Statistic:UnknownSpecimenRemaining"
         |> toAppResult
 
-    let getTopScoringUnknownGrains() =
-        let getCol (id:Guid) = ReadStore.RepositoryBase.getSingle<GrainSummary> (id.ToString()) readStoreGet deserialise
-        RepositoryBase.getListKey<Guid> All "GrainSummary:index" readStoreGetList deserialiseGuid
-        |> bind (mapResult getCol)
-        |> toAppResult
+module Admin =
+
+    let rebuildReadModel() =
+        redisReset() |> ignore
+        ProjectionHandler.init redisSet () |> ignore
+        eventStore.Value.ReplayDomainEvents()
 
 // Additional event handlers:
 

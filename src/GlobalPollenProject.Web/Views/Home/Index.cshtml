@@ -7,6 +7,9 @@
 
 @section Scripts {
     <script type="text/javascript" src="/js/home/suggest.js"></script>
+    <script src="//d3js.org/d3.v3.min.js"></script>
+    <script src="//d3js.org/topojson.v0.min.js"></script>
+    <script type="text/javascript" src="/js/home/grain-map.js"></script>
 }
 
 @* Header *@
@@ -39,34 +42,39 @@
     <section class="homepage-section">
         <div class="container">
             <div class="row justify-content-center">
+                <div class="col-md-9"><div class="alert alert-info">Welcome to the new Global Pollen Project (GPP). Data is currently being migrated from the original GPP, so some taxa or slides may be missing. <a href="/About">Learn more...</a></div></div>
+            </div>
+        </div>
+    </section>
+    <section class="homepage-section">
+        <div class="container">
+            <div class="row justify-content-center">
                 <div class="col-sm-4">
-                    <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Poaceae Grass Pollen Grain">
+                    <img class="img-circle img-responsive home-tri-image" src="/images/pollen2.jpg" alt="Compositae Pollen Grain">
                     <h3><a href="/Taxon">A Global Pollen and Spore Reference Set</a></h3>
-                    <p>Browse the dynamic and ever expanding reference collection of the Global Pollen Project.</p>
+                    <p>Browse the dynamic and ever expanding reference collection of the Global Pollen Project. Individual reference collections and identified material are combined into an always up-to-date botanical taxonomy. <a href="/Guide#mrc">Learn more&hellip;</a></p>
                 </div>
                 <div class="col-sm-4">
-                    <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Betula pollen grain">
-                    <h3><a href="/Home/Guide#submit">Submit Your Pollen Grains</a></h3>
-                    <p>
-                        If you are having trouble identifying a pollen grain to family, genus or species level, submit your grain to the Global Pollen Project. Crowd source the identification from others working with pollen across the world.
-                    </p>
+                    <img class="img-circle img-responsive home-tri-image" src="/images/pollen1.jpg" alt="Pollen Grain">
+                    <h3><a href="/Identify">Crowdsourced Taxonomic Identification</a></h3>
+                    <p>If you are having trouble identifying a pollen grain to family, genus or species level, submit your grain to the Global Pollen Project. Help others by providing identifications and earn points on the leader board for your lab group or Institution. <a href="/Guide#submit">Learn more&hellip;</a></p>
                 </div>
                 <div class="col-sm-4">
-                    <img class="img-circle img-responsive home-tri-image" src="http://placehold.it/250x250" alt="Asteraceae pollen grain">
-                    <h3><a href="/Unknown/Submit">Add Your Expertise</a></h3>
-                    <p>Are you a specialist in a particular region or taxon? Help others by providing identifications and earn points on the leader board for your lab group or Institution.</p>
+                    <img class="img-circle img-responsive home-tri-image" src="/images/pollen3.jpg" alt="Pollen Grain">
+                    <h3><a href="/Guide#digitisation">Robust Digitisiation Tools</a></h3>
+                    <p>Our web-based digitisation tool enables anyone to digitise and share reference material, following a scientifically-robust protocol. <a href="/Guide#digitisation">Learn more&hellip;</a></p>
                 </div>
             </div>
         </div>
     </section>
 
-    <section class="homepage-section">
+    <section class="homepage-section map-section">
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-md-4">
                     <p><span id="unidentified-count">@Model.UnidentifiedGrains</span> unidentified grains</p>
                 </div>
-                <div class="col-md-8">
+                <div class="col-md-6">
                     <div id="locations-map"></div>
                 </div>
             </div>

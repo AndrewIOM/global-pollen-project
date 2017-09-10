@@ -6,8 +6,6 @@ open EventStore.ClientAPI
 open Serialisation
 open GlobalPollenProject.Core.Aggregate
 
-let newEvent = new Event<obj>()
-
 type IEventStoreConnection with
     member this.AsyncConnect() = this.ConnectAsync() |> Async.AwaitTask
     member this.AsyncReadStreamEventsForward stream start count resolveLinkTos =
@@ -16,7 +14,6 @@ type IEventStoreConnection with
     member this.AsyncAppendToStream stream expectedVersion events =
         this.AppendToStreamAsync(stream, expectedVersion, events)
         |> Async.AwaitTask
-    member this.SaveEvent = newEvent.Publish
 
 let serialise (event:'a) = 
     let typeName, data = Serialisation.serialiseEventToBytes event
@@ -39,11 +36,20 @@ let connect host port username userpass =
         do! Async.AwaitTask ( s.ConnectAsync() )
         return s }
 
+let rec private readAll (connection : IEventStoreConnection)
+                        (from : Position) : seq<RecordedEvent> =
+    seq {
+        let sliceTask = connection.ReadAllEventsForwardAsync(from, 100, true)
+        let slice = sliceTask |> Async.AwaitTask |> Async.RunSynchronously
+        if slice.Events.Length > 0 then
+            for resolvedEvent in slice.Events do
+                yield resolvedEvent.Event
+            yield! readAll connection slice.NextPosition
+    }
+
 type EventStore(store:IEventStoreConnection) =
 
     let saveEvent = new Event<string * obj>()
-
-    member this.Events = invalidOp "Not implemented"
 
     member this.SaveEvent = saveEvent.Publish 
 
@@ -82,6 +88,10 @@ type EventStore(store:IEventStoreConnection) =
             let serializedEvents = [| for event in newEvents -> serialise event |]
             do! Async.Ignore <| store.AsyncAppendToStream streamId (int64 expectedVersion) serializedEvents
             newEvents |> List.iter (fun e -> saveEvent.Trigger(streamId ,upcast e)) }
+
+    member this.ReplayDomainEvents() =
+        let events = readAll store Position.Start
+        events |> Seq.iter (fun e -> saveEvent.Trigger(e.EventStreamId, Serialisation.deserialiseEventByName e.EventType e.Data))
 
     member this.MakeCommandHandler aggName aggregate deps =
         let read = this.ReadStream<'TEvent>

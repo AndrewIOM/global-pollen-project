@@ -111,7 +111,6 @@ module RepositoryBase =
     let setSortedListItem item list score =
         KeyValueStore.setItemInSortedList list item score
 
-
 module Redis =
 
     open StackExchange.Redis
@@ -127,6 +126,7 @@ module Redis =
         let config = ConfigurationOptions()
         config.SyncTimeout <- 100000
         config.ConnectTimeout <- 100000
+        config.AllowAdmin <- true //To allow flushing read model
         //because of https://github.com/dotnet/corefx/issues/8768:
         let ip = System.Net.Dns.GetHostAddressesAsync(host) 
                  |> Async.AwaitTask 
@@ -135,6 +135,12 @@ module Redis =
         config.EndPoints.Add("127.0.0.1")
         printfn "Connecting to redis ip: %s" ip
         StackExchange.Redis.ConnectionMultiplexer.Connect(config)
+
+    let reset (redis:ConnectionMultiplexer) () =
+        let endPoints = redis.GetEndPoints()
+        match endPoints.Length with
+        | 1 -> redis.GetServer(endPoints.[0]).FlushAllDatabases() |> Ok
+        | _ -> Error "Unsupported configuration at present"
 
     let get (redis:ConnectionMultiplexer) (key:string) =
         let db = redis.GetDatabase()

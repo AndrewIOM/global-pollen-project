@@ -140,6 +140,10 @@ textarea.form-control {
     border-color: $primary-color !important;
 }
 
+.alert {
+    border-radius: 0;
+}
+
 .navbar {
     background-color: white;
     opacity: .95;

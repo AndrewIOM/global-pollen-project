@@ -12,8 +12,13 @@ $(document).ready(function () {
     })
 });
 
+function capitaliseFirstLetter(string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
+
 //Query local Species API
 function Suggest(searchTerm) {
+    searchTerm = capitaliseFirstLetter(searchTerm);
     ajax = new XMLHttpRequest();
     ajax.onreadystatechange = function () {
         if (ajax.readyState == 4 || ajax.readyState == "complete") {

@@ -79,6 +79,15 @@
     }
 }
 
+.homepage-section.map-section {
+    background-color: #435058;
+    color: #f2f7f2;
+
+    .map {
+        fill:  #f5f5f5;
+    }
+}
+
 .section-bottomline {
     border-bottom: 0.75px solid lightgrey;
 }

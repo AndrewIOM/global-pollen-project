@@ -64,8 +64,9 @@ type TaxonDetail = {
     Grains:     GrainSummary list
     NeotomaId:  int
     GbifId:     int
-    ReferenceName:  string
-    ReferenceUrl:   string
+    ReferenceName:      string
+    ReferenceUrl:       string
+    BackboneChildren:   int
 }
 
 [<CLIMutable>]

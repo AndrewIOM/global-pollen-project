@@ -182,8 +182,12 @@ let homeHandler next (ctx:HttpContext) =
     |> toViewResult "Home/Index" next ctx
 
 let topUnknownGrainsHandler next (ctx:HttpContext) =
-    Statistic.getTopScoringUnknownGrains()
+    UnknownGrains.getTopScoringUnknownGrains()
     |> toApiResult next ctx
+
+let rebuildReadModelHandler next ctx =
+    Admin.rebuildReadModel()
+    text "Done" next ctx
 
 /////////////////////////
 /// Routes
@@ -197,7 +201,7 @@ let webApp : HttpHandler =
             route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
             route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
             route   "/taxon/search"             >=> queryRequestToApiResponse<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
-            route   "/grain/unknown"            >=> topUnknownGrainsHandler
+            route   "/grain/location"           >=> topUnknownGrainsHandler
         ]
 
     let digitiseApi =
@@ -263,6 +267,11 @@ let webApp : HttpHandler =
             GET  >=> routef "/%s"               (fun id -> showGrainDetail id)
         ]
 
+    let admin =
+        choose [
+            GET  >=> route "/RebuildReadModel"  >=> rebuildReadModelHandler
+        ]
+
     // Main router
     choose [
         subRoute    "/api/v1"                   publicApi
@@ -271,6 +280,7 @@ let webApp : HttpHandler =
         subRoute    "/Taxon"                    masterReferenceCollection
         subRoute    "/Reference"                individualRefCollections
         subRoute    "/Identify"                 identify
+        subRoute    "/Admin"                    admin
         GET >=> 
         choose [
             route   "/"                         >=> homeHandler

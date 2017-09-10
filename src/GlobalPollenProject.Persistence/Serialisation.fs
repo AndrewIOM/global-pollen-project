@@ -3,6 +3,7 @@ module Serialisation
 open Microsoft.FSharp.Reflection
 open Microsoft.FSharpLu.Json
 open GlobalPollenProject.Core.DomainTypes
+open GlobalPollenProject.Core.Aggregates
 
 let serialise (o:'a) = 
     try Compact.serialize o |> Ok
@@ -26,3 +27,21 @@ let inline deserialiseEventFromBytes< ^E> eventType (data:byte[]) =
     with
     | _ -> 
         invalidOp (sprintf "There was a fatal problem when deserialising an event (%s)" eventType)
+
+let fromString<'a> (s:string) =
+    match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> case.Name = s) with
+    |[|case|] -> Some s//(FSharpValue.MakeUnion(case,[||]) :?> 'a)
+    |_ -> None
+
+let deserialiseEventByName eventName (data:byte[]) : obj =
+    if fromString<Calibration.Event> eventName |> Option.isSome 
+        then deserialiseEventFromBytes<Calibration.Event> eventName data :> obj
+    else if fromString<Grain.Event> eventName |> Option.isSome 
+        then deserialiseEventFromBytes<Grain.Event> eventName data :> obj
+    else if fromString<ReferenceCollection.Event> eventName |> Option.isSome 
+        then deserialiseEventFromBytes<ReferenceCollection.Event> eventName data :> obj
+    else if fromString<Taxonomy.Event> eventName |> Option.isSome 
+        then deserialiseEventFromBytes<Taxonomy.Event> eventName data :> obj
+    else if fromString<User.Event> eventName |> Option.isSome 
+        then deserialiseEventFromBytes<User.Event> eventName data :> obj
+    else None :> obj // Handles non-domain eventstore events e.g. $statistics

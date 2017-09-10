@@ -16,6 +16,11 @@ let validateCheckpoint get set getEventCount e =
     // <*> getEventCount()
     Ok e
 
+let init set () =
+    Checkpoint.init set |> ignore
+    Statistics.init set |> ignore
+    TaxonomicBackbone.init set
+
 let route 
     (get:GetFromKeyValueStore) 
     (getList:GetListFromKeyValueStore) 
@@ -40,6 +45,7 @@ let route
     >>= feed (UserProfile.handle set)
     >>= feed (ReferenceCollectionReadOnly.handle get set setList)
     >>= feed (Grain.handle get set setList generateThumb toAbsoluteUrl)
+    >>= feed (Statistics.handle get getSortedList set setSortedList)
     >>= MasterReferenceCollection.handle get getSortedList set setSortedList
 
 
