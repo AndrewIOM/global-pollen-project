@@ -74,7 +74,8 @@ module ``When serialising read models`` =
             ReferenceName = "Test et al., Some test manuscript. In Testy test: Trees of Europe"
             ReferenceUrl = "https://sometest.test/test?r89y89cbq"
             NeotomaId   = 0
-            GbifId      = 2841145 }
+            GbifId      = 2841145
+            BackboneChildren = 2 }
         let result =
             sut
             |> Serialisation.serialise

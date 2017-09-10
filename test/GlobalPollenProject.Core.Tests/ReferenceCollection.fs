@@ -21,6 +21,7 @@ let person = Person (["A"; "C"], "McTest")
 let id = Botanical (TaxonId (Guid.NewGuid()), Unknown, person)
 let place = Country "Nigeria"
 let age = CollectionDate 1987<CalYr>
+let curatorId = UserId (Guid.NewGuid())
 
 let slideRequest = {
     Collection          = collection
@@ -65,11 +66,35 @@ module ``When digitising reference material`` =
         |> ExpectInvalidOp
 
     [<Fact>]
-    let ``A collection with slides can be published`` () =
+    let ``A collection with slides can be submitted for publication`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
                 SlideRecorded slideRecorded ]
         |> When (Publish collection)
+        |> Expect [ RequestedPublication collection ]
+
+    [<Fact>]
+    let ``A collection must gain approval from a curator before publication`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded ]
+        |> When (Publish collection)
+        |> Expect [ RequestedPublication collection ]
+
+    [<Fact>]
+    let ``A curator can approve a collection which publishes it`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                RequestedPublication collection ]
+        |> When (IssuePublicationDecision(collection,Approved,curatorId))
         |> Expect [ CollectionPublished (collection,domainDefaultDeps.GetTime(),ColVersion.initial |> ColVersion.increment) ]
+
+    [<Fact>]
+    let ``A curator can return a collection for revision to the owner`` () =
+        let notes = "This is a rubbish collection"
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                RequestedPublication collection ]
+        |> When (IssuePublicationDecision(collection,RevisionRequired notes,curatorId))
+        |> Expect [ RevisionAdvised(collection,notes) ]
 
     [<Fact>]
     let ``A collection with no changes since the last publication cannot be published again`` () =
@@ -84,8 +109,9 @@ module ``When digitising reference material`` =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
                 SlideRecorded slideRecorded
                 CollectionPublished (collection, domainDefaultDeps.GetTime(), ColVersion 1) 
-                SlideRecorded { slideRecorded with Id = SlideId (collection,"GPP2") } ]
-        |> When (Publish collection)
+                SlideRecorded { slideRecorded with Id = SlideId (collection,"GPP2") }
+                RequestedPublication collection ]
+        |> When (IssuePublicationDecision(collection,Approved,curatorId))
         |> Expect [ CollectionPublished (collection,domainDefaultDeps.GetTime(),ColVersion 2) ]
 
 

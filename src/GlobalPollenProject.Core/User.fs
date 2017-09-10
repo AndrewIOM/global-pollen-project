@@ -12,6 +12,7 @@ type Command =
 | ActivatePublicProfile of UserId
 | DisablePublicProfile of UserId
 | JoinClub of UserId * ClubId
+| AssignCurationRights of UserId
 
 and Register = {
     Id: UserId
@@ -25,6 +26,7 @@ type Event =
 | ProfileMadePublic of UserId
 | ProfileHidden of UserId
 | JoinedClub of UserId * ClubId
+| BecameCurator of UserId
 
 and UserRegistered = {
     Id: UserId

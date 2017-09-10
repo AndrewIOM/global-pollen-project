@@ -15,6 +15,8 @@ let exitCode = 0
 let BuildWebHost args =
     WebHost
         .CreateDefaultBuilder(args)
+        .UseKestrel(fun opt ->
+            opt.Limits.MaxRequestBodySize <- Nullable<int64>(int64 (1024 * 1024 * 10)))
         .UseStartup<Startup.Startup>()
         .Build()
 

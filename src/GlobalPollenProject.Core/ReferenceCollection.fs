@@ -4,11 +4,14 @@ open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Aggregate
 open System
 
+type RevisionNotes = string
+
 type Command =
 | CreateCollection of CreateCollection
 | AddSlide of AddSlide
 | UploadSlideImage of UploadSlideImage
 | Publish of CollectionId
+| IssuePublicationDecision of CollectionId * PublicationDecision * UserId
 
 and CreateCollection = {Id:CollectionId; Name:string; Owner:UserId; Description: string}
 and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int<CalYr> option }
@@ -26,13 +29,19 @@ and AddSlide =
      PrepDate:          int<CalYr> option
      Mounting:          MountingMedium option }
 
+and PublicationDecision =
+| Approved
+| RevisionRequired of RevisionNotes 
+
 type Event =
 | DigitisationStarted of DigitisationStarted
+| RequestedPublication of CollectionId
 | CollectionPublished of CollectionId * DateTime * ColVersion
 | SlideRecorded of SlideRecorded
 | SlideImageUploaded of SlideId * Image * int<CalYr> option
 | SlideFullyDigitised of SlideId
 | SlideGainedIdentity of SlideId * TaxonId
+| RevisionAdvised of CollectionId * RevisionNotes
 
 and DigitisationStarted = {Id: CollectionId; Name: string; Owner: UserId; Description: string}
 and SlideRecorded = {
@@ -50,8 +59,10 @@ and SlideRecorded = {
 
 type State =
 | Initial
-| Draft of RefState         // Unpublished or published, with outstanding changes
-| Published of RefState     // Published version with no current changes
+| Draft of RefState
+| PublicationRequested of RefState
+| InRevision of RefState * RevisionNotes
+| Published of RefState
 
 and RefState = {
     Owner: UserId
@@ -90,21 +101,41 @@ let isFullyDigitised (slide:SlideState) =
     | _ -> false
 
 let create (command:CreateCollection) state =
-    [DigitisationStarted {Id = command.Id; Name = command.Name; Owner = command.Owner; Description = command.Description }]
+    match state with
+    | Initial ->
+        [DigitisationStarted {Id = command.Id; Name = command.Name; Owner = command.Owner; Description = command.Description }]
+    | _ -> invalidOp "Collection already exists"
 
-let publish getTime (id:CollectionId) state =
+let publish (id:CollectionId) state =
     match state with
     | Initial -> "This collection does not exist" |> invalidOp
     | Published c -> "The collection" + c.Name + "ha no pending changes for publication" |> invalidOp
+    | PublicationRequested c -> "Publication has already been requested" |> invalidOp
+    | InRevision (c,_)
     | Draft c ->
         match c.Slides.Length with
         | 0 -> invalidOp "Cannot publish an empty collection"
-        | _ -> [CollectionPublished (id, getTime(), c.CurrentVersion |> ColVersion.increment ) ]
+        | _ -> [ RequestedPublication id ]
+
+let issueDecision getTime (id:CollectionId) decision userId state =
+    match state with
+    | Initial -> "This collection does not exist" |> invalidOp
+    | Draft c
+    | InRevision (c,_)
+    | Published c -> "No decision is currently required" |> invalidOp
+    | PublicationRequested c ->
+        match decision with
+        | Approved -> 
+            [CollectionPublished (id, getTime(), c.CurrentVersion |> ColVersion.increment ) ]
+        | RevisionRequired msg -> 
+            [RevisionAdvised (id,msg)]
 
 let addSlide (command:AddSlide) calcIdentity state =
     match state with
     | Initial -> invalidOp "This collection does not exist"
+    | PublicationRequested c -> "This collection is under review for publication and cannot accept changes" |> invalidOp
     | Published c
+    | InRevision (c,_)
     | Draft c ->
         let slideId = 
             match command.ExistingId with
@@ -141,7 +172,9 @@ let addSlide (command:AddSlide) calcIdentity state =
 let uploadImage (command:UploadSlideImage) state =
     match state with
     | Initial -> invalidOp "This collection does not exist"
+    | PublicationRequested c -> "This collection is under review for publication and cannot accept changes" |> invalidOp
     | Published c
+    | InRevision (c,_)
     | Draft c -> 
         let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId command.Id)
         match slide with
@@ -155,18 +188,13 @@ let uploadImage (command:UploadSlideImage) state =
 let handle deps = 
     function
     | CreateCollection c -> create c
-    | Publish c -> publish deps.GetTime c
+    | Publish c -> publish c
     | AddSlide c -> addSlide c deps.CalculateIdentity
     | UploadSlideImage c -> uploadImage c
+    | IssuePublicationDecision (c,dec,userId) -> issueDecision deps.GetTime c dec userId
 
 type State with
     static member Evolve state = function
-
-        | CollectionPublished (id,time,version) ->
-            match state with
-            | Initial -> invalidOp "Collection is empty"
-            | Published c -> invalidOp "Invalid state evolution"
-            | Draft c -> Published { c with CurrentVersion = version }
 
         | DigitisationStarted event ->
             match state with
@@ -180,11 +208,38 @@ type State with
                     Curators = []
                 }
             | _ -> invalidOp "Digitisation has already started for this collection"
+
+        | RequestedPublication id ->
+            match state with
+            | Initial
+            | Published _
+            | PublicationRequested _ -> invalidOp "Invalid state transition"
+            | InRevision (s,_)
+            | Draft s -> PublicationRequested s
+
+        | CollectionPublished (id,time,version) ->
+            match state with
+            | Initial
+            | InRevision _
+            | Published _ -> invalidOp "Invalid state transition"
+            | Draft c
+            | PublicationRequested c -> Published { c with CurrentVersion = version }
+
+        | RevisionAdvised (id,note) ->
+            match state with
+            | Initial
+            | Published _
+            | InRevision _
+            | Draft _ -> invalidOp "Invalid state transition"
+            | PublicationRequested s -> 
+                InRevision (s,note)
         
         | SlideRecorded event ->
             match state with
             | Initial -> invalidOp "You must create a collection before adding a slide to it"
+            | PublicationRequested _ -> invalidOp "Invalid state transition"
             | Published c
+            | InRevision (c,_)
             | Draft c ->
                 let newSlide = {
                     IsFullyDigitised = false
@@ -205,7 +260,9 @@ type State with
         | SlideGainedIdentity (id,tid) ->
             match state with
             | Initial -> invalidOp "Collection does not exist"
+            | PublicationRequested _ -> invalidOp "Invalid state transition"
             | Published c
+            | InRevision (c,_)
             | Draft c ->
                 let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with
@@ -223,7 +280,9 @@ type State with
         | SlideFullyDigitised event ->
             match state with
             | Initial -> invalidOp "Collection has not been started"
+            | PublicationRequested _ -> invalidOp "Invalid state transition"
             | Published c
+            | InRevision (c,_)
             | Draft c ->
                 let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId event)
                 match slide with
@@ -236,7 +295,9 @@ type State with
         | SlideImageUploaded (id,image,year) ->
             match state with
             | Initial -> invalidOp "Collection has not been started"
+            | PublicationRequested _ -> invalidOp "Invalid state transition"
             | Published c
+            | InRevision (c,_)
             | Draft c ->
                 let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with
@@ -254,3 +315,4 @@ let getId =
     | AddSlide c -> unwrap c.Collection
     | Publish c -> unwrap c
     | UploadSlideImage c -> unwrapSlideId c.Id |> unwrap
+    | IssuePublicationDecision (c,_,_) -> unwrap c

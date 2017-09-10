@@ -905,6 +905,12 @@ module Digitisation =
         | Ok c -> 
             RepositoryBase.setSingle (colId.ToString()) { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time } setKey serialise
 
+    let requestedPublication id =
+        Ok()
+
+    let revision id note =
+        Ok()
+
     let handle get getSortedList set setList generateThumb toAbsoluteUrl (e:string*obj) =
         match snd e with
         | :? ReferenceCollection.Event as e ->
@@ -915,6 +921,8 @@ module Digitisation =
             | ReferenceCollection.Event.SlideFullyDigitised e -> digitised get set e
             | ReferenceCollection.Event.SlideGainedIdentity (s,t) -> gainedIdentity get set s t
             | ReferenceCollection.Event.CollectionPublished (id,d,v) -> published get set id d v
+            | ReferenceCollection.Event.RequestedPublication id -> requestedPublication id
+            | ReferenceCollection.Event.RevisionAdvised (id,note) -> revision id note
         | _ -> Ok()
 
 
