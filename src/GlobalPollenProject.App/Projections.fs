@@ -240,7 +240,15 @@ module MasterReferenceCollection =
             | _ -> Error "Invalid rank specified"
         | _ -> Error "Cannot currently import taxa that are not accepted into MRC"
 
-    let initTaxon get backboneId : Result<TaxonReadModel,string> =
+    let incrementTotal rank get set =
+        match rank with
+        | "Family" -> Statistics.incrementStat "Statistic:Taxon:SpeciesTotal" get set
+        | "Genus" -> Statistics.incrementStat "Statistic:Taxon:GenusTotal" get set
+        | "Species" -> Statistics.incrementStat "Statistic:Taxon:SpeciesTotal" get set
+        | _ -> Ok()
+
+
+    let initTaxon get set backboneId : Result<TaxonReadModel,string> =
         let bbTaxon = TaxonomicBackbone.getById backboneId get deserialise
         let parentNode = bbTaxon |> bind toParentNode
         let summary = bbTaxon |> lift initTaxonSummary
@@ -255,21 +263,26 @@ module MasterReferenceCollection =
         | Ok s ->
             match detail with
             | Error e -> Error e
-            | Ok d -> { Summary = s; Detail = d } |> Ok
+            | Ok d -> 
+                incrementTotal d.Rank get set |> ignore
+                { Summary = s; Detail = d } |> Ok
 
-    let getTaxon get backboneId : Result<TaxonReadModel,string> =
+    let getTaxon get set backboneId : Result<TaxonReadModel,string> =
         let existing = getTaxon' get backboneId
         match existing with 
         | Ok s -> existing
-        | Error e -> initTaxon get backboneId
+        | Error e -> initTaxon get set backboneId
 
     let appendChild (child:TaxonReadModel) (taxon:TaxonReadModel) =
         let newChild = { Id = child.Summary.Id; Name = child.Summary.LatinName; Rank = child.Summary.Rank }
-        { taxon with 
-            Summary = { taxon.Summary with DirectChildren = newChild :: taxon.Summary.DirectChildren }; 
-            Detail = { taxon.Detail with Children = newChild :: taxon.Detail.Children } }
+        match taxon.Detail.Children |> List.tryFind (fun c -> c.Name = child.Summary.LatinName) with
+        | Some c -> taxon
+        | None ->
+            { taxon with 
+                Summary = { taxon.Summary with DirectChildren = newChild :: taxon.Summary.DirectChildren }; 
+                Detail = { taxon.Detail with Children = newChild :: taxon.Detail.Children } }
 
-    let getHeirarchy get backboneId =
+    let getHeirarchy get set backboneId =
         let bbTaxon = TaxonomicBackbone.getById backboneId get deserialise
         match bbTaxon with
         | Error e -> Error e
@@ -279,7 +292,7 @@ module MasterReferenceCollection =
             | Error e -> Error e
             | Ok h ->
                 let getParent (c:TaxonReadModel) (p:Guid) =
-                    getTaxon get (p |> TaxonId)
+                    getTaxon get set (p |> TaxonId)
                     |> lift (appendChild c)
                 let rec getParents (remaining:BackboneTaxon list) (stashed:TaxonReadModel list) child =
                     match remaining |> List.length with
@@ -290,7 +303,7 @@ module MasterReferenceCollection =
                         | Error e -> Error e
                         | Ok p -> getParents remaining.Tail (child :: stashed) p
                 let reversed = h |> List.rev
-                getTaxon get (reversed.Head.Id |> TaxonId)
+                getTaxon get set (reversed.Head.Id |> TaxonId)
                 |> bind (getParents reversed.Tail [])
 
     let setDiff previous current =
@@ -335,7 +348,7 @@ module MasterReferenceCollection =
                 let detail = { taxon.Detail with Slides = slide :: taxon.Detail.Slides }
                 { Summary = summary; Detail = detail }
             Statistics.incrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
-            getHeirarchy get (bbId |> TaxonId)
+            getHeirarchy get set (bbId |> TaxonId)
             |> lift (List.map (add slideSummary))
             |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
             |> lift ignore
@@ -350,7 +363,7 @@ module MasterReferenceCollection =
                 let detail = { taxon.Detail with Slides = taxon.Detail.Slides |> List.filter (fun s -> not (s = slide)) }
                 { Summary = summary; Detail = detail }
             Statistics.decrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
-            getHeirarchy get (bbId |> TaxonId)
+            getHeirarchy get set (bbId |> TaxonId)
             |> lift (List.map (remove slideSummary))
             |> bind (mapResult (setTaxon get set setSortedList (bbId |> TaxonId)))
             |> lift ignore

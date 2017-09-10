@@ -134,7 +134,6 @@ let addSlideHandler next (ctx:HttpContext) =
 
 let addImageHandler next (ctx:HttpContext) =
     bindJson<SlideImageRequest> ctx
-    |> bind validateModel
     |> Result.bind Digitise.uploadSlideImage
     |> toApiResult next ctx
 
