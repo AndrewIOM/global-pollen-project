@@ -293,7 +293,7 @@ function SlideDetailViewModel(detail) {
     self.measuringLine = null;
     self.scaleBar = null;
     self.validationErrors = ko.observableArray([]);
-
+    self.isProcessing = ko.observable(false);
     self.calibrations = ko.observableArray();
 
     self.selectedMicroscope = ko.observable(null);
@@ -306,6 +306,7 @@ function SlideDetailViewModel(detail) {
     self.digitisedYear = ko.observable(null);
 
     self.isValidStaticRequest = ko.computed(function () {
+        if (self.isProcessing()) return false;
         if (self.floatingCal() == null) return false;
         if (self.measuredDistance() == null) return false;
         if (self.digitisedYear() == null) return false;
@@ -314,6 +315,7 @@ function SlideDetailViewModel(detail) {
     }, self);
 
     self.isValidFocusRequest = ko.computed(function () {
+        if (self.isProcessing()) return false;
         if (self.selectedMicroscope() == null) return false;
         if (self.selectedMagnification() == null) return false;
         if (self.digitisedYear() == null) return false;
@@ -386,6 +388,7 @@ function SlideDetailViewModel(detail) {
     }
 
     self.submit = function (rootVM, base64Array) {
+        self.isProcessing(true);
         let request = {
             CollectionId: self.slideDetail().CollectionId,
             SlideId: self.slideDetail().CollectionSlideId,
@@ -405,7 +408,6 @@ function SlideDetailViewModel(detail) {
         } else {
             return;
         }
-        console.log(request);
 
         $.ajax({
             url: "/api/v1/digitise/collection/slide/addimage",
@@ -437,10 +439,12 @@ function SlideDetailViewModel(detail) {
                     err.responseJSON.Errors.forEach(function (e) {
                         self.validationErrors().push(e.Errors[0]);
                         console.log(self.validationErrors());
+                        self.isProcessing(false);
                     })
                 },
                 500: function (data) {
                     self.validationErrors(['Internal error. Please try again later.']);
+                    self.isProcessing(false);
                 }
             }
         });
@@ -566,7 +570,7 @@ function SlideDetailViewModel(detail) {
         var files = element.files;
         var loaded = 0;
         var readers = [];
-        var base64s = [];
+        var fileData = [];
 
         if (files.length < 2) {
             alert("You must upload at least 2 images (shift-click/ctrl-click files to select multiple)");
@@ -574,13 +578,26 @@ function SlideDetailViewModel(detail) {
         }
 
         for (var i = 0; i < files.length; i++) {
-            readers.push(new FileReader());
+            var r = new FileReader();
+            readers.push(r);
 
             readers[i].onloadend = function (e) {
                 loaded++;
-                base64s.push(this.result);
-
+                fileData.push({ name: this.file.name, b64: this.result });
+                
                 if (loaded >= files.length) {
+                    // sort by file name
+                    fileData.sort(function(a, b){
+                        if(a.name < b.name) return -1;
+                        if(a.name > b.name) return 1;
+                        return 0;
+                    })
+
+                    var base64s = [];
+                    for(var j = 0; j < fileData.length; j++) {
+                        base64s.push(fileData[j].b64);
+                    }
+                    
                     self.viewer = new Viewer("#focus-image-previewer",
                         "#focus-image-previewer-canvas",
                         $("#focus-image-previewer-container").width() * 0.8, 500, base64s
@@ -598,6 +615,7 @@ function SlideDetailViewModel(detail) {
                 }
             }
             if (files[i]) {
+                readers[i].file = files[i];
                 readers[i].readAsDataURL(files[i]);
             }
         }

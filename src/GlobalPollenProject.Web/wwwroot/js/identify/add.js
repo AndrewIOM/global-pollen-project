@@ -308,12 +308,29 @@ var uploadGrain = function () {
 
         var request = {
             Images: outputArray,
-            SampleType: "Fossil",
-            LatitudeDD: 52.0173,
-            LongitudeDD: -2.1313,
-            Year: 2000,
-            YearType: "Lead210"
+            SampleType: null,
+            LatitudeDD: parseFloat($("#latitude-input").val()),
+            LongitudeDD: parseFloat($("#longitude-input").val()),
+            Year: null,
+            YearType: null
         }
+
+        if ($("#identify-sampling-method-fossil").is(":checked")) {
+            request.SampleType = "Fossil";
+            request.Year = parseInt($("#identify-temporal-fossil-ybp").val());
+            if ($("#identify-temporal-fossil-radiocarbon").is(":checked")) {
+                request.YearType = "Radiocarbon";
+            } else if ($("#identify-temporal-fossil-lead").is(":checked")) {
+                request.YearType = "Lead210";
+            } else {
+                request.YearType = "Unknown";
+            }
+        } else {
+            request.SampleType = "Environmental";
+            request.YearType = "Calendar";
+            request.Year = parseInt($("#identify-temporal-environmental-year").val());
+        }
+
         console.log(request);
 
 

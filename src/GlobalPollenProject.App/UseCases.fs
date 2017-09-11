@@ -31,7 +31,7 @@ let sendEmail correspondingEmail subject messageHtml =
 
 // Image Store
 let saveImage = AzureImageStore.uploadToAzure (getAppSetting "imagestore:baseurl") (getAppSetting "imagestore:container") (getAppSetting "imagestore:azureconnectionstring") (fun x -> Guid.NewGuid().ToString())
-let generateThumbnail = AzureImageStore.generateThumbnail (getAppSetting "imagestore:baseurl") (getAppSetting "imagestore:containerthumbnail") (getAppSetting "imagestore:azureconnectionstring")
+let generateThumbnail = AzureImageStore.generateThumbnail (getAppSetting "imagestore:baseurl") (getAppSetting "imagestore:container") (getAppSetting "imagestore:azureconnectionstring")
 let toAbsoluteUrl = Url.relativeToAbsolute appSettings.["imagestore:baseurl"]
 
 // Write (Event) Store
