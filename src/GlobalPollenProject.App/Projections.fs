@@ -242,7 +242,7 @@ module MasterReferenceCollection =
 
     let incrementTotal rank get set =
         match rank with
-        | "Family" -> Statistics.incrementStat "Statistic:Taxon:SpeciesTotal" get set
+        | "Family" -> Statistics.incrementStat "Statistic:Taxon:FamilyTotal" get set
         | "Genus" -> Statistics.incrementStat "Statistic:Taxon:GenusTotal" get set
         | "Species" -> Statistics.incrementStat "Statistic:Taxon:SpeciesTotal" get set
         | _ -> Ok()
