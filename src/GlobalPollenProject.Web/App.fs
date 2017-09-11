@@ -53,13 +53,6 @@ let notFoundResult ctx =
 
 let prettyJson = Serialisation.serialise
 
-let jsonRequestToApiResponse<'a> appService : HttpHandler =
-    fun next ctx ->
-        bindJson<'a> ctx
-        |> bind validateModel
-        |> bind appService
-        |> toApiResult next ctx
-
 let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,ServiceError>) : HttpHandler =
     fun next ctx ->
         ctx

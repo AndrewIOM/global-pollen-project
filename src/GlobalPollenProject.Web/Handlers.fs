@@ -17,10 +17,15 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 /// Validation
 /////////////////////
 
-let bindJson<'a> (ctx:HttpContext) =
-    try ctx.BindJson<'a>() |> Async.AwaitTask |> Async.RunSynchronously |> Ok
-    with
-    | _ -> Error InvalidRequestFormat
+open System.IO
+
+let inline bindJson< ^T> (ctx:HttpContext) =
+    let body = ctx.Request.Body
+    use reader = new StreamReader(body, true)
+    let reqBytes = reader.ReadToEndAsync() |> Async.AwaitTask |> Async.RunSynchronously
+    match Serialisation.deserialise< ^T> reqBytes with
+    | Ok o -> Ok o
+    | Error e -> Error InvalidRequestFormat
 
 let bindQueryString<'a> (ctx:HttpContext) =
     try ctx.BindQueryString<'a>() |> Ok
