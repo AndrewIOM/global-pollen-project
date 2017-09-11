@@ -293,7 +293,7 @@ function SlideDetailViewModel(detail) {
     self.measuringLine = null;
     self.scaleBar = null;
     self.validationErrors = ko.observableArray([]);
-
+    self.isProcessing = ko.observable(false);
     self.calibrations = ko.observableArray();
 
     self.selectedMicroscope = ko.observable(null);
@@ -306,6 +306,7 @@ function SlideDetailViewModel(detail) {
     self.digitisedYear = ko.observable(null);
 
     self.isValidStaticRequest = ko.computed(function () {
+        if (self.isProcessing()) return false;
         if (self.floatingCal() == null) return false;
         if (self.measuredDistance() == null) return false;
         if (self.digitisedYear() == null) return false;
@@ -314,6 +315,7 @@ function SlideDetailViewModel(detail) {
     }, self);
 
     self.isValidFocusRequest = ko.computed(function () {
+        if (self.isProcessing()) return false;
         if (self.selectedMicroscope() == null) return false;
         if (self.selectedMagnification() == null) return false;
         if (self.digitisedYear() == null) return false;
@@ -386,6 +388,7 @@ function SlideDetailViewModel(detail) {
     }
 
     self.submit = function (rootVM, base64Array) {
+        self.isProcessing(true);
         let request = {
             CollectionId: self.slideDetail().CollectionId,
             SlideId: self.slideDetail().CollectionSlideId,
@@ -405,7 +408,6 @@ function SlideDetailViewModel(detail) {
         } else {
             return;
         }
-        console.log(request);
 
         $.ajax({
             url: "/api/v1/digitise/collection/slide/addimage",
@@ -437,10 +439,12 @@ function SlideDetailViewModel(detail) {
                     err.responseJSON.Errors.forEach(function (e) {
                         self.validationErrors().push(e.Errors[0]);
                         console.log(self.validationErrors());
+                        self.isProcessing(false);
                     })
                 },
                 500: function (data) {
                     self.validationErrors(['Internal error. Please try again later.']);
+                    self.isProcessing(false);
                 }
             }
         });

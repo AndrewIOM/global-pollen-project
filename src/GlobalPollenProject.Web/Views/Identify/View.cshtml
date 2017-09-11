@@ -79,7 +79,8 @@
                         <label>Sampling Method</label>
                     </div>
                     <div class="col-md-8">
-                        <strong>Fossil.</strong> This grain or spore was taken from a sediment core.
+                        @if (Model.AgeType == "Calendar") { <span><strong>Environmental.</strong> This grain or spore was from the environment, for example from a pollen trap, bee, honey, or soil.</span> }
+                        else { <span><strong>Fossil.</strong> This grain or spore was taken from a sediment core.</span> }
                     </div>
                 </div>
                 <div class="row">
