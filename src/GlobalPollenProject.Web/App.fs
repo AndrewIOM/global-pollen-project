@@ -61,6 +61,39 @@ let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,ServiceError>) : 
         |> bind appService
         |> toApiResult next ctx
 
+////////////////////////
+/// Routing lookups
+////////////////////////
+
+open System.IO
+
+type TaxonLookup = { 
+    OriginalId: int
+    Rank: string
+    Family: string
+    Genus: string
+    Species: string 
+} with
+    static member FromFile file = 
+        file
+        |> File.ReadAllLines
+        |> Seq.skip 1
+        |> Seq.map (fun s-> s.Split ',')
+        |> Seq.map (fun a -> {OriginalId=int a.[0]; Rank=a.[1]; Family = a.[2]; Genus = a.[3]; Species = a.[4]})
+
+let taxonLookup = TaxonLookup.FromFile @"Lookups/taxonlookup.csv"
+
+let lookupNameFromOldTaxonId id =
+    let old = taxonLookup |> Seq.tryFind(fun t -> t.OriginalId = id)
+    match old with
+    | Some t ->
+        match t.Rank with
+        | "Family" -> redirectTo true (sprintf "/Taxon/%s" t.Family)
+        | "Genus" -> redirectTo true (sprintf "/Taxon/%s/%s" t.Family t.Genus)
+        | "Species" -> redirectTo true (sprintf "/Taxon/%s/%s/%s" t.Family t.Genus t.Species)
+        | _ -> notFoundResult
+    | None -> notFoundResult
+
 /////////////////////////
 /// Custom HTTP Handlers
 /////////////////////////
@@ -240,6 +273,7 @@ let webApp : HttpHandler =
         choose [   
             route   ""                          >=> pagedTaxonomyHandler
             routef  "/Slide/%s"                 slideViewHandler
+            routef  "/View/%i"                  lookupNameFromOldTaxonId
             routef  "/%s"                       taxonDetail
         ]
 
