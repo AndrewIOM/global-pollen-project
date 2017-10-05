@@ -110,7 +110,7 @@ module ``When digitising reference material`` =
 
     [<Fact>]
     let ``A GPP curator can return a collection for revision to the owner`` () =
-        let notes = "This collection is not very good"
+        let notes = LongformText "This collection is not very good"
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
                 SlideRecorded slideRecorded
                 RequestedPublication collection ]
