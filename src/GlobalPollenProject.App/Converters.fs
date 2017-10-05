@@ -14,6 +14,11 @@ let toPersistenceError domainResult =
     | Ok r -> Ok r
     | Error str -> Error ServiceError.Persistence
 
+let toValidationResult domainResult =
+    match domainResult with
+    | Ok r -> Ok r
+    | Error err -> validationError "" err
+
 let optionToResult opt =
     match opt with
     | Some o -> Ok o
@@ -244,6 +249,34 @@ module Metadata =
         | "unknown" -> None |> Ok
         | _ -> validationError "MountingMaterial" "An unrecognised mounting method was specified"
 
+    open GlobalPollenProject.Core.Aggregates.ReferenceCollection
+
+    let createAccess accessMethod institutionName institutionUrl =
+        match accessMethod with
+        | "digitial" -> DigitialOnly |> Ok
+        | "institution" -> 
+            let createInstitution name web = { Name = name; Web = web }
+            createInstitution
+            <!> ShortText.create institutionName
+            <*> (Url.create institutionUrl |> Some |> Ok)
+            |> lift Institutional
+            |> lift PrimaryLocation
+            |> toValidationResult
+        | "private" -> Personal |> PrimaryLocation |> Ok
+        | _ -> validationError "Access" "Material access info was not formatted correctly"
+
+
+    let createCurator (firstNames:string) lastName email =
+        if String.IsNullOrEmpty lastName 
+        then validationError "CuratorLastName" "A curator requires a last name"
+        else 
+            let firstNames = firstNames.Split(' ') |> Array.toList
+            let create forenames surname email = { Forenames = forenames; Surname = surname; Contact = Email email}
+            create firstNames lastName
+            <!> EmailAddress.create email
+            |> toValidationResult
+
+
 module Dto =
 
     let createUnknownGrainCommand id user images temporal spatial =
@@ -388,7 +421,9 @@ module DomainToDto =
     let unwrapAuthor (Scientific a) = a
     let unwrapColVer (ColVersion a) = a
     let unwrapMagId (MagnificationId (a,b)) : Guid * int = a |> unwrapCalId,b
-
+    let unwrapEmail (EmailAddress e) = e
+    let unwrapShortText (ShortText s) = s
+    let unwrapLongText (LongformText s) = s
     let getPixelWidth p1 p2 dist =
         let removeUnit (x:float<_>) = float x
         let x1,y1 = p1

@@ -70,7 +70,7 @@ $('document').ready(function () {
     var path = d3.geo.path()
         .projection(projection);
     var g = svg.append("g");
-    d3.json('/geoJSON/world110.json', function (error, topology) {
+    d3.json('/geojson/world110.json', function (error, topology) {
         g.selectAll("path")
             .data(topojson.object(topology, topology.objects.countries)
                 .geometries)

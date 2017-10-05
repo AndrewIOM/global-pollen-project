@@ -1,0 +1,39 @@
+@model FSharpList<ReadModels.EditableRefCollection>
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Curator Dashboard";
+    ViewData["Subtitle"] = "Collection awaiting approval or revision can be managed here.";
+}
+
+@* Header *@
+@section headerSection {
+    <header><div class="container">
+    <h1>@ViewData["Title"]</h1>
+    <p>@ViewData["Subtitle"]</p>
+    </div></header>
+}
+
+<table class="table table-responsive">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model) {
+            <tr>
+                <td>@u.Name @u.Description</td>
+                <td>
+                    <form method="POST" action="/Admin/Curate">
+                        <input hidden="hidden" name="Collection" value="@u.Id"/>
+                        <input hidden="hidden" name="Comment" value=""/>
+                        <input hidden="hidden" name="Approved" value="true"/>
+                        <button type="submit" class="btn btn-secondary">Approve</button>
+                    </form>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

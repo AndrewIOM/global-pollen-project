@@ -144,19 +144,25 @@ function AddCollectionViewModel() {
     self.description = ko.observable();
     self.curatorFirstNames = ko.observable();
     self.curatorSurname = ko.observable();
+    self.accessMethod = ko.observable();
     self.institutionName = ko.observable();
+    self.institutionUrl = ko.observable();
     self.email = ko.observable();
-    self.externalUrl = ko.observable();
+
+    self.isProcessing = ko.observable();
+    self.validationErrors = ko.observableArray();
     
     self.submit = function (rootVM) {
+        self.isProcessing(true);
         let req = {
             Name: self.name(),
             Description: self.description(),
             CuratorFirstNames: self.curatorFirstNames(),
             CuratorSurname: self.curatorSurname(),
-            Institution: self.institutionName(),
             CuratorEmail: self.email(),
-            ExternalUrl: self.externalUrl()
+            AccessMethod: self.accessMethod(),
+            Institution: self.institutionName(),
+            InstitutionUrl: self.institutionUrl()
         };
         $.ajax({
             url: "/api/v1/digitise/collection/start",
@@ -167,8 +173,18 @@ function AddCollectionViewModel() {
             success: function () {
                 rootVM.switchView(CurrentView.MASTER);
             },
-            error: function (errors) {
-                // Handle validation errors here
+            statusCode: {
+                400: function (err) {
+                    self.validationErrors([]);
+                    err.responseJSON.Errors.forEach(function (e) {
+                        self.validationErrors().push(e.Errors[0]);
+                        self.isProcessing(false);
+                    })
+                },
+                500: function (data) {
+                    self.validationErrors(['Internal error. Please try again later.']);
+                    self.isProcessing(false);
+                }
             }
         })
     }

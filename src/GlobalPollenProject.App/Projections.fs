@@ -8,6 +8,11 @@ open GlobalPollenProject.Core.Composition
 open ReadStore
 open ReadModels
 
+type EventMessage = string*obj*DateTime
+
+let toEvent (s,o,d) = o
+let toTime (s,o,d) = d
+
 let readModelErrorHandler() =
     invalidOp "The read model is corrupt or out-of-sync. Rebuild now."
 
@@ -45,8 +50,8 @@ module GrainLocation =
         // Add to redis list
         Ok()
 
-    let handle (e:string*obj) =
-        match snd e with
+    let handle (e:EventMessage) =
+        match e |> toEvent with
         | :? Grain.Event as e ->
             match e with
             | Grain.Event.GrainSubmitted s -> insertLocation s
@@ -84,8 +89,8 @@ module Statistics =
         RepositoryBase.getKey<int> key get deserialise
         |> bind (fun i -> RepositoryBase.setKey (i - 1) key set serialise)
 
-    let handle get getSortedList set setSortedList (e:string*obj) =
-        match snd e with
+    let handle get getSortedList set setSortedList (e:EventMessage) =
+        match e |> toEvent with
         | :? Grain.Event as e ->
             match e with
             | Grain.Event.GrainSubmitted e -> 
@@ -419,8 +424,8 @@ module MasterReferenceCollection =
         |> lift updateId
         |> bind save
 
-    let handle get getSortedList set setSortedList (e:string*obj) =
-        match snd e with
+    let handle get getSortedList set setSortedList (e:EventMessage) =
+        match e |> toEvent with
         | :? ReferenceCollection.Event as e -> 
             match e with
             | ReferenceCollection.Event.CollectionPublished (id,date,ver) -> publishCollection id ver get getSortedList set setSortedList
@@ -442,7 +447,7 @@ module Grain =
 
     open GlobalPollenProject.Core.Aggregates.Grain
 
-    let submit getKey setReadModel setList generateThumbnail toAbsoluteUrl (e:GrainSubmitted) =
+    let submit getKey setReadModel setList generateThumbnail toAbsoluteUrl time (e:GrainSubmitted) =
         let thumbUrl = 
             let result = 
                 match e.Images.Head with
@@ -457,7 +462,8 @@ module Grain =
 
         let summary = { 
             Id = Converters.DomainToDto.unwrapGrainId e.Id 
-            Thumbnail = thumbUrl }
+            Thumbnail = thumbUrl
+            Submitted = time }
 
         let removeUnit (x:float<_>) = float x
         let removeUnitInt (x:int<_>) = int x
@@ -566,11 +572,11 @@ module Grain =
             |> bind save
 
 
-    let handle get set setList generateThumb toAbsoluteUrl (e:string*obj) =
-        match snd e with
+    let handle get set setList generateThumb toAbsoluteUrl (em:EventMessage) =
+        match em |> toEvent with
         | :? Grain.Event as e ->
             match e with
-            | Grain.Event.GrainSubmitted e -> submit get set setList generateThumb toAbsoluteUrl e
+            | Grain.Event.GrainSubmitted e -> submit get set setList generateThumb toAbsoluteUrl (em |> toTime) e
             | Grain.Event.GrainIdentified e -> identified get set e 
             | Grain.Event.GrainIdentityChanged e -> identityChanged get set (Some e.Taxon) e.Id
             | Grain.Event.GrainIdentityConfirmed e -> identityChanged get set (Some e.Taxon) e.Id
@@ -682,8 +688,8 @@ module TaxonomicBackbone =
             | _ -> Ok()
         | _ -> Ok()
 
-    let handle get getSortedList set setSortedList (e:string*obj) =
-        match snd e with
+    let handle get getSortedList set setSortedList (e:EventMessage) =
+        match e |> toEvent with
         | :? Taxonomy.Event as e -> 
             match e with
             | Taxonomy.Event.Imported t -> addToBackbone get getSortedList set setSortedList serialise deserialise t
@@ -711,6 +717,12 @@ module ReferenceCollectionReadOnly =
                 Description     = c.Description
                 SlideCount      = c.SlideCount
                 Published       = time
+                CuratorFirstNames = c.CuratorFirstNames
+                CuratorSurname  = c.CuratorSurname
+                CuratorEmail    = c.CuratorEmail
+                AccessMethod    = c.AccessMethod
+                Institution     = c.Institution
+                InstitutionUrl  = c.InstitutionUrl
                 Version         = Converters.DomainToDto.unwrapColVer version
             }
             let v = Converters.DomainToDto.unwrapColVer version
@@ -719,6 +731,12 @@ module ReferenceCollectionReadOnly =
                 Name            = c.Name
                 Description     = c.Description
                 Published       = time
+                CuratorFirstNames = c.CuratorFirstNames
+                CuratorSurname  = c.CuratorSurname
+                CuratorEmail    = c.CuratorEmail
+                AccessMethod    = c.AccessMethod
+                Institution     = c.Institution
+                InstitutionUrl  = c.InstitutionUrl
                 Version         = v
                 Slides          = c.Slides
                 Contributors    = []
@@ -730,8 +748,8 @@ module ReferenceCollectionReadOnly =
             Ok()
         | Error e -> Error e
 
-    let handle get set setList (e:string*obj) =
-        match snd e with
+    let handle get set setList (e:EventMessage) =
+        match e |> toEvent with
         | :? ReferenceCollection.Event as e ->
             match e with
             | ReferenceCollection.Event.CollectionPublished (id,time,version) -> published get set setList id time version
@@ -743,7 +761,7 @@ module UserProfile =
 
     open GlobalPollenProject.Core.Aggregates.User
 
-    let registered set (user:UserRegistered) =
+    let registered set setList (user:UserRegistered) =
         let profile = {
             UserId = user.Id |> Converters.DomainToDto.unwrapUserId
             Title = user.Title
@@ -751,17 +769,37 @@ module UserProfile =
             LastName = user.LastName
             Score = 0.
             Groups = []
+            Curator = false
             IsPublic = true }
-        RepositoryBase.setSingle (profile.UserId.ToString()) profile set serialise
+        RepositoryBase.setSingle (profile.UserId.ToString()) profile set serialise |> ignore
+        RepositoryBase.setListItem (profile.UserId.ToString()) "PublicProfile:index" setList
 
-    let handle set (e:string*obj) =
-        match snd e with
+    let updateProperty get set userId updater newValue =
+        let id = userId |> Converters.DomainToDto.unwrapUserId
+        let existing = RepositoryBase.getSingle<PublicProfile> (id.ToString()) get deserialise
+        match existing with
+        | Ok u ->
+            let updated = updater u newValue
+            RepositoryBase.setSingle (id.ToString()) updated set serialise
+        | Error e -> Error e
+
+    let changeVisibility get set visibility userId =
+        let updater (u:PublicProfile) vis = {u with IsPublic = vis }
+        updateProperty get set userId updater visibility
+
+    let changeCuration get set curation userId =
+        let updater (u:PublicProfile) c = {u with Curator = c }
+        updateProperty get set userId updater curation
+
+    let handle get set setList (e:EventMessage) =
+        match e |> toEvent with
         | :? User.Event as e ->
             match e with
-            | User.Event.JoinedClub (x,y) -> invalidOp "Cool"
-            | User.Event.ProfileHidden x -> invalidOp "Cool"
-            | User.Event.ProfileMadePublic x -> invalidOp "Cool"
-            | User.Event.UserRegistered u -> registered set u
+            | User.Event.JoinedClub (x,y) -> invalidOp "Not implemented"
+            | User.Event.ProfileHidden i -> changeVisibility get set false i
+            | User.Event.ProfileMadePublic i -> changeVisibility get set true i
+            | User.Event.BecameCurator i -> changeCuration get set true i
+            | User.Event.UserRegistered u -> registered set setList u
         | _ -> Ok()
 
 
@@ -778,11 +816,19 @@ module Digitisation =
             Id = e.Id |> unwrapRefId
             Name = e.Name
             Description = e.Description
+            CuratorFirstNames = ""
+            CuratorSurname = ""
+            CuratorEmail = ""
+            AccessMethod = ""
+            Institution = ""
+            InstitutionUrl = ""
             EditUserIds = [ e.Owner |> unwrapUserId ]
             LastEdited = DateTime.Now //TODO remove to parameter function
             PublishedVersion = 0
             SlideCount = 0
-            Slides = [] }
+            Slides = []
+            CommentsFromReview = ""
+            AwaitingReview = false }
         let id : Guid = e.Id |> unwrapRefId
         let userId : Guid = e.Owner |> unwrapUserId
         RepositoryBase.setSingle (id.ToString()) col set serialise |> ignore
@@ -825,7 +871,8 @@ module Digitisation =
                 PrepMethod = prepMethod
                 CollectorName = collectorName
                 Location = location
-                LocationType = locationType }
+                LocationType = locationType
+                Voided = false }
             RepositoryBase.setSingle (colId.ToString()) { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
 
     let imageUploaded getKey setKey generateThumbnail toAbsoluteUrl id image =
@@ -905,14 +952,68 @@ module Digitisation =
         | Ok c -> 
             RepositoryBase.setSingle (colId.ToString()) { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time } setKey serialise
 
-    let requestedPublication id =
-        Ok()
+    let requestedPublication setList colId =
+        let id = colId |> Converters.DomainToDto.unwrapRefId
+        RepositoryBase.setListItem (id.ToString()) "Curation:InReview" setList
 
-    let revision id note =
-        Ok()
+    let revision get set id note =
+        let colId : Guid = id |> unwrapRefId
+        let col = RepositoryBase.getSingle (colId.ToString()) get deserialise<EditableRefCollection>
+        match col with
+        | Error e -> Error e
+        | Ok c -> 
+            let updated = { c with AwaitingReview = false; CommentsFromReview = note |> Converters.DomainToDto.unwrapLongText }
+            RepositoryBase.setSingle (colId.ToString()) updated set serialise
 
-    let handle get getSortedList set setList generateThumb toAbsoluteUrl (e:string*obj) =
-        match snd e with
+    let publicAccess get set id curator access =
+        let colId : Guid = id |> unwrapRefId
+        let col = RepositoryBase.getSingle (colId.ToString()) get deserialise<EditableRefCollection>
+        match col with
+        | Error e -> Error e
+        | Ok c -> 
+            
+            let curatorEmail =
+                match curator.Contact with
+                | Email e -> e |> Converters.DomainToDto.unwrapEmail
+
+            let accessMethod,institution,institutionUrl =
+                match access with
+                | AccessToMaterial.DigitialOnly -> "digital","",""
+                | PrimaryLocation p
+                | ReplicateLocations (p, _) ->
+                    match p with
+                    | Personal -> "private","",""
+                    | Institutional i ->
+                        let name = Converters.DomainToDto.unwrapShortText i.Name
+                        match i.Web with
+                        | Some w -> "institution",name, w |> Url.unwrap
+                        | None -> "institution",name,""
+
+            let updated = { c with CuratorFirstNames = String.Concat(curator.Forenames," ")
+                                   CuratorSurname = curator.Surname
+                                   CuratorEmail = curatorEmail
+                                   AccessMethod = accessMethod
+                                   Institution = institution
+                                   InstitutionUrl = institutionUrl  }
+            RepositoryBase.setSingle (colId.ToString()) updated set serialise
+
+    let voidSlide get set id =
+        let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
+        let col = RepositoryBase.getSingle (colId.ToString()) get deserialise<EditableRefCollection>
+        match col with
+        | Error e -> Error e
+        | Ok c -> 
+            let slide = c.Slides |> List.tryFind (fun x -> x.CollectionSlideId = (id |> unwrapSlideId |> snd))
+            match slide with
+            | None -> readModelErrorHandler()
+            | Some s ->
+                let updatedSlide = { s with Voided = true }
+                let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+                let updatedCol = { c with Slides = updatedSlides }
+                RepositoryBase.setSingle (colId.ToString()) updatedCol set serialise
+
+    let handle get getSortedList set setList generateThumb toAbsoluteUrl (e:EventMessage) =
+        match e |> toEvent with
         | :? ReferenceCollection.Event as e ->
             match e with
             | ReferenceCollection.Event.DigitisationStarted e -> started set setList e
@@ -921,8 +1022,12 @@ module Digitisation =
             | ReferenceCollection.Event.SlideFullyDigitised e -> digitised get set e
             | ReferenceCollection.Event.SlideGainedIdentity (s,t) -> gainedIdentity get set s t
             | ReferenceCollection.Event.CollectionPublished (id,d,v) -> published get set id d v
-            | ReferenceCollection.Event.RequestedPublication id -> requestedPublication id
-            | ReferenceCollection.Event.RevisionAdvised (id,note) -> revision id note
+            | ReferenceCollection.Event.RequestedPublication id -> requestedPublication setList id
+            | ReferenceCollection.Event.RevisionAdvised (id,note) -> revision get set id note
+            | ReferenceCollection.Event.PublicAccessAssigned (id,curator,access) -> publicAccess get set id curator access
+            | ReferenceCollection.Event.SlideVoided id -> voidSlide get set id
+            | ReferenceCollection.Event.SpecimenDelineated (sid, image, box) -> invalidOp "Not implemented"
+            | ReferenceCollection.Event.SpecimenConfirmed (sid, image, box) -> invalidOp "Not implemented"
         | _ -> Ok()
 
 
@@ -960,8 +1065,8 @@ module Calibration =
                     UncalibratedMags = c.UncalibratedMags |> List.filter (fun m -> not (m = (e.Magnification |> removeUnitInt))) }
             RepositoryBase.setSingle (calId.ToString()) updated set serialise
 
-    let handle get getList set setList toAbsoluteUrl (e:string*obj) =
-        match snd e with
+    let handle get getList set setList toAbsoluteUrl (e:EventMessage) =
+        match e |> toEvent with
         | :? Event as e ->
             match e with
             | Event.SetupMicroscope e -> setup set setList e

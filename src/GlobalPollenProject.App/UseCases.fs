@@ -75,7 +75,7 @@ let projectionHandler e =
     | Error e -> invalidOp ("Read model is corrupt: " + e)
 
 eventStore.Value.SaveEvent 
-:> IObservable<string*obj>
+:> IObservable<string*obj*DateTime>
 |> Observable.subscribe projectionHandler
 |> ignore
 
@@ -158,8 +158,24 @@ module Digitise =
     let startNewCollection getCurrentUser (request:StartCollectionRequest) =
         let newId = CollectionId <| domainDependencies.GenerateId()
         let currentUser = UserId <| getCurrentUser()
-        issueCommand <| CreateCollection { Id = newId; Name = request.Name; Owner = currentUser; Description = request.Description }
-        Ok newId
+        let access = Converters.Metadata.createAccess request.AccessMethod request.Institution request.InstitutionUrl
+        let curator = Converters.Metadata.createCurator request.CuratorFirstNames request.CuratorSurname request.CuratorEmail
+        let curatorCommand c a = SpecifyCurator (newId, c, a)
+
+        let issueCommands newCol curator =
+            newCol |> issueCommand
+            curator |> issueCommand
+            Ok newId
+
+        let newColCommand = 
+            CreateCollection { Id = newId; Name = request.Name; Owner = currentUser; Description = request.Description }
+
+        let curCommand =
+            curatorCommand
+            <!> curator
+            <*> access
+        issueCommands newColCommand
+        <!> curCommand
 
     let publish getCurrentUser colId =
         let currentUser = UserId <| getCurrentUser()
@@ -209,6 +225,7 @@ module Calibrations =
 
     let setupMicroscope getCurrentUser (req:AddMicroscopeRequest) =
         let microscope = Microscope.Light <| LightMicroscope.Compound (10, [ 10; 20; 40; 100 ], "Nikon")
+        let name = req.Name |> ShortText.create
         let cmd = UseMicroscope { Id = CalibrationId <| domainDependencies.GenerateId()
                                   User = getCurrentUser() |> UserId
                                   FriendlyName = req.Name
@@ -343,6 +360,11 @@ module Taxonomy =
     let getSlide colId slideId =
         let key = sprintf "SlideDetail:%s:%s" colId slideId
         RepositoryBase.getKey<SlideDetail> key readStoreGet deserialise
+        |> toAppResult
+
+    let getById (taxonId:Guid) =
+        let key = sprintf "TaxonDetail:%s" (taxonId.ToString())
+        RepositoryBase.getKey<TaxonDetail> key readStoreGet deserialise
         |> toAppResult
 
 module IndividualReference =
@@ -493,8 +515,23 @@ module User =
     
     let register (newUser:NewAppUserRequest) (getUserId:GetCurrentUser) =
         let id = UserId (getUserId())
-        issueCommand <| Register { Id = id; Title = newUser.Title; FirstName = newUser.FirstName; LastName = newUser.LastName }
+        issueCommand <| Register { Id = id; Title = newUser.Title; FirstName = newUser.FirstName; LastName = newUser.LastName; PublicProfile = false }
         Ok id
+
+    let getPublicProfile (id:Guid) =
+        RepositoryBase.getSingle<PublicProfile> (id.ToString()) readStoreGet deserialise
+        |> toAppResult
+
+    let grantCuration id =
+        let i = Guid.TryParse id
+        match fst i with
+        | true ->
+            snd i
+            |> UserId
+            |> GlobalPollenProject.Core.Aggregates.User.Command.GrantCurationRights
+            |> issueCommand
+            Ok id
+        | false -> Error InvalidRequestFormat
 
 module Statistic =
 
@@ -512,6 +549,26 @@ module Statistic =
         <*> getStat "Statistic:UnknownSpecimenRemaining"
         |> toAppResult
 
+    let getSystemStats() : Result<AllStatsViewModel,ServiceError> =
+
+        let createViewModel famC famT genC genT speC speT =
+            { Family = { Count = famC; Total = famT } 
+              Genus = { Count = genC; Total = genT }
+              Species = { Count = speC; Total = speT }
+              TopIndividuals = []
+              TopOrganisations = [] }
+
+        let getInt key = RepositoryBase.getKey<int> key readStoreGet deserialise
+
+        createViewModel
+        <!> getInt "Statistic:Taxon:FamilyTotal"
+        <*> getInt "Statistic:BackboneTaxa:Families"
+        <*> getInt "Statistic:Taxon:GenusTotal"
+        <*> getInt "Statistic:BackboneTaxa:Genera"
+        <*> getInt "Statistic:Taxon:SpeciesTotal"
+        <*> getInt "Statistic:BackboneTaxa:Species"
+        |> toAppResult
+
 module Admin =
 
     let rebuildReadModel() =
@@ -519,9 +576,59 @@ module Admin =
         ProjectionHandler.init redisSet () |> ignore
         eventStore.Value.ReplayDomainEvents()
 
+    let listUsers() =
+        let get (id:Guid) = 
+            ReadStore.RepositoryBase.getSingle<PublicProfile> (id.ToString()) readStoreGet deserialise
+        RepositoryBase.getListKey<Guid> All "PublicProfile:index" readStoreGetList deserialiseGuid
+        |> bind (mapResult get)
+        |> toAppResult
+
+module Curation =
+
+    open GlobalPollenProject.Core.Aggregates.ReferenceCollection
+
+    let private issueCommand = 
+        let aggregate = { initial = State.Initial; evolve = State.Evolve; handle = handle; getId = getId }
+        eventStore.Value.MakeCommandHandler "ReferenceCollection" aggregate domainDependencies
+
+    let listPending() =
+        let get (id:Guid) = 
+            ReadStore.RepositoryBase.getSingle<EditableRefCollection> (id.ToString()) readStoreGet deserialise
+        RepositoryBase.getListKey<Guid> All "Curation:InReview" readStoreGetList deserialiseGuid
+        |> bind (mapResult get)
+        |> toAppResult
+
+    let issueDecision getCurrentUser (request:CurateCollectionRequest) =
+        
+        let isCurator = 
+            ReadStore.RepositoryBase.getSingle<PublicProfile> (getCurrentUser().ToString()) readStoreGet deserialise
+            |> lift (fun u -> u.Curator)
+
+        let decision =
+            match request.Approved with
+            | true -> Approved |> Ok
+            | false -> 
+                match request.Comment |> LongformText.create with
+                | Ok t -> RevisionRequired t |> Ok
+                | Error e -> Error e
+
+        let issue isCurator decision =
+            match isCurator with
+            | false -> Error "You do not have curation permissions"
+            | true ->
+                IssuePublicationDecision (request.Collection |> CollectionId,decision,(getCurrentUser() |> UserId))
+                |> issueCommand
+                Ok()
+
+        issue
+        <!> isCurator
+        <*> decision
+        |> toAppResult
+
+
 // Additional event handlers:
 
 eventStore.Value.SaveEvent 
-:> IObservable<string*obj>
+:> IObservable<string*obj*DateTime>
 |> Observable.subscribe (EventHandlers.ExternalConnections.refresh readStoreGet Backbone.issueCommand)
 |> ignore

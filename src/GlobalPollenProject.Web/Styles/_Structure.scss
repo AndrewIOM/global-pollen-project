@@ -269,6 +269,10 @@ header {
     background-color:#9b538b;
     padding-bottom:1em;
     margin-bottom:1em;
+    // background-size: 500px;
+    // background-repeat: no-repeat;
+    // background-position: right;
+    // background-image: url(/images/pollen-tiles-bar.png);
 }
 
 // Dropdowns
@@ -293,4 +297,9 @@ header {
             font-style: italic;
         }
     }
+}
+
+// Reference Collection Table
+.table-orig-name {
+    display:block;
 }

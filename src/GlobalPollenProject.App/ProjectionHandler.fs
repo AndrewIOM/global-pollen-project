@@ -30,9 +30,9 @@ let route
     (setSortedList:SetEntryInSortedList) 
     (generateThumb:RelativeUrl->Result<Url,string>)
     (toAbsoluteUrl:RelativeUrl->Url)
-    (e:string*obj) =
+    (e:string*obj*DateTime) =
 
-    let feed (f:(string*obj)->Result<unit,string>) (e:string*obj) =
+    let feed (f:(string*obj*DateTime)->Result<unit,string>) (e:string*obj*DateTime) =
         let r = f e
         match r with
         | Ok o -> Ok e
@@ -42,7 +42,7 @@ let route
     |> feed (TaxonomicBackbone.handle get getSortedList set setSortedList)
     >>= feed (Digitisation.handle get getList set setList generateThumb toAbsoluteUrl)
     >>= feed (Calibration.handle get getList set setList toAbsoluteUrl)
-    >>= feed (UserProfile.handle set)
+    >>= feed (UserProfile.handle get set setList)
     >>= feed (ReferenceCollectionReadOnly.handle get set setList)
     >>= feed (Grain.handle get set setList generateThumb toAbsoluteUrl)
     >>= feed (Statistics.handle get getSortedList set setSortedList)
@@ -50,7 +50,7 @@ let route
 
 
 type Message = 
-    (string*obj) * AsyncReplyChannel<Result<int,string>>
+    (string*obj*DateTime) * AsyncReplyChannel<Result<int,string>>
 
 let readModelAgent handleEvent get set getEventCount =
   MailboxProcessor<Message>.Start(fun inbox ->

@@ -1,17 +1,33 @@
+@using Microsoft.AspNetCore.Identity
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
+@inject Startup.IProfileLoader ProfileLoader
 
 @if (SignInManager.IsSignedIn(User))
 {
+  var user = await UserManager.GetUserAsync(User);
+  var profile = @ProfileLoader.Get(user.Id);
   <ul class="nav navbar-nav">
     <li class="nav-item dropdown">
-      <a class="nav-link dropdown-toggle" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-        @UserManager.GetUserName(User)
+      <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+        @if ( Microsoft.FSharp.Core.FSharpOption<ReadModels.PublicProfile>.get_IsSome(profile)) {
+            <span>@profile.Value.FirstName @profile.Value.LastName</span>
+          } else {
+            <span>@UserManager.GetUserName(User)</span>
+          }
       </a>
       <div class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-        <form href="/Account/Logout" method="post" id="logoutForm" class="navbar-right">
-          <input type="submit" class="dropdown-item" value="Log out" />
-        </form>
+        @if (User.IsInRole("Admin")) {
+          <a class="dropdown-item" href="/Admin/Users">Admin: Users</a>
+        }
+        @if (User.IsInRole("Curator")) {
+          <a class="dropdown-item" href="/Admin/Curate">Curator Dashboard</a>
+        }
+        <a class="dropdown-item">
+          <form action="/Account/Logout" method="POST" id="logoutForm" class="navbar-right">
+            <input type="submit" class="dropdown-item" value="Log out" />
+          </form>
+        </a>
       </div>
     </li>
   </ul>

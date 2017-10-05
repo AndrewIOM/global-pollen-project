@@ -28,9 +28,9 @@
 @* Options *@
 <div class="row">
     <div class="col-md-12">
-        <a class="header-toggle" href="/Taxon?rank=Family">Family</a>
-        <a class="header-toggle header-toggle-active" href="/Taxon?rank=Genus">Genus</a>
-        <a class="header-toggle" href="/Taxon?rank=Species">Species</a>
+        <a class="header-toggle @if (rankFilter == "Family") { @Html.Raw("header-toggle-active") }" href="/Taxon?rank=Family">Family</a>
+        <a class="header-toggle @if (rankFilter == "Genus") { @Html.Raw("header-toggle-active") }" href="/Taxon?rank=Genus">Genus</a>
+        <a class="header-toggle @if (rankFilter == "Species") { @Html.Raw("header-toggle-active") }" href="/Taxon?rank=Species">Species</a>
         <div class="alphabet-index"><a href="/Taxon?rank=@rankFilter">All</a>
             @for (char c = 'A'; c <= 'Z'; c++) {
                 <a href="/Taxon?lex=@c&rank=@rankFilter">@c</a>
@@ -75,7 +75,7 @@
                     @foreach (var subTaxa in taxon.DirectChildren.OrderBy(m => m.Name))
                     {
                         <li>
-                            <a href="/Taxon/ID/@subTaxa.Id})">@subTaxa.Name</a>
+                            <a href="/Taxon/ID/@subTaxa.Id">@subTaxa.Name</a>
                         </li>
                     }
                 </ul>

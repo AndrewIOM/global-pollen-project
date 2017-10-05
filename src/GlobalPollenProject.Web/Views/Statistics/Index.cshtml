@@ -1,8 +1,15 @@
+@model Responses.AllStatsViewModel
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Statistics";
     ViewData["Subtitle"] = "";
     ViewData["Description"] = "";
+    var familyPercent = ((double)Model.Family.Count / (double)Model.Family.Total) * 100.00;
+    var genusPercent = ((double)Model.Genus.Count / (double)Model.Genus.Total) * 100.00;
+    var speciesPercent = ((double)Model.Species.Count / (double)Model.Species.Total) * 100.00;
+    string familyPercentRounded = "p" + Math.Floor(familyPercent).ToString("0");
+    string genusPercentRounded = "p" + Math.Floor(genusPercent).ToString("0");
+    string speciesPercentRounded = "p" + Math.Floor(speciesPercent).ToString("0");
 }
 
 @section headerSection {
@@ -13,54 +20,89 @@
         </div>
     </header>
 }
-<h3>Leaderboard</h3>
-<p>Once a grain has been identified and transferred to the online reference collection all participating users will gain points
-    both for themselves and their affiliated institutions. The number of points will be determined by the current score placed
-    on an individual grain as as well as the level of taxonomic identification (i.e. more points will be awarded for a species
-    level than a genus level identification).</p>
-
 <div class="row">
-    <div class="col-md-8">
-        <div class="panel panel-default">
-            <div class="panel-heading"><i class="fa fa-users" aria-hidden="true"></i> Top organisations</div>
-            <div class="panel-body">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>GPP Total Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Long-Term Ecology Lab, University of Oxford</td>
-                            <td>87</td>
-                        </tr>
-                    </tbody>
-                </table>
+
+    <nav class="col-sm-3 guide-sidebar">
+        <ul class="nav flex-column">
+            <li>
+                <a href="#representation">Taxonomic Representation</a>
+            </li>
+            <li>
+                <a href="#contributions">Contributions</a>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="col-md-9">
+
+        <h3 id="representation">Taxonomic Representation</h3>
+        <hr/>
+        <p>The Global Pollen Project is uses a heirarchical, botanical taxonomy. Of the known plant taxa, our master reference collection covers:</p>
+
+        <div class="row justify-content-center">
+            <div class="col-sm-4">
+                <div class='c100 @familyPercentRounded'>
+                    <span>@familyPercent.ToString("0.00")%</span>
+                    <div class="slice">
+                        <div class="bar"></div>
+                        <div class="fill"></div>
+                    </div>
+                </div>
+                <p class="card-text">or @Model.Family.Count of @Model.Family.Total families.</p>
+            </div>
+            <div class="col-sm-4">
+                <div class='c100 @genusPercentRounded'>
+                    <span>@genusPercent.ToString("0.00")%</span>
+                    <div class="slice">
+                        <div class="bar"></div>
+                        <div class="fill"></div>
+                    </div>
+                </div>
+                <p class="card-text">or @Model.Genus.Count of @Model.Genus.Total genera.</p>
+            </div>
+            <div class="col-sm-4">
+                <div class='c100 @speciesPercentRounded'>
+                    <span>@speciesPercent.ToString("0.00")%</span>
+                    <div class="slice">
+                        <div class="bar"></div>
+                        <div class="fill"></div>
+                    </div>
+                </div>
+                <p class="card-text">or @Model.Species.Count of @Model.Species.Total species.</p>
             </div>
         </div>
-    </div>
-    <div class="col-md-4">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <i class="fa fa-user-circle-o" aria-hidden="true"></i> Top Users
+    <br/>
+
+    <h3 id="contributions">Contributions</h3>
+    <hr/>
+    <p>Once a grain has been identified and transferred to the online reference collection all participating users will gain points
+        both for themselves and their affiliated institutions. The number of points will be determined by the current score placed
+        on an individual grain as as well as the level of taxonomic identification (i.e. more points will be awarded for a species
+        level than a genus level identification).</p>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-block primary-header"><h4 class="card-title"><i class="fa fa-users" aria-hidden="true"></i> Top Organisations</h4></div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>1. </strong> Cras justo odio</li>
+                    <li class="list-group-item"><strong>2. </strong> Dapibus ac facilisis in</li>
+                    <li class="list-group-item"><strong>3. </strong> Vestibulum at eros</li>
+                    <li class="list-group-item"><strong>4. </strong> Vestibulum at eros</li>
+                    <li class="list-group-item"><strong>5. </strong> Vestibulum at eros</li>
+                </ul>
             </div>
-            <div class="panel-body">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>User</th>
-                            <th>GPP Score</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>W. Harvey</td>
-                            <td>67</td>
-                        </tr>
-                    </tbody>
-                </table>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-block primary-header"><h4 class="card-title"><i class="fa fa-user" aria-hidden="true"></i> Top People</h4></div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><strong>1. </strong> Cras justo odio</li>
+                    <li class="list-group-item"><strong>2. </strong> Dapibus ac facilisis in</li>
+                    <li class="list-group-item"><strong>3. </strong> Vestibulum at eros</li>
+                    <li class="list-group-item"><strong>4. </strong> Vestibulum at eros</li>
+                    <li class="list-group-item"><strong>5. </strong> Vestibulum at eros</li>
+                </ul>
             </div>
         </div>
     </div>

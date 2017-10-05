@@ -2,10 +2,13 @@
 @{ 
     Layout = "_Layout"; 
     ViewBag.Title = "Individual Slide"; 
-    ViewData["Title"] = Model.CollectionSlideId;
-    ViewData["Subtitle"] = ""; 
-    ViewData["Description"] = ""; 
-} 
+    string latinName;
+    if (Model.Rank == "Family") { latinName = Model.CurrentFamily; }
+    else if (Model.Rank == "Genus") { latinName = Model.CurrentGenus; }
+    else { latinName = Model.CurrentSpecies; }
+    ViewData["Title"] = Model.CollectionSlideId + ": " + latinName;
+    ViewData["Subtitle"] = "An individual reference slide from the Oxford European Reference Collection"; 
+}
 
 @section headerSection {
 <header>
@@ -19,6 +22,7 @@
 @functions { public string GetSpecificEphitet(string latinName) { return latinName.Split(' ').Last(); } }
 @section scripts {
 <script src="/lib/d3/d3.min.js"></script>
+<script src="/lib/Jcrop/js/Jcrop.min.js"></script>
 <script src="/js/viewer/viewer.js"></script>
 <script src="/js/viewer/focusslider.js"></script>
 <script src="/js/viewer/scalebar.js"></script>
@@ -29,7 +33,7 @@
         createViewer(frames, @Model.Images[0].PixelWidth);
     });
 </script>
-} 
+}
 
 @* Breadcrumb *@
 <div class="row">
@@ -53,26 +57,48 @@
 </div>
 
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-8" id="viewer-interface">
         <div id="viewer-container">
 
         </div>
         <div class="card">
-            <div class="card-header">
-                Select Image:
+            <div class="card-block card-no-padding" id="slide-gallery">
+                @foreach(var img in Model.Images) {
+                    <div class="slide-gallery-item col-md-3" data-frames="@img.Frames" data-pixelwidth="@img.PixelWidth">
+                        <img src="@img.Frames[0]" alt="Image preview">
+                    </div>
+                }
             </div>
-            <div class="card-block">
-                <div class="row" id="slide-gallery">
-                    @foreach(var img in Model.Images) {
-                        <div class="slide-gallery-item col-md-3" data-frames="@img.Frames" data-pixelwidth="@img.PixelWidth">
-                            <img src="@img.Frames[0]" alt="Image preview">
-                        </div>
-                    }
+        </div>
+
+        @* Citation *@
+        <h4>Citation</h4>
+        <p>Slide from the <em>Collection Name</em> collection, which is owned by Owner, and located at Institution. Obtained from Martin, A.C., & Harvey, W. J. (2016). <em>The Global Pollen Project</em>. Retrieved @DateTime.Now.ToString("d"), from http://globalpollenproject.org</p>
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />These images are licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.
+    </div>
+    <div class="col-md-8" id="cropping-interface" style="display: none;">
+        <div class="card">
+            <div class="card-header">
+                <span>Draw a box around each pollen grain / spore:</span>
+                <div class="btn-toolbar" role="toolbar">
+                    <div class="btn-group mr-2" role="group">
+                        <button type="button" id="toolbar-clear" class="btn btn-secondary">Clear selected box</button>
+                        <button type="button" id="toolbar-cancel" class="btn btn-secondary">Cancel</button>
+                        <button type="button" id="toolbar-done" class="btn btn-secondary">Done</button>
+                    </div>
                 </div>
             </div>
+            <div class="card-block" id="cropping-container"></div>
         </div>
     </div>
     <div class="col-md-4">
+        <div class="card card-inverse card-primary mb-3 text-center crop-panel" id="cropping-panel">
+            <div class="card-block">
+                <span>Help us identify individual pollen grains and spores within this slide.</span>
+                <button id="cropping-button" class="btn btn-primary btn-block">Start</button>
+            </div>
+        </div>
+
         <p>This reference slide has been digitised with @Model.Images.Length image(s). Each image may contain one or more pollen grains.</p>
         <div class="card">
             <div class="card-header">

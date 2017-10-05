@@ -93,3 +93,15 @@
 #neotoma-map {
     margin-bottom:1em;
 }
+
+// Bootstrap 4 cards
+
+.card-block.primary-header {
+    background-color: $primary-color; 
+    color: #fff;
+
+    .card-title {
+        font-size:1.2em; 
+        margin-bottom:0.2em;
+    }
+}

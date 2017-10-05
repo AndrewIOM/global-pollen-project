@@ -4,58 +4,109 @@ open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Aggregate
 open System
 
-type RevisionNotes = string
+type RevisionNotes = LongformText
+
+type Institution = {
+    Name: ShortText
+    Web: Url option
+}
+
+type ContactDetail =
+| Email of EmailAddress
+
+type Curator = {
+    Forenames: FirstName list
+    Surname: Surname
+    Contact: ContactDetail
+}
+type Digitiser = Person
+
+type CollectionLocation =
+| Institutional of Institution
+| Personal
+
+type AccessToMaterial =
+| DigitialOnly
+| PrimaryLocation of CollectionLocation
+| ReplicateLocations of CollectionLocation * (CollectionLocation list)
 
 type Command =
-| CreateCollection of CreateCollection
-| AddSlide of AddSlide
-| UploadSlideImage of UploadSlideImage
-| Publish of CollectionId
-| IssuePublicationDecision of CollectionId * PublicationDecision * UserId
+| CreateCollection          of CreateCollection
+| AddSlide                  of AddSlide
+| VoidSlide                 of SlideId
+| UploadSlideImage          of UploadSlideImage
+| Publish                   of CollectionId
+| IssuePublicationDecision  of CollectionId * PublicationDecision * UserId
+| CreditDigitiser           of CollectionId * Digitiser
+| SpecifyCurator            of CollectionId * Curator * AccessToMaterial
+| RegisterReplicate         of CollectionId * Institution
+| DelineateSpecimensOnImage of DelineateSpecimensOnImage
 
-and CreateCollection = {Id:CollectionId; Name:string; Owner:UserId; Description: string}
-and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int<CalYr> option }
+and CreateCollection = {
+    Id:CollectionId
+    Name:string
+    Owner:UserId
+    Description: string }
+
 and AddSlide = 
-    {Collection:        CollectionId
-     Taxon:             TaxonIdentification
-     OriginalFamily:    string
-     OriginalGenus:     string
-     OriginalSpecies:   string
-     OriginalAuthor:    string
-     ExistingId:        string option
-     Place:             SamplingLocation option
-     Time:              Age option
-     PrepMethod:        ChemicalTreatment option
-     PrepDate:          int<CalYr> option
-     Mounting:          MountingMedium option }
+    {Collection:            CollectionId
+     Taxon:                 TaxonIdentification
+     OriginalFamily:        string
+     OriginalGenus:         string
+     OriginalSpecies:       string
+     OriginalAuthor:        string
+     ExistingId:            string option
+     Place:                 SamplingLocation option
+     Time:                  Age option
+     PrepMethod:            ChemicalTreatment option
+     PrepDate:              int<CalYr> option
+     Mounting:              MountingMedium option }
+
+and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int<CalYr> option }
 
 and PublicationDecision =
 | Approved
 | RevisionRequired of RevisionNotes 
 
-type Event =
-| DigitisationStarted of DigitisationStarted
-| RequestedPublication of CollectionId
-| CollectionPublished of CollectionId * DateTime * ColVersion
-| SlideRecorded of SlideRecorded
-| SlideImageUploaded of SlideId * Image * int<CalYr> option
-| SlideFullyDigitised of SlideId
-| SlideGainedIdentity of SlideId * TaxonId
-| RevisionAdvised of CollectionId * RevisionNotes
+and DelineateSpecimensOnImage = {
+    Slide: SlideId
+    Image: ImageNumber
+    By: UserId
+    Delineations: SpecimenDelineation list
+}
 
-and DigitisationStarted = {Id: CollectionId; Name: string; Owner: UserId; Description: string}
+type Event =
+| DigitisationStarted       of DigitisationStarted
+| PublicAccessAssigned      of CollectionId * Curator * AccessToMaterial
+| RequestedPublication      of CollectionId
+| RevisionAdvised           of CollectionId * RevisionNotes
+| CollectionPublished       of CollectionId * DateTime * ColVersion
+| SlideRecorded             of SlideRecorded
+| SlideVoided               of SlideId
+| SlideImageUploaded        of SlideId * Image * int<CalYr> option
+| SlideFullyDigitised       of SlideId
+| SlideGainedIdentity       of SlideId * TaxonId
+| SpecimenDelineated        of SlideId * ImageNumber * SpecimenDelineation
+| SpecimenConfirmed         of SlideId * ImageNumber * SpecimenDelineation
+
+and DigitisationStarted = {
+    Id: CollectionId
+    Name: string
+    Owner: UserId
+    Description: string }
+
 and SlideRecorded = {
-    Id: SlideId
-    OriginalFamily: string
-    OriginalGenus: string
-    OriginalSpecies: string
-    OriginalAuthor: string
-    Place: SamplingLocation option
-    Time: Age option
-    PrepMethod: ChemicalTreatment option
-    PrepDate: int<CalYr> option
-    Mounting: MountingMedium option
-    Taxon: TaxonIdentification }
+    Id:                     SlideId
+    OriginalFamily:         string
+    OriginalGenus:          string
+    OriginalSpecies:        string
+    OriginalAuthor:         string
+    Place:                  SamplingLocation option
+    Time:                   Age option
+    PrepMethod:             ChemicalTreatment option
+    PrepDate:               int<CalYr> option
+    Mounting:               MountingMedium option
+    Taxon:                  TaxonIdentification }
 
 type State =
 | Initial
@@ -65,15 +116,18 @@ type State =
 | Published of RefState
 
 and RefState = {
-    Owner: UserId
-    Curators: UserId list
     Name: string
     Description: string option
     CurrentVersion: ColVersion
-    Slides: SlideState list}
+    Owner: UserId
+    Digitisers: UserId list
+    Curator: Curator option
+    PhysicalLocation: AccessToMaterial option
+    Slides: SlideState list }
 and SlideState = {
     Id: string
     IsFullyDigitised: bool
+    Void: bool
     OriginalFamily: string
     OriginalGenus: string
     OriginalSpecies: string
@@ -115,7 +169,10 @@ let publish (id:CollectionId) state =
     | Draft c ->
         match c.Slides.Length with
         | 0 -> invalidOp "Cannot publish an empty collection"
-        | _ -> [ RequestedPublication id ]
+        | _ ->
+            match c.Curator with
+            | None -> invalidOp "Cannot publish a collection without knowing the curator"
+            | Some _ -> [ RequestedPublication id ]
 
 let issueDecision getTime (id:CollectionId) decision userId state =
     match state with
@@ -140,7 +197,7 @@ let addSlide (command:AddSlide) calcIdentity state =
         let slideId = 
             match command.ExistingId with
             | Some i ->
-                match c.Slides |> List.tryFind (fun s -> s.Id = i) with
+                match c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = i) with
                 | Some _ -> invalidOp "Slide ID already in use"
                 | None -> i
             | None ->
@@ -148,7 +205,8 @@ let addSlide (command:AddSlide) calcIdentity state =
                     match c.Slides.Length with
                     | 0 -> 0
                     | _ ->
-                        c.Slides 
+                        c.Slides
+                        |> List.filter (fun s -> s.Void = false)
                         |> List.map ( fun s -> match s.Id with | Prefix "GPP" rest -> int rest | _ -> 0 )
                         |> List.max
                 sprintf "GPP%i" (lastId + 1)
@@ -176,7 +234,7 @@ let uploadImage (command:UploadSlideImage) state =
     | Published c
     | InRevision (c,_)
     | Draft c -> 
-        let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId command.Id)
+        let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId command.Id)
         match slide with
         | None -> invalidOp "Slide does not exist"
         | Some s ->
@@ -185,6 +243,32 @@ let uploadImage (command:UploadSlideImage) state =
             | true -> [SlideImageUploaded (command.Id, command.Image, command.YearTaken); SlideFullyDigitised command.Id]
             | false -> [SlideImageUploaded (command.Id, command.Image, command.YearTaken)]
 
+let voidSlide slideId state =
+    match state with
+    | Initial -> invalidOp "This collection does not exist"
+    | PublicationRequested c -> "This collection is under review for publication and cannot accept changes" |> invalidOp
+    | Published c
+    | InRevision (c,_)
+    | Draft c -> 
+        let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId slideId)
+        match slide with
+        | None -> invalidOp "Slide does not exist"
+        | Some s -> 
+            match s.Void with
+            | true -> invalidOp "Slide is already voided"
+            | false -> [ SlideVoided slideId ]
+
+let specifyCurator id curator access state =
+    match state with
+    | Initial -> invalidOp "This collection does not exist"
+    | PublicationRequested c -> "This collection is under review for publication and cannot accept changes" |> invalidOp
+    | Published c
+    | InRevision (c,_)
+    | Draft c -> [ PublicAccessAssigned (id,curator,access) ]
+
+let delineate command state =
+    invalidOp "Not implemented"
+
 let handle deps = 
     function
     | CreateCollection c -> create c
@@ -192,6 +276,11 @@ let handle deps =
     | AddSlide c -> addSlide c deps.CalculateIdentity
     | UploadSlideImage c -> uploadImage c
     | IssuePublicationDecision (c,dec,userId) -> issueDecision deps.GetTime c dec userId
+    | VoidSlide id -> voidSlide id
+    | SpecifyCurator (id,curator,access) -> specifyCurator id curator access
+    | DelineateSpecimensOnImage c -> delineate c
+    | CreditDigitiser _ -> invalidOp "Not implemented"
+    | RegisterReplicate _ -> invalidOp "Not implemented"
 
 type State with
     static member Evolve state = function
@@ -205,9 +294,20 @@ type State with
                     Owner = event.Owner
                     Description = Some event.Description
                     Slides = []
-                    Curators = []
+                    Digitisers = []
+                    Curator = None
+                    PhysicalLocation = None
                 }
             | _ -> invalidOp "Digitisation has already started for this collection"
+
+        | PublicAccessAssigned (id,curator,accessLevel) ->
+            match state with
+            | Initial -> invalidOp "Invalid state transition"
+            | PublicationRequested _ -> invalidOp "Invalid state transition"
+            | InRevision (c,_)
+            | Published c
+            | Draft c ->
+                Draft { c with PhysicalLocation = Some accessLevel; Curator = Some curator }
 
         | RequestedPublication id ->
             match state with
@@ -243,6 +343,7 @@ type State with
             | Draft c ->
                 let newSlide = {
                     IsFullyDigitised = false
+                    Void = false
                     Id = getSlideId event.Id
                     Identification = Partial [event.Taxon]
                     Images = []
@@ -257,6 +358,20 @@ type State with
                     Mounting = event.Mounting }
                 Draft { c with Slides = newSlide :: c.Slides }
 
+        | SlideVoided id ->
+            match state with
+            | Initial -> invalidOp "You must create a collection before adding a slide to it"
+            | PublicationRequested _ -> invalidOp "Invalid state transition"
+            | Published c
+            | InRevision (c,_)
+            | Draft c ->
+                let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId id)
+                match slide with
+                | None -> invalidOp "Slide does not exist"
+                | Some s ->
+                    let slides = c.Slides |> List.except [s]
+                    Draft { c with Slides = slides }
+
         | SlideGainedIdentity (id,tid) ->
             match state with
             | Initial -> invalidOp "Collection does not exist"
@@ -264,7 +379,7 @@ type State with
             | Published c
             | InRevision (c,_)
             | Draft c ->
-                let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
+                let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
                 | Some s ->
@@ -284,7 +399,7 @@ type State with
             | Published c
             | InRevision (c,_)
             | Draft c ->
-                let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId event)
+                let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId event)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
                 | Some s ->
@@ -299,7 +414,7 @@ type State with
             | Published c
             | InRevision (c,_)
             | Draft c ->
-                let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
+                let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
                 | Some s ->
@@ -313,6 +428,11 @@ let getId =
     function
     | CreateCollection c -> unwrap c.Id
     | AddSlide c -> unwrap c.Collection
+    | VoidSlide sid -> unwrapSlideId sid |> unwrap
     | Publish c -> unwrap c
     | UploadSlideImage c -> unwrapSlideId c.Id |> unwrap
     | IssuePublicationDecision (c,_,_) -> unwrap c
+    | SpecifyCurator (id,_,_) -> unwrap id
+    | DelineateSpecimensOnImage c -> unwrapSlideId c.Slide |> unwrap
+    | CreditDigitiser (id,_) -> unwrap id
+    | RegisterReplicate (id,_) -> unwrap id

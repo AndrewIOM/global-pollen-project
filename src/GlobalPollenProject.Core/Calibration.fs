@@ -10,7 +10,7 @@ type Command =
 and UseMicroscope = {
     Id:             CalibrationId
     User:           UserId
-    FriendlyName:   Label
+    FriendlyName:   string
     Microscope:     Microscope
 }
 
@@ -24,7 +24,7 @@ and ImageCalibration = {
 type Event =
 | SetupMicroscope of SetupMicroscope
 | CalibratedMag of CalibratedMag
-and SetupMicroscope = { Id: CalibrationId; User: UserId; Microscope: Microscope; FriendlyName: Label }
+and SetupMicroscope = { Id: CalibrationId; User: UserId; Microscope: Microscope; FriendlyName: string }
 and CalibratedMag = { Id: CalibrationId; Magnification: Magnification; Image: RelativeUrl; PixelWidth: float<um> }
 
 type State =

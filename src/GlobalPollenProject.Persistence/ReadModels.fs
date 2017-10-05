@@ -25,6 +25,7 @@ type SlideSummary = {
 type GrainSummary = {
     Id:         Guid
     Thumbnail:  string
+    Submitted:  DateTime
 }
 
 [<CLIMutable>]
@@ -134,6 +135,7 @@ type SlideDetail = {
     PrepYear:           string
     PrepMethod:         string
     CollectorName:      string
+    Voided:             bool
 }
 
 // Taxonomic Backbone
@@ -161,23 +163,35 @@ type BackboneTaxon = {
 
 [<CLIMutable>]
 type ReferenceCollectionSummary = {
-    Id:         Guid
-    Name:       string
-    Description:string
-    SlideCount: int
-    Published:  DateTime
-    Version:    int
+    Id:                 Guid
+    Name:               string
+    Description:        string
+    CuratorFirstNames:  string
+    CuratorSurname:     string
+    CuratorEmail:       string
+    AccessMethod:       string
+    Institution:        string
+    InstitutionUrl:     string
+    SlideCount:         int
+    Published:          DateTime
+    Version:            int
 }
 
 [<CLIMutable>]
 type ReferenceCollectionDetail = {
-    Id:             Guid
-    Name:           string
-    Contributors:   string list
-    Description:    string
-    Slides:         SlideDetail list
-    Published:      DateTime
-    Version:        int
+    Id:                 Guid
+    Name:               string
+    Contributors:       string list
+    Description:        string
+    CuratorFirstNames:  string
+    CuratorSurname:     string
+    CuratorEmail:       string
+    AccessMethod:       string
+    Institution:        string
+    InstitutionUrl:     string
+    Slides:             SlideDetail list
+    Published:          DateTime
+    Version:            int
 }
 
 // User Profiles
@@ -195,6 +209,7 @@ type PublicProfile = {
     FirstName:  string
     LastName:   string
     Score:      float
+    Curator:    bool
     Groups:     GroupSummary list
 }
 
@@ -221,9 +236,17 @@ type EditableRefCollection = {
     Id:                 Guid
     Name:               string
     Description:        string
+    CuratorFirstNames:  string
+    CuratorSurname:     string
+    CuratorEmail:       string
+    AccessMethod:       string
+    Institution:        string
+    InstitutionUrl:     string
     EditUserIds:        Guid list
     LastEdited:         DateTime
     PublishedVersion:   int
     SlideCount:         int
     Slides:             SlideDetail list
+    CommentsFromReview: string
+    AwaitingReview:     bool
 }

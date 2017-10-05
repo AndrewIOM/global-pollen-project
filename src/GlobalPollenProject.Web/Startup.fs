@@ -27,6 +27,63 @@ open GlobalPollenProject.Web.App
 
 open ReadModels
 
+///////////////////////////
+/// DI components for views
+///////////////////////////
+
+let parseGuid i =
+    match System.Guid.TryParse i with
+    | (true,g) -> Ok g
+    | (false,g) -> Error InvalidRequestFormat
+
+let resultToOption r =
+    match r with
+    | Ok o -> Some o
+    | Error _ -> None
+
+let getPublicProfile userId =
+    userId
+    |> parseGuid
+    |> bind User.getPublicProfile
+    |> resultToOption
+
+type IProfileLoader =
+  abstract Get : string -> PublicProfile option
+
+type ProfileLoader() =
+    interface IProfileLoader with
+        member x.Get id = getPublicProfile id
+
+///////////////////////////
+/// App Configuration
+///////////////////////////
+
+let createRoles (serviceProvider:IServiceProvider) =
+    let roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>()
+    let userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>()
+    
+    [ "Admin"; "Curator" ]
+    |> List.iter (fun roleName ->
+        match roleManager.RoleExistsAsync(roleName) |> Async.AwaitTask |> Async.RunSynchronously with
+        | true -> ()
+        | false -> roleManager.CreateAsync(IdentityRole(roleName)) 
+                   |> Async.AwaitTask 
+                   |> Async.RunSynchronously 
+                   |> ignore )
+
+    let powerUser = ApplicationUser(UserName = getAppSetting "UserSettings:UserEmail",Email = getAppSetting "UserSettings:UserEmail" )
+
+    let powerPassword = getAppSetting "UserSettings:UserPassword"
+    let existing = userManager.FindByEmailAsync(getAppSetting "UserSettings:UserEmail") |> Async.AwaitTask |> Async.RunSynchronously
+    if existing |> isNull 
+        then
+            let create = userManager.CreateAsync(powerUser, powerPassword) |> Async.AwaitTask |> Async.RunSynchronously
+            if create.Succeeded 
+                then userManager.AddToRoleAsync(powerUser, "Admin") |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+                else ()
+        else ()
+
+
 type Startup () =
     new (configuration: IConfiguration) as this =
         Startup() then
@@ -57,9 +114,10 @@ type Startup () =
             |> ignore
 
         services.AddSingleton<IEmailSender, AuthEmailMessageSender>() |> ignore
-        services.AddAuthentication() |> ignore
+        services.AddSingleton<IProfileLoader, ProfileLoader>() |> ignore
         services.AddDataProtection() |> ignore
         services.AddRazorEngine(viewsFolderPath) |> ignore
+        createRoles (services.BuildServiceProvider()) |> ignore
 
     member this.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
 

@@ -67,6 +67,14 @@ let loginHandler redirectUrl : HttpHandler =
                    return! renderView "Account/Login" loginRequest next ctx
         }
 
+let logoutHandler : HttpHandler =
+    fun (next : HttpFunc) (ctx : HttpContext) ->
+        task {
+            let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+            do! signInManager.SignOutAsync()
+            return! (redirectTo false "/") next ctx
+}
+
 let registerHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
@@ -189,4 +197,20 @@ let resetPasswordHandler : HttpHandler =
                     match result.Succeeded with
                     | true -> return! redirectTo false "/Account/ResetPasswordConfirmation" next ctx
                     | false -> return! renderView "Account/ResetPassword" None next ctx
+        }
+
+let grantCurationHandler (id:string) : HttpHandler =
+    fun next ctx ->
+        task {
+            let roleManager = ctx.GetService<RoleManager<IdentityRole>>()
+            let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+            match User.grantCuration id with
+            | Ok _ ->
+                let! existing = userManager.FindByIdAsync id
+                if existing |> isNull 
+                    then return! text "Error" next ctx
+                    else
+                        let! r = userManager.AddToRoleAsync(existing, "Curator")
+                        return! redirectTo false "/Admin/Users" next ctx
+            | Error e -> return! text "Error" next ctx
         }

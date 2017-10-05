@@ -96,6 +96,12 @@ type LoginRequest = {
 type StartCollectionRequest = {
     [<Required>] [<StringLength(50,MinimumLength=10)>] Name: string
     [<Required>] Description: string 
+    [<Required>] CuratorFirstNames: string
+    [<Required>] CuratorSurname: string
+    [<Required>] CuratorEmail: string
+    [<Required>] AccessMethod: string
+    Institution: string
+    InstitutionUrl: string
 }
 
 [<CLIMutable>]
@@ -207,4 +213,11 @@ type TaxonPageRequest = {
 type TaxonAutocompleteRequest = {
     PageSize: int
     Name: string
+}
+
+[<CLIMutable>]
+type CurateCollectionRequest = {
+    Approved: bool
+    Comment: string
+    Collection: Guid
 }

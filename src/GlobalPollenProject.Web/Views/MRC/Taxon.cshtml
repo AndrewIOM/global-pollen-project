@@ -4,6 +4,7 @@
     Layout = "_Layout";
     ViewBag.Title = Model.LatinName + " (" + Model.Rank + ") - Master Reference Collection";
     var subname = Model.Rank == "Family" ? "Genera" : "Species";
+    var completionPercentage = @Model.BackboneChildren != 0 ? (@Model.Children.Length / @Model.BackboneChildren) * 100 : 100;
 }
 
 <link rel="stylesheet" href="~/lib/nouislider/distribute/nouislider.min.css"> @* TODO Move this *@
@@ -16,7 +17,6 @@
     <p>@Model.Rank in the Global Pollen Project's Master Reference Collection.</p>
     </div></header>
 }
-
 
 @* Breadcrumb *@
 <div class="row">
@@ -136,32 +136,47 @@
                     </div>
                 </div>
                 <dl class="row">
-                    <dt class="col-sm-3">GPP UUID</dt>
+                    <dt class="col-sm-3">Global Pollen Project UUID</dt>
                     <dd class="col-sm-9">@Model.Id</dd>
                 </dl>
                 <dl class="row">
-                    <dt class="col-sm-3">GPP Parent</dt>
-                    <dd class="col-sm-9"></dd>
-                </dl>
-                <dl class="row">
-                    <dt class="col-sm-3">GPP @subname</dt>
+                    <dt class="col-sm-3">Parent Taxon</dt>
                     <dd class="col-sm-9">
-                        <ul class="list-inline">
-                        @foreach (var subTaxon in Model.Children.OrderBy(m => m.Name))
-                        {
-                            <li><a href="/Taxon/Id/@subTaxon.Id">@subTaxon.Name</a></li>
+                        @if (Model.Rank == "Genus") {
+                            <a href="/Taxon/@Model.Family">@Model.Family</a>
                         }
-                        </ul>
+                        @if (Model.Rank == "Species") {
+                            <a href="/Taxon/@Model.Family/@Model.Genus">@Model.Genus</a>
+                        }
                     </dd>
                 </dl>
-                <dl class="row">
-                    <dt class="col-sm-3">GPP Completion</dt>
-                    <dd class="col-sm-9">
-                        <ul class="list-inline">
-                            @Model.Children.Length of @Model.BackboneChildren accepted @subname.
-                        </ul>
-                    </dd>
-                </dl>
+                @if (Model.Rank != "Species") {
+                    <dl class="row">
+                        <dt class="col-sm-3">@subname</dt>
+                        <dd class="col-sm-9">
+                            <ul class="list-inline">
+                            @foreach (var subTaxon in Model.Children.OrderBy(m => m.Name))
+                            {
+                                <li><a href="/Taxon/ID/@subTaxon.Id">@subTaxon.Name</a></li>
+                            }
+                            </ul>
+                        </dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="col-sm-3">Taxonomic Completion</dt>
+                        <dd class="col-sm-9">
+                            @{ var completionP = "p" + completionPercentage.ToString(); }
+                            <div class="c100 @completionP">
+                                <span>@completionPercentage%</span>
+                                <div class="slice">
+                                    <div class="bar"></div>
+                                    <div class="fill"></div>
+                                </div>
+                            </div>
+                            <span>@Model.Children.Length of @Model.BackboneChildren accepted @subname.</span>
+                        </dd>
+                    </dl>
+                }
             </div>
         </div>
 
@@ -175,7 +190,7 @@
                     } else {
                         <p><strong>Reference: </strong>@Model.ReferenceName</p>
                     }
-                }
+                } else { <span>We currently do not have a reference for this taxon. You can check <a target="_blank" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName">The Plant List</a> for further information.</span>}
             </div>
         </div>
 

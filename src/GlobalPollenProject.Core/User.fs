@@ -7,18 +7,28 @@ open GlobalPollenProject.Core.DomainTypes
 // No passwords, logins etc. are dealt with here.
 // They are dealt with in GPP.Shared.Identity
 
+[<AutoOpen>]
+module Points =
+    type Points = Points of float
+    let create (amount:float) = Math.Round(amount, 1)
+
+type UserContribution =
+| TaxonomicIdentity of GrainId
+
 type Command =
 | Register of Register
+| Contribute of UserId * UserContribution * Points
 | ActivatePublicProfile of UserId
 | DisablePublicProfile of UserId
 | JoinClub of UserId * ClubId
-| AssignCurationRights of UserId
+| GrantCurationRights of UserId
 
 and Register = {
     Id: UserId
     Title: string
     FirstName: string
     LastName: string
+    PublicProfile: bool
 }
 
 type Event =
@@ -46,15 +56,20 @@ and UserState = {
     PrimaryClub: ClubId option
     OtherClubs: ClubId list
     IsPubliclyVisible: bool
+    Curator: bool
 }
 
 let register (command:Register) state =
     match state with
     | InitialState ->
-        [ UserRegistered {  Id = command.Id
-                            Title = command.Title
-                            FirstName = command.FirstName
-                            LastName = command.LastName }]
+        let registered = 
+            [ UserRegistered {  Id = command.Id
+                                Title = command.Title
+                                FirstName = command.FirstName
+                                LastName = command.LastName }]
+        match command.PublicProfile with
+        | false -> registered
+        | true -> (ProfileMadePublic command.Id) :: registered
     | _ -> 
         invalidOp "This user has already registered"
 
@@ -79,12 +94,25 @@ let joinClub userId clubId state =
     | _ -> 
         invalidOp "User does not exist"
 
+let contribute userId contribution points state =
+    invalidOp "Not implemented"
+
+let grantCuration userId state =
+    match state with
+    | Registered s ->
+        match s.Curator with
+        | true -> invalidOp <| sprintf "The user %A is already a curator" userId
+        | false -> [ BecameCurator userId ]
+    | _ -> invalidOp "User does not exist"
+
 let handle deps = 
     function
     | Register command -> register command
     | ActivatePublicProfile command -> activateProfile command
     | DisablePublicProfile command -> deactivateProfile command
     | JoinClub (u,c) -> joinClub u c
+    | GrantCurationRights u -> grantCuration u
+    | Contribute (u,c,p) -> contribute u c p
 
 let private unwrap (UserId e) = e
 let getId = function
@@ -92,6 +120,8 @@ let getId = function
     | ActivatePublicProfile c -> unwrap c
     | DisablePublicProfile c -> unwrap c
     | JoinClub (c,_) -> unwrap c
+    | GrantCurationRights c -> unwrap c
+    | Contribute (c,_,_) -> unwrap c
 
 type State with
     static member Evolve state event =
@@ -105,6 +135,7 @@ type State with
                     Title = e.Title
                     IsPubliclyVisible = false
                     PrimaryClub = None
+                    Curator = false
                     OtherClubs = []
                 }
             | _ -> invalidOp "User is not registered"
@@ -114,4 +145,5 @@ type State with
             | ProfileMadePublic user -> Registered { regState with IsPubliclyVisible = true }
             | ProfileHidden user -> Registered { regState with IsPubliclyVisible = false }
             | JoinedClub (user,club) -> Registered { regState with IsPubliclyVisible = true }
+            | BecameCurator id -> Registered { regState with Curator = true }
 

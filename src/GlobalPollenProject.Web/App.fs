@@ -36,9 +36,8 @@ open Account
 /// Helpers
 /////////////////////////
 
-let authScheme = "Cookie"
 let accessDenied = setStatusCode 401 >=> razorHtmlView "AccessDenied" None
-let mustBeLoggedIn = requiresAuthentication accessDenied
+let mustBeLoggedIn : HttpHandler = requiresAuthentication (redirectTo false "/Account/Login")
 let mustBeAdmin ctx = requiresRole "Admin" accessDenied ctx
 
 let currentUserId (ctx:HttpContext) () =
@@ -97,6 +96,7 @@ let lookupNameFromOldTaxonId id =
 /////////////////////////
 /// Custom HTTP Handlers
 /////////////////////////
+
 let slideViewHandler (id:string) : HttpHandler =
     fun next ctx ->
         let split = id.Split '/'
@@ -117,6 +117,14 @@ let taxonDetail (taxon:string) next ctx =
         | _ -> "",None,None
     Taxonomy.getByName f g s
     |> toViewResult "MRC/Taxon" next ctx
+
+let taxonDetailById id next ctx =
+    match System.Guid.TryParse id with
+    | (true,g) ->
+        g
+        |> Taxonomy.getById
+        |> toViewResult "MRC/Taxon" next ctx
+    | (false,g) -> notFoundResult next ctx
 
 let individualCollectionIndex next ctx =
     IndividualReference.list {Page = 1; PageSize = 20}
@@ -214,6 +222,28 @@ let rebuildReadModelHandler next ctx =
     Admin.rebuildReadModel()
     text "Done" next ctx
 
+let systemStatsHandler next ctx =
+    Statistic.getSystemStats()
+    |> toViewResult "Statistics/Index" next ctx
+
+let userAdminHandler next ctx =
+    Admin.listUsers()
+    |> toViewResult "Admin/Users" next ctx
+
+let curateIndexHandler next ctx =
+    Curation.listPending()
+    |> toViewResult "Admin/Curate" next ctx
+
+let curateHandler next (ctx:HttpContext) =
+    ctx.BindForm<CurateCollectionRequest>()
+    |> Async.AwaitTask
+    |> Async.RunSynchronously
+    |> validateModel
+    |> Result.bind (Curation.issueDecision (currentUserId ctx))
+    |> ignore
+    redirectTo true "/Admin/Curate" next ctx 
+
+
 /////////////////////////
 /// Routes
 /////////////////////////
@@ -248,9 +278,9 @@ let webApp : HttpHandler =
             POST >=> route  "/Login"                        >=> loginHandler "/"
             POST >=> route  "/ExternalLogin"                >=> externalLoginHandler
             POST >=> route  "/Register"                     >=> registerHandler
-            POST >=> route  "/Logout"                       >=> signOff authScheme >=> redirectTo true "/"
-            POST >=> route  "/ForgotPassword"               >=> forgotPasswordHandler
-            POST >=> route  "/ResetPassword"                >=> resetPasswordHandler
+            POST >=> route  "/Logout"                       >=> mustBeLoggedIn >=> logoutHandler
+            POST >=> route  "/ForgotPassword"               >=> mustBeLoggedIn >=> forgotPasswordHandler
+            POST >=> route  "/ResetPassword"                >=> mustBeLoggedIn >=> resetPasswordHandler
 
             GET  >=> route  "/Login"                        >=> renderView "Account/Login" None
             GET  >=> route  "/Register"                     >=> renderView "Account/Register" None
@@ -274,6 +304,7 @@ let webApp : HttpHandler =
             route   ""                          >=> pagedTaxonomyHandler
             routef  "/Slide/%s"                 slideViewHandler
             routef  "/View/%i"                  lookupNameFromOldTaxonId
+            routef  "/ID/%s"                    taxonDetailById
             routef  "/%s"                       taxonDetail
         ]
 
@@ -289,13 +320,17 @@ let webApp : HttpHandler =
             POST >=> route  "/Upload"           >=> submitGrainHandler
             POST >=> route  "/Identify"         >=> submitIdentificationHandler
             GET  >=> route  ""                  >=> listGrains
-            GET  >=> route  "/Upload"           >=> renderView "Identify/Add" None
-            GET  >=> routef "/%s"               (fun id -> showGrainDetail id)
+            GET  >=> route  "/Upload"           >=> mustBeLoggedIn >=> renderView "Identify/Add" None
+            GET  >=> routef "/%s"               showGrainDetail
         ]
 
     let admin =
         choose [
-            GET  >=> route "/RebuildReadModel"  >=> rebuildReadModelHandler
+            GET  >=> route "/Curate"            >=> curateIndexHandler
+            POST >=> route "/Curate"            >=> curateHandler
+            GET  >=> route "/Users"             >=> mustBeAdmin >=> userAdminHandler
+            POST >=> routef "/GrantCuration/%s" grantCurationHandler
+            GET  >=> route "/RebuildReadModel"  >=> mustBeAdmin >=> rebuildReadModelHandler
         ]
 
     // Main router
@@ -311,7 +346,7 @@ let webApp : HttpHandler =
         choose [
             route   "/"                         >=> homeHandler
             route   "/Guide"                    >=> renderView "Home/Guide" None
-            route   "/Statistics"               >=> renderView "Statistics/Index" None
+            route   "/Statistics"               >=> systemStatsHandler
             route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
             route   "/Api"                      >=> renderView "Home/Api" None
             route   "/Tools"                    >=> renderView "Tools/Index" None

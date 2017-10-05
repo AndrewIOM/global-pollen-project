@@ -23,6 +23,10 @@ let place = Country "Nigeria"
 let age = CollectionDate 1987<CalYr>
 let curatorId = UserId (Guid.NewGuid())
 
+let image = RelativeUrl "image.png"
+let focusImage = FocusImage ([image; image; image; image; image],Fixed 2.3<um>,(MagnificationId (CalibrationId Guid.Empty,100)))
+let singleImage = SingleImage (image, {Point1 = 2,3; Point2 = 5,8; MeasuredDistance = 4.<um>})
+
 let slideRequest = {
     Collection          = collection
     Taxon               = id
@@ -50,6 +54,14 @@ let slideRecorded = {
     PrepDate            = None
     Mounting            = None }
 
+let collectionCurator = {
+    Forenames = ["William"; "Testy"]
+    Surname = "McTest"
+    Contact = Email <| EmailAddress "hello@somemadeuptestaddress.com"
+}
+
+let materialAccess = Institutional { Name = ShortText "Contoso University"; Web = Some <| Url "https://globalpollenproject.org" } |> PrimaryLocation
+
 
 module ``When digitising reference material`` =
 
@@ -66,21 +78,30 @@ module ``When digitising reference material`` =
         |> ExpectInvalidOp
 
     [<Fact>]
-    let ``A collection with slides can be submitted for publication`` () =
+    let ``A collection must have a curator assigned before publication can proceed`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded ]
+        |> When (Publish collection)
+        |> ExpectInvalidOp
+
+    [<Fact>]
+    let ``A collection with slides and a curator can be submitted for publication`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                PublicAccessAssigned (collection, collectionCurator, materialAccess)
                 SlideRecorded slideRecorded ]
         |> When (Publish collection)
         |> Expect [ RequestedPublication collection ]
 
     [<Fact>]
-    let ``A collection must gain approval from a curator before publication`` () =
+    let ``A collection must gain approval from a GPP curator before publication`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                PublicAccessAssigned (collection, collectionCurator, materialAccess)
                 SlideRecorded slideRecorded ]
         |> When (Publish collection)
         |> Expect [ RequestedPublication collection ]
 
     [<Fact>]
-    let ``A curator can approve a collection which publishes it`` () =
+    let ``A GPP curator can approve a collection which publishes it`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
                 SlideRecorded slideRecorded
                 RequestedPublication collection ]
@@ -88,8 +109,8 @@ module ``When digitising reference material`` =
         |> Expect [ CollectionPublished (collection,domainDefaultDeps.GetTime(),ColVersion.initial |> ColVersion.increment) ]
 
     [<Fact>]
-    let ``A curator can return a collection for revision to the owner`` () =
-        let notes = "This is a rubbish collection"
+    let ``A GPP curator can return a collection for revision to the owner`` () =
+        let notes = "This collection is not very good"
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
                 SlideRecorded slideRecorded
                 RequestedPublication collection ]
@@ -114,12 +135,7 @@ module ``When digitising reference material`` =
         |> When (IssuePublicationDecision(collection,Approved,curatorId))
         |> Expect [ CollectionPublished (collection,domainDefaultDeps.GetTime(),ColVersion 2) ]
 
-
 module ``When uploading a slide`` =
-
-    let image = RelativeUrl "image.png"
-    let focusImage = FocusImage ([image; image; image; image; image],Fixed 2.3<um>,(MagnificationId (CalibrationId Guid.Empty,100)))
-    let singleImage = SingleImage (image, {Point1 = 2,3; Point2 = 5,8; MeasuredDistance = 4.<um>})
 
     [<Fact>]
     let ``A slide is added to the reference collection`` () =
@@ -148,16 +164,73 @@ module ``When uploading a slide`` =
         |> When (AddSlide {slideRequest with ExistingId = Some "GPP1"} )
         |> ExpectInvalidOp
 
-    // [<Fact>]
-    // let ``Focus images can be uploaded after calibration`` () =
-    //     Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser}
-    //             SlideRecorded {Id = SlideId (collection,"GPP1"); Taxon = id } ]
-    //     |> When ( UploadSlideImage {Id = SlideId (collection, "GPP1"); Image = focusImage })
-    //     |> Expect [ SlideImageUploaded ((SlideId (collection, "GPP1")), focusImage)  ]
+    [<Fact>]
+    let ``Focus images can be uploaded after calibration`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded ]
+        |> When ( UploadSlideImage {Id = SlideId (collection, "GPP1"); Image = focusImage; YearTaken = None })
+        |> Expect [ SlideImageUploaded ((SlideId (collection, "GPP1")), focusImage, None)  ]
+
+    [<Fact>]
+    let ``Single images do not require a calibration set`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded ]
+        |> When ( UploadSlideImage {Id = SlideId (collection, "GPP1"); Image = singleImage; YearTaken = None })
+        |> Expect [ SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)  ]
+
+module ``When correcting mistakes`` =
+
+    [<Fact>]
+    let ``A slide registered with errors can be voided in whole`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Some test"}
+                SlideRecorded slideRecorded ]
+        |> When (VoidSlide slideRecorded.Id )
+        |> Expect [ SlideVoided slideRecorded.Id ]
+
+    [<Fact>]
+    let ``The ID of a void slide is freed-up so that another can be added`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Some test"}
+                SlideRecorded slideRecorded
+                SlideVoided slideRecorded.Id ]
+        |> When (AddSlide slideRequest)
+        |> Expect [ SlideRecorded slideRecorded]
+
+module ``When delineating individual specimens on a slide`` =
+
+    [<Fact>]
+    let ``At least one delineation must be specified`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None) ]
+        |> When ( DelineateSpecimensOnImage {Slide = SlideId (collection, "GPP1")
+                                             Image = 1
+                                             By = currentUser
+                                             Delineations = [] } )
+        |> ExpectInvalidOp
+
+    [<Fact>]
+    let ``The image number must match one for the slide`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None) ]
+        |> When ( DelineateSpecimensOnImage {Slide = SlideId (collection, "GPP1")
+                                             Image = 2
+                                             By = currentUser
+                                             Delineations = [] } )
+        |> ExpectInvalidOp
 
     // [<Fact>]
-    // let ``Single images do not require a calibration set`` () =
-    //     Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser}
-    //             SlideRecorded {Id = SlideId (collection,"GPP1"); Taxon = id } ]
-    //     |> When ( UploadSlideImage {Id = SlideId (collection, "GPP1"); Image = singleImage })
-    //     |> Expect [ SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage)  ]
+    // let ``Each delineation must be within the bounds of the image`` () =
+    //     invalidOp "Cool"
+
+    // [<Fact>]
+    // let ``A user cannot delineate grains on the same image more than once`` () =
+    //     invalidOp "Cool"
+
+    // [<Fact>]
+    // let ``Every delineation is recorded`` () =
+    //     invalidOp "Cool"
+
+    // [<Fact>]
+    // let ``Where a delineation is in peer-blind agreement, the delineation is confirmed`` () =
+    //     invalidOp "Cool"

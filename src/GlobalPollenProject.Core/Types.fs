@@ -24,8 +24,24 @@ type CalibrationId = CalibrationId of RootAggregateId
 type MagnificationId = MagnificationId of CalibrationId * int
 
 [<AutoOpen>]
+module ShortText =
+    type ShortText = ShortText of string
+    let create (str:string) =
+        match str.Length with
+        | l when l < 50 && l > 0 -> ShortText str |> Ok
+        | _ -> Error "The string was too long"
+
+[<AutoOpen>]
+module LongformText =
+    type LongformText = LongformText of string
+    let create (str:string) =
+        match str.Length with
+        | l when l > 0 -> LongformText str |> Ok
+        | _ -> Error "The string was empty"
+
+[<AutoOpen>]
 module Url =
-    type Url = Url of string //TODO cannot make private due to Newtonsoft limitation
+    type Url = Url of string
     type RelativeUrl = RelativeUrl of string
     let unwrap (Url u) = u
     let unwrapRelative (RelativeUrl u) = u
@@ -39,8 +55,18 @@ module Url =
         let unwrap (RelativeUrl u) = u
         baseUrl + (relativeUrl |> unwrap) |> Url
 
+[<AutoOpen>]
+module EmailAddress =
+    type EmailAddress = EmailAddress of string
+    let create mail =
+        let regex = Text.RegularExpressions.Regex(@"\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*")
+        match regex.IsMatch mail with
+        | true -> EmailAddress mail |> Ok
+        | false -> Error "The email address is not in a valid format"
+
 // Images
 [<Measure>] type um
+
 type Base64Image = Base64Image of string
 
 type ImageForUpload =
@@ -60,6 +86,14 @@ and FloatingCalibration = {
     MeasuredDistance: float<um>
 }
 
+type CartesianBox = {
+    TopLeft: int * int
+    BottomRight: int * int
+}
+
+type ImageNumber = int
+type SpecimenDelineation = CartesianBox
+
 // Microscope
 [<Measure>] type timesMagnified
 [<Measure>] type pixels
@@ -76,9 +110,6 @@ and CameraModel = string
 and Magnification = int<timesMagnified>
 and Ocular = int
 and Objective = int
-
-type Label = string
-
 
 // Sample Collection (Space + Time)
 [<Measure>]
@@ -222,3 +253,10 @@ type Pores =
     | PoreAndFurrow
     | No
     | Unsure
+
+type CitizenScienceTrait =
+| Shape of GrainShape
+| Size of GrainDiameter
+| Wall of WallThickness
+| Pattern of Patterning
+| Pores of Pores

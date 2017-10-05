@@ -49,7 +49,7 @@ let rec private readAll (connection : IEventStoreConnection)
 
 type EventStore(store:IEventStoreConnection) =
 
-    let saveEvent = new Event<string * obj>()
+    let saveEvent = new Event<string * obj * DateTime>()
 
     member this.SaveEvent = saveEvent.Publish 
 
@@ -83,19 +83,19 @@ type EventStore(store:IEventStoreConnection) =
         printfn "Checkpoint: %s" (e.FromPosition.ToString())
         e.FromPosition.ToString() |> int
 
-    member this.AppendToStream streamId expectedVersion newEvents = 
+    member this.AppendToStream getTime streamId expectedVersion newEvents = 
         async {
             let serializedEvents = [| for event in newEvents -> serialise event |]
             do! Async.Ignore <| store.AsyncAppendToStream streamId (int64 expectedVersion) serializedEvents
-            newEvents |> List.iter (fun e -> saveEvent.Trigger(streamId ,upcast e)) }
+            newEvents |> List.iter (fun e -> saveEvent.Trigger(streamId ,upcast e, getTime())) }
 
     member this.ReplayDomainEvents() =
         let events = readAll store Position.Start
-        events |> Seq.iter (fun e -> saveEvent.Trigger(e.EventStreamId, Serialisation.deserialiseEventByName e.EventType e.Data))
+        events |> Seq.iter (fun e -> saveEvent.Trigger(e.EventStreamId, Serialisation.deserialiseEventByName e.EventType e.Data, e.Created))
 
     member this.MakeCommandHandler aggName aggregate deps =
         let read = this.ReadStream<'TEvent>
-        let append = this.AppendToStream 
+        let append = this.AppendToStream deps.GetTime
         Aggregate.makeHandler aggregate aggName deps read append
 
     member this.MakeReadModelGetter (deserialize:byte array -> _) =

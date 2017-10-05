@@ -8,6 +8,7 @@ type Command =
     | SubmitUnknownGrain of SubmitUnknownGrain
     | IdentifyUnknownGrain of IdentifyUnknownGrain
     | ReportAsMultiGrain of GrainId
+    // | ImportFromSlide of SlideId * ImageNumber * SpecimenDelineation 
 
 and SubmitUnknownGrain = {
     Id: GrainId

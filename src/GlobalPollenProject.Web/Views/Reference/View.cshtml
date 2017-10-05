@@ -17,6 +17,8 @@
     </script>
 }
 
+<link rel="stylesheet" href="https://cdn.datatables.net/1.10.16/css/dataTables.bootstrap4.min.css" />
+
 @* Header *@
 @section headerSection {
     <header><div class="container">
@@ -53,9 +55,9 @@
         <tr class="taxon-status-@slide.CurrentTaxonStatus">
             <th scope="row">@slide.CollectionSlideId</th>
             @if (slide.CurrentTaxonStatus == "accepted" && slide.IsFullyDigitised) {
-                <td><a href="/Taxon/@slide.CurrentFamily">@slide.CurrentFamily</a><em>@slide.FamilyOriginal</em></td>
-                <td><a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus">@slide.CurrentGenus</a><em>@slide.GenusOriginal</em></td>
-                <td><a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus/@GetSpecificEphitet(slide.CurrentSpecies)">@slide.CurrentSpecies @slide.CurrentSpAuth</a><em>@slide.SpeciesOriginal</em></td>
+                <td><a href="/Taxon/@slide.CurrentFamily">@slide.CurrentFamily</a> <em class="table-orig-name">(@slide.FamilyOriginal)</em></td>
+                <td><a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus">@slide.CurrentGenus</a> <em class="table-orig-name">(@slide.GenusOriginal)</em></td>
+                <td><a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus/@GetSpecificEphitet(slide.CurrentSpecies)">@slide.CurrentSpecies @slide.CurrentSpAuth</a> <em class="table-orig-name">(@slide.SpeciesOriginal)</em></td>
             } else {
                 <td><span>@slide.CurrentFamily</span><em>@slide.FamilyOriginal</em></td>
                 <td><span>@slide.CurrentGenus</span><em>@slide.GenusOriginal</em></td>

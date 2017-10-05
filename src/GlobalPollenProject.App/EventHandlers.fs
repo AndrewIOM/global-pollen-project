@@ -57,8 +57,9 @@ module ExternalConnections =
         taxa |> lift (List.map (refreshGbifConnection issueCommand)) |> ignore
         taxa |> lift (List.map (refreshNeotomaConnection issueCommand)) |> ignore
 
-    let refresh get issueTaxonCommand (e:string*obj) =
-        match snd e with
+    let refresh get issueTaxonCommand (e:string*obj*DateTime) =
+        let ev (s,o,d) = o
+        match e |> ev with
         | :? GlobalPollenProject.Core.Aggregates.ReferenceCollection.Event as e ->
             match e with
             | GlobalPollenProject.Core.Aggregates.ReferenceCollection.Event.CollectionPublished (id,d,v) -> refreshPublishedTaxa get issueTaxonCommand id

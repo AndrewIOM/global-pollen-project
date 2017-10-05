@@ -43,3 +43,18 @@ type GrainPositionViewModel = {
     Longitude: float
     Id: System.Guid
 }
+
+type Percent = {
+    Count: int
+    Total: int }
+
+type LeaderboardItem = {
+    Name: string
+    Score: string }
+
+type AllStatsViewModel = {
+    Family: Percent
+    Genus: Percent
+    Species: Percent
+    TopIndividuals: LeaderboardItem list
+    TopOrganisations: LeaderboardItem list }
