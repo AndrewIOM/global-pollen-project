@@ -221,3 +221,9 @@ type CurateCollectionRequest = {
     Comment: string
     Collection: Guid
 }
+
+[<CLIMutable>]
+type VoidSlideRequest = {
+    [<Required>] SlideId: string
+    [<Required>] CollectionId: Guid
+}

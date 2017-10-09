@@ -127,7 +127,6 @@ and RefState = {
 and SlideState = {
     Id: string
     IsFullyDigitised: bool
-    Void: bool
     OriginalFamily: string
     OriginalGenus: string
     OriginalSpecies: string
@@ -197,7 +196,7 @@ let addSlide (command:AddSlide) calcIdentity state =
         let slideId = 
             match command.ExistingId with
             | Some i ->
-                match c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = i) with
+                match c.Slides |> List.tryFind (fun s -> s.Id = i) with
                 | Some _ -> invalidOp "Slide ID already in use"
                 | None -> i
             | None ->
@@ -206,7 +205,6 @@ let addSlide (command:AddSlide) calcIdentity state =
                     | 0 -> 0
                     | _ ->
                         c.Slides
-                        |> List.filter (fun s -> s.Void = false)
                         |> List.map ( fun s -> match s.Id with | Prefix "GPP" rest -> int rest | _ -> 0 )
                         |> List.max
                 sprintf "GPP%i" (lastId + 1)
@@ -234,7 +232,7 @@ let uploadImage (command:UploadSlideImage) state =
     | Published c
     | InRevision (c,_)
     | Draft c -> 
-        let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId command.Id)
+        let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId command.Id)
         match slide with
         | None -> invalidOp "Slide does not exist"
         | Some s ->
@@ -250,13 +248,10 @@ let voidSlide slideId state =
     | Published c
     | InRevision (c,_)
     | Draft c -> 
-        let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId slideId)
+        let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId slideId)
         match slide with
         | None -> invalidOp "Slide does not exist"
-        | Some s -> 
-            match s.Void with
-            | true -> invalidOp "Slide is already voided"
-            | false -> [ SlideVoided slideId ]
+        | Some s -> [ SlideVoided slideId ]
 
 let specifyCurator id curator access state =
     match state with
@@ -343,7 +338,6 @@ type State with
             | Draft c ->
                 let newSlide = {
                     IsFullyDigitised = false
-                    Void = false
                     Id = getSlideId event.Id
                     Identification = Partial [event.Taxon]
                     Images = []
@@ -365,7 +359,7 @@ type State with
             | Published c
             | InRevision (c,_)
             | Draft c ->
-                let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId id)
+                let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
                 | Some s ->
@@ -379,7 +373,7 @@ type State with
             | Published c
             | InRevision (c,_)
             | Draft c ->
-                let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId id)
+                let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
                 | Some s ->
@@ -399,7 +393,7 @@ type State with
             | Published c
             | InRevision (c,_)
             | Draft c ->
-                let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId event)
+                let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId event)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
                 | Some s ->
@@ -414,7 +408,7 @@ type State with
             | Published c
             | InRevision (c,_)
             | Draft c ->
-                let slide = c.Slides |> List.filter (fun s -> s.Void = false) |> List.tryFind (fun s -> s.Id = getSlideId id)
+                let slide = c.Slides |> List.tryFind (fun s -> s.Id = getSlideId id)
                 match slide with
                 | None -> invalidOp "Slide does not exist"
                 | Some s ->

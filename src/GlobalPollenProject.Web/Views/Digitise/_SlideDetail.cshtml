@@ -59,6 +59,9 @@
                     <p>
                         The most current taxonomic name for this taxon is: <span data-bind="text: slideDetail().CurrentFamily + ' ' + slideDetail().CurrentGenus + ' ' + slideDetail().CurrentSpecies + ' ' + slideDetail().CurrentSpAuth"></span>                    
                     </p>
+
+                    <p>If this slide contains errors, you can void it. This will remove the slide from the collection and allow re-entry of another slide with the correct information.</p>
+                    <button type="button" data-bind="click: function() { voidSlide(); }" class="btn btn-danger"><i class="fa fa-trash-o" aria-hidden="true"></i> Void Slide</button>
                 </div>
 
                 <div id="slidedetail-static-tab" data-bind="visible: currentTab() == SlideDetailTab.UPLOAD_STATIC">

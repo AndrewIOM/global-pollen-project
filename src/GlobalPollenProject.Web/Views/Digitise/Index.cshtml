@@ -73,14 +73,15 @@
                                 </button>
                             </div>
                             <div class="col-md-7">
-                                <button data-bind="click: publish" class="btn btn-primary" id="collection-publish-button">
+                                <button data-bind="click: publish, visible: activeCollection().AwaitingReview == false" class="btn btn-primary" id="collection-publish-button">
                                     <i class="fa fa-beer" aria-hidden="true"></i>
                                     Request Publication
-                                </button>  
+                                </button> 
+                                <p data-bind="visible: activeCollection().AwaitingReview">Your collection has been submitted for review. The outcome will appear here.</p> 
                             </div>
                         </div>
                     </div>
-                </div>              
+                </div>
 
                 <table class="table" id="slides-data-table">
                     <thead>
@@ -95,14 +96,14 @@
                         </tr>
                     </thead>
                     <tbody data-bind="foreach: activeCollection().Slides">
-                        <tr>
+                        <tr data-bind="css: { 'table-danger': $data.Voided }">
                             <td data-bind="text: $data.CollectionSlideId"></td>
                             <td data-bind="text: $data.FamilyOriginal"></td>
                             <td data-bind="text: $data.GenusOriginal"></td>
                             <td data-bind="text: $data.SpeciesOriginal"></td>
                             <td data-bind="text: $data.CurrentFamily + ' ' + $data.CurrentGenus + ' ' + $data.CurrentSpecies + ' ' + $data.CurrentSpAuth"></td>
                             <td data-bind="text: $data.Images.length"></td>
-                            <td><button data-bind="click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }"
+                            <td><button data-bind="click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }, enable: function() { $data.Voided() == false }"
                                     class="btn btn-secondary collection-slide-upload-image-button">Details</button></td>
                         </tr>
                     </tbody>

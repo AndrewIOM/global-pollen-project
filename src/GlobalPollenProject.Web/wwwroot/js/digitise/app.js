@@ -129,7 +129,7 @@ function DigitiseViewModel(users, analyses) {
                 type: "GET"
             })
             .done(function (data) {
-                alert("Published??");
+                alert("Your collection has been submitted for review. You will be notified of the outcome on this page when it is available.");
             })
     }
 }
@@ -337,6 +337,24 @@ function SlideDetailViewModel(detail) {
         if (self.digitisedYear() == null) return false;
         return true;
     }, self);
+
+    self.voidSlide = function(rootVM) {
+        let request = { SlideId: self.slideDetail().CollectionSlideId, CollectionId: self.slideDetail().CollectionId };
+        if (window.confirm("Are you sure? You cannot recover a deleted slide. " + self.slideDetail().CollectionSlideId + " will be lost. Continue?")) {
+            $.ajax({
+                url: "/api/v1/digitise/collection/slide/void",
+                type: "POST",
+                data: JSON.stringify(request),
+                dataType: "json",
+                contentType: "application/json"
+            })
+            .done(function (data) {
+                rootVM.switchView(CurrentView.DETAIL, {
+                    Id: self.slideDetail().CollectionId
+                });
+            })
+        }
+    }
 
     self.loadCalibrations = function () {
         $.ajax({

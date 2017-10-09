@@ -174,6 +174,11 @@ let addSlideHandler next (ctx:HttpContext) =
     |> bind Digitise.addSlideRecord
     |> toApiResult next ctx
 
+let voidSlideHandler next ctx =
+    bindJson<VoidSlideRequest> ctx
+    |> bind Digitise.voidSlide
+    |> toApiResult next ctx
+
 let addImageHandler next (ctx:HttpContext) =
     bindJson<SlideImageRequest> ctx
     |> Result.bind Digitise.uploadSlideImage
@@ -275,6 +280,7 @@ let webApp : HttpHandler =
             route   "/collection/start"         >=> startCollectionHandler
             route   "/collection/publish"       >=> publishCollectionHandler
             route   "/collection/slide/add"     >=> addSlideHandler
+            route   "/collection/slide/void"    >=> voidSlideHandler
             route   "/collection/slide/addimage">=> addImageHandler
             route   "/calibration/list"         >=> getCalibrationsHandler
             route   "/calibration/use"          >=> setupMicroscopeHandler

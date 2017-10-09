@@ -189,6 +189,12 @@ module Digitise =
         |> lift issueCommand
         |> toAppResult
 
+    let voidSlide (req:VoidSlideRequest) =
+        let slideId = SlideId(req.CollectionId |> CollectionId, req.SlideId)
+        VoidSlide slideId 
+        |> issueCommand
+        Ok()
+
     let uploadSlideImage (request:SlideImageRequest) = 
         request
         |> Converters.Dto.toAddSlideImageCommand readStoreGet saveImage

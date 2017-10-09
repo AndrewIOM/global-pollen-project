@@ -962,9 +962,15 @@ module Digitisation =
         | Ok c -> 
             RepositoryBase.setSingle (colId.ToString()) { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time } setKey serialise
 
-    let requestedPublication setList colId =
+    let requestedPublication get set setList colId =
         let id = colId |> Converters.DomainToDto.unwrapRefId
-        RepositoryBase.setListItem (id.ToString()) "Curation:InReview" setList
+        let col = RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
+        match col with
+        | Error e -> Error e
+        | Ok c -> 
+            let updated = { c with AwaitingReview = true }
+            RepositoryBase.setListItem (id.ToString()) "Curation:InReview" setList |> ignore
+            RepositoryBase.setSingle (colId.ToString()) updated set serialise
 
     let revision get set id note =
         let colId : Guid = id |> unwrapRefId
@@ -1017,8 +1023,7 @@ module Digitisation =
             match slide with
             | None -> readModelErrorHandler()
             | Some s ->
-                let updatedSlide = { s with Voided = true }
-                let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+                let updatedSlides = c.Slides |> List.except [s]
                 let updatedCol = { c with Slides = updatedSlides }
                 RepositoryBase.setSingle (colId.ToString()) updatedCol set serialise
 
@@ -1032,7 +1037,7 @@ module Digitisation =
             | ReferenceCollection.Event.SlideFullyDigitised e -> digitised get set e
             | ReferenceCollection.Event.SlideGainedIdentity (s,t) -> gainedIdentity get set s t
             | ReferenceCollection.Event.CollectionPublished (id,d,v) -> published get set id d v
-            | ReferenceCollection.Event.RequestedPublication id -> requestedPublication setList id
+            | ReferenceCollection.Event.RequestedPublication id -> requestedPublication get set setList id
             | ReferenceCollection.Event.RevisionAdvised (id,note) -> revision get set id note
             | ReferenceCollection.Event.PublicAccessAssigned (id,curator,access) -> publicAccess get set id curator access
             | ReferenceCollection.Event.SlideVoided id -> voidSlide get set id
