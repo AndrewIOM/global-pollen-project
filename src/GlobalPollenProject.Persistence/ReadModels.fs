@@ -181,7 +181,8 @@ type ReferenceCollectionSummary = {
 type ReferenceCollectionDetail = {
     Id:                 Guid
     Name:               string
-    Contributors:       string list
+    Digitisers:         string list
+    Collectors:         string list
     Description:        string
     CuratorFirstNames:  string
     CuratorSurname:     string

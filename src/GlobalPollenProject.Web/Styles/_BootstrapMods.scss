@@ -1,4 +1,5 @@
 /* Bootstrap 4 Customisations for GPP */
+@import '_Palette';
 
 body {
     line-height: 1.8em;
@@ -228,4 +229,17 @@ input.form-control {
 
 .btn-primary.disabled:hover {
     cursor: not-allowed !important;
+}
+
+//Pagination
+.page-item:first-child .page-link {
+    border-radius: 0;
+}
+
+.page-item:last-child .page-link {
+    border-radius: 0;
+}
+
+.page-link {
+    color: $primary-color;
 }

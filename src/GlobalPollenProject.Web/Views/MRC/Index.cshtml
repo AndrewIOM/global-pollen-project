@@ -1,9 +1,12 @@
-@model FSharpList<ReadModels.TaxonSummary>
+@model Responses.PagedResult<ReadModels.TaxonSummary>
 
 @{
     Layout = "_Layout";
     ViewData["Title"] = "Master Reference Collection";
     var rankFilter = Context.Request.Query["rank"].Count == 0 ? "Genus" : Context.Request.Query["rank"][0];
+    var alphabetFilter = Context.Request.Query["lex"].Count == 0 ? "" : Context.Request.Query["lex"][0];
+    var linkBase = "/Taxon?rank=" + rankFilter;
+    if (!string.IsNullOrEmpty(alphabetFilter)) { linkBase = linkBase + "&lex=" + alphabetFilter; }
 }
 
 @* Header *@
@@ -31,9 +34,10 @@
         <a class="header-toggle @if (rankFilter == "Family") { @Html.Raw("header-toggle-active") }" href="/Taxon?rank=Family">Family</a>
         <a class="header-toggle @if (rankFilter == "Genus") { @Html.Raw("header-toggle-active") }" href="/Taxon?rank=Genus">Genus</a>
         <a class="header-toggle @if (rankFilter == "Species") { @Html.Raw("header-toggle-active") }" href="/Taxon?rank=Species">Species</a>
-        <div class="alphabet-index"><a href="/Taxon?rank=@rankFilter">All</a>
+        <div class="alphabet-index">
+            @if (!string.IsNullOrEmpty(alphabetFilter)) { <a href="/Taxon?rank=@rankFilter">All</a> } else { <a class="header-toggle-active" href="/Taxon?rank=@rankFilter">All</a> }      
             @for (char c = 'A'; c <= 'Z'; c++) {
-                <a href="/Taxon?lex=@c&rank=@rankFilter">@c</a>
+                if (alphabetFilter == c.ToString()) { <a class="header-toggle-active" href="/Taxon?lex=@c&rank=@rankFilter">@c</a> } else { <a href="/Taxon?lex=@c&rank=@rankFilter">@c</a> }   
             }
         </div>
     </div>
@@ -41,7 +45,7 @@
 
 @* Taxonomy Grid *@
 <div class="row">
-    @foreach (var taxon in Model)
+    @foreach (var taxon in Model.Items)
     {
         var taxonLink = "";
         if (rankFilter == "Family") { taxonLink = "/Taxon/" + taxon.Family; }
@@ -84,3 +88,13 @@
         </div>
     }
 </div>
+
+<nav aria-label="Taxonomy navigation">
+  <ul class="pagination">
+    @if (Model.CurrentPage > 1) { <li class="page-item"><a class="page-link" href="@linkBase&page=@(Model.CurrentPage - 1)">Previous</a></li> }
+    @for (int i = 1; i < Model.TotalPages + 1; i++) {
+        <li class="page-item"><a class="page-link" href="@linkBase&page=@i">@i</a></li>
+    }
+    @if (Model.CurrentPage < Model.TotalPages) { <li class="page-item"><a class="page-link" href="@linkBase&page=@(Model.CurrentPage + 1)">Next</a></li> }
+  </ul>
+</nav>

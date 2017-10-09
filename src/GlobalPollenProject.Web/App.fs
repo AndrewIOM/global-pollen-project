@@ -134,10 +134,18 @@ let individualCollection (colId:string) version next ctx =
     IndividualReference.getDetail colId version
     |> toViewResult "Reference/View" next ctx
 
+let individualCollectionLatest (colId:string) next ctx =
+    let latestVer = IndividualReference.getLatestVersion colId
+    match latestVer with
+    | Ok v -> redirectTo false (sprintf "/Reference/%s/%i" colId v) next ctx
+    | Error _ -> notFoundResult next ctx
+
 let defaultIfNull (req:TaxonPageRequest) =
     match String.IsNullOrEmpty req.Rank with
-    | true -> { Page = 1; PageSize = 40; Rank = "Genus"; Lex = "" }
-    | false -> req
+    | true -> { Page = 1; PageSize = 50; Rank = "Genus"; Lex = "" }
+    | false ->
+        if req.PageSize = 0 then { req with PageSize = 50}
+        else req
 
 let pagedTaxonomyHandler next (ctx:HttpContext) =
     ctx.BindQueryString<TaxonPageRequest>()
@@ -302,8 +310,8 @@ let webApp : HttpHandler =
         GET >=> 
         choose [   
             route   ""                          >=> pagedTaxonomyHandler
-            routef  "/Slide/%s"                 slideViewHandler
             routef  "/View/%i"                  lookupNameFromOldTaxonId
+            routef  "/Slide/%s"                 slideViewHandler
             routef  "/ID/%s"                    taxonDetailById
             routef  "/%s"                       taxonDetail
         ]
@@ -311,8 +319,11 @@ let webApp : HttpHandler =
     let individualRefCollections =
         GET >=>
         choose [
-            route ""                            >=> individualCollectionIndex
-            routef "/%s/%i"                     (fun (id,v) -> individualCollection id v)
+            route   ""                          >=> individualCollectionIndex
+            routef  "/%s/Latest/%s"             slideViewHandler
+            routef  "/%s/Latest"                individualCollectionLatest
+            routef  "/%s/%i/%s"                 slideViewHandler
+            routef  "/%s/%i"                    (fun (id,v) -> individualCollection id v)
         ]
 
     let identify =

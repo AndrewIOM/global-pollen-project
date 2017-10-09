@@ -3,6 +3,8 @@
 @{
     Layout = "_Layout";
     ViewData["Title"] = Model.Name;
+
+    var botanicalCollectors = Model.Slides.Select(s => s.CollectorName).Distinct().ToList();
 }
 @functions { public string GetSpecificEphitet(string latinName) { return latinName.Split(' ').Last(); } }
 
@@ -23,7 +25,7 @@
 @section headerSection {
     <header><div class="container">
     <h1>@ViewData["Title"]</h1>
-    <p>Digitised and undigitised reference material from individual collections and institutions.</p>
+    <p>Digitised Reference Collection.</p>
     </div></header>
 }
 
@@ -36,6 +38,39 @@
             <li class="breadcrumb-item active">@Model.Name</li>
         </ol>
     </div>
+</div>
+
+@* Collection Details *@
+<p>@Model.Description</p>
+<div class="card-group">
+  <div class="card">
+    <div class="card-block">
+      <h4 class="card-title">Contributors</h4>
+      <p><strong>Curator:</strong> @Model.CuratorFirstNames @Model.CuratorSurname (<a href="mailto:@Model.CuratorEmail">Email</a>)</p>
+      <p><strong>Digitisers:</strong> @foreach (var user in Model.Digitisers) { <span>@user</span> } </p>
+      <p><strong>Material Contributed By:</strong> @foreach (var user in Model.Collectors) { <span>@user</span> } </p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-block">
+      <h4 class="card-title">Access to Material</h4>
+      <p class="card-text">
+          @if (Model.AccessMethod == "digital") {
+              <span>This collection is only available to view in digitially. The curator does not have access to the original physical reference slides.</span>
+          } else if (Model.AccessMethod == "institution") {
+              <span>The physical reference slides are located within an institution: <a href="@Model.InstitutionUrl">@Model.Institution</a></span>
+          } else if (Model.AccessMethod == "private") {
+              <span>This is a personal collection. Access to the physical reference material may be granted on request. Please contact the curator for more information.</span>
+          }
+      </p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-block">
+      <h4 class="card-title">Citation</h4>
+      <p class="card-text">@Model.CuratorSurname, @Model.CuratorFirstNames, @Model.Name (Version @Model.Version). Digitised Palynological Reference Collection accessed via globalpollenproject.org on @DateTime.Now</p>
+    </div>
+  </div>
 </div>
 
 @* Slide Table *@

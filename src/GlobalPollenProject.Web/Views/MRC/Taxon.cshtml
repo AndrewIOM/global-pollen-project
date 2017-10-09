@@ -4,7 +4,7 @@
     Layout = "_Layout";
     ViewBag.Title = Model.LatinName + " (" + Model.Rank + ") - Master Reference Collection";
     var subname = Model.Rank == "Family" ? "Genera" : "Species";
-    var completionPercentage = @Model.BackboneChildren != 0 ? (@Model.Children.Length / @Model.BackboneChildren) * 100 : 100;
+    var completionPercentage = Model.BackboneChildren != 0 ? ((double)Model.Children.Length / (double)Model.BackboneChildren) * 100.00 : 100.00;
 }
 
 <link rel="stylesheet" href="~/lib/nouislider/distribute/nouislider.min.css"> @* TODO Move this *@
@@ -68,7 +68,7 @@
                 <ul class="grain-grid columns-8">
                     @foreach (var slide in Model.Slides) {
                     <li>
-                        <a href="/Reference/@slide.ColId/@slide.SlideId">
+                        <a href="/Taxon/Slide/@slide.ColId/@slide.SlideId">
                             <div class="img-container">
                                 <img src="@slide.Thumbnail"/>
                             </div>
@@ -119,8 +119,6 @@
                     <span class="timespan">Showing occurrences from <span id="paleo-range-low"></span> to <span id="paleo-range-hi"></span> years before present.</span>
                     <div id="neotoma-map"></div>
                     <div id="range"></div>
-                    
-                    
                 </div>
             </div>
         </div>
@@ -165,9 +163,9 @@
                     <dl class="row">
                         <dt class="col-sm-3">Taxonomic Completion</dt>
                         <dd class="col-sm-9">
-                            @{ var completionP = "p" + completionPercentage.ToString(); }
+                            @{ var completionP = "p" + completionPercentage.ToString("0"); }
                             <div class="c100 @completionP">
-                                <span>@completionPercentage%</span>
+                                <span>@(completionPercentage.ToString("0.00"))%</span>
                                 <div class="slice">
                                     <div class="bar"></div>
                                     <div class="fill"></div>

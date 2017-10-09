@@ -606,7 +606,7 @@ module TaxonomicBackbone =
             | Error e -> readModelErrorHandler()
         | None -> readModelErrorHandler()
 
-    let addToBackbone getKey getSortedListKey setKey setSortedList serialise deserialise (event:Imported) =
+    let addToBackbone getKey (getSortedListKey:GetSortedListFromKeyValueStore) setKey setSortedList serialise deserialise (event:Imported) =
 
         let getFamily familyName =
             ReadStore.TaxonomicBackbone.tryFindByLatinName familyName None None getSortedListKey getKey deserialise
@@ -726,6 +726,15 @@ module ReferenceCollectionReadOnly =
                 Version         = Converters.DomainToDto.unwrapColVer version
             }
             let v = Converters.DomainToDto.unwrapColVer version
+            let collectors = 
+                c.Slides 
+                |> List.map (fun s -> s.CollectorName)
+                |> List.distinct
+            let getUser (id:Guid) = ReadStore.RepositoryBase.getSingle<PublicProfile> (id.ToString()) get deserialise
+            let digitisers =
+                c.EditUserIds
+                |> List.map getUser
+                |> mapResult(lift (fun u -> u.FirstName + " " + u.LastName))
             let detail = {
                 Id              = c.Id
                 Name            = c.Name
@@ -739,7 +748,8 @@ module ReferenceCollectionReadOnly =
                 InstitutionUrl  = c.InstitutionUrl
                 Version         = v
                 Slides          = c.Slides
-                Contributors    = []
+                Digitisers      = match digitisers with | Ok u -> u | Error _ -> []
+                Collectors      = collectors
             }
             RepositoryBase.setSingle (id.ToString()) summary set serialise |> ignore
             RepositoryBase.setKey detail (sprintf "ReferenceCollectionDetail:%s:V%i" (id.ToString()) v) set serialise |> ignore
@@ -989,7 +999,7 @@ module Digitisation =
                         | Some w -> "institution",name, w |> Url.unwrap
                         | None -> "institution",name,""
 
-            let updated = { c with CuratorFirstNames = String.Concat(curator.Forenames," ")
+            let updated = { c with CuratorFirstNames = curator.Forenames |> List.fold (fun r s -> r + s + "\n") ""
                                    CuratorSurname = curator.Surname
                                    CuratorEmail = curatorEmail
                                    AccessMethod = accessMethod

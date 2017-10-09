@@ -3,6 +3,7 @@ module ReadStore
 open System
 open ReadModels
 open GlobalPollenProject.Core.DomainTypes
+open GlobalPollenProject.Core.Composition
 
 type Json = Json of string
 type Serialise = obj -> Result<Json,string>
@@ -17,26 +18,45 @@ and PagedRequest = {
     Page: int
 }
 
-// type ListResult<'a> =
-// | AllPages
-// | SinglePage of PagedResult<'a>
+type ListResult<'a> =
+| AllPages of 'a list
+| SinglePage of PagedResult<'a>
 
-// and PagedResult<'a> = {
-//     ItemsPerPage: int
-//     CurrentPage: int
-//     Items: 'a list
-//     TotalPages: int
-//     TotalItems: int
-// }
+and PagedResult<'a> = {
+    ItemsPerPage: int
+    CurrentPage: int
+    Items: 'a list
+    TotalPages: int
+    TotalItems: int
+}
 
-type GetFromKeyValueStore = string -> Result<Json,string>
-type GetListFromKeyValueStore = ListRequest -> string -> Result<Json list,string>
-type GetLexographic = string -> string -> Result<string list,string>
+type Key = string
+type SortScore = float
+type SearchTerm = string
+
+type GetFromKeyValueStore = Key -> Result<Json,string>
+type GetListFromKeyValueStore = ListRequest -> Key -> Result<Json list,string>
+type GetSortedListFromKeyValueStore = ListRequest -> Key -> Result<ListResult<Json>,string>
+type GetLexographic = Key -> SearchTerm -> ListRequest -> Result<ListResult<string>,string>
 
 type SetStoreValue = string -> Json -> Result<unit,string>
 type SetEntryInList = string -> string -> Result<unit,string>
 type SetEntryInSortedList = string -> string ->float -> Result<unit,string>
 
+module Seq =
+    let skipSafe (num: int) (source: seq<'a>) : seq<'a> =
+        seq {
+            use e = source.GetEnumerator()
+            let idx = ref 0
+            let loop = ref true
+            while !idx < num && !loop do
+                if not(e.MoveNext()) then
+                    loop := false
+                idx := !idx + 1
+
+            while e.MoveNext() do
+                yield e.Current 
+        }
 
 module KeyValueStore =
 
@@ -56,8 +76,35 @@ module KeyValueStore =
         getListFromStore listReq key
         |> Result.bind deserialiseList
 
-    let getLexographic key searchTerm (get:GetLexographic) =
-        get key searchTerm
+    let getSortedList<'a> listReq key (get:GetSortedListFromKeyValueStore) (deserialise: Deserialise<'a>) =
+        match get listReq key with
+        | Error e -> Error e
+        | Ok lr ->
+            match lr with
+            | AllPages p ->
+                p
+                |> List.map deserialise
+                |> List.choose (fun r ->
+                                match r with
+                                | Ok o -> Some o
+                                | Error e -> None )
+                |> AllPages |> Ok
+            | SinglePage p ->
+                { ItemsPerPage = p.ItemsPerPage
+                  CurrentPage = p.CurrentPage
+                  Items = p.Items
+                          |> List.map deserialise
+                          |> List.choose (fun r ->
+                                match r with
+                                | Ok o -> Some o
+                                | Error e -> None )
+                  TotalPages = p.TotalPages
+                  TotalItems = p.TotalItems }
+                  |> SinglePage
+                  |> Ok
+        
+    let getLexographic key searchTerm req (get:GetLexographic) =
+        get key searchTerm req
 
     let setKey key item (setStoreValue:SetStoreValue) (serialise:Serialise) =
         serialise item
@@ -160,20 +207,51 @@ module Redis =
         let result : string seq = db.SetMembers(~~key) |> Seq.map ( ~~ )
         Ok <| (result |> Seq.map Json |> Seq.toList)
 
-    let getSortedListItems (redis:ConnectionMultiplexer) (listReq:ListRequest) (key:string) =
+    let getSortedListItems (redis:ConnectionMultiplexer) (listReq:ListRequest) (key:Key) =
         let db = redis.GetDatabase()
-        let result : string seq =
-            match listReq with
-            | All -> db.SortedSetRangeByRank(~~key) |> Seq.map ( ~~ )
-            | Paged p -> 
-                let start = (p.Page - 1) * p.ItemsPerPage
-                db.SortedSetRangeByScore(~~key, float start, start + p.ItemsPerPage |> float) |> Seq.map (~~)
-        Ok <| (result |> Seq.map Json |> Seq.toList)
+        match listReq with
+        | All -> 
+            db.SortedSetRangeByRank(~~key) 
+            |> Seq.map ( ~~ )
+            |> Seq.toList
+            |> List.map Json
+            |> AllPages
+        | Paged p -> 
+            let start = (p.Page - 1) * p.ItemsPerPage
+            let totalItems = db.SortedSetLength(~~key)
+            let items : string seq = 
+                db.SortedSetRangeByScore(~~key, float start, start + p.ItemsPerPage |> float) 
+                |> Seq.map ( ~~ )
+            { ItemsPerPage = p.ItemsPerPage
+              CurrentPage = p.Page
+              Items = items |> Seq.map Json |> Seq.toList
+              TotalPages = ceil ((float totalItems) / (float p.ItemsPerPage)) |> int
+              TotalItems = totalItems |> int }
+            |> SinglePage
+        |> Ok
 
-    let lexographicSearch (redis:ConnectionMultiplexer) (key:string) (searchTerm:string) =
+    let lexographicSearch (redis:ConnectionMultiplexer) (key:Key) (searchTerm:string) (listReq:ListRequest) =
         let db = redis.GetDatabase()
-        let result : string seq = db.SortedSetRangeByValue(~~key, ~~searchTerm, ~~(searchTerm + "\xff")) |> Seq.map ( ~~ )
-        Ok <| (result |> Seq.toList)
+        match listReq with
+        | All ->
+            db.SortedSetRangeByValue(~~key, ~~searchTerm, ~~(searchTerm + "\xff")) 
+            |> Seq.map ( ~~ )
+            |> Seq.toList 
+            |> AllPages
+        | Paged p ->
+            let allItems : string seq = db.SortedSetRangeByValue(~~key, ~~searchTerm, ~~(searchTerm + "\xff")) |> Seq.map ( ~~ )
+            let items =
+                allItems
+                |> Seq.skipSafe ((p.Page - 1) * p.ItemsPerPage)
+                |> Seq.truncate p.ItemsPerPage
+            let totalItems = allItems |> Seq.length
+            { ItemsPerPage = p.ItemsPerPage
+              CurrentPage = p.Page
+              Items = items |> Seq.toList
+              TotalPages = ceil ((float totalItems) / (float p.ItemsPerPage)) |> int
+              TotalItems = totalItems |> int }
+            |> SinglePage
+        |> Ok
 
     let set (redis:ConnectionMultiplexer) (key:string) (thing:Json) =
         let db = redis.GetDatabase()
@@ -238,8 +316,10 @@ module TaxonomicBackbone =
         (taxonIdToGuid id).ToString()
         |> RepositoryBase.getSingle<BackboneTaxon>
 
-    let tryFindByLatinName family genus species getList getSingle deserialise =
-        let tryFindId key = RepositoryBase.getListKey<Guid> All key getList deserialiseGuid
+    let private getPage r = match r with | AllPages p -> p | _ -> []
+
+    let tryFindByLatinName family genus species getSortedList getSingle deserialise =
+        let tryFindId key = KeyValueStore.getSortedList<Guid> All key getSortedList deserialiseGuid
         let tryFindReadModel (ids:Guid list) = 
             // Where there are multiple matches for a genus, return the accepted one...
             match ids |> List.length with
@@ -254,11 +334,12 @@ module TaxonomicBackbone =
         (family,genus,species)
         |> toNameSearchKey
         |> tryFindId
-        |> Result.bind tryFindReadModel
+        |> lift getPage
+        |> bind tryFindReadModel
 
     // Search names to find possible matches, returning whole taxa
-    let findMatches identity getList getSingle deserialise : Result<BackboneTaxon list,string> =
-        let search key = RepositoryBase.getListKey All key getList deserialiseGuid
+    let findMatches identity getSortedList getSingle deserialise : Result<BackboneTaxon list,string> =
+        let search key = KeyValueStore.getSortedList All key getSortedList deserialiseGuid
         let fetchAllById ids = 
             ids 
             |> List.map (fun id -> RepositoryBase.getSingle<BackboneTaxon> (id.ToString()) getSingle deserialise)
@@ -267,17 +348,19 @@ module TaxonomicBackbone =
         identity
         |> toRankSearchKey
         |> search
-        |> Result.bind fetchAllById
+        |> lift getPage
+        |> bind fetchAllById
 
     // Search names to find possible matches, returning taxon names
-    let search identity (getLexographical:GetLexographic) deserialise : Result<string list, string> =
+    let search identity (getLexographical:GetLexographic) pageReq deserialise : Result<string list, string> =
         let rank,ln =
             match identity with
             | Family ln -> "Family", unwrapLatinName ln
             | Genus ln -> "Genus", unwrapLatinName ln
             | Species (ln,eph,auth) -> "Species", unwrapLatinName ln
         let key = "Autocomplete:BackboneTaxon:" + rank
-        KeyValueStore.getLexographic key ln getLexographical
+        KeyValueStore.getLexographic key ln All getLexographical
+        |> lift (fun r -> match r with | AllPages p -> p | SinglePage p -> p.Items )
 
     let validate (query:BackboneQuery) get getList deserialise =
         match query with

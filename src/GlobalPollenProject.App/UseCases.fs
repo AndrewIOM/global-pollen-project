@@ -92,7 +92,7 @@ let domainDependencies =
     let log = ignore
     let calculateIdentity = calculateTaxonomicIdentity ReadStore.TaxonomicBackbone.findMatches
     let isValidTaxon query =
-        match ReadStore.TaxonomicBackbone.validate query readStoreGet readStoreGetList deserialise with
+        match ReadStore.TaxonomicBackbone.validate query readStoreGet readStoreGetSortedList deserialise with
         | Ok t -> Some (TaxonId t.Id)
         | Error e -> None
 
@@ -322,10 +322,39 @@ module Taxonomy =
         | 3 -> { LatinName = parts.[0]; Rank = "Species"; Heirarchy = [parts.[2]; parts.[1]; parts.[0]] } |> Ok
         | _ -> Error "The read model format was different to that expected"
 
+    let private pageResponseToItems pageResponse =
+        match pageResponse with
+        | AllPages p -> p
+        | SinglePage p -> p.Items
+
     let autocomplete (req:TaxonAutocompleteRequest) =
-        KeyValueStore.getLexographic "Autocomplete:Taxon" req.Name readLex
+        let page = Paged {ItemsPerPage = 10; Page = 1 }
+        KeyValueStore.getLexographic "Autocomplete:Taxon" req.Name page readLex
+        |> lift pageResponseToItems
         |> bind (mapResult toSearchResult)
         |> toAppResult
+
+    let private toPagedDto = function
+        | AllPages p -> { Items = p
+                          CurrentPage = 1
+                          TotalPages = 1
+                          ItemsPerPage = p |> List.length
+                          ItemTotal = p |> List.length }
+        | SinglePage p -> { Items = p.Items
+                            CurrentPage = p.CurrentPage
+                            TotalPages = p.TotalPages
+                            ItemsPerPage = p.ItemsPerPage
+                            ItemTotal = p.TotalItems }
+
+    let private mapResultPagedItems f p =
+        p.Items 
+        |> mapResult f
+        |> lift (fun i ->
+            { Items = i
+              CurrentPage = p.CurrentPage
+              TotalPages = p.TotalPages
+              ItemsPerPage = p.ItemsPerPage
+              ItemTotal = p.ItemTotal } )
 
     let list (request:TaxonPageRequest) =
         let req = Paged {ItemsPerPage = request.PageSize; Page = request.Page }
@@ -336,8 +365,9 @@ module Taxonomy =
             RepositoryBase.getKey<Guid> ("Taxon" + reversedTaxonomy) readStoreGet deserialise
             |> bind (fun x -> RepositoryBase.getKey<TaxonSummary> ("TaxonSummary:" + (x.ToString())) readStoreGet deserialise)
 
-        KeyValueStore.getLexographic key request.Lex readLex
-        |> bind (mapResult getSummary)
+        KeyValueStore.getLexographic key request.Lex req readLex
+        |> lift toPagedDto
+        |> bind (mapResultPagedItems getSummary)
         |> toAppResult
 
     let private toNameSearchKey family genus species =
@@ -385,6 +415,10 @@ module IndividualReference =
         RepositoryBase.getKey<ReferenceCollectionDetail> key readStoreGet deserialise
         |> toAppResult
 
+    let getLatestVersion id =
+        RepositoryBase.getKey<EditableRefCollection> id readStoreGet deserialise
+        |> lift (fun c -> c.PublishedVersion)
+        |> toAppResult
 
 module Backbone =
 
@@ -439,7 +473,7 @@ module Backbone =
     let searchNames (request:BackboneSearchRequest) =
         request
         |> Converters.Taxonomy.backboneSearchToIdentity
-        |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.search s readLex deserialise)
+        |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.search s readLex All deserialise)
         |> toAppResult
 
     let tryMatch (request:BackboneSearchRequest) =

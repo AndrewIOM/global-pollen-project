@@ -24,7 +24,7 @@ let init set () =
 let route 
     (get:GetFromKeyValueStore) 
     (getList:GetListFromKeyValueStore) 
-    (getSortedList:GetListFromKeyValueStore) 
+    (getSortedList:GetSortedListFromKeyValueStore) 
     (set:SetStoreValue) 
     (setList:SetEntryInList) 
     (setSortedList:SetEntryInSortedList) 
