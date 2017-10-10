@@ -134,6 +134,7 @@ module Temporal =
                 | true -> 
                     // Lead210 dates are based on 1950, so negatives are allowed up to present year minus 1950.
                     Ok (Some <| Lead210 (year.Value * 1<YBP>))
+            | "Unknown" -> None |> Ok
             | _ -> validationError "YearType" "The dating type was not in a correct format"
 
     let createSampleAge (year:Nullable<int>) samplingMethod =
