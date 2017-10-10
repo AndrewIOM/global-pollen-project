@@ -395,7 +395,10 @@ module Taxonomy =
 
     let getSlide colId slideId =
         let key = sprintf "SlideDetail:%s:%s" colId slideId
-        RepositoryBase.getKey<SlideDetail> key readStoreGet deserialise
+        let createViewModel slide col = { Slide = slide; Collection = col }
+        createViewModel
+        <!> RepositoryBase.getKey<SlideDetail> key readStoreGet deserialise
+        <*> RepositoryBase.getSingle<ReferenceCollectionSummary> colId readStoreGet deserialise
         |> toAppResult
 
     let getById (taxonId:Guid) =

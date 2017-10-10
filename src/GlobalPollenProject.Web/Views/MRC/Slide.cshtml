@@ -1,13 +1,13 @@
-@model ReadModels.SlideDetail 
+@model Responses.SlidePageViewModel 
 @{ 
     Layout = "_Layout"; 
     ViewBag.Title = "Individual Slide"; 
     string latinName;
-    if (Model.Rank == "Family") { latinName = Model.CurrentFamily; }
-    else if (Model.Rank == "Genus") { latinName = Model.CurrentGenus; }
-    else { latinName = Model.CurrentSpecies; }
-    ViewData["Title"] = Model.CollectionSlideId + ": " + latinName;
-    ViewData["Subtitle"] = "An individual reference slide from the Oxford European Reference Collection"; 
+    if (Model.Slide.Rank == "Family") { latinName = Model.Slide.CurrentFamily; }
+    else if (Model.Slide.Rank == "Genus") { latinName = Model.Slide.CurrentGenus; }
+    else { latinName = Model.Slide.CurrentSpecies; }
+    ViewData["Title"] = Model.Slide.CollectionSlideId + ": " + latinName;
+    ViewData["Subtitle"] = Model.Collection.Name + " - digitised reference slide"; 
 }
 
 @section headerSection {
@@ -29,8 +29,8 @@
 <script src="/js/mrc/slide.js"></script>
 <script>
     $(function() {
-        var frames = ("@Model.Images[0].Frames").slice(1, -1).split(";");
-        createViewer(frames, @Model.Images[0].PixelWidth);
+        var frames = ("@Model.Slide.Images[0].Frames").slice(1, -1).split(";");
+        createViewer(frames, @Model.Slide.Images[0].PixelWidth);
     });
 </script>
 }
@@ -41,15 +41,15 @@
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/">Home</a></li>
             <li class="breadcrumb-item"><a href="/Taxon">Master Reference Collection</a></li>
-            @if (Model.Rank == "Family") {
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
-            } @if (Model.Rank == "Genus") {
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">@Model.CurrentGenus</a></li>
-            } @if (Model.Rank == "Species") {
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily">@Model.CurrentFamily</a></li>
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">@Model.CurrentGenus</a></li>
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@GetSpecificEphitet(Model.CurrentSpecies)">@Model.CurrentSpecies</a></li>
+            @if (Model.Slide.Rank == "Family") {
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
+            } @if (Model.Slide.Rank == "Genus") {
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">@Model.Slide.CurrentGenus</a></li>
+            } @if (Model.Slide.Rank == "Species") {
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">@Model.Slide.CurrentGenus</a></li>
+            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus/@GetSpecificEphitet(Model.Slide.CurrentSpecies)">@Model.Slide.CurrentSpecies</a></li>
             }
             <li class="breadcrumb-item active">Slide</li>
         </ol>
@@ -63,7 +63,7 @@
         </div>
         <div class="card">
             <div class="card-block card-no-padding" id="slide-gallery">
-                @foreach(var img in Model.Images) {
+                @foreach(var img in Model.Slide.Images) {
                     <div class="slide-gallery-item col-md-3" data-frames="@img.Frames" data-pixelwidth="@img.PixelWidth">
                         <img src="@img.Frames[0]" alt="Image preview">
                     </div>
@@ -72,9 +72,13 @@
         </div>
 
         @* Citation *@
-        <h4>Citation</h4>
-        <p>Slide from the <em>Collection Name</em> collection, which is owned by Owner, and located at Institution. Obtained from Martin, A.C., & Harvey, W. J. (2016). <em>The Global Pollen Project</em>. Retrieved @DateTime.Now.ToString("d"), from http://globalpollenproject.org</p>
-        <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />These images are licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.
+        <div class="card card-inverse card-primary crop-panel mb-3">
+            <div class="card-block">
+                <h4 class="card-title">Citation</h4>
+                <p>@(Model.Collection.CuratorSurname), @(Model.Collection.CuratorFirstNames) (@Model.Collection.Published.Year). @latinName (@Model.Slide.CollectionSlideId). Digitised palynological slide. In: <em>@(Model.Collection.Name)</em> (Version @Model.Collection.Version). Obtained from Martin & Harvey (2017) 10.1111/2041-210X.12752. Retrieved from globalpollenproject.org on @DateTime.Now.ToString("d").</p>
+            </div>
+        </div>
+        <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/80x15.png" /></a><br />These images are licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.
     </div>
     <div class="col-md-8" id="cropping-interface" style="display: none;">
         <div class="card">
@@ -99,7 +103,7 @@
             </div>
         </div>
 
-        <p>This reference slide has been digitised with @Model.Images.Length image(s). Each image may contain one or more pollen grains.</p>
+        <p>This reference slide has been digitised with @Model.Slide.Images.Length image(s). Each image may contain one or more pollen grains.</p>
         <div class="card">
             <div class="card-header">
                 Origin
@@ -110,20 +114,20 @@
                     <dd class="col-sm-7">Subsample of plant material identified botanically and harvested.</dd>
 
                     <dt class="col-sm-5">Year in which plant was harvested</dt>
-                    <dd class="col-sm-7">@Model.AgeType @Model.Age</dd>
+                    <dd class="col-sm-7">@Model.Slide.AgeType @Model.Slide.Age</dd>
 
                     <dt class="col-sm-5">Taxonomic Identification</dt>
                     <dd class="col-sm-7">
-                        <a href="/Taxon/@Model.CurrentFamily">Family: @Model.CurrentFamily</a><br/>
-                        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus">Genus: @Model.CurrentGenus</a><br/>
-                        <a href="/Taxon/@Model.CurrentFamily/@Model.CurrentGenus/@GetSpecificEphitet(Model.CurrentSpecies)">Species: @Model.CurrentSpecies</a>
+                        <a href="/Taxon/@Model.Slide.CurrentFamily">Family: @Model.Slide.CurrentFamily</a><br/>
+                        <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">Genus: @Model.Slide.CurrentGenus</a><br/>
+                        <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus/@GetSpecificEphitet(Model.Slide.CurrentSpecies)">Species: @Model.Slide.CurrentSpecies</a>
                     </dd>
 
                     <dt class="col-sm-5">Collected by</dt>
-                    <dd class="col-sm-7">@Model.CollectorName</dd>
+                    <dd class="col-sm-7">@Model.Slide.CollectorName</dd>
 
                     <dt class="col-sm-5">Location from which plant was taken</dt>
-                    <dd class="col-sm-7">@Model.LocationType @Model.Location</dd>
+                    <dd class="col-sm-7">@Model.Slide.LocationType @Model.Slide.Location</dd>
                 </dl>
             </div>
         </div>
@@ -135,10 +139,10 @@
             <div class="card-block">
                 <dl class="row">
                     <dt class="col-sm-5">Chemical Treatments</dt>
-                    <dd class="col-sm-7">@Model.PrepMethod</dd>
+                    <dd class="col-sm-7">@Model.Slide.PrepMethod</dd>
 
                     <dt class="col-sm-5">Slide Creation Date</dt>
-                    <dd class="col-sm-7">@Model.PrepYear</dd>
+                    <dd class="col-sm-7">@Model.Slide.PrepYear</dd>
 
                     <dt class="col-sm-5">Mounting Medium</dt>
                     <dd class="col-sm-7">Unknown</dd>

@@ -1,6 +1,8 @@
 [<AutoOpen>]
 module Responses
 
+open ReadModels
+
 type ValidationError = {
     Property: string
     Errors: string list
@@ -58,3 +60,8 @@ type AllStatsViewModel = {
     Species: Percent
     TopIndividuals: LeaderboardItem list
     TopOrganisations: LeaderboardItem list }
+
+type SlidePageViewModel = {
+    Slide: SlideDetail
+    Collection: ReferenceCollectionSummary
+}

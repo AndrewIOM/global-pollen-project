@@ -424,6 +424,16 @@ module MasterReferenceCollection =
         |> lift updateId
         |> bind save
 
+    let addGrain (grainId:GrainId) (taxonId:TaxonId) =
+        // Get taxon and add grain for it and every parent level
+        Ok()
+
+    let removeGrainFromMrc (grainId:GrainId) =
+
+        // Figure out the current taxon in MRC
+        // Get taxon and remove grain for it and every parent
+        Ok()
+
     let handle get getSortedList set setSortedList (e:EventMessage) =
         match e |> toEvent with
         | :? ReferenceCollection.Event as e -> 
@@ -432,9 +442,9 @@ module MasterReferenceCollection =
             | _ -> Ok()
         | :? Grain.Event as e ->
             match e with
-            | Grain.Event.GrainIdentityConfirmed e -> invalidOp "Help"
-            | Grain.Event.GrainIdentityChanged e -> invalidOp "Help" //Get current taxon and remove grain from this taxon. Assign to new taxon.
-            | Grain.Event.GrainIdentityUnconfirmed e -> invalidOp "Help" //Get current taxon and remove grain from this taxon
+            | Grain.Event.GrainIdentityConfirmed e -> addGrain e.Id e.Taxon
+            | Grain.Event.GrainIdentityChanged e -> removeGrainFromMrc e.Id; addGrain e.Id e.Taxon
+            | Grain.Event.GrainIdentityUnconfirmed e -> removeGrainFromMrc e.Id
             | _ -> Ok()
         | :? Taxonomy.Event as e ->
             match e with
