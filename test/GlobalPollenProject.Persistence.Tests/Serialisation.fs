@@ -75,6 +75,15 @@ module ``When serialising read models`` =
             ReferenceUrl = "https://sometest.test/test?r89y89cbq"
             NeotomaId   = 0
             GbifId      = 2841145
+            EolId       = 142
+            EolCache =
+                    { CommonEnglishName =      "Daisies"
+                      PhotoUrl =               "https://somecoolurl.cool/cool.png"
+                      PhotoAttribution =       "Daisy McDaisy"
+                      Description =            "Daisies are common throughout the world."
+                      DescriptionAttribution = "Daisy McDaisy"
+                      Retrieved =              DateTime()
+            }
             BackboneChildren = 2 }
         let result =
             sut

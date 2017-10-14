@@ -17,6 +17,7 @@ let domainDefaultDeps =
      ValidateTaxon       = validate
      GetGbifId           = fun unit -> (None |> Ok)
      GetNeotomaId        = fun unit -> (None |> Ok)
+     GetEolId            = fun unit -> (None |> Ok)
      GetTime             = (fun x -> DateTime(2017,1,1))
      CalculateIdentity   = calcIdentity }
 
