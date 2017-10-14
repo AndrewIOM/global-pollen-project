@@ -105,3 +105,24 @@
         margin-bottom:0.2em;
     }
 }
+
+.card-fixed-height-image {
+    height: 15em;
+    overflow: hidden;
+    display: flex;
+    position: relative;
+
+    img {
+        width: 100%;
+        object-fit: cover;
+    }
+
+    .image-attribution {
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background-color: rgba(226,226,226, 0.75);
+        border-top-left-radius: 2px;
+        padding: 0.2em 0.35em 0.1em 0.35em;
+    }    
+}

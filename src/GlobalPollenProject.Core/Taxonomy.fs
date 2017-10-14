@@ -20,10 +20,12 @@ and Import = {
 and ThirdParty =
 | Neotoma
 | GlobalBiodiversityInformationFacility
+| EncyclopediaOfLife
 
 and ThirdPartyTaxonId =
 | NeotomaId of int
 | GbifId of int
+| EncyclopediaOfLifeId of int
 
 type Event =
 | Imported of Imported
@@ -88,6 +90,7 @@ let connect thirdParty (connector:TaxonId->Result<int option,string>) state =
                 match thirdParty with
                 | Neotoma -> [ EstablishedConnection (t.Id, NeotomaId i) ]
                 | GlobalBiodiversityInformationFacility -> [ EstablishedConnection (t.Id, GbifId i) ]
+                | EncyclopediaOfLife -> [ EstablishedConnection (t.Id, EncyclopediaOfLifeId i) ]
             | None -> []
 
 
@@ -98,6 +101,7 @@ let handle deps =
         match db with
         | Neotoma -> connect Neotoma deps.GetNeotomaId
         | GlobalBiodiversityInformationFacility -> connect GlobalBiodiversityInformationFacility deps.GetGbifId
+        | EncyclopediaOfLife -> connect EncyclopediaOfLife deps.GetEolId
 
 type State with
     static member Evolve state = function

@@ -104,11 +104,16 @@ let domainDependencies =
         TaxonomicBackbone.getById id readStoreGet deserialise
         |> bind ExternalLink.toLinkRequest
         |> lift ExternalLink.getGbifId
+    let eolLink id =
+        TaxonomicBackbone.getById id readStoreGet deserialise
+        |> bind ExternalLink.toLinkRequest
+        |> lift ExternalLink.getEncyclopediaOfLifeId
 
     { GenerateId          = Guid.NewGuid
       Log                 = log
       GetGbifId           = gbifLink
       GetNeotomaId        = neotomaLink
+      GetEolId            = eolLink
       GetTime             = (fun x -> DateTime.Now)
       ValidateTaxon       = isValidTaxon
       CalculateIdentity   = calculateIdentity }

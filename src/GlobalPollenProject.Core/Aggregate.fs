@@ -12,6 +12,7 @@ type Dependencies =  {
     ValidateTaxon:     BackboneQuery -> TaxonId option
     GetGbifId:         TaxonId -> Result<int option,string>
     GetNeotomaId:      TaxonId -> Result<int option,string>
+    GetEolId:          TaxonId -> Result<int option,string>
     GetTime:           unit -> DateTime
     CalculateIdentity: TaxonIdentification list -> TaxonId option }
 

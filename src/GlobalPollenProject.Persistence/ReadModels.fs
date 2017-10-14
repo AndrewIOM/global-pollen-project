@@ -51,20 +51,32 @@ type TaxonSummary = {
 }
 
 [<CLIMutable>]
+type EncyclopediaOfLifeCache = {
+    CommonEnglishName:      string
+    PhotoUrl:               string
+    PhotoAttribution:       string
+    Description:            string
+    DescriptionAttribution: string
+    Retrieved:              DateTime
+}
+
+[<CLIMutable>]
 type TaxonDetail = {
-    Id:         Guid
-    Family:     string
-    Genus:      string
-    Species:    string
-    LatinName:  string
-    Authorship: string
-    Rank:       string
-    Parent:     Node option
-    Children:   Node list
-    Slides:     SlideSummary list
-    Grains:     GrainSummary list
-    NeotomaId:  int
-    GbifId:     int
+    Id:                 Guid
+    Family:             string
+    Genus:              string
+    Species:            string
+    LatinName:          string
+    Authorship:         string
+    Rank:               string
+    Parent:             Node option
+    Children:           Node list
+    Slides:             SlideSummary list
+    Grains:             GrainSummary list
+    NeotomaId:          int
+    GbifId:             int
+    EolId:              int
+    EolCache:           EncyclopediaOfLifeCache
     ReferenceName:      string
     ReferenceUrl:       string
     BackboneChildren:   int

@@ -123,20 +123,31 @@
             </div>
         </div>
 
+        @if (!(string.IsNullOrEmpty(Model.EolCache.PhotoUrl) && string.IsNullOrEmpty(Model.EolCache.Description))) {
+        <div class="card">
+            <div class="card-fixed-height-image">
+                <img src="@Model.EolCache.PhotoUrl" alt="@Model.LatinName (rights holder: @Model.EolCache.PhotoAttribution)" />
+                <span class="image-attribution">&copy; @Model.EolCache.PhotoAttribution</span>
+            </div>
+            <div class="card-block">
+                <h4 class="card-title">@Model.EolCache.CommonEnglishName</h4>
+                @if (!string.IsNullOrEmpty(Model.EolCache.Description)) {
+                <p class="card-text">@(Html.Raw(Model.EolCache.Description.Length>400 ? Model.EolCache.Description.Substring(0, 400)+"..." : Model.EolCache.Description))
+                    @if (!string.IsNullOrEmpty(Model.EolCache.DescriptionAttribution)) { <em>Text &copy; @Html.Raw(Model.EolCache.DescriptionAttribution)</em> }
+                </p> }
+                <a class="card-link" href="http://eol.org/pages/@Model.EolId/overview" target="_blank">See more in the Encyclopedia of Life...</a>
+            </div>
+        </div>
+        }
+
         <div class="panel panel-white">
             <div class="panel-heading"><i class="fa fa-book" aria-hidden="true"></i> Definition <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://gbif.org/species/@Model.GbifId" target="_blank">View at GBIF</a></div>
             <div class="panel-body">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div id="gbif-image"></div>
-                        <p id="gbif-description"><span class="glyphicon glyphicon-refresh"></span></p>
-                        <p><span id="description-source"></span> <br/> <span id="gbif-image-source"></span></p>
-                    </div>
-                </div>
                 <dl class="row">
                     <dt class="col-sm-3">Global Pollen Project UUID</dt>
                     <dd class="col-sm-9">@Model.Id</dd>
                 </dl>
+                @if (Model.Rank != "Family") {
                 <dl class="row">
                     <dt class="col-sm-3">Parent Taxon</dt>
                     <dd class="col-sm-9">
@@ -147,7 +158,7 @@
                             <a href="/Taxon/@Model.Family/@Model.Genus">@Model.Genus</a>
                         }
                     </dd>
-                </dl>
+                </dl> }
                 @if (Model.Rank != "Species") {
                     <dl class="row">
                         <dt class="col-sm-3">@subname</dt>
@@ -155,7 +166,7 @@
                             <ul class="list-inline">
                             @foreach (var subTaxon in Model.Children.OrderBy(m => m.Name))
                             {
-                                <li><a href="/Taxon/ID/@subTaxon.Id">@subTaxon.Name</a></li>
+                                <li class="list-inline-item"><a href="/Taxon/ID/@subTaxon.Id">@subTaxon.Name</a></li>
                             }
                             </ul>
                         </dd>

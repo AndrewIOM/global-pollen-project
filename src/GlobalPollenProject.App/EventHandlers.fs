@@ -25,6 +25,11 @@ module ExternalConnections =
         |> issueTaxonCommand
         |> ignore
 
+    let refreshEolConnection issueTaxonCommand taxonId = 
+        ConnectToExternalDatabase (taxonId,ThirdParty.EncyclopediaOfLife)
+        |> issueTaxonCommand
+        |> ignore
+
     let getCol get (id:Guid) = 
         RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
 
@@ -55,6 +60,7 @@ module ExternalConnections =
             |> getCol get
             |> bind (toGppTaxa get)
         taxa |> lift (List.map (refreshGbifConnection issueCommand)) |> ignore
+        taxa |> lift (List.map (refreshEolConnection issueCommand)) |> ignore
         taxa |> lift (List.map (refreshNeotomaConnection issueCommand)) |> ignore
 
     let refresh get issueTaxonCommand (e:string*obj*DateTime) =

@@ -157,8 +157,16 @@ module MasterReferenceCollection =
             ReferenceUrl = ""
             NeotomaId = 0
             GbifId = 0
-            BackboneChildren = backboneChildCount
-        }
+            EolId = 0
+            EolCache =
+                    { CommonEnglishName =      ""
+                      PhotoUrl =               ""
+                      PhotoAttribution =       ""
+                      Description =            ""
+                      DescriptionAttribution = ""
+                      Retrieved =              DateTime()
+            }
+            BackboneChildren = backboneChildCount }
 
     let getLatinName (s:SlideDetail) =
         match s.Rank with
@@ -418,6 +426,11 @@ module MasterReferenceCollection =
             match externalId with
             | Taxonomy.ThirdPartyTaxonId.NeotomaId i -> {taxon with NeotomaId = i}
             | Taxonomy.ThirdPartyTaxonId.GbifId i -> {taxon with GbifId = i}
+            | Taxonomy.ThirdPartyTaxonId.EncyclopediaOfLifeId i -> 
+                let cache = ExternalLink.getEncyclopediaOfLifeCacheData i
+                match cache with
+                | Some c -> { taxon with EolId = i; EolCache = c }
+                | None -> { taxon with EolId = i }
         id
         |> Converters.DomainToDto.unwrapTaxonId
         |> getExisting
