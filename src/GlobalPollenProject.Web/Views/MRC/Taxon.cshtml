@@ -127,10 +127,13 @@
         <div class="card">
             <div class="card-fixed-height-image">
                 <img src="@Model.EolCache.PhotoUrl" alt="@Model.LatinName (rights holder: @Model.EolCache.PhotoAttribution)" />
-                <span class="image-attribution">&copy; @Model.EolCache.PhotoAttribution</span>
+                @if (!string.IsNullOrEmpty(Model.EolCache.PhotoAttribution)) { <span class="image-attribution">&copy; @Model.EolCache.PhotoAttribution</span> }
             </div>
             <div class="card-block">
-                <h4 class="card-title">@Model.EolCache.CommonEnglishName</h4>
+                @if (string.IsNullOrEmpty(Model.EolCache.CommonEnglishName)) {
+                    <h4 class="card-title">@Model.LatinName</h4>
+                } else { <h4 class="card-title">@Model.EolCache.CommonEnglishName</h4> }
+                
                 @if (!string.IsNullOrEmpty(Model.EolCache.Description)) {
                 <p class="card-text">@(Html.Raw(Model.EolCache.Description.Length>400 ? Model.EolCache.Description.Substring(0, 400)+"..." : Model.EolCache.Description))
                     @if (!string.IsNullOrEmpty(Model.EolCache.DescriptionAttribution)) { <em>Text &copy; @Html.Raw(Model.EolCache.DescriptionAttribution)</em> }
