@@ -43,7 +43,7 @@ let rec private readAll (connection : IEventStoreConnection)
         let slice = sliceTask |> Async.AwaitTask |> Async.RunSynchronously
         if slice.Events.Length > 0 then
             for resolvedEvent in slice.Events do
-                yield resolvedEvent.Event
+                yield resolvedEvent.OriginalEvent
             yield! readAll connection slice.NextPosition
     }
 
