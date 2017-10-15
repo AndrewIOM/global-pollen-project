@@ -9,8 +9,8 @@
 @section headerSection {
 <header>
     <div class="container">
-        <h2>@ViewBag.Title</h2>
-        <p>@ViewBag.Subtitle</p>
+        <h2>@ViewData["Title"]</h2>
+        <p>@ViewData["Subtitle"]</p>
     </div>
 </header>
 }
@@ -102,5 +102,4 @@
 </div>
 
 @section Scripts { @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-<script type="text/javascript" src="~/js/account/OrganisationAutocomplete.js"></script>
 }

@@ -110,7 +110,8 @@ type Startup () =
                 opt.AppSecret <- getAppSetting "Authentication:Facebook:AppSecret")
             .AddTwitter(fun opt ->
                 opt.ConsumerKey <- getAppSetting "Authentication:Twitter:ConsumerKey"
-                opt.ConsumerSecret <- getAppSetting "Authentication:Twitter:ConsumerSecret")
+                opt.ConsumerSecret <- getAppSetting "Authentication:Twitter:ConsumerSecret"
+                opt.RetrieveUserDetails <- true)
             |> ignore
 
         services.AddSingleton<IEmailSender, AuthEmailMessageSender>() |> ignore

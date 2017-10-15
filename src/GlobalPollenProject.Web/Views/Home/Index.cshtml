@@ -16,7 +16,7 @@
 @section headerSection {
     <header class="homepage-header">
         <div class="container">
-            <h1>The Global Pollen Project</h1>
+            <h1>The Global Pollen Project <span style="font-weight: normal;" class="badge badge-info">Beta</span></h1>
             <p>The Open Platform for Pollen Identification</p>
 
             <form action="/Taxon" method="get" class="form-inline search-big">
@@ -33,9 +33,9 @@
     <section class="homepage-section section-bottomline">
         <div class="container">
             <div class="row justify-content-center">
-                <div class="col-md-3"><span class="big-number">@Model.Species</span>Species</div>
-                <div class="col-md-3"><span class="big-number">@Model.DigitisedSlides</span>Digitised Reference Slides</div>
-                <div class="col-md-3"><span class="big-number">@Model.IndividualGrains</span>Individual Grains and Spores</div>
+                <div class="col-md-3 bottom-margin"><span class="big-number">@Model.Species</span>Species</div>
+                <div class="col-md-3 bottom-margin"><span class="big-number">@Model.DigitisedSlides</span>Digitised Reference Slides</div>
+                <div class="col-md-3 bottom-margin"><span class="big-number">@Model.IndividualGrains</span>Individual Grains and Spores</div>
             </div>
         </div>
     </section>

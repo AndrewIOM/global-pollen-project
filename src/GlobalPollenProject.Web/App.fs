@@ -291,19 +291,18 @@ let webApp : HttpHandler =
         choose [
             POST >=> route  "/Login"                        >=> loginHandler "/"
             POST >=> route  "/ExternalLogin"                >=> externalLoginHandler
+            POST >=> route  "/ExternalLoginConfirmation"    >=> externalLoginConfirmation
             POST >=> route  "/Register"                     >=> registerHandler
             POST >=> route  "/Logout"                       >=> mustBeLoggedIn >=> logoutHandler
             POST >=> route  "/ForgotPassword"               >=> mustBeLoggedIn >=> forgotPasswordHandler
             POST >=> route  "/ResetPassword"                >=> mustBeLoggedIn >=> resetPasswordHandler
-
             GET  >=> route  "/Login"                        >=> renderView "Account/Login" None
             GET  >=> route  "/Register"                     >=> renderView "Account/Register" None
             GET  >=> route  "/ResetPassword"                >=> resetPasswordView
             GET  >=> route  "/ResetPasswordConfirmation"    >=> renderView "Account/ResetPasswordConfirmation" None
             GET  >=> route  "/ForgotPassword"               >=> renderView "Account/ForgotPassword" None
             GET  >=> route  "/ConfirmEmail"                 >=> confirmEmailHandler
-            // GET  >=> route  "/ExternalLoginCallback"        >=> (fun x -> invalidOp "Not implemented")
-            // GET  >=> route  "/ExternalLoginConfirmation"    >=> (fun x -> invalidOp "Not implemented")
+            GET  >=> route  "/ExternalLoginCallback"        >=> externalLoginCallback "/"
             // GET  >=> route  "/LinkLogin"                    >=> (fun x -> invalidOp "Not implemented")
             // GET  >=> route  "/LinkLoginCallback"            >=> (fun x -> invalidOp "Not implemented")
             // GET  >=> route  "/ManageLogins"                 >=> (fun x -> invalidOp "Not implemented")

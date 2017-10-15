@@ -33,7 +33,7 @@
                     <h4 class="card-title"><a href="/Reference/@col.Id/@col.Version">@col.Name</a></h4>
                     <h6 class="card-subtitle mb-2 text-muted">@col.CuratorSurname, @col.CuratorFirstNames @if (!string.IsNullOrEmpty(col.Institution)) { <span>/ @col.Institution</span> } </h6>
                     <p class="card-text">@(Html.Raw(col.Description.Length>300 ? col.Description.Substring(0, 300)+"..." : col.Description))</p>
-                    <p class="card-text"><small class="text-muted">Version @col.Version published on @col.Published.Date</small></p>
+                    <p class="card-text"><small class="text-muted">Version @col.Version published on @col.Published.ToLongDateString()</small></p>
                     </div>
                 </div>
                 </div>

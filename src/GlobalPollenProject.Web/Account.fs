@@ -29,9 +29,7 @@ open GlobalPollenProject.App.UseCases
 open ReadModels
 
 open Microsoft.AspNetCore.Mvc.ModelBinding
-
 open Microsoft.AspNetCore.Authentication
-
 open ModelValidation
 
 let renderView name model = warbler (fun x -> razorHtmlView name model)
@@ -123,7 +121,7 @@ let externalLoginHandler : HttpHandler =
         task {
             let! provider = ctx.BindForm<ExternalLoginRequest>()
             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-            let returnUrl = "/"
+            let returnUrl = "/Account/ExternalLoginCallback"
             let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,returnUrl)
             return! challengeWithProperties provider.Provider properties next ctx
         }
@@ -139,15 +137,63 @@ let externalLoginCallback returnUrl next (ctx:HttpContext) =
             else if result.IsLockedOut then return! renderView "Account/Lockout" None next ctx
             else
                 let email = info.Principal.FindFirstValue(ClaimTypes.Email)
+                let firstName = 
+                    if isNull (info.Principal.FindFirstValue(ClaimTypes.GivenName))
+                        then info.Principal.FindFirstValue ClaimTypes.Name
+                        else info.Principal.FindFirstValue ClaimTypes.GivenName
+                let lastName = info.Principal.FindFirstValue ClaimTypes.Surname
+                ctx.Items.Add ("ReturnUrl","returnUrl")
+                ctx.Items.Add ("LoginProvider",info.LoginProvider)
                 let model : ExternalLoginConfirmationViewModel = {
                     Email = email
-                    FirstName = ""
-                    LastName = ""
+                    FirstName = firstName
+                    LastName = lastName
                     Title = ""
                     Organisation = ""
                     EmailConfirmation = ""
                 }
                 return! renderView "Account/ExternalLoginConfirmation" model next ctx
+    }
+
+let externalLoginConfirmation next (ctx:HttpContext) =
+    task {
+        let! model = ctx.BindForm<ExternalLoginConfirmationViewModel>()
+        let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+        let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+        let isValid,errors = validateModel' model
+        match isValid with
+        | false -> return! razorHtmlViewWithModelState "Account/ExternalLoginConfirmation" errors model next ctx
+        | true ->
+            let! info = signInManager.GetExternalLoginInfoAsync()
+            if isNull info then return! redirectTo true "Account/ExternalLoginFailure" next ctx
+            else
+                let user = ApplicationUser(UserName = model.Email, Email = model.Email)
+                let! result = userManager.CreateAsync user
+                match result.Succeeded with
+                | true ->
+                    let! addLoginResult = userManager.AddLoginAsync(user, info)
+                    match addLoginResult.Succeeded with
+                    | true ->
+                        let id() = Guid.Parse user.Id
+                        let newUserRequest : NewAppUserRequest = 
+                            { Title = model.Title
+                              FirstName = model.FirstName
+                              LastName = model.LastName
+                              Organisation = model.Organisation
+                              Email = model.Email
+                              EmailConfirmation = model.EmailConfirmation
+                              Password = ""
+                              ConfirmPassword = "" }
+                        let register = User.register newUserRequest id
+                        match register with
+                        | Error msg -> return! renderView "Account/ExternalLoginFailure" model next ctx
+                        | Ok r -> 
+                            (ctx.GetLogger()).LogInformation "User created a new account with password."
+                            signInManager.SignInAsync(user, isPersistent = false) |> ignore
+                            return! redirectTo true "/" next ctx
+                    | false -> return! razorHtmlViewWithModelState "Account/ExternalLoginFailure" (identityErrorsToModelState addLoginResult) model next ctx
+                | false -> 
+                    return! razorHtmlViewWithModelState "Account/ExternalLoginFailure" (identityErrorsToModelState result) model next ctx
     }
 
 let forgotPasswordHandler : HttpHandler =

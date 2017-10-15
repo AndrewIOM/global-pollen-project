@@ -1,79 +1,81 @@
-﻿@model GlobalPollenProject.WebUI.ViewModels.ExternalLoginConfirmationViewModel
+﻿@model Requests.ExternalLoginConfirmationViewModel
 @{
-    ViewData["Title"] = "Register";
+    ViewData["Title"] = "Nearly logged in...";
     Layout = "_Layout";
 }
 
-@section homepageHeader {
-    <div class="addgrain-section headsection">
-        <div class="container">
-            <h2>@ViewBag.Title</h2>
-            <p>Associate your @ViewData["LoginProvider"] account.</p>
-        </div>
+@section headerSection {
+<header>
+    <div class="container">
+        <h2>@ViewData["Title"]</h2>
+        <p>Associate your @this.Context.Items["LoginProvider"] account.</p>
     </div>
-    <br />
+</header>
 }
 
-<form asp-controller="Account" asp-action="ExternalLoginConfirmation" asp-route-returnurl="@ViewData["ReturnUrl"]" method="post" class="form-horizontal" role="form">
-    <h4>Association Form</h4>
-    <hr />
-    <div asp-validation-summary="All" class="text-danger"></div>
-
+<form action="/Account/ExternalLoginConfirmation" method="POST" class="form-horizontal" role="form">
     <p class="text-info">
-        You've successfully authenticated with <strong>@ViewData["LoginProvider"]</strong>.
+        You've successfully authenticated with <strong>@this.Context.Items["LoginProvider"]</strong>.
         We just need a few more personal details from you before you can log in.
     </p>
-
+    <div asp-validation-summary="All" class="text-danger"></div>
     <h4>About You</h4>
-    <div class="form-group">
-        <label asp-for="Title" class="col-md-2 control-label"></label>
-        <div class="col-md-2">
+
+    <div class="form-group row">
+        <label asp-for="Title" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
             <input asp-for="Title" class="form-control" />
             <span asp-validation-for="Title" class="text-danger"></span>
         </div>
     </div>
-    <div class="form-group">
-        <label asp-for="FirstName" class="col-md-2 control-label"></label>
-        <div class="col-md-10">
+
+    <div class="form-group row">
+        <label asp-for="FirstName" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
             <input asp-for="FirstName" class="form-control" />
             <span asp-validation-for="FirstName" class="text-danger"></span>
         </div>
     </div>
-    <div class="form-group">
-        <label asp-for="LastName" class="col-md-2 control-label"></label>
-        <div class="col-md-10">
+
+    <div class="form-group row">
+        <label asp-for="LastName" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
             <input asp-for="LastName" class="form-control" />
             <span asp-validation-for="LastName" class="text-danger"></span>
         </div>
     </div>
-    <div class="form-group">
-        <label asp-for="Email" class="col-md-2 control-label"></label>
-        <div class="col-md-10">
+
+    <div class="form-group row">
+        <label asp-for="Email" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
             <input asp-for="Email" class="form-control" />
             <span asp-validation-for="Email" class="text-danger"></span>
         </div>
     </div>
-    <div class="form-group">
-        <label asp-for="Email" class="col-md-2 control-label"></label>
-        <div class="col-md-10">
+
+    <div class="form-group row">
+        <label asp-for="EmailConfirmation" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
             <input asp-for="EmailConfirmation" class="form-control" />
             <span asp-validation-for="EmailConfirmation" class="text-danger"></span>
         </div>
     </div>
+
     <hr />
     <h4>Your Organisation</h4>
-    <p>Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By using a common group name, you can build up your score together. Can your organisation become top identifiers?</p>
-    <div class="form-group">
-        <label asp-for="Organisation" class="col-md-2 control-label"></label>
-        <div class="col-md-10">
+    <p>Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By
+        using a common group name, you can build up your score together. Can your organisation become top identifiers?</p>
+    <div class="form-group row">
+        <label asp-for="Organisation" class="col-sm-2 col-form-label"></label>
+        <div class="col-sm-10">
             <input asp-for="Organisation" class="form-control" onkeyup="updateOrganisationList(this);" autocomplete="off" />
             <div class="dropdown-menu" id="organisationsList" style="display:none"></div>
             <span asp-validation-for="Organisation" class="text-danger"></span>
         </div>
     </div>
-    <div class="form-group">
-        <div class="col-md-offset-2 col-md-10">
-            <p>By registering, you agree to the Global Pollen Project <a asp-action="Terms" asp-controller="Home" target="_blank">terms and conditions</a>.</p>
+    <div class="form-group row">
+        <div class="col-md-offset-2 col-sm-10">
+            <p>By registering, you agree to the Global Pollen Project <a href="/Terms" target="_blank">terms and conditions</a>.</p>
             <button type="submit" class="btn btn-primary">Register</button>
         </div>
     </div>
@@ -81,5 +83,4 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script type="text/javascript" src="~/js/account/OrganisationAutocomplete.js"></script>
 }
