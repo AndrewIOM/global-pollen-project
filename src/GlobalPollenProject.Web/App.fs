@@ -102,7 +102,7 @@ let slideViewHandler (id:string) : HttpHandler =
         let split = id.Split '/'
         match split.Length with
         | 2 -> 
-            let col,slide = split.[0],split.[1]
+            let col,slide = split.[0], split.[1] |> System.Net.WebUtility.UrlDecode
             Taxonomy.getSlide col slide
             |> toViewResult "MRC/Slide" next ctx
         | _ -> notFoundResult next ctx

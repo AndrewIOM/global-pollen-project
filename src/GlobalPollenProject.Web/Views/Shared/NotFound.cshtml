@@ -3,12 +3,21 @@
     ViewData["Title"] = "Not Found";
 }
 
-@section headerSection {
-    <header><div class="container">
-    <h1>@ViewData["Title"]</h1>
-    </div></header>
+<div class="row justify-content-center" style="text-align:center;margin: 12.5em 0 7.5em;">
+    <div class="col-md-4">
+        <i class="fa fa-meh-o" aria-hidden="true" style="font-size: 6em;margin-bottom: 0.25em;"></i>
+        <h4>Sorry, we couldn't find what you were looking for.</h4>
+        <p>We've recently revamped the Global Pollen Project. We hope we haven't broken any links, but if you find any please let us know.</p>
+        <a href="/">Get me back to the homepage</a>
+        <p>- or -</p>
+        <p>
+            Lookup a taxon in our reference collection
+            <input name="lex" title="Search by latin name" id="ref-collection-search" type="search" autocomplete="off" class="form-control" placeholder="Find by Latin Name" style="display:inline-block;max-width:15em" />
+            <div class="dropdown-menu" id="suggestList" style="display:none"></div>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript" src="/js/home/suggest.js"></script>
 }
-
-<p>The page that you requested was not found, and may have moved.</p>
-
-<a href="/" class="btn btn-default">Return to GPP Home</a>

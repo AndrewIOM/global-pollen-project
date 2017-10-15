@@ -31,9 +31,9 @@
                 <div class="card">
                     <div class="card-block">
                     <h4 class="card-title"><a href="/Reference/@col.Id/@col.Version">@col.Name</a></h4>
-                    <h6 class="card-subtitle mb-2 text-muted">@col.CuratorSurname, @col.CuratorFirstNames</h6>
-                    <p class="card-text">@col.Description</p>
-                    <p class="card-text"><small class="text-muted">Last updated on @col.Published</small></p>
+                    <h6 class="card-subtitle mb-2 text-muted">@col.CuratorSurname, @col.CuratorFirstNames @if (!string.IsNullOrEmpty(col.Institution)) { <span>/ @col.Institution</span> } </h6>
+                    <p class="card-text">@(Html.Raw(col.Description.Length>300 ? col.Description.Substring(0, 300)+"..." : col.Description))</p>
+                    <p class="card-text"><small class="text-muted">Version @col.Version published on @col.Published.Date</small></p>
                     </div>
                 </div>
                 </div>
@@ -43,8 +43,9 @@
     <div class="col-md-3">
         <div class="card card-inverse card-primary mb-3 text-center crop-panel">
             <div class="card-block">
+                <h4 class="card-title"><i class="fa fa-question-circle-o" aria-hidden="true"></i> What are these collections?</h4>
                 <p class="card-text">
-                    Pollen reference material is commonly organised in phyiscal reference collections, of drawers of individual glass slides. 
+                    Pollen and spore reference material is commonly organised in phyiscal reference collections, of drawers of individual glass slides. 
                     We hold records of such collections, important information about their manufacture, and whether they have been digitised into the Global Pollen Project.
                 </p>
             </div>

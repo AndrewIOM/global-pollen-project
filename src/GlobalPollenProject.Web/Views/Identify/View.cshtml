@@ -129,13 +129,14 @@
                     @if (myIdentification != null) {
                         <span>Thank you for suggesting a taxonomic identification.</span>
                     } else {
+                    <h4>Can you identify this grain?</h4>
                     <form method="POST" action="/Identify/Identify">
                         <p>I can identify this grain to
                                 <select data-bind="value: rank" class="form-control input-sm inline-dropdown">
                                     <option value="Species">Species</option>
                                     <option value="Genus">Genus</option>
                                     <option value="Family">Family</option>
-                                </select> level.
+                                </select> rank.
                             </p>
                         <div class="row">
                             <div class="col-sm-3">
@@ -157,7 +158,6 @@
                                     placeholder="Auth." /></div>
                         </div>
                         <small id="taxon-help" class="form-text text-muted">This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically.</small>
-                        <button class="btn btn-secondary" data-bind="click: validateTaxon, enable: isValidTaxonSearch">Validate taxon</button>
                         <div data-bind="visible: newSlideTaxonStatus, if: newSlideTaxonStatus">
                             <div data-bind="visible: newSlideTaxonStatus() == 'Error'">
                                 <p><i class="fa fa-frown-o" aria-hidden="true"></i> There was a problem communicating with the taxonomic backbone.</p>
@@ -186,7 +186,7 @@
                         </div>
                         <input hidden="hidden" name="TaxonId" id="TaxonId" data-bind="value: currentTaxon"/>
                         <input hidden="hidden" name="GrainId" id="GrainId" value="@Model.Id" />
-                        <input type="submit"/>
+                        <button class="btn btn-primary" data-bind="click: validateTaxon, enable: isValidTaxonSearch">Validate and Submit</button>
                     </form>
                     }
                     <hr/>
@@ -194,6 +194,7 @@
                     <p><a href="/Account/Login">Log in</a> to identify this specimen.</p>
                 }
                 @* Display Current Identifications *@
+                <h4>Current Identifications</h4>
                 @if (Model.Identifications.Count() == 0)
                 {
                     <p>No current identifications</p>
