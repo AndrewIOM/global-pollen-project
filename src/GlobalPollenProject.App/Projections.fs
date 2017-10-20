@@ -824,11 +824,15 @@ module UserProfile =
         let updater (u:PublicProfile) c = {u with Curator = c }
         updateProperty get set userId updater curation
 
+    let addOrganisation get set org userId =
+        let updater (u:PublicProfile) o = { u with Groups = o :: u.Groups }
+        updateProperty get set userId updater (org |> Converters.DomainToDto.unwrapShortText)
+
     let handle get set setList (e:EventMessage) =
         match e |> toEvent with
         | :? User.Event as e ->
             match e with
-            | User.Event.JoinedClub (x,y) -> invalidOp "Not implemented"
+            | User.Event.JoinedOrganisation (i,org) -> addOrganisation get set org i
             | User.Event.ProfileHidden i -> changeVisibility get set false i
             | User.Event.ProfileMadePublic i -> changeVisibility get set true i
             | User.Event.BecameCurator i -> changeCuration get set true i

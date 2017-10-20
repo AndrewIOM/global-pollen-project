@@ -34,7 +34,12 @@ open ModelValidation
 
 let renderView name model = warbler (fun x -> razorHtmlView name model)
 
-let getBaseUrl (ctx:HttpContext) = sprintf "%s://%s:%i" ctx.Request.Scheme ctx.Request.Host.Host ctx.Request.Host.Port.Value
+let getBaseUrl (ctx:HttpContext) = 
+    let port = 
+        if ctx.Request.Host.Port.HasValue 
+        then sprintf ":%i" ctx.Request.Host.Port.Value
+        else ""
+    sprintf "%s://%s%s" ctx.Request.Scheme ctx.Request.Host.Host port
 
 let identityErrorsToModelState (identityResult:IdentityResult) =
     let dict = ModelStateDictionary()

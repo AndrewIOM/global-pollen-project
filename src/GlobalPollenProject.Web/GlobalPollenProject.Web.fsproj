@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.0</TargetFramework>
-    <MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
+    <MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
     <PreserveCompilationContext>true</PreserveCompilationContext>
     <AssemblyName>GlobalPollenProject.Web</AssemblyName>
     <OutputType>Exe</OutputType>
@@ -31,8 +31,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Lookups/taxonlookup.csv" CopyToPublishDirectory="always" />
     <None Include="Dockerfile" CopyToPublishDirectory="always" />
     <None Include="docker-compose.yml" CopyToPublishDirectory="always" />
+    <None Include="docker-compose.azure.yml" CopyToPublishDirectory="always" />
   </ItemGroup>
 
 </Project>

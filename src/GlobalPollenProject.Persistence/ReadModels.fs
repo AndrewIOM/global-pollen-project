@@ -207,13 +207,6 @@ type ReferenceCollectionDetail = {
     Version:            int
 }
 
-// User Profiles
-[<CLIMutable>]
-type GroupSummary = {
-    Id: string
-    Name: string
-}
-
 [<CLIMutable>]
 type PublicProfile = {
     UserId:     Guid
@@ -223,7 +216,7 @@ type PublicProfile = {
     LastName:   string
     Score:      float
     Curator:    bool
-    Groups:     GroupSummary list
+    Groups:     string list
 }
 
 // Digitisation Features

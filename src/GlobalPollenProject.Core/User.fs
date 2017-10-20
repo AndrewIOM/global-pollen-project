@@ -20,7 +20,6 @@ type Command =
 | Contribute of UserId * UserContribution * Points
 | ActivatePublicProfile of UserId
 | DisablePublicProfile of UserId
-| JoinClub of UserId * ClubId
 | GrantCurationRights of UserId
 
 and Register = {
@@ -29,13 +28,14 @@ and Register = {
     FirstName: string
     LastName: string
     PublicProfile: bool
+    Organisation: ShortText
 }
 
 type Event =
 | UserRegistered of UserRegistered
 | ProfileMadePublic of UserId
 | ProfileHidden of UserId
-| JoinedClub of UserId * ClubId
+| JoinedOrganisation of UserId * ShortText
 | BecameCurator of UserId
 
 and UserRegistered = {
@@ -53,8 +53,8 @@ and UserState = {
     Title: string
     FirstName: string
     LastName: string
-    PrimaryClub: ClubId option
-    OtherClubs: ClubId list
+    PrimaryClub: ShortText option
+    OtherClubs: ShortText list
     IsPubliclyVisible: bool
     Curator: bool
 }
@@ -66,7 +66,8 @@ let register (command:Register) state =
             [ UserRegistered {  Id = command.Id
                                 Title = command.Title
                                 FirstName = command.FirstName
-                                LastName = command.LastName }]
+                                LastName = command.LastName };
+              JoinedOrganisation (command.Id,command.Organisation) ]
         match command.PublicProfile with
         | false -> registered
         | true -> (ProfileMadePublic command.Id) :: registered
@@ -87,10 +88,11 @@ let deactivateProfile command state =
     | _ -> 
         invalidOp "User does not exist"
 
-let joinClub userId clubId state =
+let joinOrganisation userId organisationName state =
     match state with
     | Registered s ->
-        [ JoinedClub (userId,clubId) ]
+        // Check that user is not already a member of this organisation
+        [ JoinedOrganisation (userId,organisationName) ]
     | _ -> 
         invalidOp "User does not exist"
 
@@ -110,7 +112,6 @@ let handle deps =
     | Register command -> register command
     | ActivatePublicProfile command -> activateProfile command
     | DisablePublicProfile command -> deactivateProfile command
-    | JoinClub (u,c) -> joinClub u c
     | GrantCurationRights u -> grantCuration u
     | Contribute (u,c,p) -> contribute u c p
 
@@ -119,7 +120,6 @@ let getId = function
     | Register c -> unwrap c.Id
     | ActivatePublicProfile c -> unwrap c
     | DisablePublicProfile c -> unwrap c
-    | JoinClub (c,_) -> unwrap c
     | GrantCurationRights c -> unwrap c
     | Contribute (c,_,_) -> unwrap c
 
@@ -141,9 +141,11 @@ type State with
             | _ -> invalidOp "User is not registered"
         | Registered regState ->
             match event with
-            | UserRegistered e -> invalidOp "User is already registered"
-            | ProfileMadePublic user -> Registered { regState with IsPubliclyVisible = true }
-            | ProfileHidden user -> Registered { regState with IsPubliclyVisible = false }
-            | JoinedClub (user,club) -> Registered { regState with IsPubliclyVisible = true }
-            | BecameCurator id -> Registered { regState with Curator = true }
-
+            | UserRegistered _ -> invalidOp "User is already registered"
+            | ProfileMadePublic _ -> Registered { regState with IsPubliclyVisible = true }
+            | ProfileHidden _ -> Registered { regState with IsPubliclyVisible = false }
+            | JoinedOrganisation (_,orgName) -> 
+                match regState.PrimaryClub with
+                | None -> Registered { regState with PrimaryClub = Some orgName }
+                | Some _ -> Registered { regState with OtherClubs = orgName :: regState.OtherClubs }
+            | BecameCurator _ -> Registered { regState with Curator = true }

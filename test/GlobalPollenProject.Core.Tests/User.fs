@@ -24,11 +24,12 @@ module ``When registering a new account`` =
     [<Fact>]
     let ``A new account is created`` () =
         Given []
-        |> When ( Register { Id = id; Title = title; FirstName = firstName; LastName = lastName; PublicProfile = false } )
-        |> Expect [ UserRegistered { Id = id; Title = title; FirstName = firstName; LastName = lastName } ]
+        |> When ( Register { Id = id; Title = title; FirstName = firstName; LastName = lastName; PublicProfile = false; Organisation = ShortText "Some org" } )
+        |> Expect [ UserRegistered { Id = id; Title = title; FirstName = firstName; LastName = lastName }
+                    JoinedOrganisation (id,(ShortText "Some org")) ]
     
     [<Fact>]
     let ``It fails if the account already exists`` () =
         Given [ UserRegistered { Id = id; Title = title; FirstName = firstName; LastName = lastName } ]
-        |> When ( Register { Id = id; Title = title; FirstName = firstName; LastName = lastName; PublicProfile = false } )
+        |> When ( Register { Id = id; Title = title; FirstName = firstName; LastName = lastName; PublicProfile = false; Organisation = ShortText "Some org" } )
         |> ExpectInvalidOp

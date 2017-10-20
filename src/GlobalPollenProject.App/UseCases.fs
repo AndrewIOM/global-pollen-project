@@ -558,13 +558,21 @@ module User =
     open GlobalPollenProject.Core.Aggregates.User
     
     let private issueCommand = 
-        let aggregate = { initial = State.InitialState; evolve = State.Evolve; handle = handle; getId = getId }
+        let aggregate = { initial = InitialState; evolve = State.Evolve; handle = handle; getId = getId }
         eventStore.Value.MakeCommandHandler "User" aggregate domainDependencies
     
     let register (newUser:NewAppUserRequest) (getUserId:GetCurrentUser) =
         let id = UserId (getUserId())
-        issueCommand <| Register { Id = id; Title = newUser.Title; FirstName = newUser.FirstName; LastName = newUser.LastName; PublicProfile = false }
-        Ok id
+        newUser.Organisation 
+        |> ShortText.create
+        |> lift (fun org -> Register { Id = id
+                                       Title = newUser.Title
+                                       FirstName = newUser.FirstName
+                                       LastName = newUser.LastName
+                                       PublicProfile = false
+                                       Organisation = org } )
+        |> lift issueCommand
+        |> toAppResult
 
     let getPublicProfile (id:Guid) =
         RepositoryBase.getSingle<PublicProfile> (id.ToString()) readStoreGet deserialise
@@ -576,7 +584,7 @@ module User =
         | true ->
             snd i
             |> UserId
-            |> GlobalPollenProject.Core.Aggregates.User.Command.GrantCurationRights
+            |> GrantCurationRights
             |> issueCommand
             Ok id
         | false -> Error InvalidRequestFormat
