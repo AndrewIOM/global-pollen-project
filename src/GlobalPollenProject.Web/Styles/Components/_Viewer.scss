@@ -3,3 +3,6 @@
 .jcrop-handle {
     background-color: rgba(101, 37, 67, 1);
 }
+
+#cropping-container img { max-width: none;} /* fix responsive issue*/
+.jcrop-container img { max-width: none; }

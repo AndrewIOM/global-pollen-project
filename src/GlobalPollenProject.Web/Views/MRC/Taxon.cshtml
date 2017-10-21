@@ -144,12 +144,8 @@
         }
 
         <div class="panel panel-white">
-            <div class="panel-heading"><i class="fa fa-book" aria-hidden="true"></i> Definition <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://gbif.org/species/@Model.GbifId" target="_blank">View at GBIF</a></div>
+            <div class="panel-heading"><i class="fa fa-book" aria-hidden="true"></i> Definition</div>
             <div class="panel-body">
-                <dl class="row">
-                    <dt class="col-sm-3">Global Pollen Project UUID</dt>
-                    <dd class="col-sm-9">@Model.Id</dd>
-                </dl>
                 @if (Model.Rank != "Family") {
                 <dl class="row">
                     <dt class="col-sm-3">Parent Taxon</dt>
@@ -188,21 +184,32 @@
                             <span>@Model.Children.Length of @Model.BackboneChildren accepted @subname.</span>
                         </dd>
                     </dl>
+                    <dl class="row">
+                        <dt class="col-sm-3">Global Pollen Project UUID</dt>
+                        <dd class="col-sm-9">@Model.Id</dd>
+                    </dl>
+                    <dl class="row">
+                        <dt class="col-sm-3">Botanical Reference</dt>
+                        <dd class="col-sm-9">
+                            @if (!string.IsNullOrEmpty(Model.ReferenceName)) {
+                            if (!string.IsNullOrEmpty(Model.ReferenceUrl)) {
+                                <p><strong>Reference: </strong><a href="@Model.ReferenceUrl" target="_blank">@Model.ReferenceName</a></p>
+                            } else {
+                                <p><strong>Reference: </strong>@Model.ReferenceName</p>
+                            }
+                        } else { <span>None available. You can check <a target="_blank" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName">The Plant List</a> for further information.</span>}
+                        </dd>
+                    </dl>
                 }
             </div>
         </div>
 
-        <div class="panel panel-green" data-bind="with: taxonomicStatus">
-            <div class="panel-heading">Taxonomic Status <a id="view-at-gbif" class="btn btn-default btn-sm" style="float:right" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName" target="_blank">View on The Plant List</a></div>
+        <div class="panel panel-green">
+            <div class="panel-heading"><i class="fa fa-external-link" aria-hidden="true"></i> Connected Datasets</div>
             <div class="panel-body">
-                <p>This taxon is confirmed in our taxonomic backbone.</p>
-                @if (!string.IsNullOrEmpty(Model.ReferenceName)) {
-                    if (!string.IsNullOrEmpty(Model.ReferenceUrl)) {
-                        <p><strong>Reference: </strong><a href="@Model.ReferenceUrl" target="_blank">@Model.ReferenceName</a></p>
-                    } else {
-                        <p><strong>Reference: </strong>@Model.ReferenceName</p>
-                    }
-                } else { <span>We currently do not have a reference for this taxon. You can check <a target="_blank" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName">The Plant List</a> for further information.</span>}
+                <p>This taxon is currently linked to the following locations.</p>
+                <a class="btn btn-primary" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName" target="_blank">The Plant List</a>
+                <a class="btn btn-primary" href="http://gbif.org/species/@Model.GbifId" target="_blank">Global Biodiversity Information Facility</a>
             </div>
         </div>
 

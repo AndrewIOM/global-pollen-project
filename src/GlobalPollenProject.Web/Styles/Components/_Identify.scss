@@ -50,3 +50,24 @@
     margin: 10px;
     max-width: 300px;
 }
+
+.taxon-dropdown {
+    margin:0;
+    border-radius: 0;
+    li {
+        margin: 0;
+        padding: 0;
+        a {
+            display: block;
+            margin: 0;
+            padding: 0.4em 0.2em;
+        }
+        a:hover {
+            cursor:pointer;
+        }
+    }
+    li:hover {
+        background-color: $primary-color;
+        color: #FFF;
+    }
+}

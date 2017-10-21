@@ -16,48 +16,46 @@
 
 <div class="row">
     <nav class="col-sm-3 guide-sidebar">
-        <ul class="nav flex-column">
-            <li>
-                <a href="#about">What is the Global Pollen Project?</a>
+        <ul class="nav flex-column" id="guide-sidebar">
+            <li class="nav-item">
+                <a class="nav-link" href="#about">What is the Global Pollen Project?</a>
             </li>
-            <li>
-                <a href="#how-it-works">How it Works</a>
+            <li class="nav-item">
+                <a class="nav-link" href="#how-it-works">How it Works</a>
                 <ul class="nav nav-stacked">
-                    <li><a href="#taxonomic-backbone">Taxonomic Backbone</a></li>
+                    <li><a class="nav-link" href="#taxonomic-backbone">Taxonomic Backbone</a></li>
                 </ul>
             </li>
-            <li>
-                <a href="#reference-collection">Master Reference Collection</a>
+            <li class="nav-item">
+                <a class="nav-link" href="#reference-collection">Master Reference Collection</a>
                 <ul class="nav nav-stacked">
-                    <li><a href="#reference-search">Searching the Collection</a></li>
-                    <li><a href="#reference-taxon">The Taxon View</a></li>
-                    <li><a href="#reference-definition">Distributions and Botanical Descriptions</a></li>
+                    <li><a class="nav-link" href="#reference-search">Searching the Collection</a></li>
+                    <li><a class="nav-link" href="#reference-taxon">The Taxon View</a></li>
+                    <li><a class="nav-link" href="#reference-definition">Distributions and Botanical Descriptions</a></li>
                 </ul>
             </li>
-            <li>
-                <a href="#submit">Submit Pollen for Identification</a>
+            <li class="nav-item">
+                <a class="nav-link" href="#submit">Submit Pollen for Identification</a>
                 <ul class="nav nav-stacked">
-                    <li><a href="#submit-prepare">Preparing your Images</a></li>
+                    <li><a class="nav-link" href="#submit-prepare">Preparing your Images</a></li>
                 </ul>
             </li>
-            <li>
-                <a href="#identify">Identify Pollen Grains</a>
+            <li class="nav-item">
+                <a class="nav-link" href="#identify">Identify Pollen Grains</a>
             </li>
-            <li>
-                <a href="#digitise">Digitise Existing Reference Material</a>
+            <li class="nav-item">
+                <a class="nav-link" href="#digitise">Digitise Existing Reference Material</a>
             </li>
-            <li>
-                <a href="#cite">How to Cite</a>
+            <li class="nav-item">
+                <a class="nav-link" href="#cite">How to Cite</a>
             </li>
         </ul>
     </nav>
 
-    <div class="col-sm-9">
-        <h3 id="about">What is the Global Pollen Project?</h3>
-        <hr />
+    <div class="col-sm-9" data-spy="scroll" data-target="#guide-sidebar">
 
         <div class="alert alert-info">
-            Welcome to the Global Pollen Project (GPP) v1.5. After a positive reception for the GPP, we have worked hard to bring fresh scientific rigour and new features to the project. Please bare with us which information is migrated from the original GPP to this new version. More information is coming soon.
+            <strong>Welcome to the Global Pollen Project (GPP) v1.5.</strong> After a positive reception for the original release, we are happy to welcome you to the new Global Pollen Project (1.5). Please note that data is currently being migrated from the original dataset into a new format. While this is in progress, some data may not be available. <a href="https://v1.globalpollenproject.org" target="_blank">You can still access the original Global Pollen Project dataset in our temporary archive here.</a>
         </div>
 
         <p>
@@ -97,32 +95,59 @@
                 </p>
             </div>
             <div class="col-md-6">
-                <img src="/images/guide/reference-collection.png" class="img-responsive" alt="The global pollen project reference collection" />
+                <img src="/images/guide/mrc.jpg" class="img-fluid" alt="The global pollen project reference collection" />
             </div>
         </div>
         <br />
+        <h4 id="reference-taxon">The Taxon View</h4>
+        <p>The taxon view displays all reference slides for the taxon selected. This includes slides that belong to taxa that are children of the current selection, for example all species within a genera.</p>
+        <img src="/images/guide/taxon.jpg" class="img-fluid" alt="The global pollen project reference collection" />
+
+        <p>There are four information panels displayed for every taxon:</p>
+
+        <h5 id="reference-definition">Digitised Reference Slides</h5>
         <div class="row">
             <div class="col-md-6">
-                <h4 id="reference-taxon">The Taxon View</h4>
-                <p>
-                    The taxon view displays all reference slides for the taxon selected. This includes slides that belong to taxa that are children of the current selection, for example all species within a genera.
-                </p>
+                <p>Any digitised reference slides for the selected taxon, and any underlying genera / species, are presented together for visual comparison. </p>
             </div>
             <div class="col-md-6">
-                <img src="/images/guide/taxon-view.png" class="img-responsive" alt="The global pollen project reference collection" />
+                <img src="/images/guide/taxon-slides.jpg" class="img-fluid" alt="Taxonomic information cached from the Encyclopedia of Life" />
             </div>
         </div>
 
-        <h4 id="reference-definition">Distributions and Botanical Description</h4>
-        <p>
-            To help to distinguish between taxa that may or may not occur within your area of interest, we present past and present occurrences of taxa within the taxon view.
-            <ol>
-                <li><strong>Present-Day Occurrences.</strong> We link dynamically to the Global Biodiversity Information Facility (GBIF) to retrieve occurrences between 1990 and the present day. </li>
-                <li><strong>Past Occurrences.</strong> <a href="http://neotomadb.org">Neotoma</a> is accessed to present past occurrences (determined from pollen and plant macrofossils) from 1,000 years before present to 50,000 years before present. Use the horizontal scrollbar to filter the data to a particular temporal extent. </li>
-            </ol>
-        </p>
-        <p>We also display an image and description, if available, from the Global Biodiversity Information Facility.</p>
+        <h5 id="reference-definition">Present and Past Geographical Distributions</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <p>To help to distinguish between taxa that may or may not occur within your area of interest, we present past and present occurrences of taxa within the taxon view.
+                    <ol>
+                        <li><strong>Present-Day Occurrences.</strong> We link dynamically to the Global Biodiversity Information Facility (GBIF) to retrieve occurrences between 1990 and the present day. </li>
+                        <li><strong>Past Occurrences.</strong> <a href="http://neotomadb.org">Neotoma</a> is accessed to present past occurrences (determined from pollen and plant macrofossils) from 1,000 years before present to 50,000 years before present. Use the horizontal scrollbar to filter the data to a particular temporal extent. </li>
+                    </ol></p>
+            </div>
+            <div class="col-md-6">
+                <img src="/images/guide/taxon-past-distribution.jpg" class="img-fluid" alt="Previous occurrences of a pollen taxon, dynamically retrieved from Neotoma" />
+            </div>
+        </div>
 
+        <h5 id="reference-definition">Botanical Description</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <p>We connect each taxon in the master reference collection to <a href="https://eol.org">Encyclopedia of Life</a>. Trusted information is presented where a connection can be successfully made, including the common English name, botanical description, and an image. Please follow the link to Encyclopedia of Life from any taxon page, where additional similar information may be available.</p>
+            </div>
+            <div class="col-md-6">
+                <img src="/images/guide/taxon-description.jpg" class="img-fluid" alt="Taxonomic information cached from the Encyclopedia of Life" />
+            </div>
+        </div>
+
+        <h5 id="reference-definition">Statistics</h5>
+        <div class="row">
+            <div class="col-md-6">
+                <p>We show the representitiveness of our current collection compared to the taxonomic backbone.</p>
+            </div>
+            <div class="col-md-6">
+                <img src="/images/guide/taxon-definition.jpg" class="img-fluid" alt="Taxon definition in the Global Pollen Project's master reference collection" />
+            </div>
+        </div>
         <br />
 
         <h3 id="submit">Submit Pollen for Identification</h3>
@@ -198,14 +223,14 @@
                 <a href="/Grain">Identify grains now</a>.
             </div>
             <div class="col-md-4">
-                <img src="/images/guide/identify.png" class="img-responsive" alt="The global pollen project reference collection" />
+                <img src="/images/guide/identify.jpg" class="img-fluid" alt="The global pollen project reference collection" />
             </div>
         </div>
         <br />
 
         <h3 id="digitise">Digitise Existing Reference Material</h3>
         <hr />
-        <img src="~/images/guide/digitise-slide.png" class="img-responsive" alt="The global pollen project reference collection" />
+        <img src="~/images/guide/digitise-slide.jpg" class="img-fluid" alt="The global pollen project reference collection" />
         <p>
             The Global Pollen Project aims to provide a home for digital pollen reference collections.
             We provide tools for easy digitisation of reference collection slides. These have the following advantages:
@@ -218,26 +243,41 @@
         <a class="btn btn-default" href="/Digitise">Get started with digitisation online now.</a>
 
         <br />
+        <h3 id="cite">What's New?</h3>
+        <hr />
+
+        <h5>Release 1.5 (October 2017)</h5>
+        <p>The Global Pollen Project has been revised from the ground-up, to include more robust data models, a significantly more performant web interface, and new features.</p>
+
+        <p>New Features:</p>
+        <dl class="row">
+            <dt class="col-sm-3">Calibrated Images</dt>
+            <dd class="col-sm-9">All images are now calibrated to micrometre space. Additional tooling has been built into the digitisation process to enable correct calibration. Calibrated images enable precise measurement on images, as well as a dynamic scale bar.</dd>
+
+            <dt class="col-sm-3">Encyclopedia of Life (EoL) Integration</dt>
+            <dd class="col-sm-9">Our taxonomy is now connected to the EoL. You will notice common names, images, and botanical descriptions accompanying each taxon in our Master Reference Collection.</dd>
+
+            <dt class="col-sm-3">Public API</dt>
+            <dd class="col-sm-9">A preview of the publically-accessible API is included in this release. No API key is required at this time.</dd>
+
+            <dt class="col-sm-3">Completeness Indicators</dt>
+            <dd class="col-sm-9">We now display the completion of the GPP's master reference collection, compared to all accepted plant names.</dd>
+        </dl>
+        <p>Improvements:</p>
+        <dl class="row">
+            <dt class="col-sm-3">Speed</dt>
+            <dd class="col-sm-9">The project has been rewritten using a fuctional approach. All user-facing features are powered by a Redis in-memory database, for near-instant querying.</dd>
+            <dt class="col-sm-3">Temporal Dataset</dt>
+            <dd class="col-sm-9">Rather than storing state, all changes to the taxonomy, pollen reference material, and crowdsourced elements are captured as events. This allows us to keep a full history of changes in taxonomy as they occur in the future.</dd>
+        </dl>
+        <br />
+
         <h3 id="cite">How To Cite</h3>
         <hr />
-        <p>
-            The Global Pollen Project was developed by Andrew C Martin and William J Harvey. Please use a citation similar to the following in your work:
-        </p>
-        <div class="row">
-            <div class="col-md-6">
-                <blockquote>
-                    <p>Martin, AC. and Harvey, WJ. (2016). [online] The Global Pollen Project. Available at: http://globalpollenproject.org [Accessed 27 Feb. 2016].</p>
-                    <h6>Harvard</h6>
-                </blockquote>
-            </div>
-            <div class="col-md-6">
-                <blockquote>
-                    <p>Martin, A.C., & Harvey, W. J. (2016). <em>The Global Pollen Project</em>. Retrieved 27 February 2016, from http://globalpollenproject.org</p>
-                    <h6>APA (6th Edition)</h6>
-                </blockquote>
-
-            </div>
-        </div>
+        <p>The Global Pollen Project was developed by Andrew C Martin and William J Harvey. <strong>To cite the Global Pollen Project itself, or its framework, </strong>please use a citation similar to the following in your work:</p>
+        <blockquote class="blockquote">
+            <p class="mb-0">Martin, A. C. and Harvey, W. J. (2017), The Global Pollen Project: a new tool for pollen identification and the dissemination of physical reference collections. Methods Ecol Evol, 8: 892–897. doi:10.1111/2041-210X.12752.</p>
+        </blockquote>
         <p>
             The data available in the Global Pollen Project has been kindly contributed by individuals and organisations around the world.
             The image library and metadata is available under a Creative Commons License (<a href="/Terms">see terms</a>). When using this data in your work, please
@@ -250,22 +290,8 @@
 </div>
 
 <style>
-    h2:before, h3:before, h4:before {
-        display: block;
-        content: " ";
-        margin-top: -5em;
-        height: 5em;
-        visibility: hidden;
-    }
+    h3 { font-size: 1.5em; margin-top: 1em; }
+    hr { margin-top: 0.5em; }
+    h4 { font-size: 1.2em; }
+    h5 { font-size: 1.1em; }
 </style>
-
-@section Scripts {
-    <script type="text/javascript">
-        $(document).ready(function () {
-            $('body').scrollspy({
-                target: '.guide-sidebar',
-                offset: 0
-            });
-        });
-    </script>
-}

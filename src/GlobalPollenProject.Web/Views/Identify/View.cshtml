@@ -8,6 +8,7 @@
 
     var currentUserId = UserManager.GetUserId(User);
     var myIdentification = Model.Identifications.FirstOrDefault(i => i.User.ToString() == currentUserId);
+    var url = new Uri($"{Context.Request.Scheme}://{Context.Request.Host}{Context.Request.Path}{Context.Request.QueryString}");
 }
 
 @* Header *@
@@ -37,15 +38,12 @@
 <script src="/js/mrc/slide.js"></script>
 <script src="/lib/knockout/dist/knockout.js"></script>
 <script src="/js/tools/lookup.js"></script>
+<script src="/js/identify/identify.js"></script>
 <script>
     $(function() {
         var frames = ("@Model.Images[0].Frames").slice(1, -1).split(";");
         createViewer(frames, @Model.Images[0].PixelWidth);
     });
-    $(document).ready(function() { 
-        var vm = new BotanicalLookupToolViewModel(); 
-        ko.applyBindings(vm);
-        });
 </script>
 }
 
@@ -66,6 +64,11 @@
                 </div>
             </div>
         </div>
+
+        <div class="card">
+            <div class="card-header">Discussion</div>
+            <div class="card-block">@Html.Partial("Identify/_Disqus")</div>
+        </div>
     </div>
 
     <div class="col-md-6">
@@ -80,15 +83,18 @@
                     </div>
                     <div class="col-md-8">
                         @if (Model.AgeType == "Calendar") { <span><strong>Environmental.</strong> This grain or spore was from the environment, for example from a pollen trap, bee, honey, or soil.</span> }
-                        else { <span><strong>Fossil.</strong> This grain or spore was taken from a sediment core.</span> }
+                        else { <span><strong>Fossil.</strong> This grain or spore was taken from a sediment core or other environmental archive.</span> }
                     </div>
                 </div>
                 <div class="row">
                     <div class="col-md-4">
-                        <label>Age</label>
+                        @if (Model.AgeType == "Calendar") { <label>Year of Sampling</label> }
+                        else { <label>Age</label> }
                     </div>
                     <div class="col-md-8">
-                        @Model.AgeType - @Model.Age
+                        @if (string.IsNullOrEmpty(Model.AgeType)) { <span>Unknown</span> }
+                        else if (Model.AgeType != "Calendar") { <span>@Model.Age years before present</span> }
+                        else { <span>@Model.Age</span> }
                     </div>
                 </div>
                 <div class="row">
@@ -102,18 +108,10 @@
                 <hr />
                 <div class="row">
                     <div class="col-md-4">
-                        <label>Date Added</label>
-                    </div>
-                    <div class="col-md-8">
-                        Unknown
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-4">
                         <label>Share</label>
                     </div>
                     <div class="col-md-8">
-                        <a href="https://twitter.com/intent/tweet?button_hashtag=GlobalPollenProject&text=Help%20identify%20this%20pollen%20grain!" class="twitter-hashtag-button" url="location.href">Tweet this grain</a>
+                        <a href="https://twitter.com/intent/tweet?button_hashtag=GlobalPollenProject&text=Help%20identify%20this%20pollen%20grain!" class="twitter-hashtag-button" url="@url.AbsoluteUri">Tweet this grain</a>
                         <script>!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + '://platform.twitter.com/widgets.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'twitter-wjs');</script>
                     </div>
                 </div>
@@ -130,51 +128,41 @@
                         <span>Thank you for suggesting a taxonomic identification.</span>
                     } else {
                     <h4>Can you identify this grain?</h4>
-                    <form method="POST" action="/Identify/Identify">
+                    <form method="POST" action="/Identify/Identify" id="identify-form">
                         <p>I can identify this grain to
-                                <select data-bind="value: rank" class="form-control input-sm inline-dropdown">
-                                    <option value="Species">Species</option>
-                                    <option value="Genus">Genus</option>
+                                <select data-bind="value: rank" class="form-control form-control-sm inline-dropdown">
                                     <option value="Family">Family</option>
+                                    <option value="Genus">Genus</option>
+                                    <option value="Species">Species</option>
                                 </select> rank.
                             </p>
                         <div class="row">
                             <div class="col-sm-3">
                                 <input data-bind="value: family, event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Family" class="form-control" autocomplete="off" placeholder="Family"
                                     onblur="disable('Family');" onkeyup="suggest(this, 'Family');" />
-                                <div class="dropdown-menu" id="FamilyList" style="display:none"></div>
+                                <ul class="dropdown-menu taxon-dropdown" id="FamilyList" style="display:none"></ul>
                             </div>
                             <div class="col-sm-3">
                                 <input data-bind="value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Genus" class="form-control" autocomplete="off"
                                     placeholder="Genus" onblur="disable('Genus');" onkeyup="suggest(this, 'Genus');" />
-                                <div class="dropdown-menu" id="GenusList" style="display:none"></div>
+                                <ul class="dropdown-menu taxon-dropdown" id="GenusList" style="display:none"></ul>
                             </div>
                             <div class="col-sm-3">
                                 <input data-bind="value: species, disable: rank() != 'Species'" type="text" id="original-Species" class="form-control" autocomplete="off"
                                     placeholder="Species" onblur="disable('Species');" onkeyup="suggest(this, 'Species');" />
-                                <div class="dropdown-menu" id="SpeciesList" style="display:none"></div>
+                                <ul class="dropdown-menu taxon-dropdown" id="SpeciesList" style="display:none"></ul>
                             </div>
                             <div class="col-sm-3"><input data-bind="value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }" type="text" class="form-control" autocomplete="off"
                                     placeholder="Auth." /></div>
                         </div>
-                        <small id="taxon-help" class="form-text text-muted">This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically.</small>
+                        <small>Authorship is optional. The given name will be traced within our taxonomic backbone to the currently accepted name.</small>
                         <div data-bind="visible: newSlideTaxonStatus, if: newSlideTaxonStatus">
                             <div data-bind="visible: newSlideTaxonStatus() == 'Error'">
                                 <p><i class="fa fa-frown-o" aria-hidden="true"></i> There was a problem communicating with the taxonomic backbone.</p>
                             </div>
                             <div data-bind="if: newSlideTaxonStatus() != 'Error'">
-                                <div data-bind="visible: newSlideTaxonStatus().length == 1">
-                                    <p><i class="fa fa-smile-o" aria-hidden="true"></i> Verification successful. The current accepted name is:
-                                        <span data-bind="text: newSlideTaxonStatus()[0].Family"></span>
-                                        <span> > </span>
-                                        <span data-bind="text: newSlideTaxonStatus()[0].Genus"></span>
-                                        <em><span data-bind="text: newSlideTaxonStatus()[0].Species"></span></em>
-                                        <span> </span>
-                                        <span data-bind="text: newSlideTaxonStatus()[0].NamedBy"></span>
-                                    </p>
-                                </div>
                                 <div data-bind="visible: newSlideTaxonStatus().length > 1">
-                                    <p><i class="fa fa-frown-o" aria-hidden="true"></i> Verification unsuccessful. There are <span data-bind="text: newSlideTaxonStatus().length"></span> matching names.</p>
+                                    <p><i class="fa fa-frown-o" aria-hidden="true"></i> Validation unsuccessful. There are <span data-bind="text: newSlideTaxonStatus().length"></span> matching names.</p>
                                     <ul data-bind="foreach: newSlideTaxonStatus">
                                         <li data-bind="text: LatinName + ' ' + NamedBy + ' (' + TaxonomicStatus + ' name)'"></li>
                                     </ul>
@@ -186,7 +174,7 @@
                         </div>
                         <input hidden="hidden" name="TaxonId" id="TaxonId" data-bind="value: currentTaxon"/>
                         <input hidden="hidden" name="GrainId" id="GrainId" value="@Model.Id" />
-                        <button class="btn btn-primary" data-bind="click: validateTaxon, enable: isValidTaxonSearch">Validate and Submit</button>
+                        <button class="btn btn-primary" style="display:block;" data-bind="click: validateAndSubmit, enable: isValidTaxonSearch">Identify</button>
                     </form>
                     }
                     <hr/>
@@ -199,17 +187,18 @@
                 {
                     <p>No current identifications</p>
                 } else {
-                    <table class="table table-responsive">
+                    <table class="table">
                         <thead>
                             <tr>
                                 <th>Rank</th>
+                                <th>Method</th>
                                 <th>Identified as</th>
                             </tr>
                         </thead>
                         <tbody>
                             @foreach (var id in Model.Identifications) {
                                 <tr>
-                                <td>@id.Rank</td> <td>@id.Family @id.Genus @id.Species @id.SpAuth</td>
+                                <td>@id.Rank</td> <td>@id.IdentificationMethod</td> <td>@id.Family @id.Genus @id.Species @id.SpAuth</td>
                                 </tr>
                             }
                     </table>
@@ -217,11 +206,5 @@
             </div>
         </div>
 
-    </div>
-</div>
-
-<div class="row">
-    <div class="col-md-12">
-        @Html.Partial("Identify/_Disqus")
     </div>
 </div>

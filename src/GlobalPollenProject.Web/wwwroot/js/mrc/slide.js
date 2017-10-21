@@ -45,12 +45,15 @@ var initialiseCropper = function() {
     $("#viewer-interface").css("display", "none");
     $("#cropping-panel").css("display", "none");
     $("#cropping-interface").css("display", "block");
-
+    // $("#toolbar-clear").attr("disabled", "disabled");
+    // $("#toolbar-done").attr("disabled", "disabled");
+    
     var img = viewer.imagePaths[Math.floor(viewer.imagePaths.length / 2)];
 
-    $("#cropping-container").html("<img id='cropper-image' src='" + img + "' width='800' height='600'></img>");
+    $("#cropping-container").html("<img id='cropper-image' src='" + img + "'></img>");
+    var box_width = $('#cropping-container').width();
 
-    $("#cropper-image").Jcrop({multi: true, boxWidth: 400, boxHeight: 300}, function() {
+    $("#cropper-image").Jcrop({multi: true, boxWidth: box_width}, function() {
         jcrop_api = this;
     });
 
@@ -60,6 +63,12 @@ var initialiseCropper = function() {
             jcrop_api.setSelection(jcrop_api.ui.multi[0]);
         }
     });
+
+    $('#toolbar-done').click(function() {
+        if(jcrop_api.ui.multi.length > 0) {
+            console.log(jcrop_api.ui.multi);
+        }
+    })
 
     $("#toolbar-cancel").click(function() {
         $("#viewer-interface").css("display", "block");

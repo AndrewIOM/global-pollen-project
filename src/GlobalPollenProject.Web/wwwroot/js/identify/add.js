@@ -237,7 +237,7 @@ var uploadGrain = function () {
         return;
     }
 
-    $('#submit').prop('disabled', true);
+    $('#submit').css('display', 'none');
     $('#submit').addClass('disabled');
 
     function getBase64s(callback) {
@@ -331,9 +331,6 @@ var uploadGrain = function () {
             request.Year = parseInt($("#identify-temporal-environmental-year").val());
         }
 
-        console.log(request);
-
-
         $.ajax({
             url: "/Identify/Upload",
             type: "POST",
@@ -343,6 +340,7 @@ var uploadGrain = function () {
             xhr: function () {
                 var xhr = $.ajaxSettings.xhr();
                 xhr.upload.onprogress = function (evt) {
+                    $('#upload-progress').css('display', 'block');
                     if (evt.lengthComputable) {
                         var percentComplete = evt.loaded / evt.total;
                         console.log(percentComplete * 100);
@@ -351,13 +349,20 @@ var uploadGrain = function () {
                 return xhr;
             },
             success: function (data) {
-                console.log(data);
+                $('#upload-progress').addClass('bg-success');
+                location.href = "/Identify";
             },
             statusCode: {
                 400: function (err) {
+                    $('#upload-progress').css('display', 'none');
+                    $('#submit').css('display', 'block');
+                    $('#submit').removeClass('disabled');                    
                     console.log(err);
                 },
                 500: function (data) {
+                    $('#upload-progress').css('display', 'none');
+                    $('#submit').css('display', 'block');          
+                    $('#submit').removeClass('disabled');                                        
                     console.log("Internal error. Please try again later.");
                 }
             }

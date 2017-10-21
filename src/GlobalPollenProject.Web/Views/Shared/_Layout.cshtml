@@ -22,6 +22,7 @@
               asp-fallback-test-class="sr-only" asp-fallback-test-property="position" asp-fallback-test-value="absolute" />
         <link rel="stylesheet" href="/css/styles.css" >
     </environment>
+    @RenderSection("headAdditional", required: false)
 </head>
 <body>
 
@@ -127,5 +128,6 @@
     </environment>
 
     @RenderSection("scripts", required: false)
+    @await Html.PartialAsync("_Analytics")
 </body>
 </html>

@@ -217,11 +217,12 @@ let submitGrainHandler next (ctx:HttpContext) =
     |> toApiResult next ctx
 
 let submitIdentificationHandler next (ctx:HttpContext) =
-    ctx.BindForm<IdentifyGrainRequest>()
-    |> Async.AwaitTask
-    |> Async.RunSynchronously
-    |> UnknownGrains.identifyUnknownGrain (currentUserId ctx)
-    |> toApiResult next ctx
+    let formData =
+        ctx.BindForm<IdentifyGrainRequest>()
+        |> Async.AwaitTask
+        |> Async.RunSynchronously
+    UnknownGrains.identifyUnknownGrain (currentUserId ctx) formData |> ignore
+    redirectTo true (sprintf "/Identify/%A" formData.GrainId) next ctx
 
 let homeHandler next (ctx:HttpContext) =
     Statistic.getHomeStatistics()

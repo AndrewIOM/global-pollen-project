@@ -57,12 +57,6 @@
                             A pollen grain collected from the environment, for example from a pollen trap, bee, honey, or soil. This grain has not been fossilised.
                         </label>
                     </div>
-                    <div class="form-check disabled">
-                        <label class="form-check-label">
-                        <input class="form-check-input" name="identify-method-radio" id="identify-sampling-method-botanical" type="radio" value="botanical" disabled>
-                            A pollen grain, or spore, taken directly from a living plant. 
-                        </label>
-                    </div>
                 </div>
             </fieldset>
         </div>
@@ -151,5 +145,8 @@
         </div>
     </div>
     <br>
+    <div id="upload-progress" class="progress" style="display:none">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+    </div>
     <a id="submit" class="btn btn-primary" href="javascript: uploadGrain()">Add My Grain</a>
 </form>
