@@ -59,7 +59,6 @@ let loginHandler redirectUrl : HttpHandler =
             match isValid with
             | false -> return! razorHtmlViewWithModelState "Account/Login" errors loginRequest next ctx
             | true ->
-                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
                 let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
                 let! result = signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, lockoutOnFailure = false)
                 if result.Succeeded then
@@ -83,7 +82,6 @@ let registerHandler : HttpHandler =
         task {
             let! model = ctx.BindForm<NewAppUserRequest>()
             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-            let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
             let user = ApplicationUser(UserName = model.Email, Email = model.Email)
             let! result = userManager.CreateAsync(user, model.Password)
             match result.Succeeded with
@@ -253,7 +251,6 @@ let resetPasswordHandler : HttpHandler =
 let grantCurationHandler (id:string) : HttpHandler =
     fun next ctx ->
         task {
-            let roleManager = ctx.GetService<RoleManager<IdentityRole>>()
             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
             match User.grantCuration id with
             | Ok _ ->
@@ -265,3 +262,201 @@ let grantCurationHandler (id:string) : HttpHandler =
                         return! redirectTo false "/Admin/Users" next ctx
             | Error e -> return! text "Error" next ctx
         }
+
+module Manage =
+
+    open System.ComponentModel.DataAnnotations
+    open Microsoft.AspNetCore.Authentication
+    open Microsoft.AspNetCore.Identity
+
+    [<CLIMutable>]
+    type IndexViewModel = {
+        HasPassword: bool
+        Logins: UserLoginInfo list
+        Profile: PublicProfile }
+
+    [<CLIMutable>]
+    type ManageLoginsViewModel = {
+        CurrentLogins: UserLoginInfo list
+        OtherLogins: AuthenticationScheme list }
+
+    [<CLIMutable>]
+    type LinkLogin = { Provider: string }
+
+    [<CLIMutable>]
+    type RemoveLogin = { LoginProvider: string; ProviderKey: string }
+
+    [<CLIMutable>]
+    type SetPasswordViewModel = {
+        [<Required>] 
+        [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
+        [<DataType(DataType.Password)>]
+        [<Display(Name="New password")>]
+        NewPassword: string
+        [<DataType(DataType.Password)>]
+        [<Display(Name = "Confirm new password")>]
+        [<Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")>]
+        ConfirmPassword: string
+    }
+
+    [<CLIMutable>]
+    type ChangePasswordViewModel = {
+        [<Required>] 
+        [<DataType(DataType.Password)>]
+        [<Display(Name="Current password")>]
+        OldPassword: string
+        [<Required>] 
+        [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
+        [<DataType(DataType.Password)>]
+        [<Display(Name="New password")>]
+        NewPassword: string
+        [<DataType(DataType.Password)>]
+        [<Display(Name = "Confirm new password")>]
+        [<Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")>]
+        ConfirmPassword: string
+    }
+
+    [<CLIMutable>]
+    type ChangePublicProfileViewModel = {
+        [<Required>] [<Display(Name="Title")>] Title: string
+        [<Required>] [<Display(Name="Forename(s)")>] FirstName: string
+        [<Required>] [<Display(Name="Surname")>] LastName: string
+        [<Required>] [<Display(Name="Organisation")>] Organisation: string
+    }
+
+    let index : HttpHandler =
+        fun next ctx ->
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let! user = userManager.GetUserAsync ctx.User
+                let! hasPassword = userManager.HasPasswordAsync(user)
+                let! logins = userManager.GetLoginsAsync(user)
+                let createVm p = 
+                    { HasPassword = hasPassword
+                      Logins = logins |> Seq.toList
+                      Profile = p }
+                let model = createVm <!> User.getPublicProfile (user.Id |> Guid)
+                match model with
+                | Ok m -> return! renderView "Manage/Index" m next ctx
+                | Error _ -> return! renderView "Error" None next ctx
+            }
+    
+    let removeLoginView : HttpHandler =
+        fun next ctx ->
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let! user = userManager.GetUserAsync ctx.User
+                let! linkedAccounts = userManager.GetLoginsAsync user
+                let! hasPass = userManager.HasPasswordAsync user
+                ctx.Items.Add ("ShowRemoveButton", (hasPass || linkedAccounts.Count > 1))
+                return! renderView "Manage/RemoveLogin" linkedAccounts next ctx
+            }
+    
+    let removeLogin : HttpHandler =
+        fun next ctx ->
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+                let! user = userManager.GetUserAsync ctx.User
+                let! model = ctx.BindForm<RemoveLogin>()
+                match isNull user with
+                | true -> return! redirectTo true "/Account/Manage" next ctx
+                | false ->
+                    let! result = userManager.RemoveLoginAsync(user,model.LoginProvider,model.ProviderKey)
+                    match result.Succeeded with
+                    | false -> ()
+                    | true -> do! signInManager.SignInAsync(user, isPersistent = false)
+                    return! redirectTo true "/Account/Manage" next ctx
+            }
+
+    let changePassword : HttpHandler =
+        fun next ctx ->
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+                let! model = ctx.BindForm<ChangePasswordViewModel>()
+                let isValid,errors = validateModel' model
+                match isValid with
+                | false -> return! razorHtmlViewWithModelState "Manage/ChangePassword" errors model next ctx
+                | true ->
+                    let! user = userManager.GetUserAsync ctx.User
+                    match isNull user with
+                    | true -> return! redirectTo true "/Account/Manage" next ctx
+                    | false ->
+                        let! result = userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword)
+                        match result.Succeeded with
+                        | false -> ()
+                        | true -> do! signInManager.SignInAsync(user, isPersistent = false)
+                        return! redirectTo true "/Account/Manage" next ctx
+            }
+
+    let setPassword : HttpHandler =
+        fun next ctx ->
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+                let! model = ctx.BindForm<SetPasswordViewModel>()
+                let isValid,errors = validateModel' model
+                match isValid with
+                | false -> return! razorHtmlViewWithModelState "Manage/SetPassword" errors model next ctx
+                | true ->
+                    let! user = userManager.GetUserAsync ctx.User
+                    match isNull user with
+                    | true -> return! redirectTo true "/Account/Manage" next ctx
+                    | false ->
+                        let! result = userManager.AddPasswordAsync(user, model.NewPassword)
+                        match result.Succeeded with
+                        | false -> ()
+                        | true -> do! signInManager.SignInAsync(user, isPersistent = false)
+                        return! redirectTo true "/Account/Manage" next ctx
+            }
+
+    let manageLogins : HttpHandler =
+        fun next ctx ->
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+                let! user = userManager.GetUserAsync ctx.User
+                match isNull user with
+                | true -> return! renderView "Error" None next ctx
+                | false ->
+                    let! userLogins = userManager.GetLoginsAsync user
+                    let! otherLogins = signInManager.GetExternalAuthenticationSchemesAsync()
+                    ctx.Items.Add ("ShowRemoveButton", (not (isNull user.PasswordHash)) || userLogins.Count > 1)
+                    let model = { CurrentLogins = userLogins |> Seq.toList; OtherLogins = otherLogins |> Seq.toList }
+                    return! renderView "Manage/ManageLogins" model next ctx
+            }
+
+    let linkLogin : HttpHandler =
+        fun next ctx ->
+            let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+            let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+            let provider = ctx.BindForm<LinkLogin>() |> Async.AwaitTask |> Async.RunSynchronously
+            let user = userManager.GetUserAsync ctx.User |> Async.AwaitTask |> Async.RunSynchronously
+            let callbackUrl = sprintf "%s/Account/Manage/LinkLoginCallback" (getBaseUrl ctx)
+            let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,callbackUrl, user.Id)
+            challengeWithProperties provider.Provider properties next ctx
+
+    let linkLoginCallback : HttpHandler =
+        fun next ctx ->
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+                let! user = userManager.GetUserAsync ctx.User
+                match isNull user with
+                | true -> return! renderView "Error" None next ctx
+                | false ->
+                    let! info = signInManager.GetExternalLoginInfoAsync()
+                    match isNull info with
+                    | true -> return! renderView "Error" None next ctx
+                    | false ->
+                        let! res = userManager.AddLoginAsync(user,info)
+                        match res.Succeeded with 
+                        | false -> return! renderView "Error" None next ctx
+                        | true -> return! redirectTo true "/Account/cool" next ctx
+            }
+
+    let profile : HttpHandler =
+        fun next ctx ->
+            let model = ctx.BindForm<ChangePublicProfileViewModel>() |> Async.AwaitTask |> Async.RunSynchronously
+            invalidOp "Not implemented"

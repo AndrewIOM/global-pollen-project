@@ -304,12 +304,19 @@ let webApp : HttpHandler =
             GET  >=> route  "/ForgotPassword"               >=> renderView "Account/ForgotPassword" None
             GET  >=> route  "/ConfirmEmail"                 >=> confirmEmailHandler
             GET  >=> route  "/ExternalLoginCallback"        >=> externalLoginCallback "/"
-            // GET  >=> route  "/LinkLogin"                    >=> (fun x -> invalidOp "Not implemented")
-            // GET  >=> route  "/LinkLoginCallback"            >=> (fun x -> invalidOp "Not implemented")
-            // GET  >=> route  "/ManageLogins"                 >=> (fun x -> invalidOp "Not implemented")
-            // GET  >=> route  "/SetPassword"                  >=> (fun x -> invalidOp "Not implemented")
-            // GET  >=> route  "/ChangePassword"               >=> (fun x -> invalidOp "Not implemented")
-            // GET  >=> route  "/RemoveLogin"                  >=> (fun x -> invalidOp "Not implemented")
+            
+            GET  >=> route  "/Manage"                       >=> Manage.index
+            POST >=> route  "/Manage/Profile"               >=> Manage.profile
+            GET  >=> route  "/Manage/Profile"               >=> renderView "Manage/ChangePublicProfile" None
+            POST >=> route  "/Manage/LinkLogin"             >=> Manage.linkLogin
+            GET  >=> route  "/Manage/LinkLoginCallback"     >=> Manage.linkLoginCallback
+            GET  >=> route  "/Manage/ManageLogins"          >=> Manage.manageLogins
+            POST >=> route  "/Manage/SetPassword"           >=> Manage.setPassword
+            GET  >=> route  "/Manage/SetPassword"           >=> renderView "Manage/SetPassword" None
+            POST >=> route  "/Manage/ChangePassword"        >=> Manage.changePassword
+            GET  >=> route  "/Manage/ChangePassword"        >=> renderView "Manage/ChangePassword" None
+            POST >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLogin
+            GET  >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLoginView
         ]
 
     let masterReferenceCollection =

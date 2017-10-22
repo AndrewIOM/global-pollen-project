@@ -23,6 +23,7 @@
         @if (User.IsInRole("Curator")) {
           <a class="dropdown-item" href="/Admin/Curate">Curator Dashboard</a>
         }
+        <a class="dropdown-item" href="/Account/Manage">Manage Your Account</a>
         <a class="dropdown-item">
           <form action="/Account/Logout" method="POST" id="logoutForm" class="navbar-right">
             <input type="submit" class="dropdown-item" value="Log out" />
