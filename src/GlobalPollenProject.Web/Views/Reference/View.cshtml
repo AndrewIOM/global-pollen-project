@@ -103,7 +103,7 @@
                 @if (!slide.IsFullyDigitised) { <span>Not digitised.</span> }
             </td>
             <td>
-                @if (!slide.IsFullyDigitised) { <a href="/Taxon/@Model.Id/@slide.CollectionSlideId" class="btn btn-secondary">View Slide</a> }
+                @if (slide.IsFullyDigitised) { <a href="/Reference/@Model.Id/@slide.CollectionSlideId" class="btn btn-secondary">View Slide</a> }
             </td>
         </tr>
       }

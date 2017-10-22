@@ -102,9 +102,13 @@ let slideViewHandler (id:string) : HttpHandler =
         let split = id.Split '/'
         match split.Length with
         | 2 -> 
-            let col,slide = split.[0], split.[1] |> System.Net.WebUtility.UrlDecode
+            let col,slide = split.[0], split.[1] |> Net.WebUtility.UrlDecode
             Taxonomy.getSlide col slide
-            |> toViewResult "MRC/Slide" next ctx
+            |> toViewResult "Reference/Slide" next ctx
+        | 3 ->
+            let col,slide = split.[0], split.[2] |> Net.WebUtility.UrlDecode
+            Taxonomy.getSlide col slide
+            |> toViewResult "Reference/Slide" next ctx
         | _ -> notFoundResult next ctx
 
 let taxonDetail (taxon:string) next ctx =
@@ -324,7 +328,6 @@ let webApp : HttpHandler =
         choose [   
             route   ""                          >=> pagedTaxonomyHandler
             routef  "/View/%i"                  lookupNameFromOldTaxonId
-            routef  "/Slide/%s"                 slideViewHandler
             routef  "/ID/%s"                    taxonDetailById
             routef  "/%s"                       taxonDetail
         ]
@@ -333,10 +336,8 @@ let webApp : HttpHandler =
         GET >=>
         choose [
             route   ""                          >=> individualCollectionIndex
-            routef  "/%s/Latest/%s"             slideViewHandler
-            routef  "/%s/Latest"                individualCollectionLatest
-            routef  "/%s/%i/%s"                 slideViewHandler
             routef  "/%s/%i"                    (fun (id,v) -> individualCollection id v)
+            routef  "/%s"                       slideViewHandler
         ]
 
     let identify =
@@ -374,6 +375,8 @@ let webApp : HttpHandler =
             route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
             route   "/Api"                      >=> renderView "Home/Api" None
             route   "/Tools"                    >=> renderView "Tools/Index" None
+            route   "/Cite"                     >=> renderView "Home/Cite" None
+            route   "/Terms"                    >=> renderView "Home/Terms" None
         ]
         setStatusCode 404 >=> renderView "NotFound" None 
     ]

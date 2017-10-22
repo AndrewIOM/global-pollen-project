@@ -533,3 +533,11 @@ module DomainToDto =
         | Some y ->
             let removeYr (l:int<_>) : string = (int l).ToString()
             removeYr y
+
+    let mount medium =
+        match medium with
+        | None -> "Unknown"
+        | Some m ->
+            match m with
+            | SiliconeOil -> "Silicone Oil"
+            | GlycerineJelly -> "Glycerine Jelly"

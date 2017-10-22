@@ -1,0 +1,45 @@
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = "Citation Guidelines";
+    ViewData["Subtitle"] = "We promote good citation practices to credit original data providers";
+}
+
+@section headerSection {
+    <header>
+        <div class="container">
+            <h2 id="about">@ViewData["Title"]</h2>
+            <p>@ViewData["Subtitle"]</p>
+        </div>
+    </header>
+}
+
+<div class="row">
+    <div class="col-md-12">
+
+        <p>The Global Pollen Project was designed to encourage good tracability of data sources and contributors.</p>
+
+        <h4>To cite the Global Pollen Project itself</h4>
+        <p>The Global Pollen Project is described in the following paper, which can be cited directly:</p>
+        <blockquote class="blockquote">
+            <p class="mb-0">Martin, A. C. and Harvey, W. J. (2017), The Global Pollen Project: a new tool for pollen identification and the dissemination of physical reference collections. Methods Ecol Evol, 8: 892–897. doi:10.1111/2041-210X.12752.</p>
+        </blockquote>
+        <br/>
+
+        <h4>To cite an individual reference collection</h4>
+        <blockquote class="blockquote">
+            <p class="mb-0">Willis, Kathy J (2017). Picea abies (26.4.1 - 1). Digitised palynological slide. In: European Reference Collection (Version 1). Retrieved from globalpollenproject.org on 10/22/2017.</p>
+        </blockquote>
+        <br/>
+
+        <h4>Using Images and Metadata in Your Own Work</h4>
+        <p>
+            The data available in the Global Pollen Project has been kindly contributed by individuals and organisations around the world.
+            The image library and metadata is available under a Creative Commons License (<a href="/Terms">see terms</a>). When using this data in your work, please
+            attribute both the contributors of the information you use and the Global Pollen Project itself. Please acknowledge any digitised reference collections that you use heavily.
+            <span xmlns:dct="http://purl.org/dc/terms/" href="http://purl.org/dc/dcmitype/Dataset" property="dct:title" rel="dct:type">The Global Pollen Project Reference Collection</span> by
+            <span xmlns:cc="http://creativecommons.org/ns#" property="cc:attributionName">Contributors to The Global Pollen Project</span> is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 International License</a>
+        </p>
+        <a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a><br />
+    </div>
+</div>
+

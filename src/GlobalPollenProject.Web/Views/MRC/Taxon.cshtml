@@ -62,13 +62,13 @@
 
         @if (Model.Slides.Length > 0) {
         <div class="panel panel-white">
-            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Digitised Records</div>
+            <div class="panel-heading"><i class="fa fa-film" aria-hidden="true"></i> Digitised Reference Slides</div>
             <div class="panel-body">
-                <p>There are @Model.Slides.Length digitised records in the GPP. Each record may contain multiple individual grains.</p>
+                <p>We currently have @Model.Slides.Length digitised slides. Each record may contain multiple individual grains and images.</p>
                 <ul class="grain-grid columns-8">
                     @foreach (var slide in Model.Slides) {
                     <li>
-                        <a href="/Taxon/Slide/@slide.ColId/@slide.SlideId">
+                        <a href="/Reference/@slide.ColId/@slide.SlideId">
                             <div class="img-container">
                                 <img src="@slide.Thumbnail"/>
                             </div>
@@ -184,23 +184,23 @@
                             <span>@Model.Children.Length of @Model.BackboneChildren accepted @subname.</span>
                         </dd>
                     </dl>
-                    <dl class="row">
-                        <dt class="col-sm-3">Global Pollen Project UUID</dt>
-                        <dd class="col-sm-9">@Model.Id</dd>
-                    </dl>
-                    <dl class="row">
-                        <dt class="col-sm-3">Botanical Reference</dt>
-                        <dd class="col-sm-9">
-                            @if (!string.IsNullOrEmpty(Model.ReferenceName)) {
-                            if (!string.IsNullOrEmpty(Model.ReferenceUrl)) {
-                                <p><strong>Reference: </strong><a href="@Model.ReferenceUrl" target="_blank">@Model.ReferenceName</a></p>
-                            } else {
-                                <p><strong>Reference: </strong>@Model.ReferenceName</p>
-                            }
-                        } else { <span>None available. You can check <a target="_blank" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName">The Plant List</a> for further information.</span>}
-                        </dd>
-                    </dl>
                 }
+                <dl class="row">
+                    <dt class="col-sm-3">Global Pollen Project UUID</dt>
+                    <dd class="col-sm-9">@Model.Id</dd>
+                </dl>
+                <dl class="row">
+                    <dt class="col-sm-3">Botanical Reference</dt>
+                    <dd class="col-sm-9">
+                        @if (!string.IsNullOrEmpty(Model.ReferenceName)) {
+                        if (!string.IsNullOrEmpty(Model.ReferenceUrl)) {
+                            <p><strong>Reference: </strong><a href="@Model.ReferenceUrl" target="_blank">@Model.ReferenceName</a></p>
+                        } else {
+                            <p><strong>Reference: </strong>@Model.ReferenceName</p>
+                        }
+                    } else { <span>None available. You can check <a target="_blank" href="http://www.theplantlist.org/tpl1.1/search?q=@Model.LatinName">The Plant List</a> for further information.</span>}
+                    </dd>
+                </dl>
             </div>
         </div>
 

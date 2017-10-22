@@ -146,6 +146,7 @@ type SlideDetail = {
     LocationType:       string
     PrepYear:           string
     PrepMethod:         string
+    Mount:              string
     CollectorName:      string
     Voided:             bool
 }

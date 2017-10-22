@@ -117,6 +117,21 @@ textarea.form-control {
     }
 }
 
+.navbar {
+    .dropdown-menu {
+        right:0;
+        left:auto;
+        .dropdown-item {
+            form {
+                input {
+                    padding: 0;
+                    cursor: pointer;    
+                }
+            }
+        }    
+    }
+}
+
 @media (min-width: 575px) {
     .navbar {
         .container {

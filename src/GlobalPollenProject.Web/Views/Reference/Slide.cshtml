@@ -111,10 +111,13 @@
             <div class="card-block">
                 <dl class="row">
                     <dt class="col-sm-5">Material Origin</dt>
-                    <dd class="col-sm-7">Subsample of plant material identified botanically and harvested.</dd>
+                    <dd class="col-sm-7">Herbarium voucher or a living plant identified in the field.</dd>
 
-                    <dt class="col-sm-5">Year in which plant was harvested</dt>
-                    <dd class="col-sm-7">@Model.Slide.AgeType @Model.Slide.Age</dd>
+                    <dt class="col-sm-5">Year sample taken</dt>
+                    <dd class="col-sm-7">
+                        @if (Model.Slide.AgeType == "Unknown") { <span>Unknown</span> }
+                        else { <span>@Model.Slide.AgeType @Model.Slide.Age</span> }
+                    </dd>
 
                     <dt class="col-sm-5">Taxonomic Identification</dt>
                     <dd class="col-sm-7">
@@ -123,11 +126,14 @@
                         <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus/@GetSpecificEphitet(Model.Slide.CurrentSpecies)">Species: @Model.Slide.CurrentSpecies</a>
                     </dd>
 
-                    <dt class="col-sm-5">Collected by</dt>
+                    <dt class="col-sm-5">Identified by</dt>
                     <dd class="col-sm-7">@Model.Slide.CollectorName</dd>
 
-                    <dt class="col-sm-5">Location from which plant was taken</dt>
-                    <dd class="col-sm-7">@Model.Slide.LocationType @Model.Slide.Location</dd>
+                    <dt class="col-sm-5">Location</dt>
+                    <dd class="col-sm-7">
+                        @if (Model.Slide.LocationType == "Unknown") { <span>Unknown</span> }
+                        else { <span>@Model.Slide.Location</span> }
+                    </dd>
                 </dl>
             </div>
         </div>
@@ -145,7 +151,7 @@
                     <dd class="col-sm-7">@Model.Slide.PrepYear</dd>
 
                     <dt class="col-sm-5">Mounting Medium</dt>
-                    <dd class="col-sm-7">Unknown</dd>
+                    <dd class="col-sm-7">@Model.Slide.Mount</dd>
                 </dl>
             </div>
         </div>

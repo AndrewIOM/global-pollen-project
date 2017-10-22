@@ -23,7 +23,7 @@ var gbifMap = function (gbifId) {
         accessToken: 'pk.eyJ1IjoibWFyZWVwMjAwMCIsImEiOiJjaWppeGUxdm8wMDQ3dmVtNHNhcHh0cHA1In0.OrAULrL8pJaL9N5WerUUDQ'
     }).addTo(map);
 
-    var baseUrl = 'http://api.gbif.org/v1/map/density/tile?x={x}&y={y}&z={z}&type=TAXON&key=' + gbifId + '&layer=OBS_2000_2010&layer=SP_2000_2010&layer=OBS_2010_2020&layer=SP_2010_2020&layer=LIVING&palette=yellows_reds';
+    var baseUrl = 'https://api.gbif.org/v1/map/density/tile?x={x}&y={y}&z={z}&type=TAXON&key=' + gbifId + '&layer=OBS_2000_2010&layer=SP_2000_2010&layer=OBS_2010_2020&layer=SP_2010_2020&layer=LIVING&palette=yellows_reds';
     var gbifAttrib = 'GBIF contributors';
     var gbif = new L.TileLayer(baseUrl, { minZoom: 0, maxZoom: 14, attribution: gbifAttrib }).addTo(map);
 }
@@ -33,7 +33,7 @@ var populateGbifDescription = function (gbifId) {
     var holder = document.getElementById('gbif-description');
     var sourceHolder = document.getElementById('description-source');
 
-    var gbifUri = "http://api.gbif.org/v1/species/" + gbifId;
+    var gbifUri = "https://api.gbif.org/v1/species/" + gbifId;
     ajaxHelper(gbifUri + '/descriptions', 'GET', 'jsonp').done(function (data) {
         var description = '';
         var source = '';
@@ -58,14 +58,14 @@ var populateGbifImages = function (gbifId) {
     var holder = document.getElementById('gbif-image');
     var sourceHolder = document.getElementById('gbif-image-source');
 
-    var gbifUri = "http://api.gbif.org/v1/species/" + gbifId;
+    var gbifUri = "https://api.gbif.org/v1/species/" + gbifId;
     ajaxHelper(gbifUri + '/media', 'GET', 'jsonp').done(function (data) {
         var source = '';
         var image = '';
         for (i = 0; i < data.results.length; i++) {
             console.log(data.results[i]);
             if (data.results[i].type == 'StillImage' && image == '') {
-                var url = "http://api.gbif.org/v1/image?url=" + data.results[i].identifier + "&size=m";
+                var url = "https://api.gbif.org/v1/image?url=" + data.results[i].identifier + "&size=m";
                 image = '<a target="_blank" href="' + data.results[i].references + '"><img src="' + url + '" class="img-responsive inset-framed" alt="' + data.results[i].description + '"></a>';
                 source = '<a href="' + data.results[i].references + '">Image Source</a>';
             }
