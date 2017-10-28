@@ -336,6 +336,7 @@ let webApp : HttpHandler =
         GET >=>
         choose [
             route   ""                          >=> individualCollectionIndex
+            routef   "/Grain/%i"                (fun _ -> setStatusCode 404 >=> renderView "NotFound" None)
             routef  "/%s/%i"                    (fun (id,v) -> individualCollection id v)
             routef  "/%s"                       slideViewHandler
         ]
