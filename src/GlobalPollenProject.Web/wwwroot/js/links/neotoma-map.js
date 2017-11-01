@@ -52,7 +52,7 @@ $('document').ready(function() {
     svg = d3.select('#neotoma-map').append('svg').attr('width', width).attr('height', height);
     var path = d3.geo.path().projection(projection);
     var g = svg.append("g");
-    d3.json('/geojson/world110m.json', function(error, topology) {
+    d3.json('/geojson/world110.json', function(error, topology) {
         g.selectAll("path").data(topojson.object(topology, topology.objects.countries).geometries).enter().append("path").attr("d", path).attr('fill', 'grey')
     });
     if (neotomaId == 0) {
