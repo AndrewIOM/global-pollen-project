@@ -251,7 +251,7 @@ function RecordSlideViewModel(currentCollection) {
         } else if (self.rank() == 'Genus') {
             query = "rank=Genus&family=" + self.family() + "&genus=" + self.genus() + "&latinname=" + self.genus();
         } else if (self.rank() == "Species") {
-            query = "rank=Species&family=" + self.family() + "&genus=" + self.genus() + "&species=" + self.species() + "&latinname=" + self.genus() + " " + self.species() + "&authorship=" + self.author();
+            query = "rank=Species&family=" + self.family() + "&genus=" + self.genus() + "&species=" + self.species() + "&latinname=" + self.genus() + " " + self.species() + "&authorship=" + encodeURIComponent(self.author());
         }
         $.ajax({
                 url: "/api/v1/backbone/trace?" + query,
