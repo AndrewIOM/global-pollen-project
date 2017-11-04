@@ -122,17 +122,22 @@ let domainDependencies =
 let toAppResult domainResult =
     match domainResult with
     | Ok r -> Ok r
-    | Error str -> Error Core
+    | Error _ -> Error Core
+
+let toNotFoundResult domainResult =
+    match domainResult with
+    | Ok r -> Ok r
+    | Error _ -> Error NotFound
 
 let toPersistenceError domainResult =
     match domainResult with
     | Ok r -> Ok r
-    | Error str -> Error ServiceError.Persistence
+    | Error _ -> Error Persistence
 
 let toValidationError domainResult =
     match domainResult with
     | Ok r -> Ok r
-    | Error str -> Error <| ServiceError.Validation [{ Property = ""; Errors = [str]}]
+    | Error str -> Error <| Validation [{ Property = ""; Errors = [str]}]
 
 
 module Digitise =
@@ -394,9 +399,10 @@ module Taxonomy =
         let key = toNameSearchKey family genus species
         let taxonId = RepositoryBase.getKey<Guid> key readStoreGet deserialise
         match taxonId with
-        | Ok i -> RepositoryBase.getKey<TaxonDetail> ("TaxonDetail:" + (i.ToString())) readStoreGet deserialise
-        | Error e -> Error e
-        |> toAppResult
+        | Ok i -> 
+            RepositoryBase.getKey<TaxonDetail> ("TaxonDetail:" + (i.ToString())) readStoreGet deserialise 
+            |> toAppResult
+        | Error _ -> Error NotFound
 
     let getSlide colId slideId =
         let key = sprintf "SlideDetail:%s:%s" colId slideId
@@ -404,7 +410,7 @@ module Taxonomy =
         createViewModel
         <!> RepositoryBase.getKey<SlideDetail> key readStoreGet deserialise
         <*> RepositoryBase.getSingle<ReferenceCollectionSummary> colId readStoreGet deserialise
-        |> toAppResult
+        |> toNotFoundResult
 
     let getById (taxonId:Guid) =
         let key = sprintf "TaxonDetail:%s" (taxonId.ToString())
