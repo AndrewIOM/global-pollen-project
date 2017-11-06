@@ -58,6 +58,17 @@ module ``When serialising read models`` =
         | Ok r -> Assert.Equal(sut,r)
 
     [<Fact>]
+    let ``Special characters are serialised and deserialised correctly`` () =
+        let sut = "Testé McTêßt"
+        let result =
+            sut
+            |> Serialisation.serialise
+            |> bind Serialisation.deserialise
+        match result with
+        | Error e -> Assert.True(false, "Deserialisation failed")
+        | Ok r -> Assert.Equal(sut,r)
+
+    [<Fact>]
      let ``A complex read model is serialised and deserialised correctly`` () =
         let sut = {
             Id          = Guid.NewGuid()

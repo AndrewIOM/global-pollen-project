@@ -2,7 +2,6 @@ module Serialisation
 
 open Microsoft.FSharp.Reflection
 open Microsoft.FSharpLu.Json
-open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Aggregates
 
 let serialise (o:'a) = 
@@ -17,7 +16,7 @@ let inline deserialise< ^T> json =
 
 let serialiseEventToBytes (e:'a) =
     let case,_ = FSharpValue.GetUnionFields(e, typeof<'a>)
-    let json = Compact.serialize e |> System.Text.Encoding.ASCII.GetBytes
+    let json = Compact.serialize e |> System.Text.Encoding.UTF8.GetBytes
     case.Name, json
 
 let inline deserialiseEventFromBytes< ^E> eventType (data:byte[]) =
@@ -30,7 +29,7 @@ let inline deserialiseEventFromBytes< ^E> eventType (data:byte[]) =
 
 let fromString<'a> (s:string) =
     match FSharpType.GetUnionCases typeof<'a> |> Array.filter (fun case -> case.Name = s) with
-    |[|case|] -> Some s//(FSharpValue.MakeUnion(case,[||]) :?> 'a)
+    |[|_|] -> Some s//(FSharpValue.MakeUnion(case,[||]) :?> 'a)
     |_ -> None
 
 let deserialiseEventByName eventName (data:byte[]) : obj =
