@@ -1,4 +1,5 @@
 @model Responses.SlidePageViewModel 
+@inject SignInManager<ApplicationUser> SignInManager
 @{ 
     Layout = "_Layout"; 
     ViewBag.Title = "Individual Slide"; 
@@ -99,7 +100,10 @@
         <div class="card card-inverse card-primary mb-3 text-center crop-panel" id="cropping-panel">
             <div class="card-block">
                 <span>Help us identify individual pollen grains and spores within this slide.</span>
-                <button id="cropping-button" class="btn btn-primary btn-block">Start</button>
+                @if (SignInManager.IsSignedIn(User))
+                { <button id="cropping-button" class="btn btn-primary btn-block">Start</button> } 
+                else { <span><a href="/Account/Login">Log in</a> to get started.</span>
+                }
             </div>
         </div>
 
@@ -110,24 +114,34 @@
             </div>
             <div class="card-block">
                 <dl class="row">
-                    <dt class="col-sm-5">Material Origin</dt>
-                    <dd class="col-sm-7">Herbarium voucher or a living plant identified in the field.</dd>
+                    <dt class="col-sm-5">Identification Method</dt>
+                    <dd class="col-sm-7">
+                        @if (string.IsNullOrEmpty(Model.Slide.IdMethod)) { <span>Unknown</span> } else { <span>@Model.Slide.IdMethod</span> }</dd>
+
+                    @if (Model.Slide.IdMethod == "Botanical") {
+                        if (Model.Slide.PlantId.Method == "Field") {
+                            <dt class="col-sm-5">Field Identification By</dt>
+                            <dd class="col-sm-7">@Model.Slide.PlantId.IdentifiedBySurname</dd>
+                        } else if (Model.Slide.PlantId.Method == "LivingCollection") {
+                            <dt class="col-sm-5">Botanic Garden Living Collection Ref.</dt>
+                            <dd class="col-sm-7">@Model.Slide.PlantId.InstitutionCode (Internal Code: @Model.Slide.PlantId.InternalId)</dd>
+                        } else if (Model.Slide.PlantId.Method == "Voucher") {
+                            <dt class="col-sm-5">Herbarium Voucher Reference</dt>
+                            <dd class="col-sm-7">@Model.Slide.PlantId.InstitutionCode (Internal Code: @Model.Slide.PlantId.InternalId)</dd>
+                        } else {
+                            <dt class="col-sm-5">Source Plant</dt>
+                            <dd class="col-sm-7">Unknown for this slide</dd>
+                        }
+                    }
+
+                    <dt class="col-sm-5">Sample Collected By</dt>
+                    <dd class="col-sm-7">@Model.Slide.CollectorName</dd>
 
                     <dt class="col-sm-5">Year sample taken</dt>
                     <dd class="col-sm-7">
                         @if (Model.Slide.AgeType == "Unknown") { <span>Unknown</span> }
                         else { <span>@Model.Slide.AgeType @Model.Slide.Age</span> }
                     </dd>
-
-                    <dt class="col-sm-5">Taxonomic Identification</dt>
-                    <dd class="col-sm-7">
-                        <a href="/Taxon/@Model.Slide.CurrentFamily">Family: @Model.Slide.CurrentFamily</a><br/>
-                        <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">Genus: @Model.Slide.CurrentGenus</a><br/>
-                        <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus/@GetSpecificEphitet(Model.Slide.CurrentSpecies)">Species: @Model.Slide.CurrentSpecies</a>
-                    </dd>
-
-                    <dt class="col-sm-5">Identified by</dt>
-                    <dd class="col-sm-7">@Model.Slide.CollectorName</dd>
 
                     <dt class="col-sm-5">Location</dt>
                     <dd class="col-sm-7">
@@ -140,10 +154,35 @@
 
         <div class="card">
             <div class="card-header">
-                Slide Preperation Details
+                Reference Collection Details
             </div>
             <div class="card-block">
                 <dl class="row">
+                    <dt class="col-sm-5">Current Taxon</dt>
+                    <dd class="col-sm-7">
+                        <a href="/Taxon/@Model.Slide.CurrentFamily">Family: @Model.Slide.CurrentFamily</a><br/>
+                        <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">Genus: @Model.Slide.CurrentGenus</a><br/>
+                        <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus/@GetSpecificEphitet(Model.Slide.CurrentSpecies)">Species: @Model.Slide.CurrentSpecies</a>
+                    </dd>
+                    <dt class="col-sm-5">Taxon on Slide</dt>
+                    <dd class="col-sm-7">
+                        <span>Family: @Model.Slide.FamilyOriginal</span><br/>
+                        <span>Genus: @Model.Slide.GenusOriginal</span><br/>
+                        <span>Species: @Model.Slide.SpeciesOriginal</span>
+                    </dd>
+                </dl>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                Slide Preperation
+            </div>
+            <div class="card-block">
+                <dl class="row">
+                    <dt class="col-sm-5">PreparedBy</dt>
+                    <dd class="col-sm-7">Unknown</dd>
+
                     <dt class="col-sm-5">Chemical Treatments</dt>
                     <dd class="col-sm-7">@Model.Slide.PrepMethod</dd>
 

@@ -20,6 +20,7 @@ type Curator = {
     Contact: ContactDetail
 }
 type Digitiser = Person
+type PreppedBy = Person
 
 type CollectionLocation =
 | Institutional of Institution
@@ -60,7 +61,8 @@ and AddSlide =
      Time:                  Age option
      PrepMethod:            ChemicalTreatment option
      PrepDate:              int<CalYr> option
-     Mounting:              MountingMedium option }
+     Mounting:              MountingMedium option
+     PreparedBy:            Person }
 
 and UploadSlideImage = {Id:SlideId; Image:Image; YearTaken:int<CalYr> option }
 
@@ -86,8 +88,9 @@ type Event =
 | SlideImageUploaded        of SlideId * Image * int<CalYr> option
 | SlideFullyDigitised       of SlideId
 | SlideGainedIdentity       of SlideId * TaxonId
-| SpecimenDelineated        of SlideId * ImageNumber * SpecimenDelineation
-| SpecimenConfirmed         of SlideId * ImageNumber * SpecimenDelineation
+| SlidePrepAcknowledged     of SlideId * PreppedBy
+// | SpecimenDelineated        of SlideId * ImageNumber * SpecimenDelineation
+// | SpecimenConfirmed         of SlideId * ImageNumber * SpecimenDelineation
 
 and DigitisationStarted = {
     Id: CollectionId
@@ -221,9 +224,13 @@ let addSlide (command:AddSlide) calcIdentity state =
                 Time = command.Time
                 PrepMethod = command.PrepMethod
                 PrepDate = command.PrepDate }
+        let prepEvent = 
+            match command.PreparedBy with
+            | Person.Person _ -> [ SlidePrepAcknowledged (SlideId (command.Collection,slideId), command.PreparedBy) ]
+            | Person.Unknown -> []
         match identity with
-        | Some taxon -> [ recordedEvent; SlideGainedIdentity ((SlideId (command.Collection,slideId)),taxon) ]
-        | None -> [ recordedEvent ]
+        | Some taxon -> List.append [ recordedEvent; SlideGainedIdentity ((SlideId (command.Collection,slideId)),taxon) ] prepEvent
+        | None -> List.append [ recordedEvent ] prepEvent
 
 let uploadImage (command:UploadSlideImage) state =
     match state with
@@ -295,7 +302,7 @@ type State with
                 }
             | _ -> invalidOp "Digitisation has already started for this collection"
 
-        | PublicAccessAssigned (id,curator,accessLevel) ->
+        | PublicAccessAssigned (_,curator,accessLevel) ->
             match state with
             | Initial -> invalidOp "Invalid state transition"
             | PublicationRequested _ -> invalidOp "Invalid state transition"
@@ -304,7 +311,7 @@ type State with
             | Draft c ->
                 Draft { c with PhysicalLocation = Some accessLevel; Curator = Some curator }
 
-        | RequestedPublication id ->
+        | RequestedPublication _ ->
             match state with
             | Initial
             | Published _
@@ -312,7 +319,7 @@ type State with
             | InRevision (s,_)
             | Draft s -> PublicationRequested s
 
-        | CollectionPublished (id,time,version) ->
+        | CollectionPublished (_,_,version) ->
             match state with
             | Initial
             | InRevision _
@@ -320,7 +327,7 @@ type State with
             | Draft c
             | PublicationRequested c -> Published { c with CurrentVersion = version }
 
-        | RevisionAdvised (id,note) ->
+        | RevisionAdvised (_,note) ->
             match state with
             | Initial
             | Published _
@@ -385,6 +392,14 @@ type State with
                     let updatedSlide = { s with Identification = Confirmed (currentIds,tid) }
                     let updatedSlides = c.Slides |> List.map (fun x -> if x.Id = s.Id then updatedSlide else x)
                     Draft { c with Slides = updatedSlides }
+
+        | SlidePrepAcknowledged (id,p) ->
+            match state with
+            | Initial -> invalidOp "Collection does not exist"
+            | PublicationRequested _ -> invalidOp "Invalid state transition"
+            | Published c
+            | InRevision (c,_)
+            | Draft c -> Draft c
 
         | SlideFullyDigitised event ->
             match state with

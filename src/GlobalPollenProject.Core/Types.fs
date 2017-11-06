@@ -13,7 +13,7 @@ type LogMessage =
 | Info of string
 
 // Identities
-type RootAggregateId = System.Guid
+type RootAggregateId = Guid
 type UserId = UserId of RootAggregateId
 type ClubId = ClubId of RootAggregateId
 type CollectionId = CollectionId of RootAggregateId
@@ -38,6 +38,15 @@ module LongformText =
         match str.Length with
         | l when l > 0 -> LongformText str |> Ok
         | _ -> Error "The string was empty"
+
+[<AutoOpen>]
+module InstitutionCode =
+    type InstitutionCode = InstitutionCode of string
+    let create (str:string) =
+        let m = System.Text.RegularExpressions.Regex.Match(str, "^[A-Z]{1,8}$")
+        match m.Success with
+        | true -> InstitutionCode str |> Ok
+        | false -> Error "The institution code must be between one and eight capital letters"
 
 [<AutoOpen>]
 module Url =
@@ -192,13 +201,26 @@ type Surname = string
 type Person = 
 | Person of FirstName list * Surname
 | Unknown
+type PlantMaterialCollector = Person
 
-type IdentificationSource =
+type HerbariumVoucher = {
+    HerbariumCode: InstitutionCode
+    InternalIdentifier: ShortText
+}
+
+type PlantInLivingCollection = {
+    BotanicGardenCode: InstitutionCode
+    InternalIdentifier: ShortText 
+}
+
+type PlantIdentificationMethod =
    | Unknown
-   | Book of string
+   | HerbariumVoucher of HerbariumVoucher
+   | LivingCollection of PlantInLivingCollection
+   | Field of Person
 
 type TaxonIdentification =
-    | Botanical of TaxonId * IdentificationSource * Person
+    | Botanical of TaxonId * PlantIdentificationMethod * PlantMaterialCollector
     | Environmental of TaxonId
     | Morphological of TaxonId
 

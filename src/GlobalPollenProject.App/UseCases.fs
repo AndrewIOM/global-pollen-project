@@ -92,9 +92,9 @@ let domainDependencies =
     let log = ignore
     let calculateIdentity = calculateTaxonomicIdentity ReadStore.TaxonomicBackbone.findMatches
     let isValidTaxon query =
-        match ReadStore.TaxonomicBackbone.validate query readStoreGet readStoreGetSortedList deserialise with
+        match TaxonomicBackbone.validate query readStoreGet readStoreGetSortedList deserialise with
         | Ok t -> Some (TaxonId t.Id)
-        | Error e -> None
+        | Error _ -> None
 
     let neotomaLink id = 
         TaxonomicBackbone.getById id readStoreGet deserialise
@@ -114,7 +114,7 @@ let domainDependencies =
       GetGbifId           = gbifLink
       GetNeotomaId        = neotomaLink
       GetEolId            = eolLink
-      GetTime             = (fun x -> DateTime.Now)
+      GetTime             = (fun _ -> DateTime.Now)
       ValidateTaxon       = isValidTaxon
       CalculateIdentity   = calculateIdentity }
 
@@ -197,7 +197,6 @@ module Digitise =
         request
         |> Dto.toAddSlideCommand readStoreGet
         |> lift issueCommand
-        |> toAppResult
 
     let voidSlide (req:VoidSlideRequest) =
         let slideId = SlideId(req.CollectionId |> CollectionId, req.SlideId)

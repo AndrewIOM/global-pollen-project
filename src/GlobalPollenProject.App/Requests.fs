@@ -3,6 +3,7 @@ module Requests
 
 open System
 open System.ComponentModel.DataAnnotations
+open ReadModels
 
 [<CLIMutable>] type IdQuery = { Id: Guid }
 
@@ -106,31 +107,34 @@ type StartCollectionRequest = {
 
 [<CLIMutable>]
 type SlideRecordRequest = {
-    [<Required>] Collection: System.Guid
+    [<Required>] Collection: Guid
     [<Required>] OriginalFamily: string
-    [<Required>] ValidatedTaxonId: System.Guid
+    [<Required>] ValidatedTaxonId: Guid
     [<Required>] SamplingMethod: string
     OriginalGenus: string
     OriginalSpecies: string
     OriginalAuthor: string
     ExistingId: string
-    [<Range(1700,2017)>] YearCollected: System.Nullable<int>
-    CollectedByFirstNames: string list
-    CollectedBySurname: string
-    [<Range(1950,2017)>] YearSlideMade: System.Nullable<int>
+    PlantIdMethod: PlantIdMethod
+    [<Range(1700,2017)>] YearCollected: Nullable<int>
+    [<Range(1950,2017)>] YearSlideMade: Nullable<int>
     [<Required>] LocationType: string
     LocationLocality: string
     LocationDistrict: string
     LocationRegion: string
     LocationCountry: string
     LocationContinent: string
+    PreparedByFirstNames: string list
+    PreparedBySurname: string
     PreperationMethod: string
     MountingMaterial: string
+    CollectedByFirstNames: string list
+    CollectedBySurname: string
 }
 
 [<CLIMutable>]
 type SlideImageRequest = {
-    [<Required>] CollectionId: System.Guid
+    [<Required>] CollectionId: Guid
     [<Required>] SlideId: string
     [<Required>] IsFocusImage: bool
     [<Required>] FramesBase64: List<string>
@@ -139,7 +143,7 @@ type SlideImageRequest = {
     [<Range(0,Int32.MaxValue)>] FloatingCalPointTwoX: Nullable<int>
     [<Range(0,Int32.MaxValue)>] FloatingCalPointTwoY: Nullable<int>
     [<Range(0,Int32.MaxValue)>] MeasuredDistance: Nullable<float>
-    CalibrationId: System.Guid
+    CalibrationId: Guid
     [<Range(0,10000)>] Magnification: int
     [<Range(1950,2017)>] DigitisedYear: Nullable<int>
 }

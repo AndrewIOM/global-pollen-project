@@ -7,7 +7,7 @@ open GlobalPollenProject.Core.DomainTypes
 type Command =
     | SubmitUnknownGrain of SubmitUnknownGrain
     | IdentifyUnknownGrain of IdentifyUnknownGrain
-    | ReportAsMultiGrain of GrainId
+    // | ReportAsMultiGrain of GrainId
     // | ImportFromSlide of SlideId * ImageNumber * SpecimenDelineation 
 
 and SubmitUnknownGrain = {
@@ -150,7 +150,7 @@ let private unwrap (GrainId e) = e
 let getId = function
     | SubmitUnknownGrain c -> unwrap c.Id
     | IdentifyUnknownGrain c -> unwrap c.Id
-    | ReportAsMultiGrain id -> unwrap id
+    // | ReportAsMultiGrain id -> unwrap id
 
 // Apply decisions already taken (rebuild)
 type State with
