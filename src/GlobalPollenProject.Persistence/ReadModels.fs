@@ -124,9 +124,21 @@ type GrainDetail = {
 // - Not split into grains
 
 [<CLIMutable>]
+type PlantIdMethod = {
+    Method: string
+    InstitutionCode: string
+    InternalId: string
+    IdentifiedByFirstNames: string list
+    IdentifiedBySurname: string
+}
+
+[<CLIMutable>]
 type SlideDetail = {
     CollectionId:       Guid
     CollectionSlideId:  string
+    CollectorName:      string
+    IdMethod:           string
+    PlantId:            PlantIdMethod
     Thumbnail:          string
     FamilyOriginal:     string
     GenusOriginal:      string
@@ -146,8 +158,8 @@ type SlideDetail = {
     LocationType:       string
     PrepYear:           string
     PrepMethod:         string
+    PreppedBy:          string
     Mount:              string
-    CollectorName:      string
     Voided:             bool
 }
 

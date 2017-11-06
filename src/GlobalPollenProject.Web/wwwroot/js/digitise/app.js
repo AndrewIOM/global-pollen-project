@@ -103,20 +103,6 @@ function DigitiseViewModel(users, analyses) {
         }
     }
 
-    self.submitSlideRequest = function () {
-        let request = self.newSlideVM().getRequest();
-        $.ajax({
-                url: "/api/v1/digitise/collection/slide/add",
-                type: "POST",
-                data: JSON.stringify(request),
-                dataType: "json",
-                contentType: "application/json"
-            })
-            .done(function (data) {
-                self.switchView(CurrentView.DETAIL, self.activeCollection());
-            })
-    }
-
     self.setActiveCollectionTab = function (element) {
         $(element).parent().find("li").removeClass("active");
         $(element).addClass("active");
@@ -150,7 +136,7 @@ function AddCollectionViewModel() {
     self.email = ko.observable();
 
     self.isProcessing = ko.observable();
-    self.validationErrors = ko.observableArray();
+    self.validationErrors = ko.observableArray();    
     
     self.submit = function (rootVM) {
         self.isProcessing(true);
@@ -204,11 +190,9 @@ function RecordSlideViewModel(currentCollection) {
     self.author = ko.observable("");
     self.newSlideTaxonStatus = ko.observable(null);
     self.currentTaxon = ko.observable();
-    self.collectionMethod = ko.observable();
+    self.identificationMethod = ko.observable();
     self.existingId = ko.observable();
     self.yearCollected = ko.observable();
-    self.collectorFirstNames = ko.observable();
-    self.collectorLastName = ko.observable();
     self.locationType = ko.observable();
     self.locality = ko.observable();
     self.district = ko.observable();
@@ -218,6 +202,16 @@ function RecordSlideViewModel(currentCollection) {
     self.yearPrepared = ko.observable();
     self.preperationMethod = ko.observable();
     self.mountingMaterial = ko.observable();
+    self.collectedByFirstNames = ko.observable();
+    self.collectedByLastName = ko.observable();
+    self.preparedByFirstNames = ko.observable();
+    self.preparedByLastName = ko.observable();
+
+    self.plantIdMethod = ko.observable();
+    self.institutionCode = ko.observable();
+    self.institutionInternalId = ko.observable();
+    self.identifiedByFirstNames = ko.observable();
+    self.identifiedByLastName = ko.observable();
 
     self.rank.subscribe(function (rank) {
         if (rank == "Family") {
@@ -239,19 +233,23 @@ function RecordSlideViewModel(currentCollection) {
 
     self.isValidAddSlideRequest = ko.computed(function () {
         if (self.rank() == "") return false;
-        if (self.currentTaxon() == "") return false;
-        if (self.collectionMethod() == "") return false;
+        if (self.currentTaxon() == undefined) return false;
+        if (self.identificationMethod() == undefined) return false;
         return true;
     }, self)
 
+    self.isProcessing = ko.observable(false);
+    self.validationErrors = ko.observableArray([]);
+
     self.validateTaxon = function () {
+        self.isProcessing(true);
         var query;
         if (self.rank() == "Family") {
             query = "rank=Family&family=" + self.family() + "&latinname=" + self.family();
         } else if (self.rank() == 'Genus') {
             query = "rank=Genus&family=" + self.family() + "&genus=" + self.genus() + "&latinname=" + self.genus();
         } else if (self.rank() == "Species") {
-            query = "rank=Species&family=" + self.family() + "&genus=" + self.genus() + "&species=" + self.species() + "&latinname=" + self.genus() + " " + self.species() + "&authorship=" + self.author();
+            query = "rank=Species&family=" + self.family() + "&genus=" + self.genus() + "&species=" + self.species() + "&latinname=" + self.genus() + " " + self.species() + "&authorship=" + encodeURIComponent(self.author());
         }
         $.ajax({
                 url: "/api/v1/backbone/trace?" + query,
@@ -264,7 +262,9 @@ function RecordSlideViewModel(currentCollection) {
     }
 
     self.getRequest = function () {
-        let firstNames = self.collectorFirstNames() == "" ? self.collectorFirstNames().split(' ') : [];
+        let firstNames = isEmpty(self.identifiedByFirstNames()) ? [] : self.identifiedByFirstNames().split(' ');
+        let preparedByFirstNames = isEmpty(self.preparedByFirstNames()) ? [] : self.preparedByFirstNames().split(' ');
+        let collectedByFirstNames = isEmpty(self.collectedByFirstNames()) ? [] : self.collectedByFirstNames().split(' ');
         let request = {
             Collection: self.collection().Id,
             ExistingId: self.existingId(),
@@ -273,24 +273,66 @@ function RecordSlideViewModel(currentCollection) {
             OriginalSpecies: self.species(),
             OriginalAuthor: self.author(),
             ValidatedTaxonId: self.currentTaxon(),
-            SamplingMethod: self.collectionMethod(),
+            SamplingMethod: self.identificationMethod(),
             YearCollected: parseInt(self.yearCollected()),
             YearSlideMade: parseInt(self.yearPrepared()),
             LocationType: self.locationType(),
+            LocationLocality: self.locality(),
+            LocationDistrict: self.district(),
             LocationRegion: self.region(),
             LocationCountry: self.country(),
             LocationContinent: self.continent(),
             PreperationMethod: self.preperationMethod(),
             MountingMaterial: self.mountingMaterial(),
-            CollectedByFirstNames: firstNames,
-            CollectedBySurname: self.collectorLastName()
+            PreparedByFirstNames: preparedByFirstNames,
+            PreparedBySurname: self.preparedByLastName(),
+            CollectedByFirstNames: collectedByFirstNames,
+            CollectedBySurname: self.collectedByLastName(),
+            PlantIdMethod: {
+                Method: self.plantIdMethod(),
+                InstitutionCode: self.institutionCode(),
+                InternalId: self.institutionInternalId(),
+                IdentifiedByFirstNames: firstNames,
+                IdentifiedBySurname: self.identifiedByLastName()
+            }
         };
+        console.log(request);
         return request;
     }
 
     self.capitaliseFirstLetter = function (element) {
         $(element).val($(element).val().charAt(0).toUpperCase() + $(element).val().slice(1));
     }
+
+    self.submit = function (rootVM) {
+        let request = self.getRequest();
+        $.ajax({
+                url: "/api/v1/digitise/collection/slide/add",
+                type: "POST",
+                data: JSON.stringify(request),
+                dataType: "json",
+                contentType: "application/json",
+                success: function () {
+                    rootVM.switchView(CurrentView.DETAIL, rootVM.activeCollection());
+                },
+                statusCode: {
+                    400: function (err) {
+                        self.validationErrors([]);
+                        err.responseJSON.Errors.forEach(function (e) {
+                            console.log(e.Errors[0]);
+                            self.validationErrors().push(e.Errors[0]);
+                            self.isProcessing(false);
+                            console.log(self.validationErrors());
+                        })
+                    },
+                    500: function (data) {
+                        self.validationErrors(['Internal error. Please try again later.']);
+                        self.isProcessing(false);
+                    }
+                }
+            })
+    }
+
 }
 
 ////////////////////////
@@ -973,6 +1015,10 @@ function disable(rank) {
 }
 
 //Base Functions
+function isEmpty(str) {
+    return (!str || 0 === str.length);
+}
+
 function convertToDataURLviaCanvas(url, callback) {
     var img = new Image();
     img.crossOrigin = 'Anonymous';

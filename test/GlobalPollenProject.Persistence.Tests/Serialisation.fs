@@ -24,7 +24,7 @@ module ``When serialising a domain event`` =
                 PrepMethod          = Acetolysis |> Some
                 PrepDate            = 2002<CalYr> |> Some
                 Mounting            = SiliconeOil |> Some
-                Taxon               = Botanical (TaxonId (Guid.NewGuid()), IdentificationSource.Unknown, Person (["A"], "Bill")) }
+                Taxon               = Botanical (TaxonId (Guid.NewGuid()), Unknown, Person (["A"], "Bill")) }
         
         let eventName,json = testEvent |> Serialisation.serialiseEventToBytes
         let deserialised = Serialisation.deserialiseEventFromBytes<Event> eventName json

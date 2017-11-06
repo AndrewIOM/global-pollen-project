@@ -39,7 +39,8 @@ let slideRequest = {
     Time                = None
     PrepMethod          = None
     PrepDate            = None
-    Mounting            = None }
+    Mounting            = None
+    PreparedBy          = Person.Unknown }
 
 let slideRecorded = {
     Id                  = SlideId (collection,"GPP1")

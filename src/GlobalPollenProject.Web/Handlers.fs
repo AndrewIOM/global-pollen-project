@@ -1,13 +1,15 @@
 module Handlers
 
-open System
-open Giraffe.Tasks
 open Giraffe.HttpHandlers
 open Giraffe.HttpContextExtensions
 open Giraffe.Razor.HttpHandlers
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
-open GlobalPollenProject.Core.Composition
+open Microsoft.FSharp.Reflection
+open System
+open System.IO
+open System.Reflection
+open System.ComponentModel
 
 let errorHandler (ex : Exception) (logger : ILogger) =
     logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
@@ -17,8 +19,6 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 /// Validation
 /////////////////////
 
-open System.IO
-
 let inline bindJson< ^T> (ctx:HttpContext) =
     let body = ctx.Request.Body
     use reader = new StreamReader(body, true)
@@ -26,6 +26,58 @@ let inline bindJson< ^T> (ctx:HttpContext) =
     match Serialisation.deserialise< ^T> reqBytes with
     | Ok o -> Ok o
     | Error e -> Error InvalidRequestFormat
+
+/////////////////////
+/// Query String Decode
+/////////////////////
+
+type HttpContext with
+
+    member this.TryGetQueryStringValueDecoded (key : string) =
+        match this.Request.Query.TryGetValue key with
+        | true, value -> Some (value.ToString())
+        | _           -> None
+
+    member this.DecodeAndBindQueryString<'T>() =
+        let obj   = Activator.CreateInstance<'T>()
+        let props = obj.GetType().GetProperties(BindingFlags.Instance ||| BindingFlags.Public)
+        props
+        |> Seq.iter (fun p ->
+            match this.TryGetQueryStringValueDecoded p.Name with
+            | None            -> ()
+            | Some queryValue ->
+
+                let isOptionType =
+                    p.PropertyType.GetTypeInfo().IsGenericType &&
+                    p.PropertyType.GetGenericTypeDefinition() = typedefof<Option<_>>
+
+                let propertyType =
+                    if isOptionType then
+                        p.PropertyType.GetGenericArguments().[0]
+                    else
+                        p.PropertyType
+
+                let propertyType =
+                    if propertyType.GetTypeInfo().IsValueType then
+                        (typedefof<Nullable<_>>).MakeGenericType([|propertyType|])
+                    else
+                        propertyType
+
+                let converter = TypeDescriptor.GetConverter propertyType
+
+                let value = converter.ConvertFromInvariantString(queryValue)
+
+                if isOptionType then
+                    let cases = FSharpType.GetUnionCases(p.PropertyType)
+                    let value =
+                        if isNull value then
+                            FSharpValue.MakeUnion(cases.[0], [||])
+                        else
+                            FSharpValue.MakeUnion(cases.[1], [|value|])
+                    p.SetValue(obj, value, null)
+                else
+                    p.SetValue(obj, value, null))
+        obj
 
 let bindQueryString<'a> (ctx:HttpContext) =
     try ctx.BindQueryString<'a>() |> Ok

@@ -68,6 +68,62 @@ module Identity =
         | Error e -> validationError "TaxonId" "The specified taxon does not exist"
         | Ok t -> t.Id |> TaxonId |> Ok
 
+
+module Metadata =
+
+    let createChemicalTreatment method =
+        match method with
+        | "acetolysis" -> Acetolysis |> Some |> Ok
+        | "fresh" -> FreshGrains |> Some |> Ok
+        | "hf" -> HydrofluoricAcid |> Some |> Ok
+        | "unknown" -> None |> Ok
+        | _ -> validationError "ChemicalTreatment" "An unrecognised chemical treatment was specified"
+
+    let createPrepDate (date:Nullable<int>) =
+        match date.HasValue with
+        | false -> None |> Ok
+        | true -> date.Value * 1<CalYr> |> Some |> Ok
+
+    let createMountingMethod method =
+        match method with
+        | "glycerol" -> GlycerineJelly |> Some |> Ok
+        | "siliconeoil" -> SiliconeOil |> Some |> Ok
+        | "unknown" -> None |> Ok
+        | _ -> validationError "MountingMaterial" "An unrecognised mounting method was specified"
+
+    let createPerson firstNames lastName =
+        if String.IsNullOrEmpty lastName then Person.Unknown
+        else 
+            let i = firstNames |> List.map (fun c -> c.ToString())
+            Person (i,lastName)
+
+    open GlobalPollenProject.Core.Aggregates.ReferenceCollection
+
+    let createAccess accessMethod institutionName institutionUrl =
+        match accessMethod with
+        | "digitial" -> DigitialOnly |> Ok
+        | "institution" -> 
+            let createInstitution name web = { Name = name; Web = web }
+            createInstitution
+            <!> ShortText.create institutionName
+            <*> (Url.create institutionUrl |> Some |> Ok)
+            |> lift Institutional
+            |> lift PrimaryLocation
+            |> toValidationResult
+        | "private" -> Personal |> PrimaryLocation |> Ok
+        | _ -> validationError "Access" "Material access info was not formatted correctly"
+
+
+    let createCurator (firstNames:string) lastName email =
+        if String.IsNullOrEmpty lastName 
+        then validationError "CuratorLastName" "A curator requires a last name"
+        else 
+            let firstNames = firstNames.Split(' ') |> Array.toList
+            let create forenames surname email = { Forenames = forenames; Surname = surname; Contact = Email email}
+            create firstNames lastName
+            <!> EmailAddress.create email
+            |> toValidationResult
+
 module Spatial =
 
     let createPoint lat lon : Result<Site,ServiceError> =
@@ -213,69 +269,37 @@ module Taxonomy =
         | "Species" -> Ok <| Species (LatinName dto.LatinName,SpecificEphitet dto.Species,Scientific "")
         | _ -> Error "DTO validation failed"
 
-    let createPerson initials lastName =
-        if String.IsNullOrEmpty lastName then Person.Unknown
-        else 
-            let i = initials |> List.map (fun c -> c.ToString())
-            Person (i,lastName)
+    let createLivingSpecimen institutionCode internalId =
+        { BotanicGardenCode = institutionCode; InternalIdentifier = internalId }
 
-    let createIdentification samplingMethod initials surname taxonId =
+    let createHerbariumVoucher institutionCode internalId =
+        { HerbariumCode = institutionCode; InternalIdentifier = internalId }
+
+    let createIdentification samplingMethod (plantIdMethod:PlantIdMethod) collectedByFirstNames collectedByLastName taxonId =
+        let collector = Metadata.createPerson collectedByFirstNames collectedByLastName
         match samplingMethod with
         | "botanical" ->
-            let person = createPerson initials surname
-            Ok <| Botanical (taxonId, Unknown, person)
+            match plantIdMethod.Method with
+            | "unknown" -> Ok <| Botanical (taxonId, Unknown, collector)
+            | "field" ->
+                let person = Metadata.createPerson plantIdMethod.IdentifiedByFirstNames plantIdMethod.IdentifiedBySurname
+                Ok <| Botanical (taxonId, Field person, collector)
+            | "livingCollection" ->
+                createLivingSpecimen
+                <!> InstitutionCode.create plantIdMethod.InstitutionCode
+                <*> ShortText.create plantIdMethod.InternalId
+                |> lift (fun l -> Botanical (taxonId, LivingCollection l, collector))
+                |> toValidationResult
+            | "voucher" ->
+                createHerbariumVoucher
+                <!> InstitutionCode.create plantIdMethod.InstitutionCode
+                <*> ShortText.create plantIdMethod.InternalId
+                |> lift (fun l -> Botanical (taxonId, HerbariumVoucher l, collector))
+                |> toValidationResult
+            | _ -> validationError "PlantIdMethod" "Not a valid plant id method"
         | "environmental" -> Ok <| Environmental taxonId
         | "morphological" -> Ok <| Morphological taxonId
         | _ -> validationError "SamplingMethod" ("Not a valid sampling method: " + samplingMethod)
-
-module Metadata =
-
-    let createChemicalTreatment method =
-        match method with
-        | "acetolysis" -> Acetolysis |> Some |> Ok
-        | "fresh" -> FreshGrains |> Some |> Ok
-        | "hf" -> HydrofluoricAcid |> Some |> Ok
-        | "unknown" -> None |> Ok
-        | _ -> validationError "ChemicalTreatment" "An unrecognised chemical treatment was specified"
-
-    let createPrepDate (date:Nullable<int>) =
-        match date.HasValue with
-        | false -> None |> Ok
-        | true -> date.Value * 1<CalYr> |> Some |> Ok
-
-    let createMountingMethod method =
-        match method with
-        | "glycerol" -> GlycerineJelly |> Some |> Ok
-        | "siliconeoil" -> SiliconeOil |> Some |> Ok
-        | "unknown" -> None |> Ok
-        | _ -> validationError "MountingMaterial" "An unrecognised mounting method was specified"
-
-    open GlobalPollenProject.Core.Aggregates.ReferenceCollection
-
-    let createAccess accessMethod institutionName institutionUrl =
-        match accessMethod with
-        | "digitial" -> DigitialOnly |> Ok
-        | "institution" -> 
-            let createInstitution name web = { Name = name; Web = web }
-            createInstitution
-            <!> ShortText.create institutionName
-            <*> (Url.create institutionUrl |> Some |> Ok)
-            |> lift Institutional
-            |> lift PrimaryLocation
-            |> toValidationResult
-        | "private" -> Personal |> PrimaryLocation |> Ok
-        | _ -> validationError "Access" "Material access info was not formatted correctly"
-
-
-    let createCurator (firstNames:string) lastName email =
-        if String.IsNullOrEmpty lastName 
-        then validationError "CuratorLastName" "A curator requires a last name"
-        else 
-            let firstNames = firstNames.Split(' ') |> Array.toList
-            let create forenames surname email = { Forenames = forenames; Surname = surname; Contact = Email email}
-            create firstNames lastName
-            <!> EmailAddress.create email
-            |> toValidationResult
 
 
 module Dto =
@@ -288,7 +312,7 @@ module Dto =
                 Temporal = temporal
                 Spatial = spatial }
 
-    let createAddSlideCommand colId id f g s auth taxon place age treatment treatmentDate mounting =
+    let createAddSlideCommand colId id f g s auth preparedBy taxon place age treatment treatmentDate mounting =
         GlobalPollenProject.Core.Aggregates.ReferenceCollection.Command.AddSlide {
             Collection = colId
             ExistingId = id
@@ -302,6 +326,7 @@ module Dto =
             PrepMethod = treatment
             PrepDate = treatmentDate
             Mounting = mounting
+            PreparedBy = preparedBy
         }
 
     let toSubmitUnknownGrain grainId userId saveImage (request:AddUnknownGrainRequest) =
@@ -345,7 +370,7 @@ module Dto =
 
         let taxonOrError =
             taxonIdOrError
-            |> bind (Taxonomy.createIdentification dto.SamplingMethod dto.CollectedByFirstNames dto.CollectedBySurname)
+            |> bind (Taxonomy.createIdentification dto.SamplingMethod dto.PlantIdMethod dto.CollectedByFirstNames dto.CollectedBySurname)
 
         let treatmentOrError =
             Metadata.createChemicalTreatment dto.PreperationMethod
@@ -356,7 +381,10 @@ module Dto =
         let mountingOrError =
             Metadata.createMountingMethod dto.MountingMaterial
 
-        createAddSlideCommand (CollectionId dto.Collection) existingId dto.OriginalFamily dto.OriginalGenus dto.OriginalSpecies dto.OriginalAuthor
+        let preparedBy =
+            Metadata.createPerson dto.PreparedByFirstNames dto.PreparedBySurname
+
+        createAddSlideCommand (CollectionId dto.Collection) existingId dto.OriginalFamily dto.OriginalGenus dto.OriginalSpecies dto.OriginalAuthor preparedBy
         <!> taxonOrError
         <*> placeOrError
         <*> ageOrError
@@ -425,6 +453,7 @@ module DomainToDto =
     let unwrapEmail (EmailAddress e) = e
     let unwrapShortText (ShortText s) = s
     let unwrapLongText (LongformText s) = s
+    let unwrapInstitutionCode (InstitutionCode c) = c
     let getPixelWidth p1 p2 dist =
         let removeUnit (x:float<_>) = float x
         let x1,y1 = p1
@@ -541,3 +570,28 @@ module DomainToDto =
             match m with
             | SiliconeOil -> "Silicone Oil"
             | GlycerineJelly -> "Glycerine Jelly"
+
+    // Converts taxonomic identification to a tuple of idType(string)*plantId(PlantIdMethod)
+    let taxonomicIdentification identification =
+        let emptyPlantId = {Method="";InstitutionCode="";InternalId="";IdentifiedByFirstNames=[];IdentifiedBySurname=""}
+        match identification with
+        | Environmental _ -> "Environmental",emptyPlantId
+        | Morphological _ -> "Morphological",emptyPlantId
+        | Botanical (_, plantIdMethod, _) -> 
+            match plantIdMethod with
+            | Unknown -> "Botanical", { emptyPlantId with Method = "Unknown" }
+            | HerbariumVoucher v -> 
+                "Botanical", 
+                { emptyPlantId with Method = "Voucher"
+                                    InstitutionCode = v.HerbariumCode |> unwrapInstitutionCode
+                                    InternalId = v.InternalIdentifier |> unwrapShortText }
+            | LivingCollection l -> 
+                "Botanical", 
+                { emptyPlantId with Method = "LivingCollection"
+                                    InstitutionCode = l.BotanicGardenCode |> unwrapInstitutionCode
+                                    InternalId = l.InternalIdentifier |> unwrapShortText }
+            | Field p -> 
+                "Botanical", 
+                { emptyPlantId with Method = "Field"
+                                    IdentifiedByFirstNames = []
+                                    IdentifiedBySurname = person p }

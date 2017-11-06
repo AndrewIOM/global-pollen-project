@@ -20,12 +20,34 @@
                     <div class="col-sm-10">
                         <input data-bind="value: existingId" class="form-control" id="inputExistingId" placeholder="Identifier" />
                         <small class="form-text text-muted">If you have already assigned IDs to your slides, you can specify this here. 
-                    Your ID will be used in place of a Global Pollen Project ID wihtin this collection.</small>
+                    Your ID will be used in place of a Global Pollen Project ID within this collection.</small>
                     </div>
                 </div>
 
                 <h5>1. Taxonomic Identity</h5>
-                <hr/>
+
+                <hr />
+                <p>How has the material on this slide been identified?<span class="required-symbol">*</span></p>
+                <div class="form-check">
+                    <label class="form-check-label">
+                <input class="form-check-input" type="radio" name="sampleType" id="botanical" value="botanical" data-bind="checked: identificationMethod" />
+                <strong>Direct.</strong> Pollen or spores sampled from plant material.
+            </label>
+                </div>
+                <div class="form-check">
+                    <label class="form-check-label">
+                <input class="form-check-input" type="radio" name="sampleType" id="morphological" value="morphological" data-bind="checked: identificationMethod" />
+                <strong>Morphological.</strong> A taxonomic identification attributed to the grains by morphology, for example using pollen keys.
+            </label>
+                </div>
+                <div class="form-check">
+                    <label class="form-check-label">
+                <input class="form-check-input" type="radio" name="sampleType" id="environmental" value="environmental" data-bind="checked: identificationMethod" />
+                <strong>Environmental.</strong> The pollen was extracted from an environmental sample, for example surface water or a pollen trap. 
+                The taxonomic identification has been constrained by species occuring known to occur in this area.
+            </label>
+                </div>
+
                 <p>This reference slide is of
                     <select data-bind="value: rank" class="form-control input-sm inline-dropdown">
                         <option value="Species">Species</option>
@@ -33,35 +55,35 @@
                         <option value="Family">Family</option>
                     </select> rank.
                 </p>
-                <p>Please enter the original taxonomic identity given to the slide.</p>
+                <p>Please enter the original taxonomic identity given to the slide.<span class="required-symbol">*</span></p>
                 <div class="row">
                     <div class="col-sm-3">
                         <input data-bind="value: family, event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Family" class="form-control" autocomplete="off" placeholder="Family"
                             onblur="disable('Family');" onkeyup="suggest(this, 'Family');" />
-                        <div class="dropdown-menu" id="FamilyList" style="display:none"></div>
+                        <div class="dropdown-menu taxon-dropdown" id="FamilyList" style="display:none"></div>
                     </div>
                     <div class="col-sm-3">
                         <input data-bind="value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Genus" class="form-control" autocomplete="off"
                             placeholder="Genus" onblur="disable('Genus');" onkeyup="suggest(this, 'Genus');" />
-                        <div class="dropdown-menu" id="GenusList" style="display:none"></div>
+                        <div class="dropdown-menu taxon-dropdown" id="GenusList" style="display:none"></div>
                     </div>
                     <div class="col-sm-3">
                         <input data-bind="value: species, disable: rank() != 'Species'" type="text" id="original-Species" class="form-control" autocomplete="off"
                             placeholder="Species" onblur="disable('Species');" onkeyup="suggest(this, 'Species');" />
-                        <div class="dropdown-menu" id="SpeciesList" style="display:none"></div>
+                        <div class="dropdown-menu taxon-dropdown" id="SpeciesList" style="display:none"></div>
                     </div>
                     <div class="col-sm-3"><input data-bind="value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }" type="text" class="form-control" autocomplete="off"
                             placeholder="Auth." /></div>
                 </div>
                 <small id="taxon-help" class="form-text text-muted">This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically.</small>
 
-                <button class="btn btn-default" data-bind="click: validateTaxon, enable: isValidTaxonSearch">Validate taxon</button>
+                <button class="btn btn-default" data-bind="click: validateTaxon, enable: isValidTaxonSearch" style="margin-bottom:0.5em">Validate taxon</button>
                 <div data-bind="visible: newSlideTaxonStatus, if: newSlideTaxonStatus">
 
                     <div data-bind="visible: newSlideTaxonStatus() == 'Error'">There was a problem communicating with the taxonomic backbone.</div>
 
                     <div data-bind="if: newSlideTaxonStatus() != 'Error'">
-                        <div data-bind="visible: newSlideTaxonStatus()[0].TaxonomicStatus == 'accepted'"> @*Accepted Taxon*@
+                        <div class="alert alert-success" data-bind="visible: newSlideTaxonStatus()[0].TaxonomicStatus == 'accepted'"> @*Accepted Taxon*@
                             <p><strong>This taxon is an accepted name.</strong></p>
                             <p>GPP Taxon:
                                 <span data-bind="text: newSlideTaxonStatus()[0].Family"></span>
@@ -72,53 +94,83 @@
                                 <span data-bind="text: newSlideTaxonStatus()[0].NamedBy"></span>
                             </p>
                         </div>
-                        <div data-bind="visible: newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'synonym'"> @*Synonym*@
+                        <div class="alert alert-success" data-bind="visible: newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'synonym'"> @*Synonym*@
                             <p>This taxon is a synonym of <span data-bind="text: newSlideTaxonStatus()[0].LatinName"></span>.</p>
                         </div>
-                        <div data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length > 1"> @*Synonym of ambiguity (more than one - authorship validation required)*@
+                        <div class="alert alert-danger" data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length > 1"> @*Synonym of ambiguity (more than one - authorship validation required)*@
                             <p>There are <span data-bind="text: newSlideTaxonStatus().length"></span> possible taxa in the GPP's
                                 taxonomic backbone:</p>
                             <ul data-bind="foreach: newSlideTaxonStatus">
                                 <li data-bind="text: LatinName + ' ' + NamedBy + ' (' + TaxonomicStatus + ' name)'"></li>
                             </ul>
                         </div>
-                        <div data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'doubtful'">
+                        <div class="alert alert-warning" data-bind="visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].TaxonomicStatus == 'doubtful'">
                             @*Unknown*@
                             <p>This taxon is currently unverified. We are not confident of it's validity, but will accept this
                                 slide. The slde will not be visible in the Master Reference Collection until the taxon can
                                 be verified.</p>
                         </div>
-                        <div data-bind="visible: newSlideTaxonStatus().length == 0"> @*Invalid*@
+                        <div class="alert alert-danger" data-bind="visible: newSlideTaxonStatus().length == 0"> @*Invalid*@
                             <p>This taxon was not recognised. Please check you entered the name correctly, or enquire with us.
                             </p>
                         </div>
                     </div>
                 </div>
 
-                <h5>2. Collection of Plant Material</h5>
+                <h5>2. Sample Origin</h5>
                 <hr/>
-                <p>Through which of the following methods did you obtain the pollen on this slide?</p>
-                <div class="form-check">
-                    <label class="form-check-label">
-                <input class="form-check-input" type="radio" name="sampleType" id="botanical" value="botanical" data-bind="checked: collectionMethod" />
-                <strong>Botanical.</strong> The pollen was collected from a plant directly. This could be from a living plant anther, or from archive material in a herbarium.
-            </label>
-                </div>
-                <div class="form-check">
-                    <label class="form-check-label">
-                <input class="form-check-input" type="radio" name="sampleType" id="environmental" value="environmental" data-bind="checked: collectionMethod" />
-                <strong>Environmental.</strong> The pollen was extracted from an environmental sample, for example surface water or a pollen trap. 
-                The taxonomic identification can be constrained by species occuring in this area in space and time.
-            </label>
-                </div>
-                <div class="form-check">
-                    <label class="form-check-label">
-                <input class="form-check-input" type="radio" name="sampleType" id="morphological" value="morphological" data-bind="checked: collectionMethod" />
-                <strong>Morphological.</strong> There is no direct link to a particular plant individual. The taxonomic identification has been attributed to the grains primarily by their morphology, for example using pollen keys.
-            </label>
+
+                <div data-bind="visible: identificationMethod() == 'botanical'">
+                    <p>Your pollen or spore sample was taken directly from plant material. We require further information about the nature of the plant identification.</p>
+
+                    <div class="form-group row">
+                        <label class="col-sm-2 col-form-label">Plant Identification Method<span class="required-symbol">*</span></label>
+                        <div class="col-sm-8">
+                            <select data-bind="value: plantIdMethod" class="form-control">
+                                <option value="unknown">Unknown</option>
+                                <option value="voucher">Herbarium Voucher</option>
+                                <option value="livingCollection">Plant in a Living Collection</option>
+                                <option value="field">Identification in the Field</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group row" data-bind="visible: plantIdMethod() == 'voucher'">
+                        <label class="col-sm-2 col-form-label">Herbarium Voucher Information<span class="required-symbol">*</span></label>
+                        <div class="col-sm-4">
+                            <input data-bind="value: institutionCode" placeholder="Herbarium Code" class="form-control" />
+                            <small class="form-text text-muted">Please enter a recognised herbarium code, as specified in <a href="http://sweetgum.nybg.org/science/ih/" target="_blank">the Index Herbariorum</a>.</small>
+                        </div>
+                        <div class="col-sm-4">
+                            <input data-bind="value: institutionInternalId" placeholder="Internal ID" class="form-control" />
+                            <small class="form-text text-muted">A barcode or other unique identifier for this specimen used by the herbarium.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row" data-bind="visible: plantIdMethod() == 'livingCollection'">
+                        <label class="col-sm-2 col-form-label">Living Collection Information<span class="required-symbol">*</span></label>
+                        <div class="col-sm-4">
+                            <input data-bind="value: institutionCode" placeholder="BGCI Code" class="form-control" />
+                            <small class="form-text text-muted">Please enter a recognised Botanic Gardens Conservation International code, as specified in <a href="https://www.bgci.org/garden_search.php" target="_blank">the BGCI online database</a>.</small>
+                        </div>
+                        <div class="col-sm-4">
+                            <input data-bind="value: institutionInternalId" placeholder="Internal ID" class="form-control" />
+                            <small class="form-text text-muted">A barcode or other unique identifier for this specimen used by the botanic garden.</small>
+                        </div>
+                    </div>
+
+                    <div class="form-group row" data-bind="visible: plantIdMethod() == 'field'">
+                        <label class="col-sm-2 col-form-label">Who identified this plant in the field?</label>
+                        <div class="col-sm-4">
+                            <input data-bind="value: identifiedByFirstNames" placeholder="Forenames" class="form-control" />
+                        </div>
+                        <div class="col-sm-3">
+                            <input data-bind="value: identifiedByLastName" placeholder="Surname" class="form-control" />
+                        </div>
+                    </div>
                 </div>
 
-                <div class="form-group row">
+                <div class="form-group row" data-bind="visible: identificationMethod() == 'botanical' || identificationMethod() == 'environmental'">
                     <label for="inputCollectionYear" class="col-sm-2 col-form-label">Year Sample Taken</label>
                     <div class="col-sm-5">
                         <div class="input-group">
@@ -128,13 +180,13 @@
                     </div>
                 </div>
 
-                <div class="form-group row">
-                    <label class="col-sm-2 col-form-label">Name of Collector</label>
-                    <div class="col-sm-2">
-                        <input data-bind="value: collectorFirstNames" placeholder="Forenames" class="form-control" />
+                <div class="form-group row" data-bind="visible: plantIdMethod() == 'field'">
+                    <label class="col-sm-2 col-form-label">Who collected the plant or pollen from its natural environment?</label>
+                    <div class="col-sm-4">
+                        <input data-bind="value: collectedByFirstNames" placeholder="Forenames" class="form-control" />
                     </div>
-                    <div class="col-sm-2">
-                        <input data-bind="value: collectorLastName" placeholder="Surname" class="form-control" />
+                    <div class="col-sm-3">
+                        <input data-bind="value: collectedByLastName" placeholder="Surname" class="form-control" />
                     </div>
                 </div>
 
@@ -148,21 +200,21 @@
                             <option value="Locality">Locality</option>
                         </select>
                     </div>
-                    <div class="col-sm-3">
-                        <input data-bind="value: locality, visible: locationType() == 'Locality'" class="form-control" id="locationLocality" placeholder="Locality" />
+                    <div class="col-sm-3" data-bind="visible: locationType() == 'Locality'">
+                        <input data-bind="value: locality" class="form-control" id="locationLocality" placeholder="Locality" />
                     </div>
-                    <div class="col-sm-3">
-                        <input data-bind="value: district, visible: locationType() == 'Locality'" class="form-control" id="locationDistrict" placeholder="District" />
-                        <small data-bind="visible: locationType() == 'Locality'" class="form-text text-muted">An administrative area within a country.</small>
+                    <div class="col-sm-3" data-bind="visible: locationType() == 'Locality'">
+                        <input data-bind="value: district" class="form-control" id="locationDistrict" placeholder="District" />
+                        <small class="form-text text-muted">An administrative area within a country.</small>
                     </div>
-                    <div class="col-sm-3">
-                        <input data-bind="value: region, visible: locationType() == 'Locality'" class="form-control" id="locationRegion" placeholder="Region" />
+                    <div class="col-sm-3" data-bind="visible: locationType() == 'Locality'">
+                        <input data-bind="value: region" class="form-control" id="locationRegion" placeholder="Region" />
                     </div>
-                    <div class="col-sm-3">
-                        <input data-bind="value: country, visible: locationType() == 'Locality' || locationType() == 'Country'" class="form-control" id="locationCountry" placeholder="Country" />
+                    <div class="col-sm-3" data-bind="visible: locationType() == 'Locality' || locationType() == 'Country'">
+                        <input data-bind="value: country" class="form-control" id="locationCountry" placeholder="Country" />
                     </div>
-                    <div class="col-sm-3">
-                        <select data-bind="value: continent, visible: locationType() == 'Continent'" class="form-control input-sm inline-dropdown">
+                    <div class="col-sm-3" data-bind="visible: locationType() == 'Continent'">
+                        <select data-bind="value: continent" class="form-control input-sm inline-dropdown">
                             <option value="Africa">Africa</option>
                             <option value="Asia">Asia</option>
                             <option value="Europe">Europe</option>
@@ -176,6 +228,16 @@
 
                 <h5>3. Slide Preperation</h5>
                 <hr/>
+
+                <div class="form-group row">
+                    <label class="col-sm-2 col-form-label">Slide Prepared By</label>
+                    <div class="col-sm-2">
+                        <input data-bind="value: preparedByFirstNames" placeholder="Forenames" class="form-control" />
+                    </div>
+                    <div class="col-sm-2">
+                        <input data-bind="value: preparedByLastName" placeholder="Surname" class="form-control" />
+                    </div>
+                </div>
 
                 <div class="form-group row">
                     <label for="preperationMethod" class="col-sm-2 col-form-label">Chemical Treatment</label>
@@ -213,8 +275,15 @@
                 </div>
 
             </div>
+
+            <div class="alert-danger" data-bind="visible: validationErrors().length > 0, if: validationErrors().length > 0">
+                <ul data-bind="foreach: validationErrors">
+                    <li data-bind="text: Property"></li>
+                </ul>
+            </div>
+
             <div class="modal-footer">
-                <button data-bind="click: $root.submitSlideRequest, enable: isValidAddSlideRequest" type="button" class="btn btn-primary">Record Slide</button>
+                <button data-bind="click: function() { submit($root) }, disable: isProcessing, enable: isValidAddSlideRequest" type="button" class="btn btn-primary">Record Slide</button>
             </div>
         </div>
     </div>

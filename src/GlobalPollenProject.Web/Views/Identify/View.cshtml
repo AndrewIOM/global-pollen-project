@@ -93,7 +93,7 @@
                     </div>
                     <div class="col-md-8">
                         @if (string.IsNullOrEmpty(Model.AgeType)) { <span>Unknown</span> }
-                        else if (Model.AgeType != "Calendar") { <span>@Model.Age years before present</span> }
+                        else if (Model.AgeType != "Calendar") { <span>@Model.Age.ToString("#,###") years before present</span> }
                         else { <span>@Model.Age</span> }
                     </div>
                 </div>

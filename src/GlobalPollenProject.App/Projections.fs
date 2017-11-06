@@ -1,7 +1,6 @@
 module GlobalPollenProject.App.Projections
 
 open System
-open System.Collections.Generic
 open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Aggregates
 open GlobalPollenProject.Core.Composition
@@ -17,26 +16,26 @@ let readModelErrorHandler() =
     invalidOp "The read model is corrupt or out-of-sync. Rebuild now."
 
 let inline deserialise< ^a> json = 
-    let unwrap (ReadStore.Json j) = j
+    let unwrap (Json j) = j
     Serialisation.deserialise< ^a> (unwrap json)
 
 let serialise s = 
     let result = Serialisation.serialise s
     match result with
-    | Ok r -> Ok <| ReadStore.Json r
+    | Ok r -> Ok <| Json r
     | Error e -> Error e
 
 module Checkpoint =
 
     let init setKey =
-        ReadStore.RepositoryBase.setKey 0 "Checkpoint" setKey serialise
+        RepositoryBase.setKey 0 "Checkpoint" setKey serialise
 
     let getCurrentVersion getKey =
-        ReadStore.RepositoryBase.getKey "Checkpoint" getKey deserialise<int>
+        RepositoryBase.getKey "Checkpoint" getKey deserialise<int>
 
     let increment getKey setKey () =
         let incrementCheck current = 
-            ReadStore.RepositoryBase.setKey (current + 1) "Checkpoint" setKey serialise
+            RepositoryBase.setKey (current + 1) "Checkpoint" setKey serialise
             |> Result.bind (fun x -> Ok (current + 1))
         getCurrentVersion getKey
         |> Result.bind incrementCheck
@@ -456,7 +455,9 @@ module MasterReferenceCollection =
         | :? Grain.Event as e ->
             match e with
             | Grain.Event.GrainIdentityConfirmed e -> addGrain e.Id e.Taxon
-            | Grain.Event.GrainIdentityChanged e -> removeGrainFromMrc e.Id; addGrain e.Id e.Taxon
+            | Grain.Event.GrainIdentityChanged e -> 
+                removeGrainFromMrc e.Id |> ignore
+                addGrain e.Id e.Taxon
             | Grain.Event.GrainIdentityUnconfirmed e -> removeGrainFromMrc e.Id
             | _ -> Ok()
         | :? Taxonomy.Event as e ->
@@ -599,11 +600,11 @@ module Grain =
         match em |> toEvent with
         | :? Grain.Event as e ->
             match e with
-            | Grain.Event.GrainSubmitted e -> submit get set setList generateThumb toAbsoluteUrl (em |> toTime) e
-            | Grain.Event.GrainIdentified e -> identified get set e 
-            | Grain.Event.GrainIdentityChanged e -> identityChanged get set (Some e.Taxon) e.Id
-            | Grain.Event.GrainIdentityConfirmed e -> identityChanged get set (Some e.Taxon) e.Id
-            | Grain.Event.GrainIdentityUnconfirmed e -> identityChanged get set None e.Id
+            | GrainSubmitted e -> submit get set setList generateThumb toAbsoluteUrl (em |> toTime) e
+            | GrainIdentified e -> identified get set e 
+            | GrainIdentityChanged e -> identityChanged get set (Some e.Taxon) e.Id
+            | GrainIdentityConfirmed e -> identityChanged get set (Some e.Taxon) e.Id
+            | GrainIdentityUnconfirmed e -> identityChanged get set None e.Id
         | _ -> Ok()
 
 
@@ -883,17 +884,21 @@ module Digitisation =
                 else "Species" 
             let ageType,age = Converters.DomainToDto.age e.Time
             let locationType,location = Converters.DomainToDto.location e.Place
-            let collectorName = Converters.DomainToDto.collectorName e.Taxon
             let prepDate = Converters.DomainToDto.prepDate e.PrepDate
             let prepMethod = Converters.DomainToDto.prepMethod e.PrepMethod
             let mount = Converters.DomainToDto.mount e.Mounting
+            let collectorName = Converters.DomainToDto.collectorName e.Taxon
+            let idMethod,plantIdMethod = Converters.DomainToDto.taxonomicIdentification e.Taxon
             let slide = {
                 CollectionId = e.Id |> unwrapSlideId |> fst |> unwrapRefId
                 CollectionSlideId = e.Id |> unwrapSlideId |> snd
+                CollectorName = collectorName
                 FamilyOriginal = e.OriginalFamily
                 GenusOriginal = e.OriginalGenus
                 SpeciesOriginal = e.OriginalSpecies
                 Rank = rank
+                IdMethod = idMethod
+                PlantId = plantIdMethod
                 CurrentTaxonId = None
                 CurrentFamily = ""
                 CurrentGenus = ""
@@ -908,9 +913,9 @@ module Digitisation =
                 PrepYear = prepDate
                 PrepMethod = prepMethod
                 Mount = mount
-                CollectorName = collectorName
                 Location = location
                 LocationType = locationType
+                PreppedBy = ""
                 Voided = false }
             RepositoryBase.setSingle (colId.ToString()) { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
 
@@ -979,6 +984,22 @@ module Digitisation =
                     | Error e -> readModelErrorHandler()
                     | Ok t -> t.Family, t.Genus, t.Species, t.NamedBy, t.TaxonomicStatus
                 let updatedSlide = { s with CurrentTaxonStatus = status; CurrentFamily = f; CurrentGenus = g; CurrentSpecies = sp; CurrentSpAuth = auth; CurrentTaxonId = taxonId |> Converters.DomainToDto.unwrapTaxonId |> Some }
+                let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+                let updatedCol = { c with Slides = updatedSlides }
+                RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise
+
+    let gainedPrep getKey setKey id person =
+        let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
+        let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
+        match col with
+        | Error e -> Error e
+        | Ok c -> 
+            let slide = c.Slides |> List.tryFind (fun x -> x.CollectionSlideId = (id |> unwrapSlideId |> snd))
+            match slide with
+            | None -> readModelErrorHandler()
+            | Some s ->
+                let personName = person |> Converters.DomainToDto.person
+                let updatedSlide = { s with PreppedBy = personName }
                 let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
                 let updatedCol = { c with Slides = updatedSlides }
                 RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise
@@ -1060,18 +1081,17 @@ module Digitisation =
         match e |> toEvent with
         | :? ReferenceCollection.Event as e ->
             match e with
-            | ReferenceCollection.Event.DigitisationStarted e -> started set setList e
-            | ReferenceCollection.Event.SlideRecorded e -> recordSlide get set e
-            | ReferenceCollection.Event.SlideImageUploaded (s,i,y) -> imageUploaded get set generateThumb toAbsoluteUrl s i
-            | ReferenceCollection.Event.SlideFullyDigitised e -> digitised get set e
-            | ReferenceCollection.Event.SlideGainedIdentity (s,t) -> gainedIdentity get set s t
-            | ReferenceCollection.Event.CollectionPublished (id,d,v) -> published get set id d v
-            | ReferenceCollection.Event.RequestedPublication id -> requestedPublication get set setList id
-            | ReferenceCollection.Event.RevisionAdvised (id,note) -> revision get set id note
-            | ReferenceCollection.Event.PublicAccessAssigned (id,curator,access) -> publicAccess get set id curator access
-            | ReferenceCollection.Event.SlideVoided id -> voidSlide get set id
-            | ReferenceCollection.Event.SpecimenDelineated (sid, image, box) -> invalidOp "Not implemented"
-            | ReferenceCollection.Event.SpecimenConfirmed (sid, image, box) -> invalidOp "Not implemented"
+            | DigitisationStarted e -> started set setList e
+            | SlideRecorded e -> recordSlide get set e
+            | SlideImageUploaded (s,i,y) -> imageUploaded get set generateThumb toAbsoluteUrl s i
+            | SlideFullyDigitised e -> digitised get set e
+            | SlideGainedIdentity (s,t) -> gainedIdentity get set s t
+            | SlidePrepAcknowledged (s,p) -> gainedPrep get set s p
+            | CollectionPublished (id,d,v) -> published get set id d v
+            | RequestedPublication id -> requestedPublication get set setList id
+            | RevisionAdvised (id,note) -> revision get set id note
+            | PublicAccessAssigned (id,curator,access) -> publicAccess get set id curator access
+            | SlideVoided id -> voidSlide get set id
         | _ -> Ok()
 
 
