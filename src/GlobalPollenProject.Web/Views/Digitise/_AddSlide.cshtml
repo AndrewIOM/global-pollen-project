@@ -60,17 +60,17 @@
                     <div class="col-sm-3">
                         <input data-bind="value: family, event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Family" class="form-control" autocomplete="off" placeholder="Family"
                             onblur="disable('Family');" onkeyup="suggest(this, 'Family');" />
-                        <div class="dropdown-menu" id="FamilyList" style="display:none"></div>
+                        <div class="dropdown-menu taxon-dropdown" id="FamilyList" style="display:none"></div>
                     </div>
                     <div class="col-sm-3">
                         <input data-bind="value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element) }" type="text" id="original-Genus" class="form-control" autocomplete="off"
                             placeholder="Genus" onblur="disable('Genus');" onkeyup="suggest(this, 'Genus');" />
-                        <div class="dropdown-menu" id="GenusList" style="display:none"></div>
+                        <div class="dropdown-menu taxon-dropdown" id="GenusList" style="display:none"></div>
                     </div>
                     <div class="col-sm-3">
                         <input data-bind="value: species, disable: rank() != 'Species'" type="text" id="original-Species" class="form-control" autocomplete="off"
                             placeholder="Species" onblur="disable('Species');" onkeyup="suggest(this, 'Species');" />
-                        <div class="dropdown-menu" id="SpeciesList" style="display:none"></div>
+                        <div class="dropdown-menu taxon-dropdown" id="SpeciesList" style="display:none"></div>
                     </div>
                     <div class="col-sm-3"><input data-bind="value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }" type="text" class="form-control" autocomplete="off"
                             placeholder="Auth." /></div>
