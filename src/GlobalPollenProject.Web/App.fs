@@ -31,6 +31,7 @@ open ReadModels
 open Handlers
 open ModelValidation
 open Account
+open Docs
 
 /////////////////////////
 /// Helpers
@@ -123,12 +124,12 @@ let taxonDetail (taxon:string) next ctx =
     |> toViewResult "MRC/Taxon" next ctx
 
 let taxonDetailById id next ctx =
-    match System.Guid.TryParse id with
+    match Guid.TryParse id with
     | (true,g) ->
         g
         |> Taxonomy.getById
         |> toViewResult "MRC/Taxon" next ctx
-    | (false,g) -> notFoundResult next ctx
+    | (false,_) -> notFoundResult next ctx
 
 let individualCollectionIndex next ctx =
     IndividualReference.list {Page = 1; PageSize = 20}
@@ -371,7 +372,8 @@ let webApp : HttpHandler =
         GET >=> 
         choose [
             route   "/"                         >=> homeHandler
-            route   "/Guide"                    >=> renderView "Home/Guide" None
+            route   "/Guide"                    >=> docIndexHandler
+            routef  "/Guide/%s"                 docSectionHandler
             route   "/Statistics"               >=> systemStatsHandler
             route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
             route   "/Api"                      >=> renderView "Home/Api" None

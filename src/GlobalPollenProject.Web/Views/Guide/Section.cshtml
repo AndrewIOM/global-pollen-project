@@ -1,0 +1,40 @@
+@model Docs.DocViewModel
+@{
+    Layout = "_Layout";
+    ViewData["Title"] = Model.Metadata["Title"] + " - Guide";
+    ViewData["Subtitle"] = Model.Metadata["Title"];
+    string authorUrl = Model.Metadata["Author"].Replace(" ", "-").ToLower() + ".jpg";
+}
+
+@section headerSection {
+    <header>
+        <div class="container">
+            <h2 id="top">Guide</h2>
+        </div>
+    </header>
+}
+
+<div class="row">
+    <div class="col-md-3">
+        <div class="sticky-sidebar">
+            <a href="/Guide" class="btn btn-primary btn-block"><i class="fa fa-book" aria-hidden="true"></i> Guide Contents</a>
+            <hr/>
+            <label>@Model.Metadata["Title"]</label>
+            <nav id="sidebar" class="nav flex-column">
+                @foreach (var heading in Model.Headings) {
+                    <a class="nav-link" href="#@heading.LinkId">@heading.Name</a>
+                }
+            </nav>
+        </div>
+    </div>
+    <div class="col-md-9 guide-text" data-spy="scroll" data-target="#sidebar" data-offset="20">
+        <h2>@ViewData["Subtitle"]</h2>
+        <div class="metadata">
+            <img src='/images/guide/authors/@authorUrl' alt='@Model.Metadata["Author"]' />
+            <span>By @Model.Metadata["Author"], @Model.Metadata["Affiliation"]</span>
+            <span class="hide-xs divider">·</span>
+            <span><i class="fa fa-calendar"></i> @Model.Metadata["Date"]</span>
+        </div>
+        @Html.Raw(Model.Html)
+    </div>
+</div>
