@@ -406,6 +406,8 @@ module MasterReferenceCollection =
             match ver with
             | 1 ->
                 c.Slides
+                |> List.filter (fun s -> not s.Voided)
+                |> List.filter (fun s -> s.IsFullyDigitised)
                 |> List.map Add
                 |> mapResult (execute get set setSortedList)
                 |> lift ignore
