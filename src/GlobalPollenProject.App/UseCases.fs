@@ -518,7 +518,7 @@ module Backbone =
             match fst guid with
             | false -> Error "Invalid taxon specified"
             | true -> 
-                ReadStore.TaxonomicBackbone.getById (TaxonId (snd guid)) readStoreGet deserialise
+                TaxonomicBackbone.getById (TaxonId (snd guid)) readStoreGet deserialise
                 |> Result.bind (fun syn ->
                     match syn.TaxonomicStatus with
                     | "accepted" -> Ok [syn]
@@ -539,7 +539,11 @@ module Backbone =
                 | _ -> Error "Could not determine taxonomic status"
             | _ ->
                 match String.IsNullOrEmpty auth with
-                | true -> matches |> Ok
+                | true -> 
+                    // Return only the accepted genus if in multiple families
+                    match request.Rank with
+                    | "Genus" -> matches |> List.filter (fun t -> t.TaxonomicStatus = "accepted") |> Ok
+                    | _ -> matches |> Ok
                 | false ->
                     // Search by author (NB currently not fuzzy)
                     let m = matches |> List.tryFind(fun t -> t.NamedBy = auth)
