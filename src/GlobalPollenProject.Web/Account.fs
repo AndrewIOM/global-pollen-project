@@ -1,30 +1,20 @@
 module Account
 
 open System
-open System.IO
 open System.Text
 open System.Security.Claims
-open System.Collections.Generic
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
-open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.AspNetCore.WebUtilities
 open Microsoft.Extensions.Logging
-open Microsoft.Extensions.DependencyInjection
 
 open Giraffe.Tasks
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
-open Giraffe.Middleware
 open Giraffe.Razor.HttpHandlers
-open Giraffe.Razor.Middleware
 
 open GlobalPollenProject.Core.Composition
-open GlobalPollenProject.Shared.Identity
 open GlobalPollenProject.Shared.Identity.Models
-open GlobalPollenProject.Shared.Identity.Services
 open GlobalPollenProject.App.UseCases
 open ReadModels
 
@@ -32,7 +22,7 @@ open Microsoft.AspNetCore.Mvc.ModelBinding
 open Microsoft.AspNetCore.Authentication
 open ModelValidation
 
-let renderView name model = warbler (fun x -> razorHtmlView name model)
+let renderView name model = warbler (fun _ -> razorHtmlView name model)
 
 let getBaseUrl (ctx:HttpContext) = 
     let port = 
@@ -46,7 +36,7 @@ let identityErrorsToModelState (identityResult:IdentityResult) =
     for error in identityResult.Errors do dict.AddModelError("",error.Description)
     dict
 
-let challengeWithProperties (authScheme : string) properties next (ctx : HttpContext) =
+let challengeWithProperties (authScheme : string) properties _ (ctx : HttpContext) =
     task {
         do! ctx.ChallengeAsync(authScheme,properties)
         return Some ctx }
@@ -89,14 +79,14 @@ let registerHandler : HttpHandler =
                 let id() = Guid.Parse user.Id
                 let register = User.register model id
                 match register with
-                | Error msg -> return! renderView "Account/Register" model next ctx
-                | Ok r -> 
+                | Error _ -> return! renderView "Account/Register" model next ctx
+                | Ok _ -> 
                     (ctx.GetLogger()).LogInformation "User created a new account with password."
                     let! code = userManager.GenerateEmailConfirmationTokenAsync(user)
                     let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
                     let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s" (getBaseUrl ctx) user.Id codeBase64
                     let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
-                    let! response = sendEmail model.Email "Confirm your email" html
+                    let! _ = sendEmail model.Email "Confirm your email" html
                     return! renderView "Account/AwaitingEmailConfirmation" None next ctx
             | false -> 
                 return! razorHtmlViewWithModelState "Account/Register" (identityErrorsToModelState result) model next ctx
@@ -189,8 +179,8 @@ let externalLoginConfirmation next (ctx:HttpContext) =
                               ConfirmPassword = "" }
                         let register = User.register newUserRequest id
                         match register with
-                        | Error msg -> return! renderView "Account/ExternalLoginFailure" model next ctx
-                        | Ok r -> 
+                        | Error _ -> return! renderView "Account/ExternalLoginFailure" model next ctx
+                        | Ok _ -> 
                             (ctx.GetLogger()).LogInformation "User created a new account with password."
                             signInManager.SignInAsync(user, isPersistent = false) |> ignore
                             return! redirectTo true "/" next ctx
@@ -217,7 +207,7 @@ let forgotPasswordHandler : HttpHandler =
                     let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
                     let callbackUrl = sprintf "%s/Account/ResetPassword?userId=%s&code=%s" (getBaseUrl ctx) user.Id codeBase64
                     let html = sprintf "Please reset your password by clicking here: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
-                    let! response = sendEmail model.Email "Reset Password" html
+                    let! _ = sendEmail model.Email "Reset Password" html
                     return! renderView "Account/ForgotPasswordConfirmation" None next ctx
         }
 
@@ -258,16 +248,14 @@ let grantCurationHandler (id:string) : HttpHandler =
                 if existing |> isNull 
                     then return! text "Error" next ctx
                     else
-                        let! r = userManager.AddToRoleAsync(existing, "Curator")
+                        let! _ = userManager.AddToRoleAsync(existing, "Curator")
                         return! redirectTo false "/Admin/Users" next ctx
-            | Error e -> return! text "Error" next ctx
+            | Error _ -> return! text "Error" next ctx
         }
 
 module Manage =
 
     open System.ComponentModel.DataAnnotations
-    open Microsoft.AspNetCore.Authentication
-    open Microsoft.AspNetCore.Identity
 
     [<CLIMutable>]
     type IndexViewModel = {
@@ -458,5 +446,6 @@ module Manage =
 
     let profile : HttpHandler =
         fun next ctx ->
-            let model = ctx.BindForm<ChangePublicProfileViewModel>() |> Async.AwaitTask |> Async.RunSynchronously
+            ctx.BindForm<ChangePublicProfileViewModel>() |> Async.AwaitTask |> Async.RunSynchronously
+            |> ignore
             invalidOp "Not implemented"

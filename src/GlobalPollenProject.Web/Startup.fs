@@ -2,20 +2,15 @@ module Startup
 
 open System
 open System.IO
-open System.Text
-open System.Security.Claims
-open System.Collections.Generic
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
-open Microsoft.AspNetCore.Identity.EntityFrameworkCore
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
 
 open Giraffe.Middleware
-open Giraffe.Razor.HttpHandlers
 open Giraffe.Razor.Middleware
 
 open GlobalPollenProject.Core.Composition
@@ -23,7 +18,6 @@ open GlobalPollenProject.Shared.Identity
 open GlobalPollenProject.Shared.Identity.Models
 open GlobalPollenProject.Shared.Identity.Services
 open GlobalPollenProject.App.UseCases
-open GlobalPollenProject.Web.App
 
 open ReadModels
 
@@ -52,7 +46,7 @@ type IProfileLoader =
 
 type ProfileLoader() =
     interface IProfileLoader with
-        member x.Get id = getPublicProfile id
+        member __.Get id = getPublicProfile id
 
 ///////////////////////////
 /// App Configuration
@@ -89,7 +83,7 @@ type Startup () =
         Startup() then
         this.Configuration <- configuration
 
-    member this.ConfigureServices(services: IServiceCollection) =
+    member __.ConfigureServices(services: IServiceCollection) =
         let sp  = services.BuildServiceProvider()
         let env = sp.GetService<IHostingEnvironment>()
         let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
@@ -111,8 +105,15 @@ type Startup () =
             .AddTwitter(fun opt ->
                 opt.ConsumerKey <- getAppSetting "Authentication:Twitter:ConsumerKey"
                 opt.ConsumerSecret <- getAppSetting "Authentication:Twitter:ConsumerSecret"
-                opt.RetrieveUserDetails <- true)
-            |> ignore
+                opt.RetrieveUserDetails <- true) |> ignore
+            // .AddJwtBearer(fun cfg ->
+            //     cfg.RequireHttpsMetadata <- false
+            //     cfg.SaveToken <- true
+            //     cfg.TokenValidationParameters <- new TokenValidationParameters(
+            //         ValidIssuer = Configuration["Tokens:Issuer"],
+            //         ValidAudience = Configuration["Tokens:Issuer"],
+            //         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"]))
+            //     )) |> ignore
 
         services.AddSingleton<IEmailSender, AuthEmailMessageSender>() |> ignore
         services.AddSingleton<IProfileLoader, ProfileLoader>() |> ignore
@@ -120,7 +121,7 @@ type Startup () =
         services.AddRazorEngine(viewsFolderPath) |> ignore
         createRoles (services.BuildServiceProvider()) |> ignore
 
-    member this.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
+    member __.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
 
         if (env.IsDevelopment()) then
             app.UseDeveloperExceptionPage() |> ignore

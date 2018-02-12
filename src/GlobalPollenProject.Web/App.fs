@@ -2,29 +2,15 @@ module GlobalPollenProject.Web.App
 
 open System
 open System.IO
-open System.Text
-open System.Security.Claims
-open System.Collections.Generic
-open Microsoft.AspNetCore.Builder
-open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
-open Microsoft.AspNetCore.Identity.EntityFrameworkCore
-open Microsoft.AspNetCore.WebUtilities
-open Microsoft.Extensions.Logging
-open Microsoft.Extensions.DependencyInjection
 
-open Giraffe.Tasks
 open Giraffe.HttpContextExtensions
 open Giraffe.HttpHandlers
-open Giraffe.Middleware
 open Giraffe.Razor.HttpHandlers
-open Giraffe.Razor.Middleware
 
 open GlobalPollenProject.Core.Composition
-open GlobalPollenProject.Shared.Identity
 open GlobalPollenProject.Shared.Identity.Models
-open GlobalPollenProject.Shared.Identity.Services
 open GlobalPollenProject.App.UseCases
 open ReadModels
 
@@ -65,8 +51,6 @@ let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,ServiceError>) : 
 /// Routing lookups
 ////////////////////////
 
-open System.IO
-
 type TaxonLookup = { 
     OriginalId: int
     Rank: string
@@ -78,8 +62,7 @@ type TaxonLookup = {
         file
         |> File.ReadAllLines
         |> Seq.skip 1
-        |> Seq.map (fun s-> s.Split ',')
-        |> Seq.map (fun a -> {OriginalId=int a.[0]; Rank=a.[1]; Family = a.[2]; Genus = a.[3]; Species = a.[4]})
+        |> Seq.map (fun s-> s.Split ',' |> fun a -> {OriginalId=int a.[0]; Rank=a.[1]; Family = a.[2]; Genus = a.[3]; Species = a.[4]})
 
 let taxonLookup = TaxonLookup.FromFile @"Lookups/taxonlookup.csv"
 

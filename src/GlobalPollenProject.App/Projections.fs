@@ -9,6 +9,9 @@ open ReadModels
 
 type EventMessage = string*obj*DateTime
 
+let thumbnailSize = 300.
+let webImageSize = 2000.
+
 let toEvent (s,o,d) = o
 let toTime (s,o,d) = d
 
@@ -473,18 +476,18 @@ module Grain =
 
     open GlobalPollenProject.Core.Aggregates.Grain
 
-    let submit getKey setReadModel setList generateThumbnail toAbsoluteUrl time (e:GrainSubmitted) =
+    let submit getKey setReadModel setList generateCacheImage toAbsoluteUrl time (e:GrainSubmitted) =
         let thumbUrl = 
             let result = 
                 match e.Images.Head with
-                | SingleImage (relUrl,cal) -> generateThumbnail relUrl
-                | FocusImage (frames,s,c) ->
+                | SingleImage (relUrl,_) -> (generateCacheImage thumbnailSize "thumb") relUrl
+                | FocusImage (frames,_,_) ->
                     match frames |> List.length with
-                    | i when i > 0 -> generateThumbnail frames.[i / 2]
+                    | i when i > 0 -> (generateCacheImage thumbnailSize "thumb") frames.[i / 2]
                     | _ -> invalidOp "Empty focus image"
             match result with
-            | Ok u -> u |> Url.unwrap
-            | Error e -> ""
+            | Ok (u,_) -> u |> Url.unwrap
+            | Error _ -> ""
 
         let summary = { 
             Id = Converters.DomainToDto.unwrapGrainId e.Id 
@@ -514,7 +517,12 @@ module Grain =
             RepositoryBase.getSingle<Calibration> (calId.ToString()) getKey deserialise
             |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
 
-        let imgs =  e.Images |> List.map (Converters.DomainToDto.image getMag toAbsoluteUrl)
+        let cacheImage url =
+            match generateCacheImage webImageSize "web" url with
+            | Ok (r,m) -> r,m
+            | Error _ -> readModelErrorHandler()
+
+        let imgs =  e.Images |> List.map (Converters.DomainToDto.image cacheImage getMag toAbsoluteUrl)
         let detail = {
             Id = Converters.DomainToDto.unwrapGrainId e.Id
             Images = imgs
@@ -598,11 +606,11 @@ module Grain =
             |> bind save
 
 
-    let handle get set setList generateThumb toAbsoluteUrl (em:EventMessage) =
+    let handle get set setList generateCacheImage toAbsoluteUrl (em:EventMessage) =
         match em |> toEvent with
         | :? Grain.Event as e ->
             match e with
-            | GrainSubmitted e -> submit get set setList generateThumb toAbsoluteUrl (em |> toTime) e
+            | GrainSubmitted e -> submit get set setList generateCacheImage toAbsoluteUrl (em |> toTime) e
             | GrainIdentified e -> identified get set e 
             | GrainIdentityChanged e -> identityChanged get set (Some e.Taxon) e.Id
             | GrainIdentityConfirmed e -> identityChanged get set (Some e.Taxon) e.Id
@@ -921,7 +929,7 @@ module Digitisation =
                 Voided = false }
             RepositoryBase.setSingle (colId.ToString()) { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
 
-    let imageUploaded getKey setKey generateThumbnail toAbsoluteUrl id image =
+    let imageUploaded getKey setKey generateCacheImage toAbsoluteUrl id image =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
         let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
         match col with
@@ -934,19 +942,23 @@ module Digitisation =
                 let thumbnailUrl = 
                     let result = 
                         match image with
-                        | SingleImage (relUrl,cal) -> generateThumbnail relUrl
-                        | FocusImage (frames,s,c) ->
+                        | SingleImage (relUrl,_) -> (generateCacheImage thumbnailSize "thumb") relUrl
+                        | FocusImage (frames,_,_) ->
                             match frames |> List.length with
-                            | i when i > 0 -> generateThumbnail frames.[i / 2]
+                            | i when i > 0 -> (generateCacheImage thumbnailSize "thumb") frames.[i / 2]
                             | _ -> invalidOp "Empty focus image"
                     match result with
-                    | Ok u -> u |> Url.unwrap
-                    | Error e -> ""
+                    | Ok (u,_) -> u |> Url.unwrap
+                    | Error _ -> ""
                 let getMag mag = 
                     let calId,level = Converters.DomainToDto.unwrapMagId mag
                     RepositoryBase.getSingle<Calibration> (calId.ToString()) getKey deserialise
                     |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
-                let imageDto = Converters.DomainToDto.image getMag toAbsoluteUrl image
+                let cacheImage url =
+                    match generateCacheImage webImageSize "web" url with
+                    | Ok (r,s) -> r,s
+                    | Error _ -> url |> toAbsoluteUrl ,1.
+                let imageDto = Converters.DomainToDto.image cacheImage getMag toAbsoluteUrl image
                 let updatedSlide = { s with Images = imageDto :: s.Images; Thumbnail = thumbnailUrl }
                 let updatedSlides = 
                     c.Slides 
@@ -1079,13 +1091,13 @@ module Digitisation =
                 let updatedCol = { c with Slides = updatedSlides }
                 RepositoryBase.setSingle (colId.ToString()) updatedCol set serialise
 
-    let handle get getSortedList set setList generateThumb toAbsoluteUrl (e:EventMessage) =
+    let handle get getSortedList set setList generateCacheImage toAbsoluteUrl (e:EventMessage) =
         match e |> toEvent with
         | :? ReferenceCollection.Event as e ->
             match e with
             | DigitisationStarted e -> started set setList e
             | SlideRecorded e -> recordSlide get set e
-            | SlideImageUploaded (s,i,y) -> imageUploaded get set generateThumb toAbsoluteUrl s i
+            | SlideImageUploaded (s,i,y) -> imageUploaded get set generateCacheImage toAbsoluteUrl s i
             | SlideFullyDigitised e -> digitised get set e
             | SlideGainedIdentity (s,t) -> gainedIdentity get set s t
             | SlidePrepAcknowledged (s,p) -> gainedPrep get set s p

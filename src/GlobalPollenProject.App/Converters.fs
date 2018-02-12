@@ -462,13 +462,17 @@ module DomainToDto =
         let scale (actual:float<_>) image = actual / image
         scale (removeUnit dist) pixelDistance
 
-    let image getMag toAbsoluteUrl (domainImage:Image) : SlideImage =
+    let image generateCachedImage getMag toAbsoluteUrl (domainImage:Image) : SlideImage =
         match domainImage with
         | SingleImage (i,cal) ->
+            let cachedImage,cachedScaleFactor = i |> generateCachedImage
+            let pixelWidth = getPixelWidth cal.Point1 cal.Point2 cal.MeasuredDistance
             { Id = 0
               Frames = [i |> toAbsoluteUrl |> Url.unwrap]
-              PixelWidth = getPixelWidth cal.Point1 cal.Point2 cal.MeasuredDistance }
-        | FocusImage (urls,stepping,magId) ->
+              PixelWidth = pixelWidth
+              FramesSmall = [cachedImage |> Url.unwrap]
+              PixelWidthSmall = pixelWidth * cachedScaleFactor }
+        | FocusImage (urls,_,magId) ->
             let magnification = getMag magId
             match magnification with
             | Error e -> invalidOp "DTO validation failed"
@@ -476,9 +480,13 @@ module DomainToDto =
                 match o with
                 | None -> invalidOp "DTO validation failed"
                 | Some (mag:Magnification) ->
+                    let smallImages = urls |> List.map generateCachedImage
+                    let smallImageScaleFactor = smallImages |> List.map snd |> List.head
                     { Id = 0
                       Frames = urls |> List.map (toAbsoluteUrl >> Url.unwrap)
-                      PixelWidth = mag.PixelWidth }
+                      PixelWidth = mag.PixelWidth
+                      FramesSmall = smallImages |> List.map (fst >> Url.unwrap)
+                      PixelWidthSmall = mag.PixelWidth * smallImageScaleFactor }
 
     let calibration id user name microscope =
 

@@ -27,7 +27,7 @@ var createViewer = function(frames, pixelWidth) {
 
     // add a scale bar in the bottom left
     scaleBar = new ScaleBar(viewer, "#viewer-scalebar", pixelWidth);
-}
+};
 
 var clickedGalleryItem = function(element) {
     if($(element.target).hasClass("active")) return;
@@ -38,7 +38,7 @@ var clickedGalleryItem = function(element) {
     var frames = $(element.target).data("frames").slice(1, -1).split(";");
 
     createViewer(frames, parseFloat($(element.target).data("pixelwidth")));
-}
+};
 
 var jcrop_api;
 var initialiseCropper = function() {
@@ -68,14 +68,14 @@ var initialiseCropper = function() {
         if(jcrop_api.ui.multi.length > 0) {
             console.log(jcrop_api.ui.multi);
         }
-    })
+    });
 
     $("#toolbar-cancel").click(function() {
         $("#viewer-interface").css("display", "block");
         $("#cropping-panel").css("display", "block");
         $("#cropping-interface").css("display", "none");
     });
-}
+};
 
 $(function() {
     $(".slide-gallery-item").first().addClass("active");

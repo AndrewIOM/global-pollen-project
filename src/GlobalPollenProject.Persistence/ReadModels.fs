@@ -8,6 +8,8 @@ type SlideImage = {
     Id:                     int
     Frames:                 List<string>
     PixelWidth:             float
+    FramesSmall:            string list
+    PixelWidthSmall:        float
 }
 
 // GPP Master Reference Collection

@@ -5,6 +5,7 @@ open GlobalPollenProject.Core.Composition
 open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.App.Projections
 open ReadStore
+open AzureImageStore
 
 let validateCheckpoint get set getEventCount e =
     // let validate readCheckpoint writeCheckpoint =
@@ -28,7 +29,7 @@ let route
     (set:SetStoreValue) 
     (setList:SetEntryInList) 
     (setSortedList:SetEntryInSortedList) 
-    (generateThumb:RelativeUrl->Result<Url,string>)
+    (generateCacheImage:float->string->RelativeUrl->Result<Url*float,string>)
     (toAbsoluteUrl:RelativeUrl->Url)
     (e:string*obj*DateTime) =
 
@@ -40,11 +41,11 @@ let route
 
     e
     |> feed (TaxonomicBackbone.handle get getSortedList set setSortedList)
-    >>= feed (Digitisation.handle get getList set setList generateThumb toAbsoluteUrl)
+    >>= feed (Digitisation.handle get getList set setList generateCacheImage toAbsoluteUrl)
     >>= feed (Calibration.handle get getList set setList toAbsoluteUrl)
     >>= feed (UserProfile.handle get set setList)
     >>= feed (ReferenceCollectionReadOnly.handle get set setList)
-    >>= feed (Grain.handle get set setList generateThumb toAbsoluteUrl)
+    >>= feed (Grain.handle get set setList generateCacheImage toAbsoluteUrl)
     >>= feed (Statistics.handle get getSortedList set setSortedList)
     >>= MasterReferenceCollection.handle get getSortedList set setSortedList
 

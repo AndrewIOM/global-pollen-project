@@ -31,7 +31,7 @@ let sendEmail correspondingEmail subject messageHtml =
 
 // Image Store
 let saveImage = AzureImageStore.uploadToAzure (getAppSetting "imagestore:baseurl") (getAppSetting "imagestore:container") (getAppSetting "imagestore:azureconnectionstring") (fun x -> Guid.NewGuid().ToString())
-let generateThumbnail = AzureImageStore.generateThumbnail (getAppSetting "imagestore:baseurl") (getAppSetting "imagestore:container") (getAppSetting "imagestore:azureconnectionstring")
+let generateCacheImage = AzureImageStore.generateCacheImage (getAppSetting "imagestore:container") (getAppSetting "imagestore:cachecontainer") (getAppSetting "imagestore:azureconnectionstring")
 let toAbsoluteUrl = Url.relativeToAbsolute appSettings.["imagestore:baseurl"]
 
 // Write (Event) Store
@@ -67,7 +67,7 @@ let serialise s =
     | Error e -> Error e
 
 let projectionHandler e =
-    let router = ProjectionHandler.route readStoreGet readStoreGetList readStoreGetSortedList redisSet redisSetList redisSetSortedList generateThumbnail toAbsoluteUrl
+    let router = ProjectionHandler.route readStoreGet readStoreGetList readStoreGetSortedList redisSet redisSetList redisSetSortedList generateCacheImage toAbsoluteUrl
     let getEventCount = eventStore.Value.Checkpoint
     let result = (ProjectionHandler.readModelAgent router readStoreGet redisSet getEventCount).PostAndReply(fun rc -> e, rc)
     match result with 

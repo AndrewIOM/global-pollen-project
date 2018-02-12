@@ -45,11 +45,17 @@ let getBlob (container:CloudBlobContainer) fileName =
 let scaleImage maxDimension (stream:Stream) =
     use image = ImageSharp.Image.Load<ImageSharp.PixelFormats.Rgb24>(stream)
     let resizeRatio = calcScale maxDimension (float image.Height) (float image.Width)
-    let mutable memoryStream = new MemoryStream()
     let memoryStream = new MemoryStream ()
     let h = (float image.Height) * resizeRatio
     let w = (float image.Width) * resizeRatio
     image.Resize(int w,int h).SaveAsPng(memoryStream) |> ignore
+    memoryStream.Position <- int64(0)
+    memoryStream
+
+let pngTojpg (stream:Stream) =
+    use image = ImageSharp.Image.Load<ImageSharp.PixelFormats.Rgb24>(stream)
+    let memoryStream = new MemoryStream ()
+    image.SaveAsJpeg(memoryStream) |> ignore
     memoryStream.Position <- int64(0)
     memoryStream
 
@@ -106,15 +112,16 @@ let uploadToAzure baseUrl conName connString generateName (image:ImageForUpload)
         | i when i = frames -> Image.FocusImage (imgs,stepping,magId) |> Ok
         | _ -> "Couldn't upload image - not all frames were succesfully saved" |> Error
 
-let toThumbnailName (name:string) =
-    name.Replace(".png","_thumb.png")
+let toCachedName size (name:string) =
+    name.Replace(".png","_" + size + ".jpg")
 
 let toBlobName containerName (relative:string) =
     relative.Replace("/" + containerName + "/", "")
 
-let generateThumbnail baseUrl conName connString (fullSizeFile:RelativeUrl) =
-    let container = getContainer connString conName
-    let fullSizeBlobRef = fullSizeFile |> Url.unwrapRelative |> toBlobName conName |> getBlob container
+/// Returns the image url and the scale factor applied as a tuple
+let generateCacheImage originalContainerName cacheContainerName connString maxDimension sizeName (fullSizeFile:RelativeUrl) =
+    let originalContainer = getContainer connString originalContainerName
+    let fullSizeBlobRef = fullSizeFile |> Url.unwrapRelative |> toBlobName originalContainerName |> getBlob originalContainer
     let exists = fullSizeBlobRef.ExistsAsync() |> Async.AwaitTask |> Async.RunSynchronously
     match exists with
     | false -> "The specified file does not exist in Azure: " + fullSizeBlobRef.Name |> Error
@@ -122,8 +129,13 @@ let generateThumbnail baseUrl conName connString (fullSizeFile:RelativeUrl) =
         use memoryStream = new MemoryStream()
         fullSizeBlobRef.DownloadToStreamAsync(memoryStream) |> Async.AwaitTask |> Async.RunSynchronously
         memoryStream.Position <- int64(0)
-        let thumbBlob = fullSizeFile |> Url.unwrapRelative |> toBlobName conName |> toThumbnailName |> getBlob container
+        let cacheContainer = getContainer connString cacheContainerName 
+        let thumbBlob = fullSizeFile |> Url.unwrapRelative |> toBlobName originalContainerName |> toCachedName sizeName |> getBlob cacheContainer
+        let scaleFactor = memoryStream |> getScaleFactor' maxDimension
+        memoryStream.Position <- int64(0)
         memoryStream
-        |> scaleImage 200.
+        |> scaleImage maxDimension
+        |> pngTojpg
         |> uploadFromStream thumbBlob
         |> Async.RunSynchronously
+        |> lift (fun r -> r,scaleFactor)

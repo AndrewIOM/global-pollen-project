@@ -93,7 +93,6 @@ let connect thirdParty (connector:TaxonId->Result<int option,string>) state =
                 | EncyclopediaOfLife -> [ EstablishedConnection (t.Id, EncyclopediaOfLifeId i) ]
             | None -> []
 
-
 let handle deps = 
     function
     | ImportFromBackbone c -> import c deps.ValidateTaxon
