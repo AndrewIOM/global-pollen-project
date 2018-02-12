@@ -18,6 +18,8 @@ open Responses
 
 type GetCurrentUser = unit -> Guid
 
+let mutable inMaintainanceMode = false
+
 // Load AppSettings
 let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").Build()
 let getAppSetting name =
@@ -637,9 +639,11 @@ module Statistic =
 module Admin =
 
     let rebuildReadModel() =
+        inMaintainanceMode <- true
         redisReset() |> ignore
         ProjectionHandler.init redisSet () |> ignore
         eventStore.Value.ReplayDomainEvents()
+        inMaintainanceMode <- false
 
     let listUsers() =
         let get (id:Guid) = 

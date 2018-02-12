@@ -37,6 +37,9 @@ let currentUserId (ctx:HttpContext) () =
 let notFoundResult ctx =
     ctx |> (clearResponse >=> setStatusCode 400 >=> renderView "NotFound" None)
 
+let maintainanceResult ctx =
+    ctx |> (clearResponse >=> setStatusCode 503 >=> renderView "Maintainance" None)
+
 let prettyJson = Serialisation.serialise
 
 let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,ServiceError>) : HttpHandler =
@@ -344,25 +347,28 @@ let webApp : HttpHandler =
         ]
 
     // Main router
-    choose [
-        subRoute    "/api/v1"                   publicApi
-        subRoute    "/api/v1/digitise"          digitiseApi
-        subRoute    "/Account"                  accountManagement
-        subRoute    "/Taxon"                    masterReferenceCollection
-        subRoute    "/Reference"                individualRefCollections
-        subRoute    "/Identify"                 identify
-        subRoute    "/Admin"                    admin
-        GET >=> 
+    match inMaintainanceMode with
+    | true -> maintainanceResult
+    | false -> 
         choose [
-            route   "/"                         >=> homeHandler
-            route   "/Guide"                    >=> docIndexHandler
-            routef  "/Guide/%s"                 docSectionHandler
-            route   "/Statistics"               >=> systemStatsHandler
-            route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
-            route   "/Api"                      >=> renderView "Home/Api" None
-            route   "/Tools"                    >=> renderView "Tools/Index" None
-            route   "/Cite"                     >=> renderView "Home/Cite" None
-            route   "/Terms"                    >=> renderView "Home/Terms" None
+            subRoute    "/api/v1"                   publicApi
+            subRoute    "/api/v1/digitise"          digitiseApi
+            subRoute    "/Account"                  accountManagement
+            subRoute    "/Taxon"                    masterReferenceCollection
+            subRoute    "/Reference"                individualRefCollections
+            subRoute    "/Identify"                 identify
+            subRoute    "/Admin"                    admin
+            GET >=> 
+            choose [
+                route   "/"                         >=> homeHandler
+                route   "/Guide"                    >=> docIndexHandler
+                routef  "/Guide/%s"                 docSectionHandler
+                route   "/Statistics"               >=> systemStatsHandler
+                route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
+                route   "/Api"                      >=> renderView "Home/Api" None
+                route   "/Tools"                    >=> renderView "Tools/Index" None
+                route   "/Cite"                     >=> renderView "Home/Cite" None
+                route   "/Terms"                    >=> renderView "Home/Terms" None
+            ]
+            setStatusCode 404 >=> renderView "NotFound" None 
         ]
-        setStatusCode 404 >=> renderView "NotFound" None 
-    ]
