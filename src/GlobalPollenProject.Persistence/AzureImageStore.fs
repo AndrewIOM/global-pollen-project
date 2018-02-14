@@ -1,6 +1,6 @@
 module AzureImageStore
 
-open ImageSharp
+open SixLabors.ImageSharp
 open Microsoft.WindowsAzure.Storage
 open Microsoft.WindowsAzure.Storage.Blob
 open System.IO
@@ -29,7 +29,9 @@ let uploadFromStream (blob:CloudBlockBlob) stream = async {
     let! success = blob.UploadFromStreamAsync(stream) |> Async.AwaitIAsyncResult
     match success with
     | true -> return Url.create blob.Uri.AbsoluteUri |> Ok
-    | false -> return "The image did not successfully upload to Azure" |> Error }
+    | false -> 
+        printfn "The image did not successfully upload to Azure %A" blob
+        return "The image did not successfully upload to Azure" |> Error }
 
 let getContainer connectionString name =
     let storageAccount = CloudStorageAccount.Parse connectionString
@@ -43,24 +45,26 @@ let getBlob (container:CloudBlobContainer) fileName =
     container.GetBlockBlobReference(fileName)
 
 let scaleImage maxDimension (stream:Stream) =
-    use image = ImageSharp.Image.Load<ImageSharp.PixelFormats.Rgb24>(stream)
+    use image = Image.Load<PixelFormats.Rgb24>(stream)
     let resizeRatio = calcScale maxDimension (float image.Height) (float image.Width)
     let memoryStream = new MemoryStream ()
     let h = (float image.Height) * resizeRatio
     let w = (float image.Width) * resizeRatio
-    image.Resize(int w,int h).SaveAsPng(memoryStream) |> ignore
+    image.Mutate(fun i -> i.Resize(int w, int h) |> ignore)
+    image.SaveAsPng(memoryStream)
+    // image.Resize(int w,int h).SaveAsPng(memoryStream) |> ignore
     memoryStream.Position <- int64(0)
     memoryStream
 
 let pngTojpg (stream:Stream) =
-    use image = ImageSharp.Image.Load<ImageSharp.PixelFormats.Rgb24>(stream)
+    use image = Image.Load<PixelFormats.Rgb24>(stream)
     let memoryStream = new MemoryStream ()
     image.SaveAsJpeg(memoryStream) |> ignore
     memoryStream.Position <- int64(0)
     memoryStream
 
 let getImageDimensions' (stream:Stream) =
-    use image = ImageSharp.Image.Load<Rgba32>(stream)
+    use image = Image.Load<Rgba32>(stream)
     image.Height,image.Width
 
 let getImageDimensions base64 =
@@ -70,7 +74,7 @@ let getImageDimensions base64 =
     |> lift getImageDimensions'
 
 let getScaleFactor' maxDimension (stream:Stream) =
-    use image = ImageSharp.Image.Load<ImageSharp.PixelFormats.Rgb24>(stream)
+    use image = Image.Load<PixelFormats.Rgb24>(stream)
     calcScale maxDimension (float image.Height) (float image.Width)
 
 let getScaleFactor maxDimension base64 =
@@ -119,7 +123,7 @@ let toBlobName containerName (relative:string) =
     relative.Replace("/" + containerName + "/", "")
 
 /// Returns the image url and the scale factor applied as a tuple
-let generateCacheImage originalContainerName cacheContainerName connString maxDimension sizeName (fullSizeFile:RelativeUrl) =
+let generateCacheImage originalContainerName cacheContainerName connString maxDimension sizeName (fullSizeFile:RelativeUrl) =    
     let originalContainer = getContainer connString originalContainerName
     let fullSizeBlobRef = fullSizeFile |> Url.unwrapRelative |> toBlobName originalContainerName |> getBlob originalContainer
     let exists = fullSizeBlobRef.ExistsAsync() |> Async.AwaitTask |> Async.RunSynchronously
@@ -131,6 +135,7 @@ let generateCacheImage originalContainerName cacheContainerName connString maxDi
         memoryStream.Position <- int64(0)
         let cacheContainer = getContainer connString cacheContainerName 
         let thumbBlob = fullSizeFile |> Url.unwrapRelative |> toBlobName originalContainerName |> toCachedName sizeName |> getBlob cacheContainer
+        printfn "Saving cache image... [%s]" thumbBlob.Name
         let scaleFactor = memoryStream |> getScaleFactor' maxDimension
         memoryStream.Position <- int64(0)
         memoryStream
