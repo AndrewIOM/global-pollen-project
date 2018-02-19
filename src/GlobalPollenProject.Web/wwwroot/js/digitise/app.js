@@ -256,7 +256,7 @@ function RecordSlideViewModel(currentCollection) {
                 type: "GET"
             })
             .done(function (data) {
-                if (data.length == 1 && data[0].TaxonomicStatus == "accepted") self.currentTaxon(data[0].Id);
+                if (data.length == 1 && data[0].TaxonomicStatus == "accepted" || data[0].TaxonomicStatus == "doubtful") self.currentTaxon(data[0].Id);
                 self.newSlideTaxonStatus(data);
             })
     }
