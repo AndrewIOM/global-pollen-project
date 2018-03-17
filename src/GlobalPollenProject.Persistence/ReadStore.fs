@@ -194,7 +194,7 @@ module Redis =
         let result : string = ~~db.StringGet(~~key)
         match result with
         | NotNull -> Ok <| Json result
-        | _ -> Error "Could not get read model from Redis"
+        | _ -> Error (sprintf "Could not get read model from Redis: %s" key)
 
     let delete (redis:ConnectionMultiplexer) (key:string) =
         let db = redis.GetDatabase()

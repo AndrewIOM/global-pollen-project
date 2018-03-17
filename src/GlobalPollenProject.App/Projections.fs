@@ -424,7 +424,7 @@ module MasterReferenceCollection =
                 | Some t ->
                     getHeirarchy get set t
                     |> lift (List.map (remove slideSummary))
-                    |> bind (mapResult (setTaxon get set setSortedList (bbId |> TaxonId)))
+                    |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
                     |> lift ignore )
 
     let updateSlide get set setSortedList (oldSlide:SlideDetail) (newSlide:SlideDetail) = 
