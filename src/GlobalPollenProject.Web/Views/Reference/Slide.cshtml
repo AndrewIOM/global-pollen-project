@@ -41,21 +41,33 @@
     <div class="col-md-12">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="/">Home</a></li>
-            <li class="breadcrumb-item"><a href="/Taxon">Master Reference Collection</a></li>
-            @if (Model.Slide.Rank == "Family") {
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
-            } @if (Model.Slide.Rank == "Genus") {
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">@Model.Slide.CurrentGenus</a></li>
-            } @if (Model.Slide.Rank == "Species") {
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">@Model.Slide.CurrentGenus</a></li>
-            <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus/@GetSpecificEphitet(Model.Slide.CurrentSpecies)">@Model.Slide.CurrentSpecies</a></li>
+            @if (Model.Slide.CurrentTaxonStatus == "accepted") {
+                <li class="breadcrumb-item"><a href="/Taxon">Master Reference Collection</a></li>
+                @if (Model.Slide.Rank == "Family") {
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
+                } @if (Model.Slide.Rank == "Genus") {
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">@Model.Slide.CurrentGenus</a></li>
+                } @if (Model.Slide.Rank == "Species") {
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily">@Model.Slide.CurrentFamily</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">@Model.Slide.CurrentGenus</a></li>
+                <li class="breadcrumb-item"><a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus/@GetSpecificEphitet(Model.Slide.CurrentSpecies)">@Model.Slide.CurrentSpecies</a></li>
+                }
+            } else {
+                <li class="breadcrumb-item"><a href="/Reference">Individual Reference Collections</a></li>
+                <li class="breadcrumb-item"><a href="/Reference/@Model.Collection.Id/@Model.Collection.Version">@Model.Collection.Name</a></li>
             }
-            <li class="breadcrumb-item active">Slide</li>
+            <li class="breadcrumb-item active">Slide @Model.Slide.CollectionSlideId</li>
         </ol>
     </div>
 </div>
+
+@if (Model.Slide.CurrentTaxonStatus != "accepted") {
+    <div class="alert alert-warning" role="alert">
+        <strong><i class="fa fa-warning"></i> There is taxonomic uncertainty with this slide.</strong>
+        Our taxonomic backbone indicates that @latinName is a @Model.Slide.CurrentTaxonStatus name. Until more information becomes available, this slide will not appear in our Master Reference Collection. <a target="_blank" href="/Guide/Quick-Start">Learn more...</a>
+    </div>
+}
 
 <div class="row">
     <div class="col-md-8" id="viewer-interface">
@@ -158,12 +170,13 @@
             </div>
             <div class="card-block">
                 <dl class="row">
+                    @if (Model.Slide.CurrentTaxonStatus == "accepted") {
                     <dt class="col-sm-5">Current Taxon</dt>
                     <dd class="col-sm-7">
                         <a href="/Taxon/@Model.Slide.CurrentFamily">Family: @Model.Slide.CurrentFamily</a><br/>
                         <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus">Genus: @Model.Slide.CurrentGenus</a><br/>
                         <a href="/Taxon/@Model.Slide.CurrentFamily/@Model.Slide.CurrentGenus/@GetSpecificEphitet(Model.Slide.CurrentSpecies)">Species: @Model.Slide.CurrentSpecies</a>
-                    </dd>
+                    </dd> }
                     <dt class="col-sm-5">Taxon on Slide</dt>
                     <dd class="col-sm-7">
                         <span>Family: @Model.Slide.FamilyOriginal</span><br/>

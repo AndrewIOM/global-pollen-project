@@ -28,6 +28,14 @@ let serialise s =
     | Ok r -> Ok <| Json r
     | Error e -> Error e
 
+module Result = 
+
+    let toOption r =
+        match r with
+        | Ok x -> Some x
+        | Error _ -> None
+
+
 module Checkpoint =
 
     let init setKey =
@@ -297,29 +305,52 @@ module MasterReferenceCollection =
                 Summary = { taxon.Summary with DirectChildren = newChild :: taxon.Summary.DirectChildren }; 
                 Detail = { taxon.Detail with Children = newChild :: taxon.Detail.Children } }
 
-    let getHeirarchy get set backboneId =
+    let getHeirarchy get set t =
+        let heirarchy = getBackboneHeirarchy get t
+        match heirarchy with
+        | Error e -> Error e
+        | Ok h ->
+            let getParent (c:TaxonReadModel) (p:Guid) =
+                getTaxon get set (p |> TaxonId)
+                |> lift (appendChild c)
+            let rec getParents (remaining:BackboneTaxon list) (stashed:TaxonReadModel list) child =
+                match remaining |> List.length with
+                | 0 -> child :: stashed |> Ok
+                | _ ->
+                    let parent = getParent child remaining.Head.Id
+                    match parent with
+                    | Error e -> Error e
+                    | Ok p -> getParents remaining.Tail (child :: stashed) p
+            let reversed = h |> List.rev
+            getTaxon get set (reversed.Head.Id |> TaxonId)
+            |> bind (getParents reversed.Tail [])
+
+    let isMultiMatch l =
+        match l |> List.length with
+        | 0 -> Error "No matches: unknown taxon specified"
+        | 1 -> Ok l.Head
+        | _ -> Error "Multiple taxon matches: cannot place this record in the pollen taxonomy"
+
+    /// Gets the currently accepted backbone taxon for this ID. If the taxon
+    /// is currently a synonym, it will return the current accepted
+    /// taxon. If the backbone taxon is currently disputed, it will
+    /// return an error.
+    let currentAcceptedTaxon get backboneId =
         let bbTaxon = TaxonomicBackbone.getById backboneId get deserialise
         match bbTaxon with
         | Error e -> Error e
         | Ok t ->
-            let heirarchy = getBackboneHeirarchy get t
-            match heirarchy with
-            | Error e -> Error e
-            | Ok h ->
-                let getParent (c:TaxonReadModel) (p:Guid) =
-                    getTaxon get set (p |> TaxonId)
-                    |> lift (appendChild c)
-                let rec getParents (remaining:BackboneTaxon list) (stashed:TaxonReadModel list) child =
-                    match remaining |> List.length with
-                    | 0 -> child :: stashed |> Ok
-                    | _ ->
-                        let parent = getParent child remaining.Head.Id
-                        match parent with
-                        | Error e -> Error e
-                        | Ok p -> getParents remaining.Tail (child :: stashed) p
-                let reversed = h |> List.rev
-                getTaxon get set (reversed.Head.Id |> TaxonId)
-                |> bind (getParents reversed.Tail [])
+            match t.TaxonomicStatus with
+            | "accepted" -> Some t |> Ok
+            | "misapplied"
+            | "synonym" ->
+                let m =[t] 
+                        |> TaxonomicBackbone.tryTrace t.Rank t.NamedBy get deserialise
+                        |> Result.bind isMultiMatch
+                match m with
+                | Ok t -> Some t |> Ok
+                | Error _ -> None |> Ok
+            | _ -> None |> Ok
 
     let setDiff previous current =
         set current - set previous |> Set.toList
@@ -363,10 +394,18 @@ module MasterReferenceCollection =
                 let detail = { taxon.Detail with Slides = slide :: taxon.Detail.Slides }
                 { Summary = summary; Detail = detail }
             Statistics.incrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
-            getHeirarchy get set (bbId |> TaxonId)
-            |> lift (List.map (add slideSummary))
-            |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
-            |> lift ignore
+            bbId
+            |> TaxonId
+            |> currentAcceptedTaxon get
+            |> bind (fun current ->
+                match current with
+                | None -> Ok()
+                | Some t ->
+                    t
+                    |> getHeirarchy get set
+                    |> lift (List.map (add slideSummary))
+                    |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
+                    |> lift ignore )
 
     let removeSlide get set setSortedList s = 
         match s.CurrentTaxonId with
@@ -378,10 +417,15 @@ module MasterReferenceCollection =
                 let detail = { taxon.Detail with Slides = taxon.Detail.Slides |> List.filter (fun s -> not (s = slide)) }
                 { Summary = summary; Detail = detail }
             Statistics.decrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
-            getHeirarchy get set (bbId |> TaxonId)
-            |> lift (List.map (remove slideSummary))
-            |> bind (mapResult (setTaxon get set setSortedList (bbId |> TaxonId)))
-            |> lift ignore
+            currentAcceptedTaxon get (bbId |> TaxonId)
+            |> bind (fun current ->
+                match current with
+                | None -> Ok()
+                | Some t ->
+                    getHeirarchy get set t
+                    |> lift (List.map (remove slideSummary))
+                    |> bind (mapResult (setTaxon get set setSortedList (bbId |> TaxonId)))
+                    |> lift ignore )
 
     let updateSlide get set setSortedList (oldSlide:SlideDetail) (newSlide:SlideDetail) = 
         match oldSlide = newSlide with
