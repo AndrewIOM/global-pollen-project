@@ -504,65 +504,11 @@ module Backbone =
 
     // Traces a backbone taxon to its most recent name (e.g. synonym -> synonym -> accepted name)
     let tryTrace (request:BackboneSearchRequest) =
-
-        // TODO Remove this active pattern. Backbone was serialised incorrectly.
-        let (|Prefix|_|) (p:string) (s:string) =
-            if s.StartsWith(p) then
-                Some(s.Substring(p.Length))
-            else
-                None
-
-        let rec lookupSynonym (id:string) =
-            let guid =
-                match id with
-                | Prefix "TaxonId " rest -> Guid.TryParse rest
-                | _ -> Guid.TryParse id
-            match fst guid with
-            | false -> Error "Invalid taxon specified"
-            | true -> 
-                TaxonomicBackbone.getById (TaxonId (snd guid)) readStoreGet deserialise
-                |> Result.bind (fun syn ->
-                    match syn.TaxonomicStatus with
-                    | "accepted" -> Ok [syn]
-                    | "synonym"
-                    | "misapplied" -> lookupSynonym syn.TaxonomicAlias
-                    | "doubtful" -> Ok [syn]
-                    | _ -> Error "Could not determine taxonomic status" )
-
-        let trace (auth:string) (matches:BackboneTaxon list) =
-            match matches.Length with
-            | 0 -> Error "Unknown taxon specified"
-            | 1 ->
-                match matches.[0].TaxonomicStatus with
-                | "doubtful"
-                | "accepted" -> Ok ([matches.[0]])
-                | "synonym"
-                | "misapplied" ->  lookupSynonym matches.[0].TaxonomicAlias
-                | _ -> Error "Could not determine taxonomic status"
-            | _ ->
-                match String.IsNullOrEmpty auth with
-                | true -> 
-                    // Return only the accepted genus if in multiple families
-                    match request.Rank with
-                    | "Genus" -> matches |> List.filter (fun t -> t.TaxonomicStatus = "accepted") |> Ok
-                    | _ -> matches |> Ok
-                | false ->
-                    // Search by author (NB currently not fuzzy)
-                    let m = matches |> List.tryFind(fun t -> t.NamedBy = auth)
-                    match m with
-                    | None -> matches |> Ok
-                    | Some t ->
-                        match t.TaxonomicStatus with
-                        | "doubtful"
-                        | "accepted" -> Ok ([t])
-                        | "synonym"
-                        | "misapplied" ->  lookupSynonym t.TaxonomicAlias
-                        | _ -> Error "Could not determine taxonomic status"
-
         request
         |> tryMatch
-        |> Result.bind (trace request.Authorship)
+        |> Result.bind (ReadStore.TaxonomicBackbone.tryTrace request.Rank request.Authorship readStoreGet deserialise)
         |> toAppResult
+
 
 module User = 
 
