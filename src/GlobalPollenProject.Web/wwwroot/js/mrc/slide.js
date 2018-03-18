@@ -35,7 +35,7 @@ var clickedGalleryItem = function(element) {
     $("#slide-gallery").find(".slide-gallery-item").removeClass("active");
     $(element.target).addClass("active");
     
-    var frames = $(element.target).data("frames").slice(1, -1).split(";");
+    var frames = $(element.target).data("frames");
 
     createViewer(frames, parseFloat($(element.target).data("pixelwidth")));
 };

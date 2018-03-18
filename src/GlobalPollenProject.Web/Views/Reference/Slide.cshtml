@@ -30,8 +30,8 @@
 <script src="/js/mrc/slide.js"></script>
 <script>
     $(function() {
-        var frames = @Html.Raw(Json.Serialize(Model.Slide.Images[0].Frames));
-        createViewer(frames, @Model.Slide.Images[0].PixelWidth);
+        var frames = @Html.Raw(Json.Serialize(Model.Slide.Images[0].FramesSmall));
+        createViewer(frames, @Model.Slide.Images[0].PixelWidthSmall);
     });
 </script>
 }
@@ -77,8 +77,8 @@
         <div class="card">
             <div class="card-block card-no-padding" id="slide-gallery">
                 @foreach(var img in Model.Slide.Images) {
-                    <div class="slide-gallery-item col-md-3" data-frames='@Html.Raw(Json.Serialize(img.Frames))' data-pixelwidth="@img.PixelWidth">
-                        <img src="@img.Frames[0]" alt="Image preview">
+                    <div class="slide-gallery-item col-md-3" data-frames='@Html.Raw(Json.Serialize(img.FramesSmall))' data-pixelwidth="@img.PixelWidthSmall">
+                        <img src="@img.FramesSmall[0]" alt="Image preview">
                     </div>
                 }
             </div>
