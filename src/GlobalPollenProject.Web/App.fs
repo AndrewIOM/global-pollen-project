@@ -40,6 +40,11 @@ let notFoundResult ctx =
 let maintainanceResult ctx =
     ctx |> (clearResponse >=> setStatusCode 503 >=> renderView "Maintainance" None)
 
+let notInMaintainanceMode next ctx : HttpFuncResult =
+    match inMaintainanceMode with
+    | true -> maintainanceResult next ctx
+    | false -> next ctx
+
 let prettyJson = Serialisation.serialise
 
 let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,ServiceError>) : HttpHandler =
@@ -347,28 +352,26 @@ let webApp : HttpHandler =
         ]
 
     // Main router
-    match inMaintainanceMode with
-    | true -> maintainanceResult
-    | false -> 
+    notInMaintainanceMode >=>
+    choose [
+        subRoute    "/api/v1"                   publicApi
+        subRoute    "/api/v1/digitise"          digitiseApi
+        subRoute    "/Account"                  accountManagement
+        subRoute    "/Taxon"                    masterReferenceCollection
+        subRoute    "/Reference"                individualRefCollections
+        subRoute    "/Identify"                 identify
+        subRoute    "/Admin"                    admin
+        GET >=> 
         choose [
-            subRoute    "/api/v1"                   publicApi
-            subRoute    "/api/v1/digitise"          digitiseApi
-            subRoute    "/Account"                  accountManagement
-            subRoute    "/Taxon"                    masterReferenceCollection
-            subRoute    "/Reference"                individualRefCollections
-            subRoute    "/Identify"                 identify
-            subRoute    "/Admin"                    admin
-            GET >=> 
-            choose [
-                route   "/"                         >=> homeHandler
-                route   "/Guide"                    >=> docIndexHandler
-                routef  "/Guide/%s"                 docSectionHandler
-                route   "/Statistics"               >=> systemStatsHandler
-                route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
-                route   "/Api"                      >=> renderView "Home/Api" None
-                route   "/Tools"                    >=> renderView "Tools/Index" None
-                route   "/Cite"                     >=> renderView "Home/Cite" None
-                route   "/Terms"                    >=> renderView "Home/Terms" None
-            ]
-            setStatusCode 404 >=> renderView "NotFound" None 
+            route   "/"                         >=> homeHandler
+            route   "/Guide"                    >=> docIndexHandler
+            routef  "/Guide/%s"                 docSectionHandler
+            route   "/Statistics"               >=> systemStatsHandler
+            route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
+            route   "/Api"                      >=> renderView "Home/Api" None
+            route   "/Tools"                    >=> renderView "Tools/Index" None
+            route   "/Cite"                     >=> renderView "Home/Cite" None
+            route   "/Terms"                    >=> renderView "Home/Terms" None
         ]
+        setStatusCode 404 >=> renderView "NotFound" None 
+    ]
