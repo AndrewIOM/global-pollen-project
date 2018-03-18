@@ -23,3 +23,26 @@
         }
     }
 }
+
+.table-orig-name {
+    display:block;
+}
+
+.required-symbol {
+    color: red;
+}
+
+.input-group-addon {
+    border-radius: 0;
+}
+
+#reference-table {
+    .thead-default {
+        tr {
+            th {
+                background-color: #9b538b;
+                color: #fff;
+            }
+        }
+    }
+}

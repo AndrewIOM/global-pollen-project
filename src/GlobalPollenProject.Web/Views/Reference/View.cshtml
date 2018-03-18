@@ -13,7 +13,8 @@
     <script type="text/javascript">
         $(document).ready(function() {
             $('#reference-table').DataTable({
-                paging: false
+                paging: false,
+                order: [[ 2, "asc" ]]
             });
         })
     </script>
@@ -25,7 +26,7 @@
 @section headerSection {
     <header><div class="container">
     <h1>@ViewData["Title"]</h1>
-    <p>Digitised Reference Collection.</p>
+    <p>Individual Reference Collection.</p>
     </div></header>
 }
 
@@ -81,7 +82,7 @@
       <th>Family</th>
       <th>Genus</th>
       <th>Species</th>
-      <th>Digitisation Status</th>
+      <th>Digitised?</th>
       <th>Actions</th>
     </tr>
   </thead>
@@ -94,16 +95,16 @@
                 <td><a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus">@slide.CurrentGenus</a> <em class="table-orig-name">(@slide.GenusOriginal)</em></td>
                 <td><a href="/Taxon/@slide.CurrentFamily/@slide.CurrentGenus/@GetSpecificEphitet(slide.CurrentSpecies)">@slide.CurrentSpecies @slide.CurrentSpAuth</a> <em class="table-orig-name">(@slide.SpeciesOriginal)</em></td>
             } else {
-                <td><span>@slide.CurrentFamily</span><em>@slide.FamilyOriginal</em></td>
-                <td><span>@slide.CurrentGenus</span><em>@slide.GenusOriginal</em></td>
-                <td><span>@slide.CurrentSpecies @slide.CurrentSpAuth</span><em>@slide.SpeciesOriginal</em></td>
+                <td><span>@slide.CurrentFamily</span><em class="table-orig-name">(@slide.FamilyOriginal)</em></td>
+                <td><span>@slide.CurrentGenus</span><em class="table-orig-name">(@slide.GenusOriginal)</em></td>
+                <td><span>@slide.CurrentSpecies @slide.CurrentSpAuth</span><em class="table-orig-name">(@slide.SpeciesOriginal)</em></td>
             }
             <td>
-                @if (slide.IsFullyDigitised) { <span>Fully digitised, with @slide.Images.Length images.</span> }
-                @if (!slide.IsFullyDigitised) { <span>Not digitised.</span> }
+                @if (slide.IsFullyDigitised) { <span>Yes: @slide.Images.Length image(s)</span> }
+                @if (!slide.IsFullyDigitised) { <span>No</span> }
             </td>
             <td>
-                @if (slide.IsFullyDigitised) { <a href="/Reference/@Model.Id/@slide.CollectionSlideId" class="btn btn-secondary">View Slide</a> }
+                @if (slide.IsFullyDigitised) { <a href="/Reference/@Model.Id/@slide.CollectionSlideId" class="btn btn-secondary">View</a> }
             </td>
         </tr>
       }

@@ -119,33 +119,29 @@
             </div>
         </div>
 
-        <p>This reference slide has been digitised with @Model.Slide.Images.Length image(s). Each image may contain one or more pollen grains.</p>
+        <p>This reference slide has been digitised with @Model.Slide.Images.Length image(s). Each image may contain one or more pollen grains or spores.</p>
         <div class="card">
             <div class="card-header">
                 Origin
             </div>
             <div class="card-block">
-                <dl class="row">
-                    <dt class="col-sm-5">Identification Method</dt>
-                    <dd class="col-sm-7">
-                        @if (string.IsNullOrEmpty(Model.Slide.IdMethod)) { <span>Unknown</span> } else { <span>@Model.Slide.IdMethod</span> }</dd>
-
-                    @if (Model.Slide.IdMethod == "Botanical") {
-                        if (Model.Slide.PlantId.Method == "Field") {
-                            <dt class="col-sm-5">Field Identification By</dt>
-                            <dd class="col-sm-7">@Model.Slide.PlantId.IdentifiedBySurname</dd>
-                        } else if (Model.Slide.PlantId.Method == "LivingCollection") {
-                            <dt class="col-sm-5">Botanic Garden Living Collection Ref.</dt>
-                            <dd class="col-sm-7">@Model.Slide.PlantId.InstitutionCode (Internal Code: @Model.Slide.PlantId.InternalId)</dd>
-                        } else if (Model.Slide.PlantId.Method == "Voucher") {
-                            <dt class="col-sm-5">Herbarium Voucher Reference</dt>
-                            <dd class="col-sm-7">@Model.Slide.PlantId.InstitutionCode (Internal Code: @Model.Slide.PlantId.InternalId)</dd>
-                        } else {
-                            <dt class="col-sm-5">Source Plant</dt>
-                            <dd class="col-sm-7">Unknown for this slide</dd>
-                        }
+                @if (Model.Slide.IdMethod == "Botanical") {
+                    if (Model.Slide.PlantId.Method == "Field") {
+                        <h4>Taken from a wild plant</h4>
+                        <small class="text-muted">The plant was identified by @(Model.Slide.PlantId.IdentifiedBySurname).</small>
+                    } else if (Model.Slide.PlantId.Method == "LivingCollection") {
+                        <h4>Botanic Garden (Living Collection)</h4>
+                        <small class="text-muted">The plant reference is @Model.Slide.PlantId.InternalId at the botanic garden @(Model.Slide.PlantId.InstitutionCode). You can lookup the botanic garden code in <a href="https://www.bgci.org/garden_search.php" target="_blank">the BGCI online database</a> for more information.</small>
+                    } else if (Model.Slide.PlantId.Method == "Voucher") {
+                        <h4>Herbarium Voucher</h4>
+                        <small class="text-muted">The voucher barcode is <strong>@Model.Slide.PlantId.InternalId</strong> in the <strong>@(Model.Slide.PlantId.InstitutionCode)</strong> herbarium. You can lookup this herbarium in the <a href="http://sweetgum.nybg.org/science/ih/" target="_blank">Index Herbariorum</a> for more information.</small>
+                    } else {
+                        <h4>Directly sampled from plant material</h4>
+                        <small class="text-muted">The source plant and identification method is unknown. Please contact the curator of this reference collection for more information.</small>
                     }
-
+                }
+                <hr/>
+                <dl class="row">
                     <dt class="col-sm-5">Sample Collected By</dt>
                     <dd class="col-sm-7">@Model.Slide.CollectorName</dd>
 

@@ -45,7 +45,7 @@
                         <div class="fill"></div>
                     </div>
                 </div>
-                <p class="card-text">or @Model.Family.Count of @Model.Family.Total families.</p>
+                <p class="card-text">or @Model.Family.Count of @string.Format("{0:n0}", Model.Family.Total) families.</p>
             </div>
             <div class="col-sm-4">
                 <div class='c100 @genusPercentRounded'>
@@ -55,7 +55,7 @@
                         <div class="fill"></div>
                     </div>
                 </div>
-                <p class="card-text">or @Model.Genus.Count of @Model.Genus.Total genera.</p>
+                <p class="card-text">or @Model.Genus.Count of @string.Format("{0:n0}", Model.Genus.Total) genera.</p>
             </div>
             <div class="col-sm-4">
                 <div class='c100 @speciesPercentRounded'>
@@ -65,7 +65,7 @@
                         <div class="fill"></div>
                     </div>
                 </div>
-                <p class="card-text">or @Model.Species.Count of @Model.Species.Total species.</p>
+                <p class="card-text">or @Model.Species.Count of @string.Format("{0:n0}", Model.Species.Total) species.</p>
             </div>
         </div>
     <br/>

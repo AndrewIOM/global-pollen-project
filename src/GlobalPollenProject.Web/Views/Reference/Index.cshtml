@@ -25,20 +25,16 @@
 
 <div class="row">
     <div class="col-md-9">
-        <div class="row">
-            @foreach (var col in Model) {
-                <div class="col-md-6">
-                <div class="card">
-                    <div class="card-block">
-                    <h4 class="card-title"><a href="/Reference/@col.Id/@col.Version">@col.Name</a></h4>
-                    <h6 class="card-subtitle mb-2 text-muted">@col.CuratorSurname, @col.CuratorFirstNames @if (!string.IsNullOrEmpty(col.Institution)) { <span>/ @col.Institution</span> } </h6>
-                    <p class="card-text">@(Html.Raw(col.Description.Length>300 ? col.Description.Substring(0, 300)+"..." : col.Description))</p>
-                    <p class="card-text"><small class="text-muted">Version @col.Version published on @col.Published.ToLongDateString()</small></p>
-                    </div>
+        @foreach (var col in Model) {
+            <div class="card">
+                <div class="card-block">
+                <h4 class="card-title"><a href="/Reference/@col.Id/@col.Version">@col.Name</a></h4>
+                <h6 class="card-subtitle mb-2 text-muted">@col.CuratorSurname, @col.CuratorFirstNames @if (!string.IsNullOrEmpty(col.Institution)) { <span>/ @col.Institution</span> } </h6>
+                <p class="card-text">@(Html.Raw(col.Description.Length>300 ? col.Description.Substring(0, 300)+"..." : col.Description))</p>
+                <p class="card-text"><small class="text-muted">Version @col.Version published on @col.Published.ToLongDateString()</small></p>
                 </div>
-                </div>
-            }
-        </div>
+            </div>
+        }
     </div>
     <div class="col-md-3">
         <div class="card card-inverse card-primary mb-3 text-center crop-panel">
