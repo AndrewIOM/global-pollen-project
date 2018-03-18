@@ -1,5 +1,6 @@
 @model Responses.SlidePageViewModel 
 @inject SignInManager<ApplicationUser> SignInManager
+@using System.Text.RegularExpressions
 @{ 
     Layout = "_Layout"; 
     ViewBag.Title = "Individual Slide"; 
@@ -119,7 +120,6 @@
             </div>
         </div>
 
-        <p>This reference slide has been digitised with @Model.Slide.Images.Length image(s). Each image may contain one or more pollen grains or spores.</p>
         <div class="card">
             <div class="card-header">
                 Origin
@@ -141,22 +141,28 @@
                     }
                 }
                 <hr/>
-                <dl class="row">
-                    <dt class="col-sm-5">Sample Collected By</dt>
-                    <dd class="col-sm-7">@Model.Slide.CollectorName</dd>
-
-                    <dt class="col-sm-5">Year sample taken</dt>
-                    <dd class="col-sm-7">
-                        @if (Model.Slide.AgeType == "Unknown") { <span>Unknown</span> }
-                        else { <span>@Model.Slide.AgeType @Model.Slide.Age</span> }
-                    </dd>
-
-                    <dt class="col-sm-5">Location</dt>
-                    <dd class="col-sm-7">
-                        @if (Model.Slide.LocationType == "Unknown") { <span>Unknown</span> }
-                        else { <span>@Model.Slide.Location</span> }
-                    </dd>
-                </dl>
+                <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-globe fa-stack-1x fa-inverse"></i>
+                </span>
+                @if (Model.Slide.LocationType == "Unknown") { <span>Unknown location</span> }
+                        else if (Model.Slide.LocationType == "Place name") {
+                            var layers = Regex.Matches(Model.Slide.Location, @"(?<== ).*?(?=;)").Cast<Match>().Select(x=>x.Value).ToList();
+                            if (layers.Count == 0) { <span>Unknown</span> }
+                            else if (layers.Count == 1) { <span>@layers[0]</span> } else {
+                                <span>@layers[0]</span>
+                                <small>
+                                @for (int i = 1; i < layers.Count; i++) {
+                                    @Html.Raw(layers[i] + " ")
+                                } </small>
+                            }
+                        } else { <span>@Model.Slide.Location</span> } <br/>
+                <span class="fa-stack fa-lg">
+                <i class="fa fa-circle fa-stack-2x"></i>
+                <i class="fa fa-calendar fa-stack-1x fa-inverse"></i>
+                </span>
+                @if (Model.Slide.AgeType == "Unknown") { <span>Unknown</span> }
+                else { <span>@Model.Slide.Age</span> } <br>
             </div>
         </div>
 
@@ -179,6 +185,8 @@
                         <span>Genus: @Model.Slide.GenusOriginal</span><br/>
                         <span>Species: @Model.Slide.SpeciesOriginal</span>
                     </dd>
+                    <dt class="col-sm-5">Sample Collected By</dt>
+                    <dd class="col-sm-7">@Model.Slide.CollectorName</dd>
                 </dl>
             </div>
         </div>
