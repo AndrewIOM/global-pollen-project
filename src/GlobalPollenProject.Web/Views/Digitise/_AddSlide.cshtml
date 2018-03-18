@@ -77,7 +77,7 @@
                 </div>
                 <small id="taxon-help" class="form-text text-muted">This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically.</small>
 
-                <button class="btn btn-default" data-bind="click: validateTaxon, enable: isValidTaxonSearch" style="margin-bottom:0.5em">Validate taxon</button>
+                <button class="btn btn-default" data-bind="visible: newSlideTaxonStatus() == null, click: validateTaxon, enable: isValidTaxonSearch" style="margin-bottom:0.5em">Validate taxon</button>
                 <div data-bind="visible: newSlideTaxonStatus, if: newSlideTaxonStatus">
 
                     <div data-bind="visible: newSlideTaxonStatus() == 'Error'">There was a problem communicating with the taxonomic backbone.</div>
@@ -274,16 +274,16 @@
                     </div>
                 </div>
 
-            </div>
-
-            <div class="alert-danger" data-bind="visible: validationErrors().length > 0, if: validationErrors().length > 0">
-                <ul data-bind="foreach: validationErrors">
-                    <li data-bind="text: Property"></li>
-                </ul>
+                <div class="alert-danger" data-bind="visible: validationErrors().length > 0, if: validationErrors().length > 0">
+                    There was a problem with this slide. Please address the below problems and try again:
+                    <ul data-bind="foreach: validationErrors">
+                        <li data-bind="text: $data.Property + ': ' + $data.Errors[0]"></li>
+                    </ul>
+                </div>
             </div>
 
             <div class="modal-footer">
-                <button data-bind="click: function() { submit($root) }, disable: isProcessing, enable: isValidAddSlideRequest" type="button" class="btn btn-primary">Record Slide</button>
+                <button data-bind="click: function() { submit($root) }, disable: !isValidAddSlideRequest() || isProcessing()" type="button" class="btn btn-primary">Record Slide</button>
             </div>
         </div>
     </div>

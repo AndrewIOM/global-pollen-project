@@ -1,3 +1,5 @@
+/*jshint esversion: 6 */
+
 ////////////////////////
 /// Setup - KO Bindings
 ////////////////////////
@@ -62,7 +64,7 @@ function DigitiseViewModel(users, analyses) {
                 self.myCollections(serverCols);
             }
         });
-    }
+    };
 
     self.switchView = function (view, data) {
         switch (view) {
@@ -101,12 +103,12 @@ function DigitiseViewModel(users, analyses) {
                 self.currentView(view);
                 break;
         }
-    }
+    };
 
     self.setActiveCollectionTab = function (element) {
         $(element).parent().find("li").removeClass("active");
         $(element).addClass("active");
-    }
+    };
 
     self.publish = function () {
         let requestUrl = "/api/v1/digitise/collection/publish?id=" + self.activeCollection().Id;
@@ -116,8 +118,8 @@ function DigitiseViewModel(users, analyses) {
             })
             .done(function (data) {
                 alert("Your collection has been submitted for review. You will be notified of the outcome on this page when it is available.");
-            })
-    }
+            });
+    };
 }
 
 ////////////////////////
@@ -161,19 +163,18 @@ function AddCollectionViewModel() {
             },
             statusCode: {
                 400: function (err) {
-                    self.validationErrors([]);
-                    err.responseJSON.Errors.forEach(function (e) {
-                        self.validationErrors().push(e.Errors[0]);
-                        self.isProcessing(false);
-                    })
+                    self.validationErrors(err.responseJSON.Errors);
+                    self.isProcessing(false);
+                    $(".modal").scrollTop();
                 },
                 500: function (data) {
                     self.validationErrors(['Internal error. Please try again later.']);
                     self.isProcessing(false);
+                    $('.modal').animate({ scrollTop: 0 }, 'slow');
                 }
             }
-        })
-    }
+        });
+    };
 }
 
 ////////////////////////
@@ -224,6 +225,12 @@ function RecordSlideViewModel(currentCollection) {
         }
     });
 
+    // When original taxon is changed, remove current allocated taxon
+    self.family.subscribe(function(f) { self.newSlideTaxonStatus(null); });
+    self.genus.subscribe(function(g) { self.newSlideTaxonStatus(null); });
+    self.species.subscribe(function(s) { self.newSlideTaxonStatus(null); });
+    self.author.subscribe(function(a) { self.newSlideTaxonStatus(null); });
+
     self.isValidTaxonSearch = ko.computed(function () {
         if (self.rank() == "Family" && self.family().length > 0) return true;
         if (self.rank() == "Genus" && self.family().length > 0 && self.genus().length > 0) return true;
@@ -232,11 +239,12 @@ function RecordSlideViewModel(currentCollection) {
     }, self);
 
     self.isValidAddSlideRequest = ko.computed(function () {
+        console.log(self.currentTaxon());
         if (self.rank() == "") return false;
         if (self.currentTaxon() == undefined) return false;
         if (self.identificationMethod() == undefined) return false;
         return true;
-    }, self)
+    }, self);
 
     self.isProcessing = ko.observable(false);
     self.validationErrors = ko.observableArray([]);
@@ -258,8 +266,9 @@ function RecordSlideViewModel(currentCollection) {
             .done(function (data) {
                 if (data.length == 1 && data[0].TaxonomicStatus == "accepted" || data[0].TaxonomicStatus == "doubtful") self.currentTaxon(data[0].Id);
                 self.newSlideTaxonStatus(data);
-            })
-    }
+                self.isProcessing(false);
+            });
+    };
 
     self.getRequest = function () {
         let firstNames = isEmpty(self.identifiedByFirstNames()) ? [] : self.identifiedByFirstNames().split(' ');
@@ -296,15 +305,15 @@ function RecordSlideViewModel(currentCollection) {
                 IdentifiedBySurname: self.identifiedByLastName()
             }
         };
-        console.log(request);
         return request;
-    }
+    };
 
     self.capitaliseFirstLetter = function (element) {
         $(element).val($(element).val().charAt(0).toUpperCase() + $(element).val().slice(1));
-    }
+    };
 
     self.submit = function (rootVM) {
+        self.isProcessing(true);
         let request = self.getRequest();
         $.ajax({
                 url: "/api/v1/digitise/collection/slide/add",
@@ -317,21 +326,17 @@ function RecordSlideViewModel(currentCollection) {
                 },
                 statusCode: {
                     400: function (err) {
-                        self.validationErrors([]);
-                        err.responseJSON.Errors.forEach(function (e) {
-                            console.log(e.Errors[0]);
-                            self.validationErrors().push(e.Errors[0]);
-                            self.isProcessing(false);
-                            console.log(self.validationErrors());
-                        })
+                        console.log(err.responseJSON);
+                        self.validationErrors(err.responseJSON.Errors);
+                        self.isProcessing(false);
                     },
                     500: function (data) {
                         self.validationErrors(['Internal error. Please try again later.']);
                         self.isProcessing(false);
                     }
                 }
-            })
-    }
+            });
+    };
 
 }
 
@@ -404,11 +409,9 @@ function SlideDetailViewModel(detail) {
                 type: "GET"
             })
             .done(function (cals) {
-                
-                console.log(cals);
                 self.calibrations(cals);
-            })
-    }
+            });
+    };
 
     self.switchTab = function (tab) {
         self.currentTab(tab);
@@ -497,26 +500,22 @@ function SlideDetailViewModel(detail) {
                     if (evt.lengthComputable) {
                         var percentComplete = evt.loaded / evt.total;
                         self.uploadPercentage(percentComplete * 100);
-                        console.log(percentComplete * 100);
                     }
-                }
+                };
                 return xhr;
             },
             success: function (data) {
-                console.log(self.slideDetail());
                 rootVM.switchView(CurrentView.DETAIL, {
                     Id: self.slideDetail().CollectionId
                 });
             },
             statusCode: {
                 400: function (err) {
-                    console.log(err);
                     self.validationErrors([]);
                     err.responseJSON.Errors.forEach(function (e) {
                         self.validationErrors().push(e.Errors[0]);
-                        console.log(self.validationErrors());
                         self.isProcessing(false);
-                    })
+                    });
                 },
                 500: function (data) {
                     self.validationErrors(['Internal error. Please try again later.']);
@@ -900,10 +899,9 @@ function ImageCalibrationViewModel(currentMicroscope) {
 
             self.floatingCal(self.measuringLine.getPixelPoints());
         });
-    }
+    };
 
     self.createViewer = function (element) {
-        console.log(self.microscope());
         if (self.viewer != null) self.viewer.dispose();
 
         var file = element.files[0];

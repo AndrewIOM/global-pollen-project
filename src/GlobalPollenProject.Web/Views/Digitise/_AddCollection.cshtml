@@ -11,7 +11,7 @@
             <div class="modal-body">
                 <p>Please tell us about the reference collection you wish to digitise. You can edit this information later if necessary.</p>
                 <ul data-bind="foreach: validationErrors">
-                    <li data-bind="text: $data"></li>
+                    <li data-bind="text: $data.Errors[0]"></li>
                 </ul>
                 <div class="form-group">
                     <label>Collection Name</label>
