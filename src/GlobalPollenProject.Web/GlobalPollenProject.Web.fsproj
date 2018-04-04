@@ -16,17 +16,20 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Giraffe" Version="0.1.0-beta-100" />
-    <PackageReference Include="Giraffe.Razor" Version="0.1.0-beta-100" />
+    <PackageReference Include="Giraffe" Version="1.1.0" />
+    <PackageReference Include="Giraffe.Razor" Version="1.1.0" />
     <PackageReference Include="Markdig" Version="0.13.4" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
+    <PackageReference Include="jose-jwt" Version="2.1" />
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="Urls.fs" />
     <Compile Include="Handlers.fs" />
     <Compile Include="Validation.fs" />
-    <Compile Include="Account.fs" />
     <Compile Include="Docs.fs" />
+    <Compile Include="View.fs" />
+    <Compile Include="Account.fs" />
     <Compile Include="App.fs" />
     <Compile Include="Startup.fs" />
     <Compile Include="Program.fs" />

@@ -1,12 +1,7 @@
 
 module ModelValidation
 
-open Giraffe.Tasks
-open Giraffe.HttpContextExtensions
-open Giraffe.HttpHandlers
-open Giraffe.Middleware
-open Giraffe.Razor.HttpHandlers
-open Giraffe.Razor.Middleware
+open Giraffe
 
 open System
 open System.IO
@@ -18,17 +13,12 @@ open Microsoft.AspNetCore.Mvc.Razor
 open Microsoft.AspNetCore.Mvc.Rendering
 open Microsoft.AspNetCore.Mvc.ViewFeatures
 open Microsoft.AspNetCore.Routing
+open FSharp.Control.Tasks.ContextInsensitive
+open Microsoft.Extensions.DependencyInjection
 
 open System.Collections.Generic
 open System.ComponentModel.DataAnnotations
-open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Mvc
-open Microsoft.Extensions.Options
-
 open System.Text
-open Microsoft.AspNetCore.Http
-open Microsoft.Extensions.DependencyInjection
-open Microsoft.Extensions.Primitives
 
 
 let renderRazorViewWithState (razorViewEngine   : IRazorViewEngine)
@@ -112,7 +102,7 @@ let validateModel model : Result<'a,ServiceError> =
 
 let bindModel<'a> (ctx:HttpContext) =
     try
-        let model = ctx.BindModel<'a>() |> Async.AwaitTask |> Async.RunSynchronously
+        let model = ctx.BindModelAsync<'a>() |> Async.AwaitTask |> Async.RunSynchronously
         Some model
     with
         | _ -> None

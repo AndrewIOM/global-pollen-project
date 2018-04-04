@@ -1,7 +1,8 @@
 module Handlers
 
-open Giraffe.HttpHandlers
-open Giraffe.HttpContextExtensions
+open Giraffe.Core
+open Giraffe.ModelBinding
+open Giraffe.ResponseWriters
 open Giraffe.Razor.HttpHandlers
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
@@ -114,3 +115,11 @@ let toViewResult view next ctx result =
         match result with
         | Ok model -> renderView view model next ctx
         | Error e -> serviceErrorToView e next ctx
+
+let toGiraffeView next ctx v =
+    htmlView v next ctx
+
+let toGiraffeViewResult next ctx result =
+    match result with
+    | Ok v -> htmlView v next ctx
+    | Error e -> serviceErrorToView e next ctx

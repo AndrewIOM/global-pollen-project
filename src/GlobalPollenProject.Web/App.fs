@@ -5,8 +5,7 @@ open System.IO
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
 
-open Giraffe.HttpContextExtensions
-open Giraffe.HttpHandlers
+open Giraffe
 open Giraffe.Razor.HttpHandlers
 
 open GlobalPollenProject.Core.Composition
@@ -51,7 +50,7 @@ let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,ServiceError>) : 
     fun next ctx ->
         ctx
         |> bindQueryString<'a>
-        |> bind validateModel
+        // |> bind validateModel
         |> bind appService
         |> toApiResult next ctx
 
@@ -89,6 +88,24 @@ let lookupNameFromOldTaxonId id =
 /// Custom HTTP Handlers
 /////////////////////////
 
+let docIndexHandler : HttpHandler =
+    fun next ctx ->
+        guideDocuments 
+        |> Array.map (fun (meta,html) -> {Html = html; Metadata = meta |> dict; Headings = getSidebarHeadings html}) 
+        |> Seq.toList
+        |> HtmlViews.Guide.contentsView
+        |> toGiraffeView next ctx
+
+let docSectionHandler docSection =
+    fun next ctx ->
+        let r = guideDocuments |> Array.tryFind (fun (n,_) -> n |> List.find (fun (k,_) -> k = "ShortTitle") |> snd = docSection)
+        match r with
+        | Some (meta,html) -> 
+            {Html = html; Metadata = meta |> dict; Headings = getSidebarHeadings html} 
+            |> HtmlViews.Guide.sectionView
+            |> toGiraffeView next ctx
+        | None -> razorHtmlView "Error" None next ctx
+
 let slideViewHandler (id:string) : HttpHandler =
     fun next ctx ->
         let split = id.Split '/'
@@ -112,23 +129,27 @@ let taxonDetail (taxon:string) next ctx =
         | 3 -> split.[0],Some split.[1],Some split.[2]
         | _ -> "",None,None
     Taxonomy.getByName f g s
-    |> toViewResult "MRC/Taxon" next ctx
+    |> lift HtmlViews.Taxon.view
+    |> toGiraffeViewResult next ctx
 
 let taxonDetailById id next ctx =
     match Guid.TryParse id with
     | (true,g) ->
         g
         |> Taxonomy.getById
-        |> toViewResult "MRC/Taxon" next ctx
+        |> lift HtmlViews.Taxon.view
+        |> toGiraffeViewResult next ctx
     | (false,_) -> notFoundResult next ctx
 
 let individualCollectionIndex next ctx =
     IndividualReference.list {Page = 1; PageSize = 20}
-    |> toViewResult "Reference/Index" next ctx
+    |> lift HtmlViews.ReferenceCollections.listView
+    |> toGiraffeViewResult next ctx
 
 let individualCollection (colId:string) version next ctx =
     IndividualReference.getDetail colId version
-    |> toViewResult "Reference/View" next ctx
+    |> lift HtmlViews.ReferenceCollections.tableView
+    |> toGiraffeViewResult next ctx
 
 let individualCollectionLatest (colId:string) next ctx =
     let latestVer = IndividualReference.getLatestVersion colId
@@ -147,7 +168,8 @@ let pagedTaxonomyHandler next (ctx:HttpContext) =
     ctx.BindQueryString<TaxonPageRequest>()
     |> defaultIfNull
     |> Taxonomy.list
-    |> toViewResult "MRC/Index" next ctx
+    |> lift HtmlViews.MRC.index
+    |> toGiraffeViewResult next ctx
 
 let listCollectionsHandler next ctx =
     Digitise.myCollections (currentUserId ctx)
@@ -155,7 +177,7 @@ let listCollectionsHandler next ctx =
 
 let startCollectionHandler next (ctx:HttpContext) =
     bindJson<StartCollectionRequest> ctx
-    |> bind validateModel
+    // |> bind validateModel
     |> Result.bind (Digitise.startNewCollection (currentUserId ctx))
     |> toApiResult next ctx
 
@@ -166,7 +188,7 @@ let publishCollectionHandler next (ctx:HttpContext) =
 
 let addSlideHandler next (ctx:HttpContext) =
     bindJson<SlideRecordRequest> ctx
-    |> bind validateModel
+    // |> bind validateModel
     |> bind Digitise.addSlideRecord
     |> toApiResult next ctx
 
@@ -214,15 +236,17 @@ let submitGrainHandler next (ctx:HttpContext) =
 
 let submitIdentificationHandler next (ctx:HttpContext) =
     let formData =
-        ctx.BindForm<IdentifyGrainRequest>()
+        ctx.BindFormAsync<IdentifyGrainRequest>()
         |> Async.AwaitTask
         |> Async.RunSynchronously
     UnknownGrains.identifyUnknownGrain (currentUserId ctx) formData |> ignore
     redirectTo true (sprintf "/Identify/%A" formData.GrainId) next ctx
 
-let homeHandler next (ctx:HttpContext) =
+
+let homeHandler next ctx =
     Statistic.getHomeStatistics()
-    |> toViewResult "Home/Index" next ctx
+    |> lift HtmlViews.Home.view
+    |> toGiraffeViewResult next ctx
 
 let topUnknownGrainsHandler next (ctx:HttpContext) =
     UnknownGrains.getTopScoringUnknownGrains()
@@ -234,7 +258,8 @@ let rebuildReadModelHandler next ctx =
 
 let systemStatsHandler next ctx =
     Statistic.getSystemStats()
-    |> toViewResult "Statistics/Index" next ctx
+    |> lift HtmlViews.Statistics.view
+    |> toGiraffeViewResult next ctx
 
 let userAdminHandler next ctx =
     Admin.listUsers()
@@ -245,11 +270,11 @@ let curateIndexHandler next ctx =
     |> toViewResult "Admin/Curate" next ctx
 
 let curateHandler next (ctx:HttpContext) =
-    ctx.BindForm<CurateCollectionRequest>()
+    ctx.BindFormAsync<CurateCollectionRequest>()
     |> Async.AwaitTask
     |> Async.RunSynchronously
-    |> validateModel
-    |> Result.bind (Curation.issueDecision (currentUserId ctx))
+    // |> validateModel
+    |> Curation.issueDecision (currentUserId ctx)
     |> ignore
     redirectTo true "/Admin/Curate" next ctx 
 
@@ -293,7 +318,7 @@ let webApp : HttpHandler =
             POST >=> route  "/Logout"                       >=> mustBeLoggedIn >=> logoutHandler
             POST >=> route  "/ForgotPassword"               >=> mustBeLoggedIn >=> forgotPasswordHandler
             POST >=> route  "/ResetPassword"                >=> mustBeLoggedIn >=> resetPasswordHandler
-            GET  >=> route  "/Login"                        >=> renderView "Account/Login" None
+            GET  >=> route  "/Login"                        >=> htmlView (HtmlViews.Account.login None)
             GET  >=> route  "/Register"                     >=> renderView "Account/Register" None
             GET  >=> route  "/ResetPassword"                >=> resetPasswordView
             GET  >=> route  "/ResetPasswordConfirmation"    >=> renderView "Account/ResetPasswordConfirmation" None

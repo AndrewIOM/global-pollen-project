@@ -8,10 +8,9 @@ open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.WebUtilities
 open Microsoft.Extensions.Logging
 
-open Giraffe.Tasks
-open Giraffe.HttpContextExtensions
-open Giraffe.HttpHandlers
+open Giraffe
 open Giraffe.Razor.HttpHandlers
+open FSharp.Control.Tasks.ContextInsensitive
 
 open GlobalPollenProject.Core.Composition
 open GlobalPollenProject.Shared.Identity.Models
@@ -21,6 +20,7 @@ open ReadModels
 open Microsoft.AspNetCore.Mvc.ModelBinding
 open Microsoft.AspNetCore.Authentication
 open ModelValidation
+open GlobalPollenProject.Web
 
 let renderView name model = warbler (fun _ -> razorHtmlView name model)
 
@@ -44,7 +44,7 @@ let challengeWithProperties (authScheme : string) properties _ (ctx : HttpContex
 let loginHandler redirectUrl : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! loginRequest = ctx.BindForm<LoginRequest>()
+            let! loginRequest = ctx.BindFormAsync<LoginRequest>()
             let isValid,errors = validateModel' loginRequest
             match isValid with
             | false -> return! razorHtmlViewWithModelState "Account/Login" errors loginRequest next ctx
@@ -56,7 +56,7 @@ let loginHandler redirectUrl : HttpHandler =
                    logger.LogInformation "User logged in."
                    return! redirectTo false redirectUrl next ctx
                 else
-                   return! renderView "Account/Login" loginRequest next ctx
+                   return! htmlView (HtmlViews.Account.login (Some loginRequest)) next ctx
         }
 
 let logoutHandler : HttpHandler =
@@ -70,7 +70,7 @@ let logoutHandler : HttpHandler =
 let registerHandler : HttpHandler =
     fun (next : HttpFunc) (ctx : HttpContext) ->
         task {
-            let! model = ctx.BindForm<NewAppUserRequest>()
+            let! model = ctx.BindFormAsync<NewAppUserRequest>()
             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
             let user = ApplicationUser(UserName = model.Email, Email = model.Email)
             let! result = userManager.CreateAsync(user, model.Password)
@@ -86,7 +86,7 @@ let registerHandler : HttpHandler =
                     let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
                     let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s" (getBaseUrl ctx) user.Id codeBase64
                     let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
-                    let! _ = sendEmail model.Email "Confirm your email" html
+                    let _ = sendEmail model.Email "Confirm your email" html |> Async.RunSynchronously
                     return! renderView "Account/AwaitingEmailConfirmation" None next ctx
             | false -> 
                 return! razorHtmlViewWithModelState "Account/Register" (identityErrorsToModelState result) model next ctx
@@ -112,7 +112,7 @@ let confirmEmailHandler : HttpHandler =
 let externalLoginHandler : HttpHandler =
     fun next ctx ->
         task {
-            let! provider = ctx.BindForm<ExternalLoginRequest>()
+            let! provider = ctx.BindFormAsync<ExternalLoginRequest>()
             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
             let returnUrl = "/Account/ExternalLoginCallback"
             let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,returnUrl)
@@ -150,7 +150,7 @@ let externalLoginCallback returnUrl next (ctx:HttpContext) =
 
 let externalLoginConfirmation next (ctx:HttpContext) =
     task {
-        let! model = ctx.BindForm<ExternalLoginConfirmationViewModel>()
+        let! model = ctx.BindFormAsync<ExternalLoginConfirmationViewModel>()
         let userManager = ctx.GetService<UserManager<ApplicationUser>>()
         let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
         let isValid,errors = validateModel' model
@@ -192,7 +192,7 @@ let externalLoginConfirmation next (ctx:HttpContext) =
 let forgotPasswordHandler : HttpHandler =
     fun next ctx ->
         task {
-            let! model = ctx.BindForm<ForgotPasswordViewModel>()
+            let! model = ctx.BindFormAsync<ForgotPasswordViewModel>()
             let isValid,errors = validateModel' model
             match isValid with
             | false -> return! razorHtmlViewWithModelState "Account/ForgotPassword" errors model next ctx
@@ -207,7 +207,7 @@ let forgotPasswordHandler : HttpHandler =
                     let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
                     let callbackUrl = sprintf "%s/Account/ResetPassword?userId=%s&code=%s" (getBaseUrl ctx) user.Id codeBase64
                     let html = sprintf "Please reset your password by clicking here: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
-                    let! _ = sendEmail model.Email "Reset Password" html
+                    sendEmail model.Email "Reset Password" html |> Async.RunSynchronously |> ignore
                     return! renderView "Account/ForgotPasswordConfirmation" None next ctx
         }
 
@@ -223,7 +223,7 @@ let resetPasswordView : HttpHandler =
 let resetPasswordHandler : HttpHandler =
     fun next ctx ->
         task {
-            let! model = ctx.BindForm<ResetPasswordViewModel>()
+            let! model = ctx.BindFormAsync<ResetPasswordViewModel>()
             let isValid,errors = validateModel' model
             match isValid with
             | false -> return! razorHtmlViewWithModelState "Account/ResetPassword" errors model next ctx
@@ -346,7 +346,7 @@ module Manage =
                 let userManager = ctx.GetService<UserManager<ApplicationUser>>()
                 let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
                 let! user = userManager.GetUserAsync ctx.User
-                let! model = ctx.BindForm<RemoveLogin>()
+                let! model = ctx.BindFormAsync<RemoveLogin>()
                 match isNull user with
                 | true -> return! redirectTo true "/Account/Manage" next ctx
                 | false ->
@@ -362,7 +362,7 @@ module Manage =
             task {
                 let userManager = ctx.GetService<UserManager<ApplicationUser>>()
                 let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-                let! model = ctx.BindForm<ChangePasswordViewModel>()
+                let! model = ctx.BindFormAsync<ChangePasswordViewModel>()
                 let isValid,errors = validateModel' model
                 match isValid with
                 | false -> return! razorHtmlViewWithModelState "Manage/ChangePassword" errors model next ctx
@@ -383,7 +383,7 @@ module Manage =
             task {
                 let userManager = ctx.GetService<UserManager<ApplicationUser>>()
                 let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-                let! model = ctx.BindForm<SetPasswordViewModel>()
+                let! model = ctx.BindFormAsync<SetPasswordViewModel>()
                 let isValid,errors = validateModel' model
                 match isValid with
                 | false -> return! razorHtmlViewWithModelState "Manage/SetPassword" errors model next ctx
@@ -419,7 +419,7 @@ module Manage =
         fun next ctx ->
             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-            let provider = ctx.BindForm<LinkLogin>() |> Async.AwaitTask |> Async.RunSynchronously
+            let provider = ctx.BindFormAsync<LinkLogin>() |> Async.AwaitTask |> Async.RunSynchronously
             let user = userManager.GetUserAsync ctx.User |> Async.AwaitTask |> Async.RunSynchronously
             let callbackUrl = sprintf "%s/Account/Manage/LinkLoginCallback" (getBaseUrl ctx)
             let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,callbackUrl, user.Id)
@@ -446,6 +446,6 @@ module Manage =
 
     let profile : HttpHandler =
         fun next ctx ->
-            ctx.BindForm<ChangePublicProfileViewModel>() |> Async.AwaitTask |> Async.RunSynchronously
+            ctx.BindFormAsync<ChangePublicProfileViewModel>() |> Async.AwaitTask |> Async.RunSynchronously
             |> ignore
             invalidOp "Not implemented"

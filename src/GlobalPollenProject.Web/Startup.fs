@@ -10,8 +10,7 @@ open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
 
-open Giraffe.Middleware
-open Giraffe.Razor.Middleware
+open Giraffe
 
 open GlobalPollenProject.Core.Composition
 open GlobalPollenProject.Shared.Identity
@@ -86,7 +85,6 @@ type Startup () =
     member __.ConfigureServices(services: IServiceCollection) =
         let sp  = services.BuildServiceProvider()
         let env = sp.GetService<IHostingEnvironment>()
-        let viewsFolderPath = Path.Combine(env.ContentRootPath, "Views")
 
         services.AddSingleton<UserDbContext>() |> ignore
         services.AddIdentity<ApplicationUser, IdentityRole>(fun opt -> 
@@ -118,7 +116,7 @@ type Startup () =
         services.AddSingleton<IEmailSender, AuthEmailMessageSender>() |> ignore
         services.AddSingleton<IProfileLoader, ProfileLoader>() |> ignore
         services.AddDataProtection() |> ignore
-        services.AddRazorEngine(viewsFolderPath) |> ignore
+        services.AddGiraffe() |> ignore
         createRoles (services.BuildServiceProvider()) |> ignore
 
     member __.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
@@ -126,7 +124,7 @@ type Startup () =
         if (env.IsDevelopment()) then
             app.UseDeveloperExceptionPage() |> ignore
         else
-            app.UseGiraffeErrorHandler(Handlers.errorHandler)
+            app.UseGiraffeErrorHandler(Handlers.errorHandler) |> ignore
 
         app.UseAuthentication() |> ignore
         app.UseStaticFiles() |> ignore
