@@ -14,7 +14,6 @@ open GlobalPollenProject.App.UseCases
 open ReadModels
 
 open Handlers
-open ModelValidation
 open Account
 open Docs
 
@@ -311,21 +310,21 @@ let webApp : HttpHandler =
 
     let accountManagement =
         choose [
-            POST >=> route  "/Login"                        >=> loginHandler "/"
-            POST >=> route  "/ExternalLogin"                >=> externalLoginHandler
-            POST >=> route  "/ExternalLoginConfirmation"    >=> externalLoginConfirmation
-            POST >=> route  "/Register"                     >=> registerHandler
-            POST >=> route  "/Logout"                       >=> mustBeLoggedIn >=> logoutHandler
-            POST >=> route  "/ForgotPassword"               >=> mustBeLoggedIn >=> forgotPasswordHandler
-            POST >=> route  "/ResetPassword"                >=> mustBeLoggedIn >=> resetPasswordHandler
-            GET  >=> route  "/Login"                        >=> htmlView (HtmlViews.Account.login None)
-            GET  >=> route  "/Register"                     >=> renderView "Account/Register" None
-            GET  >=> route  "/ResetPassword"                >=> resetPasswordView
-            GET  >=> route  "/ResetPasswordConfirmation"    >=> renderView "Account/ResetPasswordConfirmation" None
-            GET  >=> route  "/ForgotPassword"               >=> renderView "Account/ForgotPassword" None
-            GET  >=> route  "/ConfirmEmail"                 >=> confirmEmailHandler
-            GET  >=> route  "/ExternalLoginCallback"        >=> externalLoginCallback "/"
-            
+            POST >=> route  Urls.Account.login                >=> loginHandler
+            POST >=> route  Urls.Account.externalLogin        >=> externalLoginHandler
+            POST >=> route  Urls.Account.externalLoginConf    >=> externalLoginConfirmation
+            POST >=> route  Urls.Account.register             >=> registerHandler
+            POST >=> route  Urls.Account.logout               >=> mustBeLoggedIn >=> logoutHandler
+            POST >=> route  Urls.Account.forgotPassword       >=> mustBeLoggedIn >=> forgotPasswordHandler
+            POST >=> route  Urls.Account.resetPassword        >=> mustBeLoggedIn >=> resetPasswordHandler
+            GET  >=> route  Urls.Account.login                >=> htmlView (HtmlViews.Account.login [] Requests.Empty.login)
+            GET  >=> route  Urls.Account.register             >=> htmlView (HtmlViews.Account.register [] Requests.Empty.newAppUserRequest) 
+            GET  >=> route  Urls.Account.resetPassword        >=> resetPasswordView
+            GET  >=> route  Urls.Account.resetPasswordConf    >=> htmlView (HtmlViews.Account.resetPasswordConfirmation)
+            GET  >=> route  Urls.Account.forgotPassword       >=> htmlView (HtmlViews.Account.forgotPassword Requests.Empty.forgotPassword)
+            GET  >=> route  Urls.Account.confirmEmail         >=> confirmEmailHandler
+            GET  >=> route  Urls.Account.externalLoginCallbk  >=> externalLoginCallback Urls.home
+
             GET  >=> route  "/Manage"                       >=> Manage.index
             POST >=> route  "/Manage/Profile"               >=> Manage.profile
             GET  >=> route  "/Manage/Profile"               >=> renderView "Manage/ChangePublicProfile" None
@@ -343,10 +342,10 @@ let webApp : HttpHandler =
     let masterReferenceCollection =
         GET >=> 
         choose [   
-            route   ""                          >=> pagedTaxonomyHandler
-            routef  "/View/%i"                  lookupNameFromOldTaxonId
-            routef  "/ID/%s"                    taxonDetailById
-            routef  "/%s"                       taxonDetail
+            route   Urls.MRC.root               >=> pagedTaxonomyHandler
+            routef  "/Taxon/View/%i"            lookupNameFromOldTaxonId
+            routef  "/Taxon/ID/%s"              taxonDetailById
+            routef  "/Taxon/%s"                 taxonDetail
         ]
 
     let individualRefCollections =
@@ -379,24 +378,24 @@ let webApp : HttpHandler =
     // Main router
     notInMaintainanceMode >=>
     choose [
-        subRoute    "/api/v1"                   publicApi
-        subRoute    "/api/v1/digitise"          digitiseApi
-        subRoute    "/Account"                  accountManagement
-        subRoute    "/Taxon"                    masterReferenceCollection
-        subRoute    "/Reference"                individualRefCollections
-        subRoute    "/Identify"                 identify
-        subRoute    "/Admin"                    admin
+        subRoute            "/api/v1"            publicApi
+        subRoute            "/api/v1/digitise"   digitiseApi
+        routeStartsWith     Urls.Account.root    >=> accountManagement
+        routeStartsWith     "/Taxon"             >=> masterReferenceCollection
+        subRoute            "/Reference"         individualRefCollections
+        subRoute            "/Identify"          identify
+        subRoute            "/Admin"             admin
         GET >=> 
         choose [
-            route   "/"                         >=> homeHandler
-            route   "/Guide"                    >=> docIndexHandler
+            route   Urls.home                   >=> homeHandler
+            route   Urls.guide                  >=> docIndexHandler
             routef  "/Guide/%s"                 docSectionHandler
-            route   "/Statistics"               >=> systemStatsHandler
-            route   "/Digitise"                 >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
-            route   "/Api"                      >=> renderView "Home/Api" None
-            route   "/Tools"                    >=> renderView "Tools/Index" None
-            route   "/Cite"                     >=> renderView "Home/Cite" None
-            route   "/Terms"                    >=> renderView "Home/Terms" None
+            route   Urls.statistics             >=> systemStatsHandler
+            route   Urls.digitise               >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
+            route   Urls.api                    >=> docSectionHandler "API"
+            route   Urls.tools                  >=> htmlView HtmlViews.Tools.main
+            route   Urls.cite                   >=> docSectionHandler "Cite"
+            route   Urls.terms                  >=> docSectionHandler "Terms"
         ]
-        setStatusCode 404 >=> renderView "NotFound" None 
+        setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound
     ]

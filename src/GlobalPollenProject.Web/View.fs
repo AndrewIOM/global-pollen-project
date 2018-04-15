@@ -6,8 +6,12 @@ open ReadModels
 
 type Script = string
 type ActiveComponent = { View: XmlNode; Scripts: Script list }
+type PageLink = { Name: string; Url: string }
 
 let _data attr value = KeyValue("data-" + attr, value)
+let _aria attr value = KeyValue("aria-" + attr, value)
+let _role value = KeyValue("role",value)
+let _on e value = KeyValue("on" + e,value)
 
 [<AutoOpen>]
 module Grid =
@@ -103,11 +107,10 @@ module TagHelpers =
         match expr with 
         | PropertyGet(_,pi,_) -> 
             pi.GetCustomAttributes(typeof<ValidationAttribute>,false)
-            |> Seq.choose (fun t -> match t with | :? ValidationAttribute as v -> printfn "%A" v; Some v | _ -> None)
+            |> Seq.choose (fun t -> match t with | :? ValidationAttribute as v -> Some v | _ -> None)
             |> Seq.collect (MvcAttributeValidation.clientSideInputValidationTags pi.DeclaringType pi.Name)
             |> Seq.toList
         | _ -> []
-
 
 module Forms =
 
@@ -128,8 +131,29 @@ module Forms =
         let validationAttributes = validationFor e
         formField' name validationAttributes
 
-    let validationSummary vm =
-        div [] []
+    let formGroup (e:Expr) helpText =
+        let name = propertyName e
+        let validationAttributes = validationFor e
+        div [ _class "form-group" ] [
+            label [] [ encodedText name ]
+            input (List.concat [[ _id name; _class "form-control"; ]; validationAttributes ])
+            small [ _id "name-help" ] [ encodedText helpText ] 
+        ]
+
+    let validationSummary (additionalErrors: ValidationError list) vm =
+        let errorHtml =
+            additionalErrors
+            |> List.collect (fun e -> e.Errors)
+            |> List.map encodedText
+        div [] errorHtml
+
+    let submit =
+        div [ _class "form-group" ] [
+            div [ _class "col-md-offset-2 col-md-10" ] [
+                button [ _type "submit"; _class "btn btn-default" ] [ encodedText "Submit" ]
+            ]
+        ]
+
 
 module Layout = 
 
@@ -144,8 +168,8 @@ module Layout =
         //     ]
         // ]
         ul [ _class "nav navbar-nav" ] [
-            li [ _class "nav-item" ] [ a [ _class "nav-link"; _href "/Account/Register" ] [ encodedText "Register" ] ]
-            li [ _class "nav-item" ] [ a [ _class "nav-link"; _href "/Account/Login" ] [ encodedText "Log in" ] ]
+            li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.register ] [ encodedText "Register" ] ]
+            li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.login ] [ encodedText "Log in" ] ]
         ]
 
     let navigationBar =
@@ -178,22 +202,23 @@ module Layout =
                     div [ _class "col-md-3" ] [
                         h4 [] [ encodedText "Information" ]
                         ul [] [
-                            li [] [ a [ _href "/Guide" ] [ encodedText "About"] ]
-                            li [] [ a [ _href "/Api" ] [ encodedText "Public API"] ]
-                            li [] [ a [ _href "/Terms" ] [ encodedText "Terms and Licensing"] ]
+                            li [] [ a [ _href Urls.guide ] [ encodedText "About"] ]
+                            li [] [ a [ _href Urls.api ] [ encodedText "Public API"] ]
+                            li [] [ a [ _href Urls.terms ] [ encodedText "Terms and Licensing"] ]
+                            li [] [ a [ _href Urls.cite ] [ encodedText "How to Cite"] ]
                         ]
                     ]
                     div [ _class "col-md-5"; _style "padding-right:4em" ] [
                         h4 [] [ encodedText "Data" ]
                         ul [] [
-                            li [] [ a [ _href "/Taxon" ] [ encodedText "Master Reference Collection"] ]
-                            li [] [ a [ _href "/Reference" ] [ encodedText "Individual Reference Collections"] ]
-                            li [] [ a [ _href "/Identify" ] [ encodedText "Unidentified Specimens"] ]
+                            li [] [ a [ _href Urls.referenceCollection ] [ encodedText "Master Reference Collection"] ]
+                            li [] [ a [ _href Urls.individualCollections ] [ encodedText "Individual Reference Collections"] ]
+                            li [] [ a [ _href Urls.identify ] [ encodedText "Unidentified Specimens"] ]
                         ]
                         h4 [] [ encodedText "Tools" ]
                         ul [] [
-                            li [] [ a [ _href "/Digitise" ] [ encodedText "Online Digitisation Tools"] ]
-                            li [] [ a [ _href "/Tools" ] [ encodedText "Botanical Name Tracer"] ]
+                            li [] [ a [ _href Urls.digitise ] [ encodedText "Online Digitisation Tools"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Preview" ] ] ]
+                            li [] [ a [ _href Urls.tools ] [ encodedText "Botanical Name Tracer"] ]
                         ]
                     ]
                     div [ _class "col-md-4 footer-images"] [
@@ -201,14 +226,18 @@ module Layout =
                         p [] [ encodedText "The Global Pollen Project is funded via the Natural Environment Research Council of the United Kingdom, and the Oxford Long-Term Ecology Laboratory."]
                         a [ _href "https://oxlel.zoo.ox.ac.uk"; _target "_blank"] [
                             img [ _src "/images/oxlellogo.png"; _alt "Long Term Ecology Laboratory" ]
-                            img [ _src "/images/oxford-logo.png"; _alt "University of Oxford" ]
                         ]
+                        img [ _src "/images/oxford-logo.png"; _alt "University of Oxford" ]
                     ]
                 ]
                 div [ _class "row" ] [
                     hr []
                     div [ _class "col-md-12" ] [
-                        p [ _style "text-align:center;" ] [ encodedText "The Global Pollen Project 1.5" ]
+                        p [ _style "text-align:center;" ] [ 
+                            encodedText "The Global Pollen Project 1.5"
+                            span [ _class "hide-xs" ] [ encodedText " · " ]
+                            encodedText "Code available at "
+                            a [ _href "https://github.com/AndrewIOM/gpp-cqrs" ] [ encodedText "GitHub" ] ]
                     ]
                 ]
             ]
@@ -270,14 +299,14 @@ module Layout =
 
 module Components =
 
-    let breadcrumb =
+    let breadcrumb (parentPages:PageLink list) currentPageName =
+        let breadcrumbItem name link = li [ _class "breadcrumb-item" ] [ a [ _href link ] [ encodedText name ] ]
+        let home = breadcrumbItem "Home" Urls.home
+        let parents = parentPages |> List.map (fun p -> breadcrumbItem p.Name p.Url)
+        let current = li [ _class "breadcrumb-item" ] [ a [] [ encodedText currentPageName ] ]
         div [ _class "row" ] [
             div [ _class "col-md-12" ] [
-                ol [ _class "breadcrumb" ] [
-                    li [ _class "breadcrumb-item" ] [ a [ _href "/" ] [ encodedText "Home" ] ]
-                    li [ _class "breadcrumb-item" ] [ a [ _href "/Taxon" ] [ encodedText "Master Reference Collection" ] ]
-                    li [ _class "breadcrumb-item" ] [ a [] [ encodedText "Cool" ] ]
-                ]
+                ol [ _class "breadcrumb" ] (List.concat [[home]; parents; [current]] )
             ]
         ]
 
@@ -320,7 +349,7 @@ module Home =
         let view =
             form [ _action "/Taxon"; _method "get"; _class "form-inline search-big" ] [
                 input [ _hidden; _name "rank"; _value "Genus" ]
-                input [ _name "lex"; _title "Search by latin name"; _id "ref-collection-search" ]
+                input [ _name "lex"; _title "Search by latin name"; _id "ref-collection-search"; _class "form-control form-control-lg"; _type "search"; _placeholder "Search by Latin Name"; _autocomplete "off" ]
                 div [ _class "dropdown-menu"; _id "suggestList"; _style "display:none" ] []
                 button [ _type "submit"; _title "Search"; _class "btn btn-primary btn-lg" ] [ encodedText "Go" ] 
             ]
@@ -359,21 +388,26 @@ module Home =
         ]
 
     let unidentifiedGrainMap =
-        section [ _class "homepage-section map-section" ] [
-            Grid.container [
-                div [ _class "row justify-content-center" ] [
-                    div [ _class "col-md-4" ] [
-                        p [] [
-                            span [ _id "unidentified-count" ] [ encodedText "?" ]
-                            encodedText "unidentified grains"
+        let view =
+            section [ _class "homepage-section map-section" ] [
+                Grid.container [
+                    div [ _class "row justify-content-center" ] [
+                        div [ _class "col-md-4" ] [
+                            p [] [
+                                span [ _id "unidentified-count" ] [ encodedText "?" ]
+                                encodedText "unidentified grains"
+                            ]
                         ]
-                    ]
-                    div [ _class "col-md-6" ] [
-                        div [ _id "locations-map" ] []
+                        div [ _class "col-md-6" ] [
+                            div [ _id "locations-map" ] []
+                        ]
                     ]
                 ]
             ]
-        ]
+        { View = view; 
+          Scripts = [ "//d3js.org/d3.v3.min.js"
+                      "//d3js.org/topojson.v0.min.js"
+                      "/js/home/grain-map.js" ] }
 
     let stats (vm:HomeStatsViewModel) =
         section [ _class "homepage-section section-bottomline" ] [
@@ -393,13 +427,12 @@ module Home =
         ]
 
     let view model = 
-        let searchField = autocomplete
         [
             heading autocomplete.View
             stats model
             tripleIcons
-            unidentifiedGrainMap
-        ] |> Layout.master searchField.Scripts
+            unidentifiedGrainMap.View
+        ] |> Layout.master (List.append autocomplete.Scripts unidentifiedGrainMap.Scripts)
 
 
 module Slide =
@@ -434,7 +467,7 @@ module Slide =
 
     let content model =
         [ 
-            Components.breadcrumb
+            Components.breadcrumb [ { Name = "Cool1" ; Url = "Cool1" } ] "Slide Name"
             Grid.row [
                 Grid.column Medium 6 [
                     imageViewer
@@ -522,7 +555,7 @@ module Taxon =
         [ 
             link [ _rel "stylesheet"; _href "/lib/nouislider/distribute/nouislider.min.css"]
             link [ _rel "stylesheet"; _href "/lib/leaflet/dist/leaflet.css"]
-            Components.breadcrumb
+            Components.breadcrumb [] "Cool Page"
             Grid.row [
                 Grid.column Medium 6 [
                     slideListPanel vm.Slides
@@ -555,7 +588,7 @@ module Guide =
         div [ _class "sticky-sidebar" ] [
             a [ _href "/Guide"; _class "btn btn-primary btn-block" ] [
                 Icons.fontawesome "book"
-                encodedText "Guide Contents"
+                encodedText " Guide Contents"
             ]
             hr []
             label [] [ encodedText vm.Metadata.["Title"] ]
@@ -570,10 +603,10 @@ module Guide =
             div [ _class "metadata" ] [
                 img [ _src ("/images/guide/authors/" + authorUrl) ]
                 span [] [ encodedText (sprintf "By %s, %s" metadata.["Author"] metadata.["Affiliation"])]
-                span [ _class "hide-xs divider" ] []
+                span [ _class "hide-xs divider" ] [ encodedText "·" ]
                 span [] [
                     Icons.fontawesome "calendar"
-                    encodedText metadata.["Date"]
+                    encodedText (" " + metadata.["Date"])
                 ]
             ]
         ]
@@ -638,7 +671,7 @@ module MRC =
 
     let index (vm:PagedResult<TaxonSummary>) =
         [
-            Components.breadcrumb
+            Components.breadcrumb [] "Cool Page"
             Grid.row [ Grid.column Medium 12 alphabetIndex ]
             Grid.row (vm.Items |> List.map (fun t -> Grid.column Medium 6 [ taxonCard t ] ))
             Components.pagination vm.CurrentPage vm.ItemsPerPage vm.ItemTotal vm.TotalPages "/Taxon?rank=Genus"
@@ -667,7 +700,7 @@ module ReferenceCollections =
 
     let listView (vm:ReferenceCollectionSummary list) =
         [
-            Components.breadcrumb
+            Components.breadcrumb [] "Cool Page"
             Grid.row [
                 Grid.column Medium 9 (vm |> List.map collectionCard)
                 Grid.column Medium 3 [ infoCard ]
@@ -677,7 +710,7 @@ module ReferenceCollections =
 
     let tableView (vm:ReferenceCollectionDetail) =
         [
-            Components.breadcrumb
+            Components.breadcrumb [] "Cool Page"
             p [] [ encodedText vm.Description ]
             div [ _class "card" ] [
                 div [ _class "card-block" ] [
@@ -727,7 +760,7 @@ module Statistics =
         let speciesPercent = float model.Species.Count / float model.Species.Total * 100.
 
         [
-            Components.breadcrumb
+            Components.breadcrumb [] "Cool Page"
             Grid.row [
                 Grid.column Medium 3 [ stickySidebar ]
                 Grid.column Medium 9 [
@@ -757,16 +790,13 @@ module Account =
 
     open Forms
 
-    let login (model:Requests.LoginRequest option) =
-        let vm = 
-            match model with
-            | None -> { Email = ""; Password = ""; RememberMe = false }
-            | Some vm -> vm
+    let login errors (vm:Requests.LoginRequest) =
         [
+            link [ _rel "stylesheet"; _href "/lib/bootstrap-social/bootstrap-social.css" ]
             Grid.row [
                 Grid.column Medium 8 [
                     form [ _action "/Account/Login"; _method "POST"; _class "form-horizontal" ] [
-                        validationSummary vm
+                        validationSummary [] vm
                         formField <@ vm.Email @>
                         formField <@ vm.Password @>
                         formField <@ vm.RememberMe @>
@@ -778,7 +808,207 @@ module Account =
                         ]
                     ]
                 ]
+                Grid.column Medium 4 [
+                    section [] [
+                        form [ _action "/Account/ExternalLogin"; _method "POST"; _class "form-horizontal" ] [
+                            button [ _name "provider"; _class "btn btn-block btn-social btn-facebook"; _type "submit"; _value "Facebook" ] [ 
+                                Icons.fontawesome "facebook"
+                                encodedText "Sign in with Facebook" ]
+                            button [ _name "provider"; _class "btn btn-block btn-social btn-twitter"; _type "submit"; _value "Twitter" ] [ 
+                                Icons.fontawesome "twitter"
+                                encodedText "Sign in with Twitter" ]
+                        ]
+                        br []
+                        div [ _class "panel panel-primary" ] [
+                            div [ _class "panel-heading" ] [
+                                Icons.fontawesome "pencil"
+                                encodedText "Sign up today"
+                            ]
+                            div [ _class "panel-body" ] [
+                                p [] [ encodedText "Register to submit your pollen and exchange identifications." ]
+                                a [ _class "btn btn-secondary"; _href "/Account/Register" ] [ encodedText "Register" ]
+                            ]
+                        ]
+                    ]
+                ]
             ]
         ] |> Layout.standard [ 
             "/lib/jquery-validation/jquery.validate.js"
             "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Log in" "Use your existing Global Pollen Project account, Facebook or Twitter"
+
+    let register errors (vm:NewAppUserRequest) =
+        [
+            form [ _action "/Account/Register"; _method "POST"; _class "form-horizontal" ] [
+                p [] [ encodedText "An account will enable you to submit your own unknown pollen grains and identify others. You can also request access to our digitisation features." ]
+                p [] [ encodedText "You can also alternatively"; a [ _href "/Account/Login" ] [ encodedText "sign in with your Facebook or Twitter account." ] ]
+                hr []
+                validationSummary errors vm
+                h4 [] [ encodedText "About You" ]
+                formField <@ vm.Title @>
+                formField <@ vm.FirstName @>
+                formField <@ vm.LastName @>
+                formField <@ vm.Email @>
+                formField <@ vm.EmailConfirmation @>
+                formField <@ vm.Password @>
+                formField <@ vm.ConfirmPassword @>
+                hr []
+                h4 [] [ encodedText "Your Organisation" ]
+                p [] [ encodedText "Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By using a common group name, you can build up your score together. Can your organisation become top identifiers?" ]
+                formField <@ vm.Organisation @>
+                p [] [ encodedText "By registering, you agree to the Global Pollen Project"; a [ _href "/Guide/Terms" ] [ encodedText "Terms and Conditions." ] ]
+                button [ _type "submit"; _class "btn btn-primary" ] [ encodedText "Register" ]
+            ]
+        ] |> Layout.standard [ 
+            "/lib/jquery-validation/jquery.validate.js"
+            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Register" "Create a new account"
+
+    let externalRegistration provider errors (vm:ExternalLoginConfirmationViewModel) =
+        [
+            form [ _action "/Account/ExternalLoginConfirmation"; _method "POST"; _class "form-horizontal" ] [
+                p [] [ encodedText ("You've successfully authenticated with " + provider + ". We just need a few more personal details from you before you can log in.") ]
+                validationSummary errors vm
+                h4 [] [ encodedText "About You" ]
+                formField <@ vm.Title @>
+                formField <@ vm.FirstName @>
+                formField <@ vm.LastName @>
+                formField <@ vm.Email @>
+                formField <@ vm.EmailConfirmation @>
+                hr []
+                h4 [] [ encodedText "Your Organisation" ]
+                p [] [ encodedText "Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By using a common group name, you can build up your score together. Can your organisation become top identifiers?" ]
+                formField <@ vm.Organisation @>
+                p [] [ encodedText "By registering, you agree to the Global Pollen Project"; a [ _href "/Guide/Terms" ] [ encodedText "Terms and Conditions." ] ]
+                button [ _type "submit"; _class "btn btn-primary" ] [ encodedText "Register" ]
+            ]
+        ] |> Layout.standard [ 
+            "/lib/jquery-validation/jquery.validate.js"
+            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Nearly logged in..." ("Associate your" + provider + "account")
+
+    let awaitingEmailConfirmation =
+        [
+            p [] [ encodedText "Please check your email for an activation link. You must do this before you can log in." ]
+        ] |> Layout.standard [] "Confirm Email" ""
+
+    let confirmEmail =
+        [
+            p [] [ 
+                encodedText "Thank you for confirming your email. Please"
+                a [ _href Urls.Account.login ] [ encodedText "Click here to Log in" ]
+                encodedText "." ]
+        ] |> Layout.standard [] "Confirm Email" ""
+
+    let forgotPasswordConfirmation =
+        [ p [] [ encodedText "Please check your email to reset your password" ]
+        ] |> Layout.standard [] "Confirm Email" ""
+
+    let externalLoginFailure =
+        [ p [] [ encodedText "Unsuccessful login with service" ] ]
+        |> Layout.standard [] "Login failure" ""
+
+    let resetPassword (vm:ResetPasswordViewModel) =
+        [
+            form [ _action "/Account/ResetPassowrd"; _method "POST"; _class "form-horizontal" ] [
+                // Validation summary
+                input [ _hidden; _value vm.Code ]
+                Forms.formField <@ vm.Email @>
+                Forms.formField <@ vm.Password @>
+                Forms.formField <@ vm.ConfirmPassword @>
+                Forms.submit
+            ]
+        ] |> Layout.standard [ 
+            "/lib/jquery-validation/jquery.validate.js"
+            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Reset Password" ""
+
+    let resetPasswordConfirmation =
+        [ p [] [ 
+            encodedText "Your password has been reset."
+            a [ _href "/Account/Login" ] [ encodedText "Click here to login." ] ]
+        ] |> Layout.standard [] "Confirm Email" ""
+
+    let lockout =
+        [
+
+        ] |> Layout.standard [] "" ""
+
+    let forgotPassword (vm:ForgotPasswordViewModel) =
+        [
+            form [ _href "/Account/ForgotPassword"; _method "POST"; _class "form-horizontal" ] [
+                h4 [] [ encodedText "Enter your email." ]
+                // Validation summary here
+                formField <@ vm.Email @>
+                Forms.submit
+            ]
+        ] |> Layout.standard [ 
+            "/lib/jquery-validation/jquery.validate.js"
+            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Forgot your password?" ""
+
+module Manage =
+
+    let index vm = 
+        [
+
+        ] |> Layout.standard [] "" ""
+
+    let removeLogin vm = 
+        [
+
+        ] |> Layout.standard [] "" ""
+
+    let manageLogins vm = 
+        [
+
+        ] |> Layout.standard [] "" ""
+
+    let setPassword errors vm = 
+        [
+
+        ] |> Layout.standard [] "" ""
+        
+    let changePassword errors vm = 
+        [
+
+        ] |> Layout.standard [] "" ""
+
+
+module StatusPages =
+
+    let notFound = 
+        let autocomplete = Home.autocomplete
+        [
+            div [ _class "row justify-content-center"; _style "text-align:center;margin: 12.5em 0 7.5em;" ] [
+                Grid.column Medium 4 [
+                    i [ _class "fa fa-meh-o"; _style "font-size: 6em;margin-bottom: 0.25em;" ] []
+                    h4 [] [ encodedText "Sorry, we couldn't find what you were looking for." ]
+                    p [] [ encodedText "We've recently revamped the Global Pollen Project. We hope we haven't broken any links, but if you find any please let us know." ]
+                    a [ _href Urls.home ] [ encodedText "Get me back to the homepage" ]
+                    p [] [ encodedText "- or -" ]
+                    p [] [ encodedText "Lookup a taxon in our reference collection" ]
+                    autocomplete.View
+                ]
+            ]
+        ] 
+        |> Layout.master autocomplete.Scripts
+
+    let statusLayout icon title description =
+        [
+            div [ _class "row justify-content-center"; _style "text-align:center;margin: 12.5em 0 7.5em;" ] [
+                Grid.column Medium 4 [
+                    i [ _class ("fa fa-" + icon); _style "font-size: 6em;margin-bottom: 0.25em;" ] []
+                    h4 [] [ encodedText title ]
+                    p [] [ encodedText description ]
+                    a [ _href Urls.home ] [ encodedText "Get me back to the homepage" ]
+                ]
+            ]
+        ] |> Layout.master []
+
+    let error = statusLayout "bomb" "Sorry, there's been a slight snag..." "Your request didn't go through. You can try again, or please come back later. If this happens often, please let us know."
+    
+    let maintainance = statusLayout "wrench" "Under Temporary Maintainance" "We're working on some changes, which have required us to take the Pollen Project offline. We will be back later today, so sit tight."
+
+
+module Tools =
+
+    let main =
+        [
+
+        ] |> Layout.standard [] "Tools" "Some tools"

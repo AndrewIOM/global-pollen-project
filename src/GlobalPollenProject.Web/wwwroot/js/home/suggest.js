@@ -29,9 +29,9 @@ function Suggest(searchTerm) {
             $('#suggestList').css('display', 'block');
             for (var i = 0; i < resultJson.length; i++) {
                 var linkUrl = "";
-                if (resultJson[i].Rank == "Family") { linkUrl = "/Taxon/" + resultJson[i].LatinName; }
-                else if (resultJson[i].Rank == "Genus") { linkUrl = "/Taxon/" + resultJson[i].Heirarchy[0] + "/" + resultJson[i].Heirarchy[1] }
-                else if (resultJson[i].Rank == "Species") { linkUrl = "/Taxon/" + resultJson[i].Heirarchy[0] + "/" + resultJson[i].Heirarchy[1] + "/" + (resultJson[i].Heirarchy[2].split(' ')[1]); }
+                if (resultJson[i].rank == "Family") { linkUrl = "/Taxon/" + resultJson[i].latinName; }
+                else if (resultJson[i].rank == "Genus") { linkUrl = "/Taxon/" + resultJson[i].heirarchy[0] + "/" + resultJson[i].heirarchy[1] }
+                else if (resultJson[i].rank == "Species") { linkUrl = "/Taxon/" + resultJson[i].heirarchy[0] + "/" + resultJson[i].heirarchy[1] + "/" + (resultJson[i].heirarchy[2].split(' ')[1]); }
                 var option = document.createElement('li');            
                 var headerDiv = document.createElement('div');
                 headerDiv.className = "taxon-name";
@@ -40,13 +40,13 @@ function Suggest(searchTerm) {
                 headerDiv.appendChild(link);
                 var rank = document.createElement('span');
                 rank.className = "taxon-rank";
-                rank.innerHTML = resultJson[i].Rank;
+                rank.innerHTML = resultJson[i].rank;
                 var heirarchy = document.createElement('div');
                 heirarchy.className = "heirarchy";
-                heirarchy.innerHTML = resultJson[i].Heirarchy.join(" > ");
+                heirarchy.innerHTML = resultJson[i].heirarchy.join(" > ");
                 headerDiv.appendChild(rank);
                 option.appendChild(heirarchy);
-                link.innerHTML = resultJson[i].LatinName;
+                link.innerHTML = resultJson[i].latinName;
                 link.href = linkUrl;
                 link.addEventListener('click', function (e) {
                     var name = this.innerHTML;

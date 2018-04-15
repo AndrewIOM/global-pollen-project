@@ -231,3 +231,10 @@ type VoidSlideRequest = {
     [<Required>] SlideId: string
     [<Required>] CollectionId: Guid
 }
+
+module Empty =
+
+    let newAppUserRequest = { Title = ""; FirstName = ""; LastName = ""; Organisation = ""; Email = "" ; EmailConfirmation = ""; Password = ""; ConfirmPassword = "" }
+    let forgotPassword = { Email = "" }
+    let addCollection =  { Name = ""; Description = ""; CuratorFirstNames = ""; CuratorSurname = ""; CuratorEmail = ""; AccessMethod = ""; Institution = ""; InstitutionUrl = "" }
+    let login = { Email = ""; Password = ""; RememberMe = false }

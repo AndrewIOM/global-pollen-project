@@ -29,6 +29,7 @@
     <Compile Include="Validation.fs" />
     <Compile Include="Docs.fs" />
     <Compile Include="View.fs" />
+    <Compile Include="DigitiseDashboard.fs" />
     <Compile Include="Account.fs" />
     <Compile Include="App.fs" />
     <Compile Include="Startup.fs" />
