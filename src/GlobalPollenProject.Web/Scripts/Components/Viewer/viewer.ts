@@ -45,7 +45,7 @@ function Viewer(containerId, canvasId, width, height, imagePaths, crop=null) {
         var error = false;
         for (var i = 0; i < self.imagePaths.length; i++) {
             var img = new Image();
-            img.onload = function () {
+            img.onload = (event) => {
                 // ensure all focus level images have the same dimensions
                 if (self.imgWidth != undefined && self.imgHeight != undefined) {
                     if (this.width != self.imgWidth || this.height != self.imgHeight) {
@@ -55,7 +55,7 @@ function Viewer(containerId, canvasId, width, height, imagePaths, crop=null) {
                         if(!error) {
                             // only trigger once!
                             error = true;
-                            $(self).trigger(Viewer.EVENT_IMAGES_MISMATCHED_SIZE);
+                            $(self).trigger(ViewerEvent.EVENT_IMAGES_MISMATCHED_SIZE);
                         }
                         return;
                     }
@@ -77,7 +77,7 @@ function Viewer(containerId, canvasId, width, height, imagePaths, crop=null) {
 
                     // proceed if all images have been loaded - trigger a jQuery function too
                     callback();
-                    $(self).trigger(Viewer.EVENT_LOADED_IMAGES);
+                    $(self).trigger(ViewerEvent.EVENT_LOADED_IMAGES);
                 }
             }
             img.src = self.imagePaths[i];
@@ -113,7 +113,7 @@ function Viewer(containerId, canvasId, width, height, imagePaths, crop=null) {
             self.transform = d3.event.transform;
 
             // trigger a zoom event
-            $(self).trigger(Viewer.EVENT_ZOOMED);
+            $(self).trigger(ViewerEvent.EVENT_ZOOMED);
         }
 
         var defaultZoom = Math.min(self.width / self.imgWidth, self.height / self.imgHeight);
@@ -251,6 +251,8 @@ function Viewer(containerId, canvasId, width, height, imagePaths, crop=null) {
     });
 }
 
-Viewer.EVENT_LOADED_IMAGES = "loadedImages";
-Viewer.EVENT_ZOOMED = "zoomed";
-Viewer.EVENT_IMAGES_MISMATCHED_SIZE = "imagesMismatchedSize";
+enum ViewerEvent {
+    EVENT_LOADED_IMAGES = "loadedImages",
+    EVENT_ZOOMED = "zoomed",
+    EVENT_IMAGES_MISMATCHED_SIZE = "imagesMismatchedSize"
+}

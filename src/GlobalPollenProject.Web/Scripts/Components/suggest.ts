@@ -1,9 +1,9 @@
 //Suggest species from reference collection
-//Andrew Martin - 11/06/2016
+import * as $ from "jquery"
 
 $(document).ready(function () {
     $('#ref-collection-search').keyup(function () {
-        var val = $.trim(this.value);
+        var val = (<HTMLInputElement>this).value;
         if (val.length > 0) {
             var results = Suggest(val);
         } else {
@@ -19,9 +19,9 @@ function capitaliseFirstLetter(string) {
 //Query local Species API
 function Suggest(searchTerm) {
     searchTerm = capitaliseFirstLetter(searchTerm);
-    ajax = new XMLHttpRequest();
+    let ajax = new XMLHttpRequest();
     ajax.onreadystatechange = function () {
-        if (ajax.readyState == 4 || ajax.readyState == "complete") {
+        if (ajax.readyState == 4) {
             var result = ajax.responseText;
             var resultJson = JSON.parse(result);
             var taxaList = document.getElementById('suggestList');

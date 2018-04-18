@@ -46,7 +46,7 @@ function BotanicalLookupToolViewModel() {
     }
 
     self.capitaliseFirstLetter = function (element) {
-        $(element).val($(element).val().charAt(0).toUpperCase() + $(element).val().slice(1));
+        $(element).val($(element).val().toString().charAt(0).toUpperCase() + $(element).val().toString().slice(1));
     }
 
     self.getTaxonIdIfValid = function() {
@@ -82,7 +82,7 @@ function updateList(entryBox, rank) {
 
     if (rank == 'Species') {
         //Combine genus and species for canonical name
-        var genus = document.getElementById('original-Genus').value;
+        var genus = (<HTMLInputElement>document.getElementById('original-Genus')).value;
         query += genus + " ";
     }
     query += value;

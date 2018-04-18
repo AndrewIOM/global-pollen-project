@@ -55,12 +55,12 @@
     display: inline-block;
 }
 
-.taxon-list-item .taxon-details h3 {
+.taxon-list-item .taxon-details .title {
     font-size: 1.25em;
     margin-top: 0.2em;
 }
 
-.taxon-list-item .taxon-details h3:hover {
+.taxon-list-item .taxon-details .title:hover {
     text-decoration: none !important;
 }
 

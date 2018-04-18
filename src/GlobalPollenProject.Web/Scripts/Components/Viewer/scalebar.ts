@@ -63,11 +63,11 @@ function ScaleBar(viewer, barId, scale) {
     }
 
     // initialise after the images are loaded
-    $(self.viewer).on(Viewer.EVENT_LOADED_IMAGES, function () {
+    $(self.viewer).on(ViewerEvent.EVENT_LOADED_IMAGES, function () {
         self.initialise();
     });
 
-    $(self.viewer).on(Viewer.EVENT_ZOOMED, function () {
+    $(self.viewer).on(ViewerEvent.EVENT_ZOOMED, function () {
         self.redraw();
     });
 

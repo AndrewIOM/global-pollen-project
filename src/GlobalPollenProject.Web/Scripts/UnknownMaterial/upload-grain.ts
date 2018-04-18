@@ -1,14 +1,16 @@
+import 'googlemaps'
+
 /**
  * Simple object to hold data for a single unknown grain image
  */
-var ImageObject = function () {
-    this.b64 = null;
-    this.crop = null;
-    this.floatingCal = null;
-    this.measuredDistance = null;
-    this.nativeWidth = null;
+class ImageObject {
+    b64: string;
+    crop: JQuery.Jcrop.SelectionInfo;
+    floatingCal: string;
+    measuredDistance: string;
+    nativeWidth: number
 
-    this.ready = function () {
+    ready() {
         return (
             this.b64 != null &&
             this.crop != null &&
@@ -29,13 +31,12 @@ var hasUploaded = false;
  * One tab for each image supplied
  * @param {*[ImageObject]} images 
  */
-var createTabs = function (images) {
+var createTabs = function (images:ImageObject[]) {
     // remove existing tabs
     $("#identify-image-config-tabs").html("");
     $("#identify-image-config-content").html("");
 
-    for (var i in images) {
-        var img = images[i];
+    images.forEach((img,i) => {
         var tab = $([
             "<li class='nav-item' id='identify-image-config-tab-" + i + "'>",
             "<a class='nav-link' data-toggle='tab' href='#tab" + i + "' role='tab'>",
@@ -96,7 +97,7 @@ var createTabs = function (images) {
         );
 
         $(tabContent).find(".identify-measured-distance").change(function () {
-            $(this).val($(this).val().replace(/[^0-9.]/g, ""));
+            $(this).val($(this).val().toString().replace(/[^0-9.]/g, ""));
         });
 
         $(tabContent).find("img").Jcrop({
@@ -112,10 +113,10 @@ var createTabs = function (images) {
                 images[this.opt.tab].crop.h /= h;
                 createImageViewer(images, this.opt.tab);
             },
-            tab: parseInt(i)
+            //tab: i
         });
         $("#identify-image-config-content").append(tabContent);
-    }
+    });
 
     // show tabs
     $("#identify-image-configuration").css("display", "block");
@@ -141,7 +142,7 @@ var createImageViewer = function (images, imageNo) {
         e.preventDefault();
 
         if ($("#identify-image-viewer-" + imageNo).data("measuring-line") != null) {
-            if ($("#identify-image-viewer-" + imageNo).data("measuring-line").state == MeasuringLine.STATE_DRAWING) {
+            if ($("#identify-image-viewer-" + imageNo).data("measuring-line").state == MeasuringLineState.STATE_DRAWING) {
                 return;
             }
             $("#identify-image-viewer-" + imageNo).data("measuring-line").dispose();
@@ -152,7 +153,7 @@ var createImageViewer = function (images, imageNo) {
             "#static-image-previewer-measuring-line-" + imageNo, false, null,
             "Enter the actual distance below"));
 
-        $($("#identify-image-viewer-" + imageNo).data("measuring-line")).on(MeasuringLine.EVENT_DRAWN, function () {
+        $($("#identify-image-viewer-" + imageNo).data("measuring-line")).on(MeasuringLineEvent.EVENT_DRAWN, function () {
             $("#tab" + imageNo).find(".identify-draw-line-button").removeClass("disabled");
         });
 
@@ -244,8 +245,8 @@ var uploadGrain = function () {
         function getBase64FromViewer(viewer, callback) {
             var img = new Image();
             img.crossOrigin = 'Anonymous';
-            img.onload = function () {
-                var canvas = document.createElement('CANVAS');
+            img.onload = () => {
+                var canvas = <HTMLCanvasElement> document.createElement('CANVAS');
                 var ctx = canvas.getContext('2d');
                 var dataURL;
                 canvas.height = viewer.imgHeight;
@@ -295,11 +296,11 @@ var uploadGrain = function () {
             var measuringLine = $(vid).data("measuring-line");
             var pp = measuringLine.getPixelPoints();
 
-            output[vid]["X1"] = parseInt(Math.round(pp[0][0]));
-            output[vid]["Y1"] = parseInt(Math.round(pp[0][1]));
-            output[vid]["X2"] = parseInt(Math.round(pp[1][0]));
-            output[vid]["Y2"] = parseInt(Math.round(pp[1][1]));
-            output[vid]["MeasuredLength"] = parseFloat($(vid).parent().parent().parent().find(".identify-measured-distance").val());
+            output[vid]["X1"] = Math.floor(Math.round(pp[0][0]));
+            output[vid]["Y1"] = Math.floor(Math.round(pp[0][1]));
+            output[vid]["X2"] = Math.floor(Math.round(pp[1][0]));
+            output[vid]["Y2"] = Math.floor(Math.round(pp[1][1]));
+            output[vid]["MeasuredLength"] = parseFloat($(vid).parent().parent().parent().find(".identify-measured-distance").val().toString());
         }
 
         var outputArray = Object.keys(output).map(function (v) {
@@ -309,15 +310,15 @@ var uploadGrain = function () {
         var request = {
             Images: outputArray,
             SampleType: null,
-            LatitudeDD: parseFloat($("#latitude-input").val()),
-            LongitudeDD: parseFloat($("#longitude-input").val()),
+            LatitudeDD: parseFloat($("#latitude-input").val().toString()),
+            LongitudeDD: parseFloat($("#longitude-input").val().toString()),
             Year: null,
             YearType: null
         }
 
         if ($("#identify-sampling-method-fossil").is(":checked")) {
             request.SampleType = "Fossil";
-            request.Year = parseInt($("#identify-temporal-fossil-ybp").val());
+            request.Year = parseInt($("#identify-temporal-fossil-ybp").val().toString());
             if ($("#identify-temporal-fossil-radiocarbon").is(":checked")) {
                 request.YearType = "Radiocarbon";
             } else if ($("#identify-temporal-fossil-lead").is(":checked")) {
@@ -328,7 +329,7 @@ var uploadGrain = function () {
         } else {
             request.SampleType = "Environmental";
             request.YearType = "Calendar";
-            request.Year = parseInt($("#identify-temporal-environmental-year").val());
+            request.Year = parseInt($("#identify-temporal-environmental-year").val().toString());
         }
 
         $.ajax({
@@ -372,7 +373,7 @@ var uploadGrain = function () {
 
 $(function () {
     // array of image objects
-    var images = [];
+    var images : Array<ImageObject> = [];
 
     $("#errors-box").hide();
     $("#add-grain-form").trigger("reset");
@@ -466,8 +467,8 @@ $(function () {
     function updateLocationFormFields(latLng) {
         var lat = latLng.lat().toFixed(4);
         var lon = latLng.lng().toFixed(4);
-        document.getElementById('latitude-input').value = lat;
-        document.getElementById('longitude-input').value = lon;
+        (<HTMLInputElement>document.getElementById('latitude-input')).value = lat;
+        (<HTMLInputElement>document.getElementById('longitude-input')).value = lon;
     }
 
 });

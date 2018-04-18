@@ -1,4 +1,5 @@
-/*jshint esversion: 6 */
+import * as ko from 'knockout'
+
 
 ////////////////////////
 /// Setup - KO Bindings
@@ -43,10 +44,10 @@ var SlideDetailTab = {
     UPLOAD_FOCUSABLE: 3
 };
 
-function DigitiseViewModel(users, analyses) {
+function DigitiseViewModel() {
     var self = this;
     let apiPrefix = "/api/v1/digitise/";
-    self.currentView = ko.observable(CurrentView.BASE);
+    self.currentView = ko.observable(CurrentView.MASTER);
     self.myCollections = ko.observableArray([]);
     self.activeCollection = ko.observable(null);
     self.newCollectionVM = ko.observable(null);
@@ -309,7 +310,7 @@ function RecordSlideViewModel(currentCollection) {
     };
 
     self.capitaliseFirstLetter = function (element) {
-        $(element).val($(element).val().charAt(0).toUpperCase() + $(element).val().slice(1));
+        $(element).val($(element).val().toString().charAt(0).toUpperCase() + $(element).val().toString().slice(1));
     };
 
     self.submit = function (rootVM) {
@@ -556,7 +557,7 @@ function SlideDetailViewModel(detail) {
         });
 
         $("#measuredDistance").change(function () {
-            self.measuredDistance($(this).val().replace(/[^0-9.]/g, ""));
+            self.measuredDistance($(this).val().toString().replace(/[^0-9.]/g, ""));
         });
 
         if (self.viewer != null) {
@@ -680,7 +681,7 @@ function SlideDetailViewModel(detail) {
                     self.slider = new FocusSlider(self.viewer, "#focus-image-previewer-slider");
                     self.loadedFocusImages(true);
 
-                    $(self.viewer).on(Viewer.EVENT_IMAGES_MISMATCHED_SIZE, function () {
+                    $(self.viewer).on(ViewerEvent.EVENT_IMAGES_MISMATCHED_SIZE, function () {
                         self.loadedFocusImages(false);
                         $("#focus-image-previewer-container").empty();
                         self.viewer.dispose();
@@ -712,8 +713,8 @@ function SlideDetailViewModel(detail) {
     self.activateMeasuringLine = function () {
         if (self.measuringLine != null) {
             // don't do anything if the measuring line is being drawn
-            if (self.measuringLine.state == MeasuringLine.STATE_DRAWING ||
-                self.measuringLine.state == MeasuringLine.STATE_ACTIVE) {
+            if (self.measuringLine.state == MeasuringLineState.STATE_DRAWING ||
+                self.measuringLine.state == MeasuringLineState.STATE_ACTIVE) {
                 return;
             }
 
@@ -727,7 +728,7 @@ function SlideDetailViewModel(detail) {
         self.measuringLine.activate();
         $("#slidedetail-draw-line-button").prop("disabled", true);
 
-        $(self.measuringLine).on(MeasuringLine.EVENT_DRAWN, function () {
+        $(self.measuringLine).on(MeasuringLineEvent.EVENT_DRAWN, function () {
             $("#slidedetail-draw-line-button").prop("disabled", false);
 
             self.floatingCal(self.measuringLine.getPixelPoints());
@@ -879,8 +880,8 @@ function ImageCalibrationViewModel(currentMicroscope) {
     self.activateMeasuringLine = function () {
         if (self.measuringLine != null) {
             // don't do anything if the measuring line is being drawn
-            if (self.measuringLine.state == MeasuringLine.STATE_DRAWING ||
-                self.measuringLine.state == MeasuringLine.STATE_ACTIVE) {
+            if (self.measuringLine.state == MeasuringLineState.STATE_DRAWING ||
+                self.measuringLine.state == MeasuringLineState.STATE_ACTIVE) {
                 return;
             }
 
@@ -894,7 +895,7 @@ function ImageCalibrationViewModel(currentMicroscope) {
         self.measuringLine.activate();
         $("#calibration-draw-line-button").prop("disabled", true);
 
-        $(self.measuringLine).on(MeasuringLine.EVENT_DRAWN, function () {
+        $(self.measuringLine).on(MeasuringLineEvent.EVENT_DRAWN, function () {
             $("#calibration-draw-line-button").prop("disabled", false);
 
             self.floatingCal(self.measuringLine.getPixelPoints());
@@ -951,7 +952,7 @@ function updateList(entryBox, rank) {
 
     if (rank == 'Species') {
         //Combine genus and species for canonical name
-        var genus = document.getElementById('original-Genus').value;
+        var genus = (<HTMLInputElement>document.getElementById('original-Genus')).value;
         query += genus + " ";
     }
     query += value;
@@ -1020,8 +1021,8 @@ function isEmpty(str) {
 function convertToDataURLviaCanvas(url, callback) {
     var img = new Image();
     img.crossOrigin = 'Anonymous';
-    img.onload = function () {
-        var canvas = document.createElement('CANVAS');
+    img.onload = (event) => {
+        var canvas = <HTMLCanvasElement>document.createElement('CANVAS');
         var ctx = canvas.getContext('2d');
         var dataURL;
         canvas.height = this.height;

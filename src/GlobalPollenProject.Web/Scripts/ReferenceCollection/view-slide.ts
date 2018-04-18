@@ -1,3 +1,5 @@
+import 'jquery-jcrop'
+
 // store the components in global vars
 var viewer = null;
 var slider = null;
@@ -53,7 +55,7 @@ var initialiseCropper = function() {
     $("#cropping-container").html("<img id='cropper-image' src='" + img + "'></img>");
     var box_width = $('#cropping-container').width();
 
-    $("#cropper-image").Jcrop({multi: true, boxWidth: box_width}, function() {
+    $("#cropper-image").Jcrop({/*multi: true, */boxWidth: box_width}, function() {
         jcrop_api = this;
     });
 

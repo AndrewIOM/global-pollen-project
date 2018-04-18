@@ -6,7 +6,7 @@ function IdentifyViewModel() {
     self.validateAndSubmit = function () {
         self.validateTaxon();
         self.currentTaxon.subscribe(function(newValue) {
-            if (newValue != null) { document.getElementById("identify-form").submit(); }
+            if (newValue != null) { (<HTMLFormElement>document.getElementById("identify-form")).submit(); }
         });
     }
 };

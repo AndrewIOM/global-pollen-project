@@ -1,3 +1,7 @@
+import * as d3 from 'd3'
+import * as topojson from 'topojson'
+import * as noUiSlider from 'noUiSlider'
+
 var neotomaId;
 var points = [];
 var yearOldest = 10000;
@@ -10,11 +14,11 @@ mapElement.style.display = 'none';
 var height = 250;
 var svg;
 var domPoints;
-var projection = d3.geo.equirectangular()
+var projection = d3.geoEquirectangular()
                     .scale((width + 1) / 2 / Math.PI)
                     .translate([width / 2, height / 2])
                     .precision(.1);
-var color = d3.scale.linear().domain([yearYoungest, yearOldest]).range(["yellow", "#83296F"]);
+var color = d3.scaleLinear<string>().domain([yearYoungest, yearOldest]).range(["yellow", "#83296F"]);
 
 $('document').ready(function() {
     $("input[name=distribution]").change(function() {
@@ -50,30 +54,32 @@ $('document').ready(function() {
     slider.setAttribute('disabled', true);
     $('#paleo-loading').show();
     svg = d3.select('#neotoma-map').append('svg').attr('width', width).attr('height', height);
-    var path = d3.geo.path().projection(projection);
+    var path = d3.geoPath().projection(projection);
     var g = svg.append("g");
-    d3.json('/geojson/world110.json', function(error, topology) {
-        g.selectAll("path").data(topojson.object(topology, topology.objects.countries).geometries).enter().append("path").attr("d", path).attr('fill', 'grey')
-    });
+    d3.json('/geojson/world110.json'), (error, topology) => {
+        let geojson:any = topojson.feature(topology, topology.objects.countries)
+        g.selectAll("path").data(geojson.features).enter().append("path").attr("d", path).attr('fill', 'grey')
+    };
     if (neotomaId == 0) {
         $('#paleo-loading').text('Past occurrences for this taxon are not available from Neotoma.');
         $('#paleo-loading').show();
     } else {
-        points = getNeotomaPoints();
+        let points = getNeotomaPoints();
         updatePastDistributionText();
         slider.noUiSlider.on('slide', function() {
             updatePastDistributionText();
             redrawPoints();
         });
-        function updatePastDistributionText() {
-            var value = slider.noUiSlider.get();
-            yearOldest = value[1] * 1000;
-            yearYoungest = value[0] * 1000;
-            $('#paleo-range-low').text(value[0]);
-            $('#paleo-range-hi').text(value[1] + ' thousand');
-        }
     }
 });
+
+function updatePastDistributionText() {
+    var value = slider.noUiSlider.get();
+    yearOldest = value[1] * 1000;
+    yearYoungest = value[0] * 1000;
+    $('#paleo-range-low').text(value[0]);
+    $('#paleo-range-hi').text(value[1] + ' thousand');
+}
 
 function redrawPoints() {
     domPoints.attr('display', 'none');
@@ -88,7 +94,7 @@ var getNeotomaPoints = function() {
         url: neotomaUri,
         jsonp: false,
         jsonpCallback: 'neotomaCallback',
-        cache: 'true',
+        cache: true,
         dataType: 'jsonp',
         error: function(xhr, textStatus, errorThrown) {
             $('#paleo-loading').text("Sorry, we couldn't establish a secure connection with NeotomaDB. Please try later.");

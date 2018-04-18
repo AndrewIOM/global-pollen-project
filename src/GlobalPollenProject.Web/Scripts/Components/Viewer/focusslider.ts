@@ -14,9 +14,9 @@ function FocusSlider(viewer, sliderId) {
     self.scale = null;
 
     // initialise after the images are loaded
-    $(self.viewer).on(Viewer.EVENT_LOADED_IMAGES, function () {
+    $(self.viewer).on(ViewerEvent.EVENT_LOADED_IMAGES, function () {
 
-        var startLevel = parseInt(Math.ceil(self.viewer.getMaxFocusLevel() / 2));
+        var startLevel = Math.floor(Math.ceil(self.viewer.getMaxFocusLevel() / 2));
         self.viewer.setFocusLevel(startLevel);
 
         var svg = d3.select(self.viewer.containerId).append("svg")
@@ -108,7 +108,7 @@ function FocusSlider(viewer, sliderId) {
                     if (cy > ly + lh) cy = ly + lh;
 
                     self.handle.attr("cy", cy);
-                    self.viewer.setFocusLevel(parseInt(Math.round(self.scale.invert(d3.event.y))));
+                    self.viewer.setFocusLevel(Math.round(self.scale.invert(d3.event.y)));
                 })
                 .on("end", function() {
                     var t = d3.transition()
