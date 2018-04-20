@@ -2,13 +2,13 @@
   "compilerOptions": {
     "noImplicitAny": false,
     "noEmitOnError": true,
-    "removeComments": false,
-    "sourceMap": true,
+    "removeComments": true,
+    "importHelpers": true,
     "target": "es5",
-    "outDir": "./obj/ts/",
-    "module": "commonjs",
+    "module": "esnext",
+    "strict": true,
     "moduleResolution": "node",
-    "lib": [ "dom", "es5", "es6" ]
+    "lib": ["dom", "es5", "es6"]
   },
   "exclude": [
     "node_modules",

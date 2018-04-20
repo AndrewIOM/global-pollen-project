@@ -1,9 +1,5 @@
 /* Structure: Pollen Project */
 
-.pollen-background {
-    background:url('/images/pollen-tiles.png');
-}
-
 // Typography
 .header-toggle {
     font-size:2em;
@@ -297,4 +293,8 @@ header {
             font-style: italic;
         }
     }
+}
+
+.pollen-background {
+    background:url('/images/pollen-tiles.png');
 }

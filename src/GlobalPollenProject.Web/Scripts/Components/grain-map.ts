@@ -1,4 +1,5 @@
 import * as d3 from 'd3'
+import * as $ from 'jquery'
 import * as topojson from 'topojson'
 import { GeometryCollection } from "topojson-specification";
 
@@ -8,8 +9,7 @@ type Grain = {
     Longitude: number
 };
 
-$('document').ready(function () {
-    
+export function activate(container: HTMLElement) {
     var width = $('#locations-map').width();
     var height = width * 0.5;
 
@@ -71,4 +71,4 @@ $('document').ready(function () {
             //.ease("variable")
             .attr('opacity', '1');
     };
-});
+}

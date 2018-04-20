@@ -1,35 +1,34 @@
 import * as webpack from 'webpack'
 import * as path from 'path'
 
-var ExtractTextPlugin = require('extract-text-webpack-plugin');
-var OptimiseCssAssets = require('optimize-css-assets-webpack-plugin');
+const ExtractTextPlugin = require('extract-text-webpack-plugin');
+const OptimiseCssAssets = require('optimize-css-assets-webpack-plugin');
+const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
 
 const config: webpack.Configuration = {
     mode: "production",
-    devtool: "inline-source-map",
     entry: {
-        // Stand-Alone Components
-        components: "./Scripts/gpp-components.ts",
-        // Individual Pages
-        "digitse/app": "./Scripts/Digitise/digitise-app.ts",
-        "reference-collection/slide": "./Scripts/ReferenceCollection/view-slide.ts",
-        "unknown/identify": "./Scripts/UnknownMaterial/identify-grain.ts",
-        "unknown/upload": "./Scripts/UnknownMaterial/upload-grain.ts",
-        // Global styles
+        main: "./Scripts/main.ts",
         styles: "./Styles/main.scss"
     },
     output: {
-        filename: '[name].js',
-        path: path.resolve(__dirname, 'wwwroot/scripts/')
+        filename: "[name].bundle.js",
+        chunkFilename: "[name].chunk.js",
+        path: path.resolve(__dirname, 'wwwroot/scripts/'),
+        publicPath: "/scripts/"
     },
     resolve: {
-        extensions: ['.ts', '.tsx', '.js']
+        extensions: ['.ts', '.tsx', '.js'],
+        modules: [
+            path.resolve('src'),
+            'node_modules'
+        ]    
     },
     externals: {
         jquery: "jQuery",
         bootstrap: "bootstrap",
-        knockout: "knockout",
-        googlemaps: "googlemaps"
+        //knockout: "knockout",
+        //googlemaps: "googlemaps"
     },
     module: {
         rules: [{
@@ -51,7 +50,11 @@ const config: webpack.Configuration = {
         new OptimiseCssAssets({
             assetNameRegExp: /\.min\.css$/,
             cssProcessorOptions: { discardComments: { removeAll: true } }
-          })
+        }),
+        new UglifyJSPlugin({
+            sourceMap: true,
+            include: /\.min\.js$/      
+        })
     ]
 }
 

@@ -1,9 +1,4 @@
-$('document').ready(function () {
-    var gbifId = $('#GbifId').val();
-    if (gbifId != 0) {
-        gbifMap(gbifId);
-    }
-});
+import * as L from 'leaflet'
 
 var gbifMap = function (gbifId) {
     var map = L.map('map', {
@@ -19,4 +14,11 @@ var gbifMap = function (gbifId) {
     var baseUrl = 'https://api.gbif.org/v1/map/density/tile?x={x}&y={y}&z={z}&type=TAXON&key=' + gbifId + '&layer=OBS_2000_2010&layer=SP_2000_2010&layer=OBS_2010_2020&layer=SP_2010_2020&layer=LIVING&palette=yellows_reds';
     var gbifAttrib = 'GBIF contributors';
     var gbif = new L.TileLayer(baseUrl, { minZoom: 0, maxZoom: 14, attribution: gbifAttrib }).addTo(map);
+}
+
+export function activate(container: HTMLElement) {
+    var gbifId = $('#GbifId').val();
+    if (gbifId != 0) {
+        gbifMap(gbifId);
+    }
 }

@@ -1,16 +1,18 @@
 //Suggest species from reference collection
 import * as $ from "jquery"
 
-$(document).ready(function () {
-    $('#ref-collection-search').keyup(function () {
-        var val = (<HTMLInputElement>this).value;
+export function activate(container: HTMLElement) {
+
+    $(container).keyup(() => {
+        let val = (<HTMLInputElement>this).value;
         if (val.length > 0) {
             var results = Suggest(val);
         } else {
             $('#suggestList').fadeOut();
         }
-    })
-});
+    });
+
+}
 
 function capitaliseFirstLetter(string) {
     return string.charAt(0).toUpperCase() + string.slice(1);

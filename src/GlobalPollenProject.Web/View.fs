@@ -10,8 +10,11 @@ type PageLink = { Name: string; Url: string }
 
 let _data attr value = KeyValue("data-" + attr, value)
 let _aria attr value = KeyValue("aria-" + attr, value)
+let _integrity v = KeyValue("integrity", v)
 let _role value = KeyValue("role",value)
 let _on e value = KeyValue("on" + e,value)
+
+let jsBundle = "/Scripts/main.bundle.js"
 
 [<AutoOpen>]
 module Grid =
@@ -173,7 +176,7 @@ module Layout =
         ]
 
     let navigationBar =
-        nav [ _class "navbar navbar-toggleable-md navbar-light bg-faded fixed-top"] [
+        nav [ _class "navbar navbar-expand-lg navbar-toggleable-md navbar-light bg-faded fixed-top"] [
             Grid.container [
                 button [ _class "navbar-toggler navbar-toggler-right" ] [
                     span [ _class "navbar-toggler-icon" ] []
@@ -248,29 +251,16 @@ module Layout =
             meta [_charset "utf-8"]
             meta [_name "viewport"; _content "width=device-width, initial-scale=1.0" ]
             title [] [ pageTitle |> sprintf "%s - Global Pollen Project" |> encodedText ]
-
-            // Fonts
-            link [ _rel "stylesheet"; _href "https://fonts.googleapis.com/css?family=Montserrat:400,700" ]
-            link [ _rel "stylesheet"; _href "https://fonts.googleapis.com/css?family=Hind"]
-            link [ _rel "stylesheet"; _href "/lib/font-awesome/css/font-awesome.min.css"]
-
-            // Styles
-            link [ _rel "stylesheet"; _href "/lib/bootstrap/dist/css/bootstrap.min.css" ]
-            link [ _rel "stylesheet"; _href "/lib/Jcrop/css/Jcrop.min.css" ]
+            link [ _rel "stylesheet"; _href "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" ]
+            link [ _rel "stylesheet"; _href "https://use.fontawesome.com/releases/v5.0.10/css/all.css" ]
             link [ _rel "stylesheet"; _href "/css/styles.css" ]
         ]
-
-    let baseScripts = [
-        "/lib/jquery/dist/jquery.js"
-        "/lib/tether/dist/js/tether.js"
-        "/lib/bootstrap/dist/js/bootstrap.js"
-    ]
 
     let toScriptTag (s:Script) =
         script [ _src s ] []
 
     let toScriptTags (scripts:Script list) =
-        scripts |> List.map toScriptTag
+        scripts |> List.distinct |> List.map toScriptTag
 
     let headerBar title subtitle =
         header [] [
@@ -280,6 +270,12 @@ module Layout =
             ]
         ]
 
+    let baseScripts = [
+        jsBundle
+        "https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" ]
+
     let master (scripts: Script list) content =
         html [] [
             headSection "Global Pollen Project"
@@ -288,8 +284,7 @@ module Layout =
                     [ navigationBar
                       div [ _class "main-content" ] content
                       footer ]
-                    (baseScripts |> toScriptTags)
-                    (scripts |> toScriptTags) ] )
+                    ((List.concat [baseScripts; scripts]) |> toScriptTags) ] )
         ]
 
 
@@ -354,7 +349,7 @@ module Home =
                 button [ _type "submit"; _title "Search"; _class "btn btn-primary btn-lg" ] [ encodedText "Go" ] 
             ]
         { View = view
-          Scripts = [ "/js/home/suggest.js" ]}
+          Scripts = [ jsBundle ]}
 
     let heading searchField =
         header [ _class "homepage-header" ] [
@@ -405,9 +400,7 @@ module Home =
                 ]
             ]
         { View = view; 
-          Scripts = [ "//d3js.org/d3.v3.min.js"
-                      "//d3js.org/topojson.v0.min.js"
-                      "/js/home/grain-map.js" ] }
+          Scripts = [ jsBundle ] }
 
     let stats (vm:HomeStatsViewModel) =
         section [ _class "homepage-section section-bottomline" ] [
@@ -516,13 +509,7 @@ module Taxon =
                 ]
             ]
         let scripts = 
-            [ "/lib/leaflet/dist/leaflet.js"
-              "/lib/nouislider/distribute/nouislider.min.js"
-              "/js/links/gbif-map.js"
-              "//d3js.org/d3.v3.min.js" 
-              "//d3js.org/topojson.v0.min.js"
-              "/lib/wnumb/wNumb.js"
-              "/js/links/neotoma-map.js" ]
+            [ "/Scripts" ]
         { View = view; Scripts = scripts }
 
 

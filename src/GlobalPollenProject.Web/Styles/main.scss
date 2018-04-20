@@ -3,11 +3,15 @@
     Copyright Andrew Martin, University of Oxford 2015
 */
 
+// Dependencies
+//@import '../node_modules/bootstrap/scss/bootstrap';
+
+// Base
 @import '_Palette';
 @import '_BootstrapMods';
 @import '_Structure';
 
-//Components
+// Components
 @import 'Components/_Autocomplete';
 @import 'Components/_Footer';
 @import 'Components/_GrainGrid';
@@ -23,7 +27,5 @@
 @import 'Components/_Traits';
 @import 'Components/_TaxonGrid';
 @import 'Components/_ProgressCircle';
-
 @import 'Components/_Viewer';
-
 @import 'Components/_Digitise';

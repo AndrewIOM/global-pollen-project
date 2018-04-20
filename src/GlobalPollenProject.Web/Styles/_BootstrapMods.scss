@@ -1,5 +1,6 @@
 /* Bootstrap 4 Customisations for GPP */
 @import '_Palette';
+@import '_Fonts';
 
 body {
     line-height: 1.8em;
@@ -49,7 +50,7 @@ a:focus {
 }
 
 body {
-    font-family: 'Hind', sans-serif;
+    font-family: $hind;
 }
 
 h1,
@@ -58,7 +59,7 @@ h3,
 h4,
 h5,
 h6 {
-    font-family: Montserrat, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: $mottserrat;
 }
 
 input.form-control,
