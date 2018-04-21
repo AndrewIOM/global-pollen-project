@@ -92,6 +92,16 @@
 }
 
 // Bootstrap 4 cards
+.card-inverse {
+    color: rgba(255, 255, 255, .65);
+    background-color: $secondary-colour;
+    border: 0;
+
+    .card-title {
+        color: #fff;
+    }
+}
+
 .card-block {
     -webkit-box-flex: 1;
     -webkit-flex: 1 1 auto;

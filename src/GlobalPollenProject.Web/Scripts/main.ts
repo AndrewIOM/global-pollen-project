@@ -9,7 +9,7 @@ ES6Promise.polyfill();
 async function autocomplete() {
     const container = document.getElementById("ref-collection-search");
     if (container !== null) {
-        const component = await import(/* webpackChunkName: "suggest" */"./Components/suggest");
+        const component = await import("./Components/suggest");
         component.activate(container);
     }
 }
@@ -17,10 +17,18 @@ async function autocomplete() {
 async function grainMap() {
     const container = document.getElementById("locations-map");
     if (container !== null) {
-        const component = await import(/* webpackChunkName: "map-unidentified" */"./Components/grain-map");
+        const component = await import("./Components/grain-map");
         component.activate(container);
+    }
+}
+
+async function unobtrusiveValidation() {
+    if (document.forms.length > 0) {
+        console.log("activating validation");
+        await import("./Components/validation");
     }
 }
 
 autocomplete();
 grainMap();
+unobtrusiveValidation();

@@ -121,7 +121,7 @@ module Forms =
     open Microsoft.FSharp.Quotations
 
     let formField' fieldName validationAttributes = 
-        div [ _class "form-group-row" ] [
+        div [ _class "form-group row" ] [
             label [ _class "col-sm-2 col-form-label"; _for fieldName ] [ encodedText fieldName ]
             Grid.column Small 10 [
                 input (List.concat [[ _id fieldName; _class "form-control"; ]; validationAttributes ])
@@ -139,7 +139,7 @@ module Forms =
         let validationAttributes = validationFor e
         div [ _class "form-group" ] [
             label [] [ encodedText name ]
-            input (List.concat [[ _id name; _class "form-control"; ]; validationAttributes ])
+            input (List.concat [[ _id name; _name name; _class "form-control"; ]; validationAttributes ])
             small [ _id "name-help" ] [ encodedText helpText ] 
         ]
 
@@ -271,10 +271,10 @@ module Layout =
         ]
 
     let baseScripts = [
-        jsBundle
         "https://code.jquery.com/jquery-3.2.1.slim.min.js"
         "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-        "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" ]
+        "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        jsBundle ]
 
     let master (scripts: Script list) content =
         html [] [
@@ -687,7 +687,7 @@ module ReferenceCollections =
 
     let listView (vm:ReferenceCollectionSummary list) =
         [
-            Components.breadcrumb [] "Cool Page"
+            Components.breadcrumb [] "Individual Reference Collections"
             Grid.row [
                 Grid.column Medium 9 (vm |> List.map collectionCard)
                 Grid.column Medium 3 [ infoCard ]
@@ -728,6 +728,58 @@ module ReferenceCollections =
             ]
 
         ] |> Layout.standard [] vm.Name "Individual Reference Collection"
+
+    let slideView vm =
+        [
+
+        ] |> Layout.standard [] "Individual Slide" "Individual Slide"
+
+
+module Identify =
+
+    let index (vm:ReadModels.GrainSummary list) = 
+        let title = "Unidentified Pollen and Spore Pool"
+        [
+            Components.breadcrumb [] title
+            Grid.row [
+                Grid.column Medium 8 [
+                    ul [ _class "grain-grid columns-4" ] [
+                        for g in vm do
+                            yield li [] [
+                                a [ _href (sprintf "/Identify/%s" (g.Id.ToString()) ) ] [
+                                    div [ _class "img-container portrait" ] [
+                                        img [ _src g.Thumbnail ]
+                                        div [ _class "ribbon" ] [ span [] [ encodedText "?" ] ]
+                                    ]
+                                ]
+                            ]
+                    ]
+                ]
+                Grid.column Medium 4 [
+                    a [ _class "btn btn-primary btn-lg btn-block"; _style "margin-bottom:1em;"; _href "/Identify/Upload" ] [
+                        Icons.fontawesome "plus-square"
+                        encodedText " Submit a Grain / Spore"
+                    ]
+                    div [ _class "card mb-3 text-center" ] [
+                        div [ _class "card-block" ] [
+                            h4 [ _class "card-title" ] [ encodedText "What are these grains and spores?" ]
+                            p [ _class "card-text" ] [ encodedText "These individual pollen and spores require taxonomic identification. You can identify any of them to family, genus, or species level. Once there is argeement between at least three people, and above a threshold, the identity may become confirmed." ]
+                        ]
+                    ]
+                ]
+            ]
+        ] |> Layout.standard [] title "Some specimens have been submitted, for which the botanical origin is not known. Can you help with a morphological identification?"
+
+    let view vm = 
+        [
+
+        ] |> Layout.standard [] "View" "View"
+
+    let add vm = 
+        [
+
+        ] |> Layout.standard [] "Add" "Add"
+
 
 module Statistics =
 
@@ -779,11 +831,10 @@ module Account =
 
     let login errors (vm:Requests.LoginRequest) =
         [
-            link [ _rel "stylesheet"; _href "/lib/bootstrap-social/bootstrap-social.css" ]
             Grid.row [
                 Grid.column Medium 8 [
                     form [ _action "/Account/Login"; _method "POST"; _class "form-horizontal" ] [
-                        validationSummary [] vm
+                        validationSummary errors vm
                         formField <@ vm.Email @>
                         formField <@ vm.Password @>
                         formField <@ vm.RememberMe @>
@@ -819,9 +870,7 @@ module Account =
                     ]
                 ]
             ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Log in" "Use your existing Global Pollen Project account, Facebook or Twitter"
+        ] |> Layout.standard [] "Log in" "Use your existing Global Pollen Project account, Facebook or Twitter"
 
     let register errors (vm:NewAppUserRequest) =
         [
@@ -992,6 +1041,7 @@ module StatusPages =
     
     let maintainance = statusLayout "wrench" "Under Temporary Maintainance" "We're working on some changes, which have required us to take the Pollen Project offline. We will be back later today, so sit tight."
 
+    let denied = statusLayout "exclamation-triangle" "Access Denied" "You're not authorised to access this content."
 
 module Tools =
 
@@ -999,3 +1049,16 @@ module Tools =
         [
 
         ] |> Layout.standard [] "Tools" "Some tools"
+
+
+module Admin =
+
+    let users vm =
+        [
+
+        ] |> Layout.standard [] "Users" "Admin"
+
+    let curate vm =
+        [
+            
+        ] |> Layout.standard [] "Curate" "Curate"

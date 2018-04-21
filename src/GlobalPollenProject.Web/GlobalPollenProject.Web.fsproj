@@ -1,46 +1,32 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
-
   <PropertyGroup>
-    <TargetFramework>netcoreapp2.0</TargetFramework>
-    <MvcRazorCompileOnPublish>false</MvcRazorCompileOnPublish>
-    <PreserveCompilationContext>true</PreserveCompilationContext>
     <AssemblyName>GlobalPollenProject.Web</AssemblyName>
     <OutputType>Exe</OutputType>
-    <PackageId>GlobalPollenProject.Web</PackageId>
-    <AssetTargetFallback>$(PackageTargetFallback);portable-net45+win8;dnxcore50</AssetTargetFallback>
-    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TargetFramework>netcoreapp2.0</TargetFramework>
   </PropertyGroup>
-
   <ItemGroup>
     <ProjectReference Include="../GlobalPollenProject.App/GlobalPollenProject.App.fsproj" />
   </ItemGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Giraffe" Version="1.1.0" />
-    <PackageReference Include="Giraffe.Razor" Version="1.1.0" />
-    <PackageReference Include="Markdig" Version="0.13.4" />
-    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
-    <PackageReference Include="jose-jwt" Version="2.1" />
-  </ItemGroup>
-
   <ItemGroup>
     <Compile Include="Urls.fs" />
-    <Compile Include="Handlers.fs" />
-    <Compile Include="Validation.fs" />
     <Compile Include="Docs.fs" />
     <Compile Include="View.fs" />
     <Compile Include="DigitiseDashboard.fs" />
+    <Compile Include="Handlers.fs" />
+    <Compile Include="Validation.fs" />
     <Compile Include="Account.fs" />
     <Compile Include="App.fs" />
     <Compile Include="Startup.fs" />
     <Compile Include="Program.fs" />
+    <None Include="Lookups/taxonlookup.csv" />
+    <None Include="Dockerfile" />
+    <None Include="docker-compose.yml" />
+    <None Include="docker-compose.azure.yml" />
   </ItemGroup>
-
   <ItemGroup>
-    <None Include="Lookups/taxonlookup.csv" CopyToPublishDirectory="always" />
-    <None Include="Dockerfile" CopyToPublishDirectory="always" />
-    <None Include="docker-compose.yml" CopyToPublishDirectory="always" />
-    <None Include="docker-compose.azure.yml" CopyToPublishDirectory="always" />
+    <PackageReference Include="Giraffe" Version="1.1.0" />
+    <PackageReference Include="Markdig" Version="0.13.4" />
+    <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.0" />
+    <PackageReference Include="jose-jwt" Version="2.1" />
   </ItemGroup>
-
 </Project>

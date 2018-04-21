@@ -22,7 +22,10 @@ const config: webpack.Configuration = {
         modules: [
             path.resolve('src'),
             'node_modules'
-        ]    
+        ],
+        alias: {
+            "jquery.validation": "jquery-validation/dist/jquery.validate.js"
+        }
     },
     externals: {
         jquery: "jQuery",
@@ -53,9 +56,9 @@ const config: webpack.Configuration = {
         }),
         new UglifyJSPlugin({
             sourceMap: true,
-            include: /\.min\.js$/      
+            include: /\.min\.js$/
         })
-    ]
+    ],
 }
 
 export default config

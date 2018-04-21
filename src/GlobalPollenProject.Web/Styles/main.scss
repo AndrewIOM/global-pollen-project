@@ -5,6 +5,7 @@
 
 // Dependencies
 //@import '../node_modules/bootstrap/scss/bootstrap';
+@import '../node_modules/bootstrap-social/bootstrap-social.css';
 
 // Base
 @import '_Palette';
@@ -20,7 +21,7 @@
 @import 'Components/_MapFilter';
 @import 'Components/_MapTemporalDistribution';
 @import 'Components/_PreviewRibbon';
-@import 'Components/_Panels';
+@import 'Components/_Cards';
 @import 'Components/_RefCollectionList';
 @import 'Components/_Sidebar';
 @import 'Components/_Slide';

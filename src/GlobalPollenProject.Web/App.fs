@@ -5,24 +5,21 @@ open System.IO
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
 
-open Giraffe
-open Giraffe.Razor.HttpHandlers
-
-open GlobalPollenProject.Core.Composition
-open GlobalPollenProject.Shared.Identity.Models
-open GlobalPollenProject.App.UseCases
-open ReadModels
-
-open Handlers
 open Account
 open Docs
+open Giraffe
+open GlobalPollenProject.App.UseCases
+open GlobalPollenProject.Core.Composition
+open GlobalPollenProject.Shared.Identity.Models
+open Handlers
+open ReadModels
 
 /////////////////////////
 /// Helpers
 /////////////////////////
 
-let accessDenied = setStatusCode 401 >=> razorHtmlView "AccessDenied" None
-let mustBeLoggedIn : HttpHandler = requiresAuthentication (redirectTo false "/Account/Login")
+let accessDenied = setStatusCode 401 >=> htmlView HtmlViews.StatusPages.denied
+let mustBeLoggedIn : HttpHandler = requiresAuthentication (redirectTo false Urls.Account.login)
 let mustBeAdmin ctx = requiresRole "Admin" accessDenied ctx
 
 let currentUserId (ctx:HttpContext) () =
@@ -33,10 +30,10 @@ let currentUserId (ctx:HttpContext) () =
     } |> Async.RunSynchronously
 
 let notFoundResult ctx =
-    ctx |> (clearResponse >=> setStatusCode 400 >=> renderView "NotFound" None)
+    ctx |> (clearResponse >=> setStatusCode 400 >=> htmlView HtmlViews.StatusPages.notFound)
 
 let maintainanceResult ctx =
-    ctx |> (clearResponse >=> setStatusCode 503 >=> renderView "Maintainance" None)
+    ctx |> (clearResponse >=> setStatusCode 503 >=> htmlView HtmlViews.StatusPages.maintainance)
 
 let notInMaintainanceMode next ctx : HttpFuncResult =
     match inMaintainanceMode with
@@ -93,7 +90,7 @@ let docIndexHandler : HttpHandler =
         |> Array.map (fun (meta,html) -> {Html = html; Metadata = meta |> dict; Headings = getSidebarHeadings html}) 
         |> Seq.toList
         |> HtmlViews.Guide.contentsView
-        |> toGiraffeView next ctx
+        |> renderView next ctx
 
 let docSectionHandler docSection =
     fun next ctx ->
@@ -102,8 +99,8 @@ let docSectionHandler docSection =
         | Some (meta,html) -> 
             {Html = html; Metadata = meta |> dict; Headings = getSidebarHeadings html} 
             |> HtmlViews.Guide.sectionView
-            |> toGiraffeView next ctx
-        | None -> razorHtmlView "Error" None next ctx
+            |> renderView next ctx
+        | None -> notFoundResult next ctx
 
 let slideViewHandler (id:string) : HttpHandler =
     fun next ctx ->
@@ -112,11 +109,11 @@ let slideViewHandler (id:string) : HttpHandler =
         | 2 -> 
             let col,slide = split.[0], split.[1] |> Net.WebUtility.UrlDecode
             Taxonomy.getSlide col slide
-            |> toViewResult "Reference/Slide" next ctx
+            |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
         | 3 ->
             let col,slide = split.[0], split.[2] |> Net.WebUtility.UrlDecode
             Taxonomy.getSlide col slide
-            |> toViewResult "Reference/Slide" next ctx
+            |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
         | _ -> notFoundResult next ctx
 
 let taxonDetail (taxon:string) next ctx =
@@ -128,27 +125,23 @@ let taxonDetail (taxon:string) next ctx =
         | 3 -> split.[0],Some split.[1],Some split.[2]
         | _ -> "",None,None
     Taxonomy.getByName f g s
-    |> lift HtmlViews.Taxon.view
-    |> toGiraffeViewResult next ctx
+    |> renderViewResult HtmlViews.Taxon.view next ctx
 
 let taxonDetailById id next ctx =
     match Guid.TryParse id with
     | (true,g) ->
         g
         |> Taxonomy.getById
-        |> lift HtmlViews.Taxon.view
-        |> toGiraffeViewResult next ctx
+        |> renderViewResult HtmlViews.Taxon.view next ctx
     | (false,_) -> notFoundResult next ctx
 
 let individualCollectionIndex next ctx =
     IndividualReference.list {Page = 1; PageSize = 20}
-    |> lift HtmlViews.ReferenceCollections.listView
-    |> toGiraffeViewResult next ctx
+    |> renderViewResult HtmlViews.ReferenceCollections.listView next ctx
 
 let individualCollection (colId:string) version next ctx =
     IndividualReference.getDetail colId version
-    |> lift HtmlViews.ReferenceCollections.tableView
-    |> toGiraffeViewResult next ctx
+    |> renderViewResult HtmlViews.ReferenceCollections.tableView next ctx
 
 let individualCollectionLatest (colId:string) next ctx =
     let latestVer = IndividualReference.getLatestVersion colId
@@ -167,8 +160,7 @@ let pagedTaxonomyHandler next (ctx:HttpContext) =
     ctx.BindQueryString<TaxonPageRequest>()
     |> defaultIfNull
     |> Taxonomy.list
-    |> lift HtmlViews.MRC.index
-    |> toGiraffeViewResult next ctx
+    |> renderViewResult HtmlViews.MRC.index next ctx
 
 let listCollectionsHandler next ctx =
     Digitise.myCollections (currentUserId ctx)
@@ -222,11 +214,11 @@ let calibrateHandler next (ctx:HttpContext) =
 
 let listGrains next ctx =
     UnknownGrains.listUnknownGrains()
-    |> toViewResult "Identify/Index" next ctx
+    |> renderViewResult HtmlViews.Identify.index next ctx
 
 let showGrainDetail id next ctx =
     UnknownGrains.getDetail id
-    |> toViewResult "Identify/View" next ctx
+    |> renderViewResult HtmlViews.Identify.view next ctx
 
 let submitGrainHandler next (ctx:HttpContext) =
     bindJson<AddUnknownGrainRequest> ctx
@@ -244,8 +236,7 @@ let submitIdentificationHandler next (ctx:HttpContext) =
 
 let homeHandler next ctx =
     Statistic.getHomeStatistics()
-    |> lift HtmlViews.Home.view
-    |> toGiraffeViewResult next ctx
+    |> renderViewResult HtmlViews.Home.view next ctx
 
 let topUnknownGrainsHandler next (ctx:HttpContext) =
     UnknownGrains.getTopScoringUnknownGrains()
@@ -257,16 +248,15 @@ let rebuildReadModelHandler next ctx =
 
 let systemStatsHandler next ctx =
     Statistic.getSystemStats()
-    |> lift HtmlViews.Statistics.view
-    |> toGiraffeViewResult next ctx
+    |> renderViewResult HtmlViews.Statistics.view next ctx
 
 let userAdminHandler next ctx =
     Admin.listUsers()
-    |> toViewResult "Admin/Users" next ctx
+    |> renderViewResult HtmlViews.Admin.users next ctx
 
 let curateIndexHandler next ctx =
     Curation.listPending()
-    |> toViewResult "Admin/Curate" next ctx
+    |> renderViewResult HtmlViews.Admin.curate next ctx
 
 let curateHandler next (ctx:HttpContext) =
     ctx.BindFormAsync<CurateCollectionRequest>()
@@ -275,7 +265,7 @@ let curateHandler next (ctx:HttpContext) =
     // |> validateModel
     |> Curation.issueDecision (currentUserId ctx)
     |> ignore
-    redirectTo true "/Admin/Curate" next ctx 
+    redirectTo true "/Admin/Curate" next ctx
 
 
 /////////////////////////
@@ -326,15 +316,15 @@ let webApp : HttpHandler =
             GET  >=> route  Urls.Account.externalLoginCallbk  >=> externalLoginCallback Urls.home
 
             GET  >=> route  "/Manage"                       >=> Manage.index
-            POST >=> route  "/Manage/Profile"               >=> Manage.profile
-            GET  >=> route  "/Manage/Profile"               >=> renderView "Manage/ChangePublicProfile" None
+            // POST >=> route  "/Manage/Profile"               >=> Manage.profile
+            // GET  >=> route  "/Manage/Profile"               >=> htmlView HtmlViews.Manage.changePassword //renderView "Manage/ChangePublicProfile" None
             POST >=> route  "/Manage/LinkLogin"             >=> Manage.linkLogin
             GET  >=> route  "/Manage/LinkLoginCallback"     >=> Manage.linkLoginCallback
             GET  >=> route  "/Manage/ManageLogins"          >=> Manage.manageLogins
             POST >=> route  "/Manage/SetPassword"           >=> Manage.setPassword
-            GET  >=> route  "/Manage/SetPassword"           >=> renderView "Manage/SetPassword" None
+            GET  >=> route  "/Manage/SetPassword"           >=> htmlView (HtmlViews.Manage.setPassword [] 2.)
             POST >=> route  "/Manage/ChangePassword"        >=> Manage.changePassword
-            GET  >=> route  "/Manage/ChangePassword"        >=> renderView "Manage/ChangePassword" None
+            GET  >=> route  "/Manage/ChangePassword"        >=> htmlView (HtmlViews.Manage.changePassword [] 2.)
             POST >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLogin
             GET  >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLoginView
         ]
@@ -352,7 +342,7 @@ let webApp : HttpHandler =
         GET >=>
         choose [
             route   ""                          >=> individualCollectionIndex
-            routef   "/Grain/%i"                (fun _ -> setStatusCode 404 >=> renderView "NotFound" None)
+            routef   "/Grain/%i"                (fun _ -> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound)
             routef  "/%s/%i"                    (fun (id,v) -> individualCollection id v)
             routef  "/%s"                       slideViewHandler
         ]
@@ -362,7 +352,7 @@ let webApp : HttpHandler =
             POST >=> route  "/Upload"           >=> submitGrainHandler
             POST >=> route  "/Identify"         >=> submitIdentificationHandler
             GET  >=> route  ""                  >=> listGrains
-            GET  >=> route  "/Upload"           >=> mustBeLoggedIn >=> renderView "Identify/Add" None
+            GET  >=> route  "/Upload"           >=> mustBeLoggedIn >=> htmlView (HtmlViews.Identify.add 0.)
             GET  >=> routef "/%s"               showGrainDetail
         ]
 
@@ -391,7 +381,7 @@ let webApp : HttpHandler =
             route   Urls.guide                  >=> docIndexHandler
             routef  "/Guide/%s"                 docSectionHandler
             route   Urls.statistics             >=> systemStatsHandler
-            route   Urls.digitise               >=> mustBeLoggedIn >=> renderView "Digitise/Index" None
+            route   Urls.digitise               >=> mustBeLoggedIn >=> htmlView DigitiseDashboard.appView
             route   Urls.api                    >=> docSectionHandler "API"
             route   Urls.tools                  >=> htmlView HtmlViews.Tools.main
             route   Urls.cite                   >=> docSectionHandler "Cite"
