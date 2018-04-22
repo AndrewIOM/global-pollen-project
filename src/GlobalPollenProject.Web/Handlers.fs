@@ -12,9 +12,78 @@ open System.IO
 open System.Reflection
 open System.ComponentModel
 
+///////////////////////////
+/// User Profile Retrival
+///////////////////////////
+
+module LoadProfile =
+
+    open GlobalPollenProject.App.UseCases
+    open GlobalPollenProject.Core.Composition
+    open GlobalPollenProject.Shared.Identity.Models
+    open Microsoft.AspNetCore.Identity
+
+    let parseGuid i =
+        match System.Guid.TryParse i with
+        | (true,g) -> Ok g
+        | (false,g) -> Error InvalidRequestFormat
+
+    let resultToOption r =
+        match r with
+        | Ok o -> Some o
+        | Error _ -> None
+
+    let currentUserId (ctx:HttpContext) () =
+        async {
+            let manager = ctx.GetService<UserManager<ApplicationUser>>()
+            let! user = manager.GetUserAsync(ctx.User) |> Async.AwaitTask
+            return Guid.Parse user.Id
+        } |> Async.RunSynchronously
+
+    let getPublicProfile userId =
+        userId
+        |> parseGuid
+        |> bind User.getPublicProfile
+        |> resultToOption
+
+    let loggedInUser (ctx:HttpContext) =
+        async {
+            let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+            if signInManager.IsSignedIn(ctx.User) then 
+                let manager = ctx.GetService<UserManager<ApplicationUser>>()
+                let! user = manager.GetUserAsync(ctx.User) |> Async.AwaitTask
+                return getPublicProfile user.Id
+            else return None
+        }
+
+
+/////////////////////
+/// View Handlers
+/////////////////////
+
+let htmlView v : HttpHandler =
+    fun next ctx ->
+        let userProfile = LoadProfile.loggedInUser ctx |> Async.RunSynchronously
+        htmlView (v userProfile) next ctx
+
+let renderView next ctx v =
+    htmlView v next ctx
+
+let serviceErrorToView err next ctx =
+    match err with
+    | ServiceError.NotFound -> ctx |> (clearResponse >=> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound) next
+    | _ -> ctx |> (clearResponse >=> setStatusCode 500 >=> htmlView HtmlViews.StatusPages.error) next
+
+let renderViewResult v next ctx result =
+    match result with
+    | Ok r -> htmlView (v r) next ctx
+    | Error e -> serviceErrorToView e next ctx
+
 let errorHandler (ex : Exception) (logger : ILogger) =
     logger.LogError(EventId(), ex, "An unhandled exception has occurred while executing the request.")
     clearResponse >=> setStatusCode 500 >=> htmlView HtmlViews.StatusPages.error
+
+
 
 /////////////////////
 /// Validation
@@ -98,20 +167,3 @@ let toApiResult next ctx result =
             | Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
             | InvalidRequestFormat -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
             | _ -> json <| { Message = "Internal error"; Errors = [] } ) next ctx
-
-/////////////////////
-/// View Helpers
-/////////////////////
-
-let serviceErrorToView err next ctx =
-    match err with
-    | ServiceError.NotFound -> ctx |> (clearResponse >=> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound) next
-    | _ -> ctx |> (clearResponse >=> setStatusCode 500 >=> htmlView HtmlViews.StatusPages.error) next
-
-let renderView next ctx v =
-    htmlView v next ctx
-
-let renderViewResult v next ctx result =
-    match result with
-    | Ok r -> htmlView (v r) next ctx
-    | Error e -> serviceErrorToView e next ctx

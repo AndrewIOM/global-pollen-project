@@ -21,33 +21,6 @@ open GlobalPollenProject.App.UseCases
 open ReadModels
 
 ///////////////////////////
-/// DI components for views
-///////////////////////////
-
-let parseGuid i =
-    match System.Guid.TryParse i with
-    | (true,g) -> Ok g
-    | (false,g) -> Error InvalidRequestFormat
-
-let resultToOption r =
-    match r with
-    | Ok o -> Some o
-    | Error _ -> None
-
-let getPublicProfile userId =
-    userId
-    |> parseGuid
-    |> bind User.getPublicProfile
-    |> resultToOption
-
-type IProfileLoader =
-  abstract Get : string -> PublicProfile option
-
-type ProfileLoader() =
-    interface IProfileLoader with
-        member __.Get id = getPublicProfile id
-
-///////////////////////////
 /// App Configuration
 ///////////////////////////
 
@@ -114,7 +87,6 @@ type Startup () =
             //     )) |> ignore
 
         services.AddSingleton<IEmailSender, AuthEmailMessageSender>() |> ignore
-        services.AddSingleton<IProfileLoader, ProfileLoader>() |> ignore
         services.AddDataProtection() |> ignore
         services.AddGiraffe() |> ignore
         createRoles (services.BuildServiceProvider()) |> ignore

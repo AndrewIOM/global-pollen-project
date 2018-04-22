@@ -13,6 +13,7 @@ open GlobalPollenProject.Core.Composition
 open GlobalPollenProject.Shared.Identity.Models
 open Handlers
 open ReadModels
+open Handlers.LoadProfile
 
 /////////////////////////
 /// Helpers
@@ -21,13 +22,6 @@ open ReadModels
 let accessDenied = setStatusCode 401 >=> htmlView HtmlViews.StatusPages.denied
 let mustBeLoggedIn : HttpHandler = requiresAuthentication (redirectTo false Urls.Account.login)
 let mustBeAdmin ctx = requiresRole "Admin" accessDenied ctx
-
-let currentUserId (ctx:HttpContext) () =
-    async {
-        let manager = ctx.GetService<UserManager<ApplicationUser>>()
-        let! user = manager.GetUserAsync(ctx.User) |> Async.AwaitTask
-        return Guid.Parse user.Id
-    } |> Async.RunSynchronously
 
 let notFoundResult ctx =
     ctx |> (clearResponse >=> setStatusCode 400 >=> htmlView HtmlViews.StatusPages.notFound)

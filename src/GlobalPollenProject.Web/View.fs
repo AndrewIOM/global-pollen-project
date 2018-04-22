@@ -160,22 +160,22 @@ module Forms =
 
 module Layout = 
 
-    let loginMenu =
-        // ul [ _class "navbar-nav" ] [
-        //     li [ _class "navbar-dropdown" ] [
-        //         a [ _class "nav-link dropdown-toggle"; _href "#"; _id "navbarDropdownMenuLink" ] [
-        //             match loadProfile user.Id with
-        //             | Some p -> span [] [ encodedText (sprintf "%s %s" p.FirstName p.LastName) ]
-        //             | None -> getUserName user
-        //         ]
-        //     ]
-        // ]
-        ul [ _class "nav navbar-nav" ] [
-            li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.register ] [ encodedText "Register" ] ]
-            li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.login ] [ encodedText "Log in" ] ]
-        ]
+    let loginMenu (profile: ReadModels.PublicProfile option) =
+        match profile with
+        | Some p ->
+            ul [ _class "navbar-nav" ] [
+                li [ _class "navbar-dropdown" ] [
+                    a [ _class "nav-link dropdown-toggle"; _href "#"; _id "navbarDropdownMenuLink" ] [
+                        span [] [ encodedText (sprintf "%s %s" p.FirstName p.LastName) ]
+                    ]
+                ]
+            ]
+        | None ->
+            ul [ _class "nav navbar-nav" ] [
+                li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.register ] [ encodedText "Register" ] ]
+                li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.login ] [ encodedText "Log in" ] ] ]
 
-    let navigationBar =
+    let navigationBar profile =
         nav [ _class "navbar navbar-expand-lg navbar-toggleable-md navbar-light bg-faded fixed-top"] [
             Grid.container [
                 button [ _class "navbar-toggler navbar-toggler-right" ] [
@@ -193,7 +193,7 @@ module Layout =
                         li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.individualCollections ] [ encodedText "Individual Collections" ] ]
                         li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.statistics ] [ encodedText "Stats" ] ]
                     ]
-                    loginMenu
+                    loginMenu profile
                 ]
             ] 
         ]
@@ -276,12 +276,12 @@ module Layout =
         "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
         jsBundle ]
 
-    let master (scripts: Script list) content =
+    let master (scripts: Script list) content profile =
         html [] [
             headSection "Global Pollen Project"
             body [] (
                 List.concat [
-                    [ navigationBar
+                    [ navigationBar profile
                       div [ _class "main-content" ] content
                       footer ]
                     ((List.concat [baseScripts; scripts]) |> toScriptTags) ] )
