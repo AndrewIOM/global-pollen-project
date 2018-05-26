@@ -4,49 +4,57 @@ import * as topojson from 'topojson'
 import { GeometryCollection } from "topojson-specification";
 
 type Grain = {
-    Id: string
-    Latitude: number
-    Longitude: number
+    id: string
+    latitude: number
+    longitude: number
 };
 
 export function activate(container: HTMLElement) {
-    var width = $('#locations-map').width();
-    var height = width * 0.5;
+    let width = $('#locations-map').width();
+    let height = width * 0.5;
 
-    var projection = d3.geoEquirectangular()
+    let projection = d3.geoEquirectangular()
         .scale((width + 1) / 2 / Math.PI)
         .translate([width / 2, height * 0.5])
         .precision(.1);
 
-    var svg = d3.select("#locations-map").append("svg")
-        .attr("width", width)
-        .attr("height", height);
-    var path = d3.geoPath()
-        .projection(projection);
-    var g = svg.append("g").attr('class','map');
+    let svg = d3.select("#locations-map").append("svg")
+                .attr("viewBox", "0 0 " + width + " " + height )
+                .attr("preserveAspectRatio", "xMinYMin");
 
-    d3.json('/geojson/world110.json'), (error, t) => {
-        let geojson:any = topojson.feature(t, t.objects.countries)
+    let path = d3.geoPath()
+        .projection(projection);
+    let g = svg.append("g").attr('class','map');
+
+    let topo = d3.json<TopoJSON.Topology>('/geojson/world110.json');
+    let data = d3.json<Grain[]>("/api/v1/grain/location");
+
+    topo.then((tj) => {
+
+        let geojson = topojson.feature(tj, tj.objects.countries);
+        if (geojson.type != "FeatureCollection" ) {
+            throw "World topology not in correct format";
+        }
         g.selectAll("path")
             .data(geojson.features)
             .enter()
             .append("path")
             .attr("d", path);
-    };
+    });
 
-    d3.json("/api/v1/grain/location"), function (error, data:Grain[]) {
-        var unidentifiedNumber = document.getElementById('unidentified-count');
+    data.then( data => {
+        let unidentifiedNumber = document.getElementById('unidentified-count');
         unidentifiedNumber.innerHTML = '0';
-        var unidentifiedCounter = 0;
+        let unidentifiedCounter = 0;
 
-        var circles = svg.selectAll("circle")
+        let circles = svg.selectAll("circle")
             .data(data).enter()
             .append("svg:a")
-            .attr("xlink:href", (d) => { return '/Identify/' + d.Id; })
+            .attr("xlink:href", (d) => { return '/Identify/' + d.id; })
             .append("circle")
             .attr('opacity', 0)
-            .attr("cx", d => { return projection([d.Longitude, d.Latitude])[0]; })
-            .attr("cy", function (d) { return projection([d.Longitude, d.Latitude])[1]; })
+            .attr("cx", d => { return projection([d.longitude, d.latitude])[0]; })
+            .attr("cy", function (d) { return projection([d.longitude, d.latitude])[1]; })
             .attr("r", 4)
             .attr('stroke', '#83296F')
             .attr('stroke-width', 2)
@@ -68,7 +76,8 @@ export function activate(container: HTMLElement) {
                 unidentifiedNumber.innerHTML = unidentifiedCounter.toString();
             })
             .delay((d,i) => { return 2000 + (i / data.length * 1500); })
-            //.ease("variable")
+            .ease(d3.easeLinear)
             .attr('opacity', '1');
-    };
+    });
+
 }

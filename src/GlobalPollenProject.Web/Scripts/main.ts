@@ -24,7 +24,6 @@ async function grainMap() {
 
 async function unobtrusiveValidation() {
     if (document.forms.length > 0) {
-        console.log("activating validation");
         await import("./Components/validation");
     }
 }

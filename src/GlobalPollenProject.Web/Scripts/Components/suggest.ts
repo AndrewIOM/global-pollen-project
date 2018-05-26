@@ -4,7 +4,7 @@ import * as $ from "jquery"
 export function activate(container: HTMLElement) {
 
     $(container).keyup(() => {
-        let val = (<HTMLInputElement>this).value;
+        let val = (<HTMLInputElement>container).value;
         if (val.length > 0) {
             var results = Suggest(val);
         } else {
