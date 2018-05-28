@@ -10,7 +10,7 @@ open Docs
 open Giraffe
 open GlobalPollenProject.App.UseCases
 open GlobalPollenProject.Core.Composition
-open GlobalPollenProject.Shared.Identity.Models
+open GlobalPollenProject.Auth
 open Handlers
 open ReadModels
 open Handlers.LoadProfile

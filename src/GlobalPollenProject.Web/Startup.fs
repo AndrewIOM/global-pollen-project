@@ -1,7 +1,6 @@
 module Startup
 
 open System
-open System.IO
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
@@ -12,13 +11,8 @@ open Microsoft.Extensions.Configuration
 
 open Giraffe
 
-open GlobalPollenProject.Core.Composition
-open GlobalPollenProject.Shared.Identity
-open GlobalPollenProject.Shared.Identity.Models
-open GlobalPollenProject.Shared.Identity.Services
 open GlobalPollenProject.App.UseCases
-
-open ReadModels
+open GlobalPollenProject.Auth
 
 ///////////////////////////
 /// App Configuration
@@ -86,7 +80,6 @@ type Startup () =
             //         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["Tokens:Key"]))
             //     )) |> ignore
 
-        services.AddSingleton<IEmailSender, AuthEmailMessageSender>() |> ignore
         services.AddDataProtection() |> ignore
         services.AddGiraffe() |> ignore
         createRoles (services.BuildServiceProvider()) |> ignore

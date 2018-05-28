@@ -20,7 +20,7 @@ module LoadProfile =
 
     open GlobalPollenProject.App.UseCases
     open GlobalPollenProject.Core.Composition
-    open GlobalPollenProject.Shared.Identity.Models
+    open GlobalPollenProject.Auth
     open Microsoft.AspNetCore.Identity
 
     let parseGuid i =

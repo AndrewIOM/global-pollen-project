@@ -6,7 +6,7 @@ open Microsoft.Extensions.Logging
 open Giraffe
 open GlobalPollenProject.App.UseCases
 open GlobalPollenProject.Core.Composition
-open GlobalPollenProject.Shared.Identity.Models
+open GlobalPollenProject.Auth
 open GlobalPollenProject.Web
 open ModelValidation
 open ReadModels
@@ -16,6 +16,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Identity
 open Microsoft.AspNetCore.WebUtilities
 open System.Security.Claims
+open Handlers
 
 module Identity =
 

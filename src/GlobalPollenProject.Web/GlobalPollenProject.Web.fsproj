@@ -6,6 +6,7 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../GlobalPollenProject.App/GlobalPollenProject.App.fsproj" />
+    <ProjectReference Include="../GlobalPollenProject.Auth/GlobalPollenProject.Auth.fsproj" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Urls.fs" />
