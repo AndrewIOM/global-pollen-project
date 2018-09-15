@@ -4,11 +4,9 @@ module Cloud =
 
     open SendGrid
     open SendGrid.Helpers.Mail
-    open System.Net
-    open System
     open System.Text.RegularExpressions
 
-    let send sendGridApiKey fromName fromEmail correspondingEmail subject messageHtml =
+    let send (sendGridApiKey:string) fromName fromEmail correspondingEmail subject messageHtml =
         let message = SendGridMessage()
         message.AddTo(EmailAddress(correspondingEmail))
         message.From <- EmailAddress(fromEmail, fromName)

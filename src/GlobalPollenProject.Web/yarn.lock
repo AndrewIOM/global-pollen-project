@@ -3503,14 +3503,20 @@ jquery-jcrop@^0.9.13:
   version "0.9.13"
   resolved "https://registry.yarnpkg.com/jquery-jcrop/-/jquery-jcrop-0.9.13.tgz#cda8c9557fffc56540008cc7b6291a0ec4071bf5"
 
-jquery-validation-unobtrusive@3.2.6:
-  version "3.2.6"
-  resolved "https://registry.yarnpkg.com/jquery-validation-unobtrusive/-/jquery-validation-unobtrusive-3.2.6.tgz#0f8767c5462e30b4a5743d12461e8057da7572e5"
+jquery-validation-unobtrusive@3.2.10:
+  version "3.2.10"
+  resolved "https://registry.yarnpkg.com/jquery-validation-unobtrusive/-/jquery-validation-unobtrusive-3.2.10.tgz#5ed7096c10d917c272ce71055b90ca67c27c219c"
   dependencies:
     jquery ">=1.8"
-    jquery-validation ">=1.8"
+    jquery-validation ">=1.16"
 
-jquery-validation@>=1.8, jquery-validation@^1.17.0:
+jquery-validation@>=1.16:
+  version "1.18.0"
+  resolved "https://registry.yarnpkg.com/jquery-validation/-/jquery-validation-1.18.0.tgz#69898f6cddc3e8ef5811de84ff8b23fc24d93776"
+  dependencies:
+    jquery "^1.7 || ^2.0 || ^3.1"
+
+jquery-validation@^1.17.0:
   version "1.17.0"
   resolved "https://registry.yarnpkg.com/jquery-validation/-/jquery-validation-1.17.0.tgz#ab66b6b583d7740b9bbd148993e50e8ac041f35b"
   dependencies:

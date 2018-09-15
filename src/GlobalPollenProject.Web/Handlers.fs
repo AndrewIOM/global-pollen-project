@@ -23,7 +23,7 @@ module LoadProfile =
     open GlobalPollenProject.Auth
     open Microsoft.AspNetCore.Identity
 
-    let parseGuid i =
+    let parseGuid (i:string) =
         match System.Guid.TryParse i with
         | (true,g) -> Ok g
         | (false,g) -> Error InvalidRequestFormat

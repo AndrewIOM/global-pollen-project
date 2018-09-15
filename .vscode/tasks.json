@@ -1,25 +1,22 @@
 {
-    "version": "0.1.0",
+    "version": "2.0.0",
     "command": "dotnet",
-    "isShellCommand": true,
     "args": [],
     "tasks": [
         {
-            "taskName": "build",
+            "label": "build",
             "args": [
                 "src/GlobalPollenProject.Web/GlobalPollenProject.Web.fsproj"
             ],
-            "isBuildCommand": true,
-            "showOutput": "silent",
+            "group":"build",
             "problemMatcher": "$msCompile"
         },
         {
-            "taskName": "test",
+            "label": "test",
             "args": [
                 "test/GlobalPollenProject.Core.Tests/GlobalPollenProject.Core.Tests.fsproj"
             ],
-            "isTestCommand": true,
-            "showOutput": "always",
+            "group": "test",
             "problemMatcher": "$msCompile"
         }
     ]

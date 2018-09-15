@@ -3,14 +3,12 @@ module GlobalPollenProject.Web.App
 open System
 open System.IO
 open Microsoft.AspNetCore.Http
-open Microsoft.AspNetCore.Identity
 
 open Account
 open Docs
 open Giraffe
 open GlobalPollenProject.App.UseCases
 open GlobalPollenProject.Core.Composition
-open GlobalPollenProject.Auth
 open Handlers
 open ReadModels
 open Handlers.LoadProfile
@@ -121,7 +119,7 @@ let taxonDetail (taxon:string) next ctx =
     Taxonomy.getByName f g s
     |> renderViewResult HtmlViews.Taxon.view next ctx
 
-let taxonDetailById id next ctx =
+let taxonDetailById (id:string) next ctx =
     match Guid.TryParse id with
     | (true,g) ->
         g

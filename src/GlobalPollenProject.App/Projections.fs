@@ -9,11 +9,13 @@ open ReadModels
 
 type EventMessage = string*obj*DateTime
 
+module K = GlobalPollenProject.App.ReadStoreKeys
+
 let thumbnailSize = 300.
 let webImageSize = 2000.
 
-let toEvent (s,o,d) = o
-let toTime (s,o,d) = d
+let toEvent (_,o,_) = o
+let toTime (_,_,d) = d
 
 let readModelErrorHandler() =
     invalidOp "The read model is corrupt or out-of-sync. Rebuild now."
@@ -39,14 +41,14 @@ module Result =
 module Checkpoint =
 
     let init setKey =
-        RepositoryBase.setKey 0 "Checkpoint" setKey serialise
+        RepositoryBase.setKey 0 K.checkpoint setKey serialise
 
     let getCurrentVersion getKey =
-        RepositoryBase.getKey "Checkpoint" getKey deserialise<int>
+        RepositoryBase.getKey K.checkpoint getKey deserialise<int>
 
     let increment getKey setKey () =
         let incrementCheck current = 
-            RepositoryBase.setKey (current + 1) "Checkpoint" setKey serialise
+            RepositoryBase.setKey (current + 1) K.checkpoint setKey serialise
             |> Result.bind (fun x -> Ok (current + 1))
         getCurrentVersion getKey
         |> Result.bind incrementCheck
@@ -70,25 +72,15 @@ module GrainLocation =
 
 module Statistics =
 
-    // Statistic:UnknownSpecimenTotal
-    // Statistic:UnknownSpecimenRemaining
-    // Statistic:UnknownSpecimenIdentificationsTotal
-    // Statistic:GrainTotal
-    // Statistic:SlideTotal
-    // Statistic:SlideDigitisedTotal
-    // Statistic:Representation:Families:GPP
-    // Statistic:BackboneTaxa:Total
-    // Statistic:Taxon:SpeciesTotal
-
     let init set =
-        RepositoryBase.setKey 0 "Statistic:UnknownSpecimenTotal" set serialise |> ignore
-        RepositoryBase.setKey 0 "Statistic:UnknownSpecimenRemaining" set serialise |> ignore
-        RepositoryBase.setKey 0 "Statistic:UnknownSpecimenIdentificationsTotal" set serialise |> ignore
-        RepositoryBase.setKey 0 "Statistic:Grain:Total" set serialise |> ignore
-        RepositoryBase.setKey 0 "Statistic:SlideTotal" set serialise |> ignore
-        RepositoryBase.setKey 0 "Statistic:SlideDigitisedTotal" set serialise |> ignore
-        RepositoryBase.setKey 0 "Statistic:Representation:Families:GPP" set serialise |> ignore
-        RepositoryBase.setKey 0 "Statistic:Taxon:SpeciesTotal" set serialise
+        RepositoryBase.setKey 0 K.Statistic.unknownTotal set serialise |> ignore
+        RepositoryBase.setKey 0 K.Statistic.unknownRemaining set serialise |> ignore
+        RepositoryBase.setKey 0 K.Statistic.totalIdentifications set serialise |> ignore
+        RepositoryBase.setKey 0 K.Statistic.totalGrains set serialise |> ignore
+        RepositoryBase.setKey 0 K.Statistic.totalSlides set serialise |> ignore
+        RepositoryBase.setKey 0 K.Statistic.totalDigitisedSlides set serialise |> ignore
+        RepositoryBase.setKey 0 K.Representation.family set serialise |> ignore
+        RepositoryBase.setKey 0 K.Statistic.totalSpecies set serialise
 
     let incrementStat key get set =
         match RepositoryBase.getKey<int> key get deserialise with
@@ -99,18 +91,18 @@ module Statistics =
         RepositoryBase.getKey<int> key get deserialise
         |> bind (fun i -> RepositoryBase.setKey (i - 1) key set serialise)
 
-    let handle get getSortedList set setSortedList (e:EventMessage) =
+    let handle get _ set _ (e:EventMessage) =
         match e |> toEvent with
         | :? Grain.Event as e ->
             match e with
-            | Grain.Event.GrainSubmitted e -> 
-                incrementStat "Statistic:UnknownSpecimenTotal" get set |> ignore
-                incrementStat "Statistic:UnknownSpecimenRemaining" get set
-            | Grain.Event.GrainIdentityConfirmed e ->
+            | Grain.Event.GrainSubmitted _ -> 
+                incrementStat K.Statistic.unknownTotal get set |> ignore
+                incrementStat K.Statistic.unknownRemaining get set
+            | Grain.Event.GrainIdentityConfirmed _ ->
                 decrementStat "Statistic:UnknownSpecimenRemaining" get set
-            | Grain.Event.GrainIdentified e ->
+            | Grain.Event.GrainIdentified _ ->
                 incrementStat "Statistic:UnknownSpecimenIdentificationsTotal" get set
-            | Grain.Event.GrainIdentityUnconfirmed e ->
+            | Grain.Event.GrainIdentityUnconfirmed _ ->
                 incrementStat "Statistic:UnknownSpecimenRemaining" get set
             | _ -> Ok()
         | _ -> Ok()

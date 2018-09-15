@@ -124,7 +124,7 @@ module Forms =
         div [ _class "form-group row" ] [
             label [ _class "col-sm-2 col-form-label"; _for fieldName ] [ encodedText fieldName ]
             Grid.column Small 10 [
-                input (List.concat [[ _id fieldName; _class "form-control"; ]; validationAttributes ])
+                input (List.concat [[ _name fieldName; _class "form-control"; ]; validationAttributes ])
                 span [ _class "text-danger field-validation-valid"; _data "valmsg-for" fieldName; _data "valmsg-replace" "true" ] []
             ]
         ]
@@ -635,7 +635,7 @@ module MRC =
                 | true -> ()
             ]
             div [ _class "taxon-details" ] [
-                a [ _href taxonLink ] [ span [ _class "taxon-name" ] [ encodedText summary.LatinName ] ]
+                a [ _href taxonLink;  _class "taxon-name" ] [ encodedText summary.LatinName ]
                 ul [ _class "list-inline" ] [
                     li [ _class "list-inline-item" ] [ Icons.fontawesome "object-ungroup"; encodedText (sprintf "%i" summary.GrainCount) ]
                     li [ _class "list-inline-item" ] [ Icons.fontawesome "object-group"; encodedText (sprintf "%i" summary.SlideCount) ]

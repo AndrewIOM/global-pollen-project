@@ -6,7 +6,7 @@
             "type": "coreclr",
             "request": "launch",
             "preLaunchTask": "build",
-            "program": "${workspaceRoot}/src/GlobalPollenProject.Web/bin/Debug/netcoreapp2.0/GlobalPollenProject.Web.dll",
+            "program": "${workspaceRoot}/src/GlobalPollenProject.Web/bin/Debug/netcoreapp2.1/GlobalPollenProject.Web.dll",
             "args": [],
             "cwd": "${workspaceRoot}/src/GlobalPollenProject.Web",
             "stopAtEntry": false,
@@ -35,7 +35,7 @@
             "name": ".NET Core Attach",
             "type": "coreclr",
             "request": "attach",
-            "processId": "${command.pickProcess}"
+            "processId": "${command:pickProcess}"
         }
     ]
 }
