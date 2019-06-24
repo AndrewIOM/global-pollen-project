@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <AssemblyName>GlobalPollenProject.Web</AssemblyName>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Shared/Serialisation.fs" />
+    <Compile Include="../../../Services/Core/GlobalPollenProject.Persistence/ReadModels.fs" />
+    <Compile Include="../../../Services/Core/GlobalPollenProject.App/Requests.fs" />
+    <Compile Include="../../../Services/Core/GlobalPollenProject.App/Responses.fs" />
+    <Compile Include="Connections.fs" />
+    <Compile Include="Urls.fs" />
+    <Compile Include="Docs.fs" />
+    <Compile Include="View.fs" />
+    <Compile Include="DigitiseDashboard.fs" />
+    <Compile Include="Handlers.fs" />
+    <Compile Include="Validation.fs" />
+    <Compile Include="Account.fs" />
+    <Compile Include="App.fs" />
+    <Compile Include="Startup.fs" />
+    <Compile Include="Program.fs" />
+    <None Include="Lookups/taxonlookup.csv" />
+    <None Include="Dockerfile" />
+    <None Include="docker-compose.yml" />
+    <None Include="docker-compose.azure.yml" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Giraffe" Version="2.0.1" />
+    <PackageReference Include="Markdig" Version="0.15.2" />
+    <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.10.31" />
+    <PackageReference Include="Polly" Version="7.1.0" />
+    <PackageReference Include="Polly.Extensions.Http" Version="3.0.0" />
+  </ItemGroup>
+</Project>

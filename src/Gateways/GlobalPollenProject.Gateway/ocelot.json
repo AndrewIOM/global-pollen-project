@@ -1,0 +1,16 @@
+{
+    "ReRoutes": [{
+        "DownstreamPathTemplate": "/api/{version}/{everything}",
+        "DownstreamScheme": "http",
+        "DownstreamHostAndPorts": [{
+            "Host": "core.api",
+            "Port": 80
+        }],
+        "UpstreamPathTemplate": "/api/{version}/b/{everything}",
+        "UpstreamHttpMethod": ["POST", "PUT", "GET"]
+    }],
+    "GlobalConfiguration": {
+        "RequestIdKey": "OcRequestId",
+        "AdministrationPath": "/administration"
+    }
+}

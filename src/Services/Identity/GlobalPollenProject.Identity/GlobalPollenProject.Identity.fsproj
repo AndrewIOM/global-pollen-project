@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>netcoreapp2.2</TargetFramework>
+    <OutputType>Exe</OutputType>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Shared/Responses.fs" />
+    <Compile Include="Contract.fs" />
+    <Compile Include="Email.fs" />
+    <Compile Include="User.fs" />
+    <Compile Include="Identity.fs" />
+    <Compile Include="Database.fs" />
+    <Compile Include="Migrations/*" />
+    <Compile Include="ViewModels.fs" />
+    <Compile Include="Views.fs" />
+    <Compile Include="App.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.All" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.FileExtensions" Version="2.2.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="2.2.0" />
+    <PackageReference Include="IdentityServer4.AspNetIdentity" Version="2.4.0" />
+    <PackageReference Include="IdentityServer4.EntityFramework" Version="2.4.0" />
+    <PackageReference Include="Giraffe" Version="3.6.0" />
+    <PackageReference Include="SendGrid" Version="9.11.0" />
+    <PackageReference Include="Bricelam.EntityFrameworkCore.FSharp" Version="2.2.0-alpha1" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="appsettings.json" CopyToPublishDirectory="Always" />
+  </ItemGroup>
+</Project>

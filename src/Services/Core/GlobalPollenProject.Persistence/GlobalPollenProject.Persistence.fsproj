@@ -1,0 +1,33 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <DebugType>portable</DebugType>
+    <AssemblyName>GlobalPollenProject.Persistence</AssemblyName>
+    <PackageId>GlobalPollenProject.Persistence</PackageId>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Serialisation.fs" />
+    <Compile Include="EventStore.fs" />
+    <Compile Include="ReadModels.fs" />
+    <Compile Include="ReadStore.fs" />
+    <Compile Include="AzureImageStore.fs" />
+    <Compile Include="ExternalLink.fs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GlobalPollenProject.Core\GlobalPollenProject.Core.fsproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="EventStore.Client" Version="5.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.2" />
+    <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.10.31" />
+    <PackageReference Include="Microsoft.Azure.Storage.Blob" Version="10.0.2" />
+    <PackageReference Include="SixLabors.ImageSharp" Version="1.0.0-beta0002" />
+    <PackageReference Include="StackExchange.Redis" Version="2.0.601" />
+  </ItemGroup>
+
+</Project>

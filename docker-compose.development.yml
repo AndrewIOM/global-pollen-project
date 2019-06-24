@@ -1,0 +1,40 @@
+version: '3.4'
+
+services:
+
+  core.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:80
+      - ConnectionString=${ESHOP_AZURE_REDIS_BASKET_DB:-basket.data}
+      - IdentityUrl=http://identity.api
+      - IdentityUrlExternal=http://${ESHOP_EXTERNAL_DNS_NAME_OR_IP}:5105
+      - RedisHostName=coreredis
+      - eventstore:eventstoreip=coreeventstore
+      - eventstore:eventstoreport=1113
+    ports:
+    - "5103:80"
+
+  # webmvc:
+  #   environment:
+  #     - ASPNETCORE_ENVIRONMENT=Development 
+  #     - ASPNETCORE_URLS=http://0.0.0.0:80
+  #     - IdentityUrl=http://10.0.75.1:5105
+  #     - MarketingUrl=http://webmarketingapigw 
+  #     - CatalogUrlHC=http://catalog.api/hc
+  #     - OrderingUrlHC=http://ordering.api/hc 
+  #     - IdentityUrlHC=http://identity.api/hc 
+  #     - BasketUrlHC=http://basket.api/hc
+  #     - MarketingUrlHC=http://marketing.api/hc
+  #     - PaymentUrlHC=http://payment.api/hc
+  #     - SignalrHubUrl=http://${ESHOP_EXTERNAL_DNS_NAME_OR_IP}:5202
+  #     - UseCustomizationData=True
+  #     - ApplicationInsights__InstrumentationKey=${INSTRUMENTATION_KEY} - OrchestratorType=${ORCHESTRATOR_TYPE}
+  #     - UseLoadTest=${USE_LOADTEST:-False}
+  #   ports:
+  #   - "5100:80"
+
+#  sql.data:
+#    environment:
+#    - SA_PASSWORD=Pass@word
+#    - ACCEPT_EULA=Y

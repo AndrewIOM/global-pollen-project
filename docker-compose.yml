@@ -1,0 +1,62 @@
+version: '3.4'
+
+services:
+
+  core.api:
+    image: gpp/core:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Core/GlobalPollenProject.App/Dockerfile
+    links:
+      - "core.readmodel:coreredis"
+      - "core.eventstore:coreeventstore"
+    depends_on:
+      - core.readmodel
+      - core.eventstore
+
+  webapigw:
+    image: gpp/webapigw:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Gateways/GlobalPollenProject.Gateway/Dockerfile
+    depends_on:
+      - core.api
+      - identity.api
+
+  identity.api:
+    image: ${REGISTRY:-gpp}/identity.api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Identity/GlobalPollenProject.Identity/Dockerfile
+    # depends_on:
+      # - sql.data
+
+
+  # webmvc:
+  #   image: gpp/webmvc:${TAG:-latest}
+  #   build:
+  #     context: .
+  #     dockerfile: src/web/GlobalPollenProject.Web/Dockerfile
+  #   depends_on:
+  #   - core.api
+
+  # webapi:
+  #   image: gpp/webapi:${TAG:-latest}
+  #   build:
+  #     context: .
+  #     dockerfile: src/api/GlobalPollenProject.Web.API/Dockerfile
+
+  # sql.data:
+  #   image: microsoft/mssql-server-linux:2017-latest
+
+  core.readmodel:
+    image: redis:latest
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+
+  core.eventstore:
+    image: eventstore/eventstore:latest
+    ports:
+      - "2113:2113"
+      - "1113:1113"
