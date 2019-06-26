@@ -31,23 +31,20 @@ services:
     # depends_on:
       # - sql.data
 
-
-  # webmvc:
+  # website:
   #   image: gpp/webmvc:${TAG:-latest}
   #   build:
   #     context: .
   #     dockerfile: src/web/GlobalPollenProject.Web/Dockerfile
   #   depends_on:
   #   - core.api
+  #   - identity.api
 
   # webapi:
   #   image: gpp/webapi:${TAG:-latest}
   #   build:
   #     context: .
   #     dockerfile: src/api/GlobalPollenProject.Web.API/Dockerfile
-
-  # sql.data:
-  #   image: microsoft/mssql-server-linux:2017-latest
 
   core.readmodel:
     image: redis:latest

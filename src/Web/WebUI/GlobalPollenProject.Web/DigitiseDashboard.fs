@@ -4,6 +4,22 @@ open Giraffe.GiraffeViewEngine
 open GlobalPollenProject.Web.HtmlViews
 open ReadModels
 
+// let digitiseApi =
+//     mustBeLoggedIn >=>
+//     choose [
+//         route   "/collection"               >=> getCollectionHandler
+//         route   "/collection/list"          >=> listCollectionsHandler
+//         route   "/collection/start"         >=> startCollectionHandler
+//         route   "/collection/publish"       >=> publishCollectionHandler
+//         route   "/collection/slide/add"     >=> addSlideHandler
+//         route   "/collection/slide/void"    >=> voidSlideHandler
+//         route   "/collection/slide/addimage">=> addImageHandler
+//         route   "/calibration/list"         >=> getCalibrationsHandler
+//         route   "/calibration/use"          >=> setupMicroscopeHandler
+//         route   "/calibration/use/mag"      >=> calibrateHandler
+//     ]
+
+
 [<AutoOpen>]
 module Knockout =
     let _koBind value = KeyValue("data-bind", value)

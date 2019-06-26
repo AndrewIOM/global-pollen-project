@@ -7,20 +7,35 @@ open Giraffe
 open ReadModels
 open Handlers
 open Docs
-open System.Security.Claims
-
-/////////////////////////
-/// Helpers
-/////////////////////////
-
-let inMaintainanceMode = false
-
-let accessDenied = setStatusCode 401 >=> htmlView HtmlViews.StatusPages.denied
-let mustBeLoggedIn : HttpHandler = requiresAuthentication (redirectTo false Urls.Account.login)
-let mustBeAdmin ctx = requiresRole "Admin" accessDenied ctx
+open Connections
 
 let notFoundResult ctx =
     ctx |> (clearResponse >=> setStatusCode 400 >=> htmlView HtmlViews.StatusPages.notFound)
+
+
+/// HttpHandlers for logging in, logging out, and configuring account settings.
+module Authentication =
+
+    open Microsoft.AspNetCore.Authentication
+
+    let accessDenied = setStatusCode 401 >=> htmlView HtmlViews.StatusPages.denied
+
+    let mustBeLoggedIn : HttpHandler = requiresAuthentication (redirectTo false Urls.Account.login)
+
+    let mustBeAdmin ctx = requiresRole "Admin" accessDenied ctx
+
+    let login : HttpHandler =
+        requiresAuthentication (challenge "OpenIdConnect") >=>
+        fun next ctx ->
+            let user = ctx.User
+            let token = ctx.GetTokenAsync("access_token") |> Async.AwaitTask |> Async.RunSynchronously
+            ctx.Items.Add("access_token",token)
+            redirectTo true "/" next ctx
+
+    let logout = signOut "Cookies" >=> redirectTo false "/"
+
+
+let inMaintainanceMode = false
 
 let maintainanceResult ctx =
     ctx |> (clearResponse >=> setStatusCode 503 >=> htmlView HtmlViews.StatusPages.maintainance)
@@ -32,7 +47,7 @@ let notInMaintainanceMode next ctx : HttpFuncResult =
 
 let prettyJson = Serialisation.serialise
 
-let queryRequestToApiResponse<'a,'b> (appService:'a->Result<'b,ServiceError>) : HttpHandler =
+let apiResultFromQuery<'a,'b> (appService:'a->Result<'b,ServiceError>) : HttpHandler =
     fun next ctx ->
         ctx
         |> bindQueryString<'a>
@@ -92,38 +107,60 @@ let docSectionHandler docSection =
             |> renderView next ctx
         | None -> notFoundResult next ctx
 
-// let slideViewHandler (id:string) : HttpHandler =
+// let coreFn errorHandler fn : HttpHandler =
 //     fun next ctx ->
-//         let split = id.Split '/'
-//         match split.Length with
-//         | 2 -> 
-//             let col,slide = split.[0], split.[1] |> Net.WebUtility.UrlDecode
-//             Taxonomy.getSlide col slide
-//             |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
-//         | 3 ->
-//             let col,slide = split.[0], split.[2] |> Net.WebUtility.UrlDecode
-//             Taxonomy.getSlide col slide
-//             |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
-//         | _ -> notFoundResult next ctx
+//         async {
+//             let core = ctx.GetService<CoreMicroservice>()
+//             let! result = fn |> core.Apply
+//             match result with
+//             | Error e -> errorHandler e
+//             | Ok r -> return 
+//         }
 
-// let taxonDetail (taxon:string) next ctx =
-//     let (f,g,s) =
-//         let split = taxon.Split '/'
-//         match split.Length with
-//         | 1 -> split.[0],None,None
-//         | 2 -> split.[0],Some split.[1],None
-//         | 3 -> split.[0],Some split.[1],Some split.[2]
-//         | _ -> "",None,None
-//     Taxonomy.getByName f g s
-//     |> renderViewResult HtmlViews.Taxon.view next ctx
+let slideViewHandler (id:string) : HttpHandler =
+    fun next ctx ->
+        let core = ctx.GetService<CoreMicroservice>()
+        let split = id.Split '/'
+        match split.Length with
+        | 2 -> 
+            let col,slide = split.[0], split.[1] |> Net.WebUtility.UrlDecode
+            CoreActions.MRC.getSlide col slide
+            |> core.Apply
+            |> Async.RunSynchronously // TODO Remove!
+            |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
+        | 3 ->
+            let col,slide = split.[0], split.[2] |> Net.WebUtility.UrlDecode
+            CoreActions.MRC.getSlide col slide
+            |> core.Apply
+            |> Async.RunSynchronously // TODO Remove!
+            |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
+        | _ -> notFoundResult next ctx
 
-// let taxonDetailById (id:string) next ctx =
-//     match Guid.TryParse id with
-//     | (true,g) ->
-//         g
-//         |> Taxonomy.getById
-//         |> renderViewResult HtmlViews.Taxon.view next ctx
-//     | (false,_) -> notFoundResult next ctx
+let taxonDetail (taxon:string) : HttpHandler =
+    fun next ctx ->
+        let core = ctx.GetService<CoreMicroservice>()
+        let (f,g,s) =
+            let split = taxon.Split '/'
+            match split.Length with
+            | 1 -> split.[0],None,None
+            | 2 -> split.[0],Some split.[1],None
+            | 3 -> split.[0],Some split.[1],Some split.[2]
+            | _ -> "",None,None
+        CoreActions.MRC.getByName f "" "" //g s //TODO Fix this
+        |> core.Apply
+        |> Async.RunSynchronously
+        |> renderViewResult HtmlViews.Taxon.view next ctx
+
+let taxonDetailById (id:string) : HttpHandler =
+    fun next ctx ->
+        match Guid.TryParse id with
+        | (true,g) ->
+            let core = ctx.GetService<CoreMicroservice>()
+            CoreActions.MRC.getById g
+            |> core.Apply
+            |> Async.RunSynchronously
+            |> renderViewResult HtmlViews.Taxon.view next ctx
+        | (false,_) -> notFoundResult next ctx
 
 // let individualCollectionIndex next ctx =
 //     IndividualReference.list {Page = 1; PageSize = 20}
@@ -139,18 +176,22 @@ let docSectionHandler docSection =
 //     | Ok v -> redirectTo false (sprintf "/Reference/%s/%i" colId v) next ctx
 //     | Error _ -> notFoundResult next ctx
 
-// let defaultIfNull (req:TaxonPageRequest) =
-//     match String.IsNullOrEmpty req.Rank with
-//     | true -> { Page = 1; PageSize = 50; Rank = "Genus"; Lex = "" }
-//     | false ->
-//         if req.PageSize = 0 then { req with PageSize = 50}
-//         else req
+let defaultIfNull (req:TaxonPageRequest) =
+    match String.IsNullOrEmpty req.Rank with
+    | true -> { Page = 1; PageSize = 50; Rank = "Genus"; Lex = "" }
+    | false ->
+        if req.PageSize = 0 then { req with PageSize = 50}
+        else req
 
-// let pagedTaxonomyHandler next (ctx:HttpContext) =
-//     ctx.BindQueryString<TaxonPageRequest>()
-//     |> defaultIfNull
-//     |> Taxonomy.list
-//     |> renderViewResult HtmlViews.MRC.index next ctx
+let pagedTaxonomyHandler next (ctx:HttpContext) =
+    let core = ctx.GetService<CoreMicroservice>()
+    ctx.BindQueryString<TaxonPageRequest>()
+    |> defaultIfNull
+    |> CoreActions.MRC.list
+    |> core.Apply
+    |> Async.RunSynchronously
+    |> (fun x -> printfn "Response was %A" x; x)
+    |> renderViewResult HtmlViews.MRC.index next ctx
 
 // let listCollectionsHandler next ctx =
 //     Digitise.myCollections (currentUserId ctx)
@@ -224,9 +265,12 @@ let docSectionHandler docSection =
 //     redirectTo true (sprintf "/Identify/%A" formData.GrainId) next ctx
 
 
-// let homeHandler next ctx =
-//     Statistic.getHomeStatistics()
-//     |> renderViewResult HtmlViews.Home.view next ctx
+let homeHandler next (ctx:HttpContext) =
+    let core = ctx.GetService<CoreMicroservice>()
+    CoreActions.Statistics.getHomeStatistics()
+    |> core.Apply
+    |> Async.RunSynchronously
+    |> renderViewResult HtmlViews.Home.view next ctx
 
 // let topUnknownGrainsHandler next (ctx:HttpContext) =
 //     UnknownGrains.getTopScoringUnknownGrains()
@@ -257,16 +301,6 @@ let docSectionHandler docSection =
 //     |> ignore
 //     redirectTo true "/Admin/Curate" next ctx
 
-open Microsoft.AspNetCore.Authentication
-
-let signIn : HttpHandler =
-    challenge "OpenIdConnect" >=>
-    fun next ctx ->
-        let user = ctx.User
-        let token = ctx.GetTokenAsync("access_token") |> Async.AwaitTask |> Async.RunSynchronously
-        text "Ok" next ctx
-
-
 /////////////////////////
 /// Routes
 /////////////////////////
@@ -279,78 +313,42 @@ let signIn : HttpHandler =
         // POST >=> routef "/Digitise/Collection/%s/Slide/%s/Void"     (fun (col,s) n c -> U.Digitise.voidSlide c)
         // POST >=> routef "/Digitise/Collection/%s/Slide/%s/AddImage" (fun (col,s) n c -> U.Digitise.uploadSlideImage)
 
+// let backboneMatch : HttpHandler =
+//     2
+
+
+
 open Account
 
 let webApp : HttpHandler = 
-    // let publicApi =
-    //     GET >=>
-    //     choose [
-    //         // route   "/backbone/match"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
-    //         route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
-    //         route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
-    //         route   "/taxon/search"             >=> queryRequestToApiResponse<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
+
+    let account =
+        GET >=> choose [
+            route  Urls.Account.login                >=> Authentication.login
+            route  Urls.Account.register             >=> Authentication.login
+            route  Urls.Account.logout               >=> Authentication.logout
+        ]
+
+    // let api =
+    //     GET >=> choose [
+    //         route   "/backbone/match"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
+    //         route   "/backbone/trace"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
+    //         route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> Backbone.searchNames
+    //         route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
     //         route   "/grain/location"           >=> topUnknownGrainsHandler
     //     ]
 
-    // let digitiseApi =
-    //     mustBeLoggedIn >=>
-    //     choose [
-    //         route   "/collection"               >=> getCollectionHandler
-    //         route   "/collection/list"          >=> listCollectionsHandler
-    //         route   "/collection/start"         >=> startCollectionHandler
-    //         route   "/collection/publish"       >=> publishCollectionHandler
-    //         route   "/collection/slide/add"     >=> addSlideHandler
-    //         route   "/collection/slide/void"    >=> voidSlideHandler
-    //         route   "/collection/slide/addimage">=> addImageHandler
-    //         route   "/calibration/list"         >=> getCalibrationsHandler
-    //         route   "/calibration/use"          >=> setupMicroscopeHandler
-    //         route   "/calibration/use/mag"      >=> calibrateHandler
-    //     ]
-
-    let accountManagement =
-        choose [
-            POST >=> route  Urls.Account.login                >=> signIn//loginHandler
-            POST >=> route  Urls.Account.externalLogin        >=> externalLoginHandler
-            // POST >=> route  Urls.Account.externalLoginConf    >=> externalLoginConfirmation
-            POST >=> route  Urls.Account.register             >=> registerHandler
-            POST >=> route  Urls.Account.logout               >=> mustBeLoggedIn >=> logoutHandler
-            // POST >=> route  Urls.Account.forgotPassword       >=> mustBeLoggedIn >=> forgotPasswordHandler
-            // POST >=> route  Urls.Account.resetPassword        >=> mustBeLoggedIn >=> resetPasswordHandler
-            GET  >=> route  Urls.Account.login                >=> htmlView (HtmlViews.Account.login [] Requests.Empty.login)
-            GET  >=> route  Urls.Account.register             >=> htmlView (HtmlViews.Account.register [] Requests.Empty.newAppUserRequest) 
-            GET  >=> route  Urls.Account.resetPassword        >=> resetPasswordView
-            GET  >=> route  Urls.Account.resetPasswordConf    >=> htmlView (HtmlViews.Account.resetPasswordConfirmation)
-            GET  >=> route  Urls.Account.forgotPassword       >=> htmlView (HtmlViews.Account.forgotPassword Requests.Empty.forgotPassword)
-            // GET  >=> route  Urls.Account.confirmEmail         >=> confirmEmailHandler
-            GET  >=> route  Urls.Account.externalLoginCallbk  >=> externalLoginCallback Urls.home
+    let masterReferenceCollection =
+        GET >=> 
+        choose [   
+            route   Urls.MasterReference.root   >=> pagedTaxonomyHandler
+            routef  "/Taxon/View/%i"            lookupNameFromOldTaxonId
+            routef  "/Taxon/ID/%s"              taxonDetailById
+            routef  "/Taxon/%s"                 taxonDetail
         ]
 
-    //         GET  >=> route  "/Manage"                       >=> Manage.index
-    //         // POST >=> route  "/Manage/Profile"               >=> Manage.profile
-    //         // GET  >=> route  "/Manage/Profile"               >=> htmlView HtmlViews.Manage.changePassword //renderView "Manage/ChangePublicProfile" None
-    //         POST >=> route  "/Manage/LinkLogin"             >=> Manage.linkLogin
-    //         GET  >=> route  "/Manage/LinkLoginCallback"     >=> Manage.linkLoginCallback
-    //         GET  >=> route  "/Manage/ManageLogins"          >=> Manage.manageLogins
-    //         POST >=> route  "/Manage/SetPassword"           >=> Manage.setPassword
-    //         GET  >=> route  "/Manage/SetPassword"           >=> htmlView (HtmlViews.Manage.setPassword [] 2.)
-    //         POST >=> route  "/Manage/ChangePassword"        >=> Manage.changePassword
-    //         GET  >=> route  "/Manage/ChangePassword"        >=> htmlView (HtmlViews.Manage.changePassword [] 2.)
-    //         POST >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLogin
-    //         GET  >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLoginView
-    //     ]
-
-    // let masterReferenceCollection =
-    //     GET >=> 
-    //     choose [   
-    //         route   Urls.MRC.root               >=> pagedTaxonomyHandler
-    //         routef  "/Taxon/View/%i"            lookupNameFromOldTaxonId
-    //         routef  "/Taxon/ID/%s"              taxonDetailById
-    //         routef  "/Taxon/%s"                 taxonDetail
-    //     ]
-
     // let individualRefCollections =
-    //     GET >=>
-    //     choose [
+    //     GET >=> choose [
     //         route   ""                          >=> individualCollectionIndex
     //         routef   "/Grain/%i"                (fun _ -> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound)
     //         routef  "/%s/%i"                    (fun (id,v) -> individualCollection id v)
@@ -359,10 +357,10 @@ let webApp : HttpHandler =
 
     // let identify =
     //     choose [
-    //         POST >=> route  "/Upload"           >=> submitGrainHandler
+    //         POST >=> route  "/Upload"           >=> Authentication.mustBeLoggedIn >=> submitGrainHandler
     //         POST >=> route  "/Identify"         >=> submitIdentificationHandler
     //         GET  >=> route  ""                  >=> listGrains
-    //         GET  >=> route  "/Upload"           >=> mustBeLoggedIn >=> htmlView (HtmlViews.Identify.add 0.)
+    //         GET  >=> route  "/Upload"           >=> Authentication.mustBeLoggedIn >=> htmlView (HtmlViews.Identify.add 0.)
     //         GET  >=> routef "/%s"               showGrainDetail
     //     ]
 
@@ -375,23 +373,21 @@ let webApp : HttpHandler =
     //         GET  >=> route "/RebuildReadModel"  >=> mustBeAdmin >=> rebuildReadModelHandler
     //     ]
 
-    // Main router
     notInMaintainanceMode >=>
     choose [
-        // subRoute            "/api/v1"            publicApi
-        // subRoute            "/api/v1/digitise"   digitiseApi
-        routeStartsWith     Urls.Account.root    >=> accountManagement
-        // routeStartsWith     "/Taxon"             >=> masterReferenceCollection
-        // subRoute            "/Reference"         individualRefCollections
-        // subRoute            "/Identify"          identify
+        // subRoute    "/api"                      >=> api
+        // subRoute           "/api/v1/digitise"         digitiseApi
+        routeStartsWith     Urls.Account.root           >=> account
+        routeStartsWith     Urls.MasterReference.root   >=> masterReferenceCollection
+        // routeStartsWith     Urls.Collections.root       >=> individualRefCollections
+        // routeStartsWith     Urls.Identify.root          >=> identify
         // subRoute            "/Admin"             admin
-        GET >=> 
-        choose [
-            // route   Urls.home                   >=> homeHandler
+        GET >=> choose [
+            route   Urls.home                   >=> homeHandler
             route   Urls.guide                  >=> docIndexHandler
             routef  "/Guide/%s"                 docSectionHandler
             // route   Urls.statistics             >=> systemStatsHandler
-            route   Urls.digitise               >=> mustBeLoggedIn >=> htmlView DigitiseDashboard.appView
+            route   Urls.digitise               >=> Authentication.mustBeLoggedIn >=> htmlView DigitiseDashboard.appView
             route   Urls.api                    >=> docSectionHandler "API"
             route   Urls.tools                  >=> htmlView HtmlViews.Tools.main
             route   Urls.cite                   >=> docSectionHandler "Cite"

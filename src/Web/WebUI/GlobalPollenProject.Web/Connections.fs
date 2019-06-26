@@ -1,9 +1,11 @@
 module Connections
 
 open System
-open Giraffe
 open System.Net.Http
 open Microsoft.Extensions.Options
+open System.Net.Http
+open FSharp.Control.Tasks.V2.ContextInsensitive
+open Microsoft.AspNetCore.Http.Extensions
 
 //////////////////
 /// Models
@@ -65,44 +67,81 @@ type AuthenticationService(client:HttpClient, appSettings:IOptions<AppSettings>)
 /// Core / Other Services
 //////////////////
 
-
 /// Represents a function that accesses a core service
-type CoreFunction<'a> = HttpClient -> System.Uri -> Async<Result<'a,ServiceError>>
+type CoreFunction<'a> = HttpClient -> System.UriBuilder -> Async<Result<'a,ServiceError>>
+
+/// A connection to the core microservice
+type CoreMicroservice(client:HttpClient, appSettings:IOptions<AppSettings>) =
+    let baseUrl = appSettings.Value.CoreUrl
+    member __.Apply (fn:CoreFunction<'a>) = fn client (UriBuilder(baseUrl))
 
 
-type Microservice(client:HttpClient, baseUrl:string) =
+module CoreActions =
 
-    member this.Apply (fn:CoreFunction<'a>) = fn client (Uri(baseUrl, UriKind.Absolute))
+    open ReadModels
+    open Responses
+    open System.Reflection
 
+    let toQueryString x =
+        let formatElement (pi : PropertyInfo) =
+            sprintf "%s=%O" pi.Name <| pi.GetValue x
+        x.GetType().GetProperties()
+        |> Array.map formatElement
+        |> String.concat "&"
 
+    let CGET<'a,'b> (queryData:'b option) (route:string) (c:HttpClient) (u:UriBuilder) = 
+        async {
+            let queryString =
+                match queryData with
+                | Some data -> data |> toQueryString
+                | None -> ""
+            u.Query <- queryString
+            u.Path <- route
+            let! response = c.GetStringAsync(u.Uri) |> Async.AwaitTask
+            match Serialisation.deserialise<Result<'a,ServiceError>> response with
+            | Ok m -> return m
+            | Error _ -> return Error ServiceError.InvalidRequestFormat
+        }
 
-
-
-let microservice httpClient baseUrl (fn:CoreFunction<'a>) : HttpHandler =
-    fun next ctx ->
-        // Apply a core service with its arguments
-        // Handle any errors
-        let r = fn
-        next ctx
-
-
-module CoreAccess = 
-
-    module Taxonomy =
-
-        // Points of failure:
-        // A. Url doesn't exist
-        // B. Bad request / problem with response
-        // C. Cannot deserialise response
-
-        let getSlide collectionId slideId : CoreFunction<Responses.SlidePageViewModel> =
-            fun c u -> async {
-                let! response = c.GetStringAsync(u) |> Async.AwaitTask // TODO add in colId and slideid
-                match Serialisation.deserialise<Result<Responses.SlidePageViewModel,ServiceError>> response with
+    let CPOST<'a, 'b> (route:string) (c:HttpClient) (u:UriBuilder) (data:'a) = 
+        task {
+            u.Path <- route
+            let! response = c.PostAsJsonAsync(u.Uri, data) |> Async.AwaitTask
+            if response.IsSuccessStatusCode
+            then
+                let! content = response.Content.ReadAsStringAsync()
+                printfn "Contents returned was %A" content
+                match Serialisation.deserialise<Result<'b,ServiceError>> content with
                 | Ok m -> return m
                 | Error _ -> return Error ServiceError.InvalidRequestFormat
-            }
+            else return Error ServiceError.InvalidRequestFormat
+        }
 
+    module MRC =
+        let autocompleteTaxon (req:TaxonAutocompleteRequest) = CGET (Some req) "/api/v1/anon/MRC/Taxon/Autocomplete"
+        let list (req:TaxonPageRequest) = CGET (Some req) "/api/v1/anon/MRC/Taxon"
+        let getByName family genus species = CGET None (sprintf "/api/v1/anon/MRC/Taxon/%s/%s/%s" family genus species)
+        let getById (guid:Guid) = CGET None (sprintf "/api/v1/anon/MRC/Taxon/Id/%s" (guid.ToString()))
+        let getSlide colId slideId = CGET None (sprintf "/api/v1/anon/MRC/Collection/%s/%s" colId slideId)
+        let collectionDetail colId version = CGET None (sprintf "/api/v1/anon/MRC/Collection/%s/%i" colId version)
+        let collectionDetailLatest colId = CGET None (sprintf "/api/v1/anon/MRC/Collection/%s" colId)
+        let listCollections (req:PageRequest) = CGET (Some req) "/api/v1/anon/MRC/Collection"
+
+    // module Backbone =
+    //     let search (req:BackboneSearchRequest) = 
+
+
+
+    module Statistics =
+
+        let getHomeStatistics() : CoreFunction<HomeStatsViewModel> =
+            fun c u ->
+                async {
+                    return Ok <|  { DigitisedSlides = 200
+                                    Species = 5000
+                                    IndividualGrains = 242
+                                    UnidentifiedGrains = 24 }
+                }
 
 // let slideHandler =
 //     microservice <| CoreAccess.Taxonomy.getSlide "Cool1" "Cool2"

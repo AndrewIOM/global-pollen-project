@@ -15,26 +15,31 @@ services:
     ports:
     - "5103:80"
 
-  # webmvc:
+  identity.api:
+    environment:
+      - ConnectionStrings:UserConnection=Server=identitydb,1433;Database=gppuserdb;User=sa;Password=YourStrong!Passw0rd
+    links:
+      - "identity.sql:identitydb"
+    depends_on:
+      - identity.sql
+
+  identity.sql:
+    image: microsoft/mssql-server-linux:2017-latest
+    environment:
+      - SA_PASSWORD=Pass@word
+      - ACCEPT_EULA=Y
+
+  webapigw:
+    environment:
+      - IdentityUrl=http://identity.api
+
+  # website:
   #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development 
+  #     - ASPNETCORE_ENVIRONMENT=Development
   #     - ASPNETCORE_URLS=http://0.0.0.0:80
-  #     - IdentityUrl=http://10.0.75.1:5105
-  #     - MarketingUrl=http://webmarketingapigw 
-  #     - CatalogUrlHC=http://catalog.api/hc
-  #     - OrderingUrlHC=http://ordering.api/hc 
-  #     - IdentityUrlHC=http://identity.api/hc 
-  #     - BasketUrlHC=http://basket.api/hc
-  #     - MarketingUrlHC=http://marketing.api/hc
-  #     - PaymentUrlHC=http://payment.api/hc
-  #     - SignalrHubUrl=http://${ESHOP_EXTERNAL_DNS_NAME_OR_IP}:5202
-  #     - UseCustomizationData=True
-  #     - ApplicationInsights__InstrumentationKey=${INSTRUMENTATION_KEY} - OrchestratorType=${ORCHESTRATOR_TYPE}
+  #     - IdentityUrl=http://identity.api
+  #     - IdentityUrlHC=http://identity.api/hc
+  #     - CoreUrl=http://core.api
   #     - UseLoadTest=${USE_LOADTEST:-False}
   #   ports:
   #   - "5100:80"
-
-#  sql.data:
-#    environment:
-#    - SA_PASSWORD=Pass@word
-#    - ACCEPT_EULA=Y

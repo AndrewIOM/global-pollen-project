@@ -24,7 +24,6 @@
     <PackageReference Include="IdentityServer4.EntityFramework" Version="2.4.0" />
     <PackageReference Include="Giraffe" Version="3.6.0" />
     <PackageReference Include="SendGrid" Version="9.11.0" />
-    <PackageReference Include="Bricelam.EntityFrameworkCore.FSharp" Version="2.2.0-alpha1" />
   </ItemGroup>
   <ItemGroup>
     <None Include="appsettings.json" CopyToPublishDirectory="Always" />

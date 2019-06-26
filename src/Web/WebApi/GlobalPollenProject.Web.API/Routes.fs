@@ -24,6 +24,16 @@ open Microsoft.AspNetCore.Http
 
 //let mustBeLoggedIn = requiresAuthentication notLoggedIn
 
+// let publicApi =
+//     GET >=>
+//     choose [
+//         // route   "/backbone/match"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
+//         route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
+//         route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
+//         route   "/taxon/search"             >=> queryRequestToApiResponse<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
+//         route   "/grain/location"           >=> topUnknownGrainsHandler
+//     ]
+
 let webApp : HttpFunc -> HttpContext -> HttpFuncResult =
     //mustBeLoggedIn >=>
         choose [

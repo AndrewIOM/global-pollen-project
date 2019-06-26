@@ -28,7 +28,7 @@ let cite = "/Cite"
 let terms = "/Terms"
 
 
-module MRC =
+module MasterReference =
     let root = "/Taxon"
 
 
@@ -45,3 +45,11 @@ module Account =
     let resetPasswordConf = root + "/ResetPasswordConfirmation"
     let confirmEmail = root + "/ConfirmEmail"
     let externalLoginCallbk = root + "/ExternalLoginCallback"
+
+module Collections =
+
+    let root = "/Reference"
+
+module Identify =
+
+    let root = "/Identify"

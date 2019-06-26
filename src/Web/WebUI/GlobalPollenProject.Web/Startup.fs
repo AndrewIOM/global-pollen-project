@@ -90,13 +90,13 @@ type Startup (configuration: IConfiguration) =
         services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>() |> ignore
         services.AddTransient<HttpClientAuthorizationDelegatingHandler>() |> ignore
         services.AddTransient<HttpClientRequestIdDelegatingHandler>() |> ignore
-        services.AddHttpClient<Connections.Microservice>()
-            .SetHandlerLifetime(TimeSpan.FromMinutes(5.))
+        services.AddHttpClient<Connections.CoreMicroservice>()
+            .SetHandlerLifetime(TimeSpan.FromMinutes(2.))
             .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>() |> ignore
             // .AddPolicyHandler(GetRetryPolicy())
             // .AddPolicyHandler(GetCircuitBreakerPolicy()) |> ignore
         services.AddHttpClient<Connections.AuthenticationService>()
-            .SetHandlerLifetime(TimeSpan.FromMinutes(5.))
+            .SetHandlerLifetime(TimeSpan.FromMinutes(2.))
             .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>() |> ignore
             // .AddPolicyHandler(GetRetryPolicy())
             // .AddPolicyHandler(GetCircuitBreakerPolicy()) |> ignore
