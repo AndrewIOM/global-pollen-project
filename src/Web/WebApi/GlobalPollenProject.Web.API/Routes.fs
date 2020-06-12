@@ -1,7 +1,27 @@
-module Routes
+namespace GlobalPollenProject.Web.API
 
-open Giraffe
-open Microsoft.AspNetCore.Http
+open Microsoft.AspNetCore.Mvc
+
+[<ApiController>]
+type HomeController() =
+    inherit ControllerBase()
+
+    [<HttpGet>]
+    member __.Index() =
+        RedirectResult "~/swagger"
+
+
+[<Route("api/v1/[controller]")>]
+[<ApiController>]
+type TaxonomyController() =
+    inherit ControllerBase()
+
+    [<HttpGet>]
+    member __.Search() =
+        let values = [|"value1"; "value2"|]
+        ActionResult<string[]>(values)
+
+
 
 // GPP Public API
 // Read-only in the first instance
@@ -15,15 +35,6 @@ open Microsoft.AspNetCore.Http
 // ---- Contents by ID
 // ---- Search by properties
 
-
-// let notLoggedIn =
-//     RequestErrors.UNAUTHORIZED
-//         "Basic"
-//         "Some Realm"
-//         "You must be logged in."
-
-//let mustBeLoggedIn = requiresAuthentication notLoggedIn
-
 // let publicApi =
 //     GET >=>
 //     choose [
@@ -31,11 +42,4 @@ open Microsoft.AspNetCore.Http
 //         route   "/backbone/trace"           >=> queryRequestToApiResponse<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
 //         route   "/backbone/search"          >=> queryRequestToApiResponse<BackboneSearchRequest,string list> Backbone.searchNames
 //         route   "/taxon/search"             >=> queryRequestToApiResponse<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
-//         route   "/grain/location"           >=> topUnknownGrainsHandler
 //     ]
-
-let webApp : HttpFunc -> HttpContext -> HttpFuncResult =
-    //mustBeLoggedIn >=>
-        choose [
-            route "/ping"   >=> text "pong"
-            route "/"       >=> htmlFile "/pages/index.html" ]

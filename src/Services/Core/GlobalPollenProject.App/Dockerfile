@@ -1,20 +1,20 @@
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.2 AS base
-WORKDIR /app
-EXPOSE 5000
-
-FROM mcr.microsoft.com/dotnet/core/sdk:2.2 AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build-env
 WORKDIR /src
 
-ARG RUN=pwd
-RUN ${RUN}
+# Copy project and restore as distinct layers
+COPY /src/Services/Core/GlobalPollenProject.Core/GlobalPollenProject.Core.fsproj /src/Services/Core/GlobalPollenProject.Core/GlobalPollenProject.Core.fsproj
+COPY /src/Services/Core/GlobalPollenProject.App/GlobalPollenProject.App.fsproj /src/Services/Core/GlobalPollenProject.App/GlobalPollenProject.App.fsproj
+COPY /src/Services/Core/GlobalPollenProject.Persistence/GlobalPollenProject.Persistence.fsproj /src/Services/Core/GlobalPollenProject.Persistence/GlobalPollenProject.Persistence.fsproj
+RUN dotnet restore --disable-parallel /src/Services/Core/GlobalPollenProject.App/GlobalPollenProject.App.fsproj
 
-COPY . .
-WORKDIR /src/src/Services/Core/GlobalPollenProject.App
+# Copy everything else and build
+COPY /src/Services/Core /src/Services/Core
+COPY /src/Shared /src/Shared
+WORKDIR /src/Services/Core/GlobalPollenProject.App
 RUN dotnet publish -c Release -o /app
 
-FROM build AS publish
-
-FROM base AS final
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
+EXPOSE 5000
 WORKDIR /app
-COPY --from=publish /app .
+COPY --from=build-env /app .
 ENTRYPOINT ["dotnet", "GlobalPollenProject.App.dll"]

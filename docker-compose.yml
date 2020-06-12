@@ -13,6 +13,56 @@ services:
     depends_on:
       - core.readmodel
       - core.eventstore
+    environment:
+      - imagestore__azureconnectionstring=${IMAGESTORE_AZURE_CONN_STR}
+      - imagestore__baseurl=${IMAGESTORE_BASEURL}
+      - imagestore__container=${IMAGESTORE_CONTAINER}
+      - imagestore__cachecontainer=${IMAGESTORE_CONTAINER_CACHE}
+      - RedisHostName=coreredis
+      - eventstore__eventstoreip=coreeventstore
+      - eventstore__eventstoreuser=${EVENTSTORE_USER}
+      - eventstore__eventstorepassword=${EVENTSTORE_PASSWORD}
+      - UserSettings__UserEmail=${USER_EMAIL}
+      - UserSettings__UserPassword=${USER_PASSWORD}
+
+  identity.api:
+    image: ${REGISTRY:-gpp}/identity.api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Identity/GlobalPollenProject.Identity/Dockerfile
+    depends_on:
+      - identity.sqldb
+    links:
+      - "identity.sqldb:identitydb"
+    environment:
+      - Authentication__Facebook__AppId=${FACEBOOK_ID}
+      - Authentication__Facebook__AppSecret=${FACEBOOK_SECRET}
+      - Authentication__Twitter__ConsumerKey=${TWITTER_KEY}
+      - Authentication__Twitter__ConsumerSecret=${TWITTER_SECRET}
+      - ConnectionStrings:UserConnection=Server=identitydb,1433;Database=${USER_SQL_DB};User=${USER_SQL_USER};Password=${USER_SQL_PASSWORD}
+      - EmalFromName=${EMAIL_FROM_NAME}
+      - EmailFromAddress=${EMAIL_FROM_ADDR}
+      - SendGridKey=${SENDGRID_KEY}
+      - WebsiteUrl=http://web.ui
+
+  web.ui:
+    image: gpp/webmvc:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Web/WebUI/GlobalPollenProject.Web/Dockerfile
+    depends_on:
+      - core.api
+      - identity.api
+    environment:
+      - IdentityUrl= http://identity.api
+      - CoreUrl=http://core.api
+      - CallBackUrl=http://0.0.0.0:80
+
+  web.api:
+    image: gpp/webapi:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Web/WebApi/GlobalPollenProject.Web.API/Dockerfile
 
   webapigw:
     image: gpp/webapigw:${TAG:-latest}
@@ -22,29 +72,18 @@ services:
     depends_on:
       - core.api
       - identity.api
+    environment:
+      - IdentityUrl=http://identity.api
 
-  identity.api:
-    image: ${REGISTRY:-gpp}/identity.api:${PLATFORM:-linux}-${TAG:-latest}
-    build:
-      context: .
-      dockerfile: src/Services/Identity/GlobalPollenProject.Identity/Dockerfile
-    # depends_on:
-      # - sql.data
-
-  # website:
-  #   image: gpp/webmvc:${TAG:-latest}
-  #   build:
-  #     context: .
-  #     dockerfile: src/web/GlobalPollenProject.Web/Dockerfile
-  #   depends_on:
-  #   - core.api
-  #   - identity.api
-
-  # webapi:
-  #   image: gpp/webapi:${TAG:-latest}
-  #   build:
-  #     context: .
-  #     dockerfile: src/api/GlobalPollenProject.Web.API/Dockerfile
+  # nginx for SSL, ddos protection etc. of web app
+  reverse-proxy:
+    image: nginx:1.17-alpine
+    depends_on:
+    - identity.api
+    ports:
+      - "5100:5100"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
 
   core.readmodel:
     image: redis:latest
@@ -52,8 +91,22 @@ services:
     ports:
       - "6379:6379"
 
+  #core.readmodel:
+  #  image: elasticsearch:7.6.2
+  #  environment: 
+  #    - discovery.type=single-node
+
   core.eventstore:
     image: eventstore/eventstore:latest
     ports:
       - "2113:2113"
       - "1113:1113"
+
+  identity.sqldb:
+    image: "microsoft/mssql-server-linux:2017-CU12"
+    ports:
+    - "1433:1433"
+    environment:
+        SA_PASSWORD: "${USER_SQL_PASSWORD}"
+        ACCEPT_EULA: "Y"
+        MSSQL_PID: "Express"

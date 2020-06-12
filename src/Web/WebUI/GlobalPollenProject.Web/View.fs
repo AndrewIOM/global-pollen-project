@@ -43,40 +43,29 @@ module Icons =
 module MvcAttributeValidation =
 
     open Microsoft.AspNetCore.Mvc.DataAnnotations
-    open Microsoft.AspNetCore.Mvc.DataAnnotations.Internal
-    open Microsoft.AspNetCore.Mvc.Internal
     open Microsoft.AspNetCore.Mvc.ModelBinding
     open Microsoft.AspNetCore.Mvc.ModelBinding.Metadata
     open Microsoft.AspNetCore.Mvc.ModelBinding.Validation
     open Microsoft.AspNetCore.Mvc.ViewFeatures
     open Microsoft.Extensions.Options
 
-    type ModelMetadataProvider =
-        inherit DefaultModelMetadataProvider
-        static member CreateDefaultProvider() =
-            let detailsProviders = [
-                new DefaultBindingMetadataProvider() :> IMetadataDetailsProvider
-                new DefaultValidationMetadataProvider() :> IMetadataDetailsProvider
-                new DataAnnotationsMetadataProvider(Options.Create(new MvcDataAnnotationsLocalizationOptions()), null) :> IMetadataDetailsProvider
-                new DataMemberRequiredBindingMetadataProvider() :> IMetadataDetailsProvider
-            ]
-            let compositeDetailsProvider = new DefaultCompositeMetadataDetailsProvider(detailsProviders)
-            DefaultModelMetadataProvider(compositeDetailsProvider, Options.Create(new Microsoft.AspNetCore.Mvc.MvcOptions()))
+    // type ModelMetadataProvider =
+    //     inherit DefaultModelMetadataProvider
+    //     static member CreateDefaultProvider() =
+    //         let detailsProviders = [
+    //             new DefaultBindingMetadataProvider() :> IMetadataDetailsProvider
+    //             new DefaultValidationMetadataProvider() :> IMetadataDetailsProvider
+    //             new DataAnnotationsMetadataProvider(Options.Create(new MvcDataAnnotationsLocalizationOptions()), null) :> IMetadataDetailsProvider
+    //             new DataMemberRequiredBindingMetadataProvider() :> IMetadataDetailsProvider
+    //         ]
+    //         let compositeDetailsProvider = new DefaultCompositeMetadataDetailsProvider(detailsProviders)
+    //         DefaultModelMetadataProvider(compositeDetailsProvider, Options.Create(Microsoft.AspNetCore.Mvc.MvcOptions()))
 
-    type ModelValidatorProvider =
-       inherit CompositeModelValidatorProvider
-       static member CreateDefaultProvider() : CompositeModelValidatorProvider =
-            invalidOp "Fix me"
-            // let x = DefaultModelValidatorProvider()
-            // let y = DataAnnotationsModelValidatorProvider(new ValidationAttributeAdapterProvider(),Options.Create(new MvcDataAnnotationsLocalizationOptions()),null)
-            // let providers = ResizeArray [ x :> IModelValidatorProvider; y :> IModelValidatorProvider ]
-            // CompositeModelValidatorProvider(providers)
-
-    let clientSideInputValidationTags' p pName attr =
-        let provider = ModelMetadataProvider.CreateDefaultProvider()
+    let clientSideInputValidationTags' (p:Type) pName attr =
+        let provider = EmptyModelMetadataProvider() //ModelMetadataProvider.CreateDefaultProvider()
         let metadata = provider.GetMetadataForProperty(p, pName)
         let actionContext = Microsoft.AspNetCore.Mvc.ActionContext()
-        let context = ClientModelValidationContext(actionContext, metadata, provider, new AttributeDictionary())
+        let context = ClientModelValidationContext(actionContext, metadata, provider, AttributeDictionary())
         let adapter = ValidationAttributeAdapterProvider()
         let a = adapter.GetAttributeAdapter(attr,null)
         match isNull a with
@@ -107,14 +96,14 @@ module TagHelpers =
             | None -> pi.Name
         | _ -> ""
 
-    // let validationFor expr =
-    //     match expr with 
-    //     | PropertyGet(_,pi,_) -> 
-    //         pi.GetCustomAttributes(typeof<ValidationAttribute>,false)
-    //         |> Seq.choose (fun t -> match t with | :? ValidationAttribute as v -> Some v | _ -> None)
-    //         |> Seq.collect (MvcAttributeValidation.clientSideInputValidationTags pi.DeclaringType pi.Name)
-    //         |> Seq.toList
-    //     | _ -> []
+    let validationFor expr =
+        match expr with 
+        | PropertyGet(_,pi,_) -> 
+            pi.GetCustomAttributes(typeof<ValidationAttribute>,false)
+            |> Seq.choose (fun t -> match t with | :? ValidationAttribute as v -> Some v | _ -> None)
+            |> Seq.collect (MvcAttributeValidation.clientSideInputValidationTags pi.DeclaringType pi.Name)
+            |> Seq.toList
+        | _ -> []
 
 module Forms =
 
@@ -132,12 +121,12 @@ module Forms =
 
     let formField (e:Expr) =
         let name = propertyName e
-        let validationAttributes = []//validationFor e
+        let validationAttributes = validationFor e
         formField' name validationAttributes
 
     let formGroup (e:Expr) helpText =
         let name = propertyName e
-        let validationAttributes = []//validationFor e
+        let validationAttributes = validationFor e
         div [ _class "form-group" ] [
             label [] [ encodedText name ]
             input (List.concat [[ _id name; _name name; _class "form-control"; ]; validationAttributes ])
@@ -238,7 +227,7 @@ module Layout =
                     hr []
                     div [ _class "col-md-12" ] [
                         p [ _style "text-align:center;" ] [ 
-                            encodedText "The Global Pollen Project 1.5"
+                            encodedText "The Global Pollen Project 2.0"
                             span [ _class "hide-xs" ] [ encodedText " · " ]
                             encodedText "Code available at "
                             a [ _href "https://github.com/AndrewIOM/gpp-cqrs" ] [ encodedText "GitHub" ] ]

@@ -18,273 +18,27 @@ open IdentityServer4.EntityFramework.DbContexts
 open GlobalPollenProject.Identity.ViewModels
 open Microsoft.AspNetCore.WebUtilities
 open Microsoft.AspNetCore.Http
+open Microsoft.Extensions.Hosting
 
+module Login =
 
+    type ILoginService<'T> =
+        
+        abstract member ValidateCredentials : 'T -> string -> Task<bool>
+        abstract member FindByUsername : string -> Task<'T>
+        abstract member SignInAsync : 'T -> AuthenticationProperties -> Task
 
+    type EFLoginService(userManager:UserManager<ApplicationUser>, signInManager:SignInManager<ApplicationUser>) =
+        interface ILoginService<ApplicationUser> with
 
-// Manage
+            member __.FindByUsername user =
+                userManager.FindByEmailAsync(user)
 
-    // open System.ComponentModel.DataAnnotations
+            member __.ValidateCredentials user password =
+                userManager.CheckPasswordAsync(user, password)
 
-    // [<CLIMutable>]
-    // type IndexViewModel = {
-    //     HasPassword: bool
-    //     Logins: UserLoginInfo list
-    //     Profile: PublicProfile }
-
-    // [<CLIMutable>]
-    // type ManageLoginsViewModel = {
-    //     CurrentLogins: UserLoginInfo list
-    //     OtherLogins: AuthenticationScheme list }
-
-    // [<CLIMutable>]
-    // type LinkLogin = { Provider: string }
-
-    // [<CLIMutable>]
-    // type RemoveLogin = { LoginProvider: string; ProviderKey: string }
-
-    // [<CLIMutable>]
-    // type SetPasswordViewModel = {
-    //     [<Required>] 
-    //     [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
-    //     [<DataType(DataType.Password)>]
-    //     [<Display(Name="New password")>]
-    //     NewPassword: string
-    //     [<DataType(DataType.Password)>]
-    //     [<Display(Name = "Confirm new password")>]
-    //     [<Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")>]
-    //     ConfirmPassword: string
-    // }
-
-    // [<CLIMutable>]
-    // type ChangePasswordViewModel = {
-    //     [<Required>] 
-    //     [<DataType(DataType.Password)>]
-    //     [<Display(Name="Current password")>]
-    //     OldPassword: string
-    //     [<Required>] 
-    //     [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
-    //     [<DataType(DataType.Password)>]
-    //     [<Display(Name="New password")>]
-    //     NewPassword: string
-    //     [<DataType(DataType.Password)>]
-    //     [<Display(Name = "Confirm new password")>]
-    //     [<Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")>]
-    //     ConfirmPassword: string
-    // }
-
-
-    // let index : HttpHandler =
-    //     fun next ctx ->
-    //         task {
-    //             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-    //             let! user = userManager.GetUserAsync ctx.User
-    //             let! hasPassword = userManager.HasPasswordAsync(user)
-    //             let! logins = userManager.GetLoginsAsync(user)
-    //             let createVm p = 
-    //                 { HasPassword = hasPassword
-    //                   Logins = logins |> Seq.toList
-    //                   Profile = p }
-    //             let model = createVm <!> User.getPublicProfile (user.Id |> Guid)
-    //             match model with
-    //             | Ok m -> return! htmlView (HtmlViews.Manage.index m) next ctx
-    //             | Error _ -> return! htmlView HtmlViews.StatusPages.error next ctx
-    //         }
-    
-    // let removeLoginView : HttpHandler =
-    //     fun next ctx ->
-    //         task {
-    //             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-    //             let! user = userManager.GetUserAsync ctx.User
-    //             let! linkedAccounts = userManager.GetLoginsAsync user
-    //             let! hasPass = userManager.HasPasswordAsync user
-    //             ctx.Items.Add ("ShowRemoveButton", (hasPass || linkedAccounts.Count > 1))
-    //             return! htmlView (HtmlViews.Manage.removeLogin linkedAccounts) next ctx
-    //         }
-    
-    // let removeLogin : HttpHandler =
-    //     fun next ctx ->
-    //         task {
-    //             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-    //             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-    //             let! user = userManager.GetUserAsync ctx.User
-    //             let! model = ctx.BindFormAsync<RemoveLogin>()
-    //             match isNull user with
-    //             | true -> return! redirectTo true "/Account/Manage" next ctx
-    //             | false ->
-    //                 let! result = userManager.RemoveLoginAsync(user,model.LoginProvider,model.ProviderKey)
-    //                 match result.Succeeded with
-    //                 | false -> ()
-    //                 | true -> do! signInManager.SignInAsync(user, isPersistent = false)
-    //                 return! redirectTo true "/Account/Manage" next ctx
-    //         }
-
-    // let changePassword : HttpHandler =
-    //     fun next ctx ->
-    //         task {
-    //             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-    //             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-    //             let! model = ctx.BindFormAsync<ChangePasswordViewModel>()
-    //             match isValid model with
-    //             | false -> return! htmlView (HtmlViews.Manage.changePassword [] model) next ctx
-    //             | true ->
-    //                 let! user = userManager.GetUserAsync ctx.User
-    //                 match isNull user with
-    //                 | true -> return! redirectTo true "/Account/Manage" next ctx
-    //                 | false ->
-    //                     let! result = userManager.ChangePasswordAsync(user, model.OldPassword, model.NewPassword)
-    //                     match result.Succeeded with
-    //                     | false -> ()
-    //                     | true -> do! signInManager.SignInAsync(user, isPersistent = false)
-    //                     return! redirectTo true "/Account/Manage" next ctx
-    //         }
-
-    // let setPassword : HttpHandler =
-    //     fun next ctx ->
-    //         task {
-    //             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-    //             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-    //             let! model = ctx.BindFormAsync<SetPasswordViewModel>()
-    //             match isValid model with
-    //             | false -> return! htmlView (HtmlViews.Manage.setPassword [] model) next ctx
-    //             | true ->
-    //                 let! user = userManager.GetUserAsync ctx.User
-    //                 match isNull user with
-    //                 | true -> return! redirectTo true "/Account/Manage" next ctx
-    //                 | false ->
-    //                     let! result = userManager.AddPasswordAsync(user, model.NewPassword)
-    //                     match result.Succeeded with
-    //                     | false -> ()
-    //                     | true -> do! signInManager.SignInAsync(user, isPersistent = false)
-    //                     return! redirectTo true "/Account/Manage" next ctx
-    //         }
-
-    // let manageLogins : HttpHandler =
-    //     fun next ctx ->
-    //         task {
-    //             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-    //             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-    //             let! user = userManager.GetUserAsync ctx.User
-    //             match isNull user with
-    //             | true -> return! htmlView HtmlViews.StatusPages.error next ctx
-    //             | false ->
-    //                 let! userLogins = userManager.GetLoginsAsync user
-    //                 let! otherLogins = signInManager.GetExternalAuthenticationSchemesAsync()
-    //                 ctx.Items.Add ("ShowRemoveButton", (not (isNull user.PasswordHash)) || userLogins.Count > 1)
-    //                 let model = { CurrentLogins = userLogins |> Seq.toList; OtherLogins = otherLogins |> Seq.toList }
-    //                 return! htmlView (HtmlViews.Manage.manageLogins model) next ctx
-    //         }
-
-    // let linkLogin : HttpHandler =
-    //     fun next ctx ->
-    //         let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-    //         let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-    //         let provider = ctx.BindFormAsync<LinkLogin>() |> Async.AwaitTask |> Async.RunSynchronously
-    //         let user = userManager.GetUserAsync ctx.User |> Async.AwaitTask |> Async.RunSynchronously
-    //         let callbackUrl = sprintf "%s/Account/Manage/LinkLoginCallback" (Urls.getBaseUrl ctx)
-    //         let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,callbackUrl, user.Id)
-    //         Identity.challengeWithProperties provider.Provider properties next ctx
-
-    // let linkLoginCallback : HttpHandler =
-    //     fun next ctx ->
-    //         task {
-    //             let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-    //             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-    //             let! user = userManager.GetUserAsync ctx.User
-    //             match isNull user with
-    //             | true -> return! htmlView HtmlViews.StatusPages.error next ctx
-    //             | false ->
-    //                 let! info = signInManager.GetExternalLoginInfoAsync()
-    //                 match isNull info with
-    //                 | true -> return! htmlView HtmlViews.StatusPages.error next ctx
-    //                 | false ->
-    //                     let! res = userManager.AddLoginAsync(user,info)
-    //                     match res.Succeeded with 
-    //                     | false -> return! htmlView HtmlViews.StatusPages.error next ctx
-    //                     | true -> return! redirectTo true "/Account/cool" next ctx
-    //         }
-
-
-
-module UserService =
-
-    open System.Text
-    open Microsoft.IdentityModel.Tokens
-    open System.IdentityModel.Tokens.Jwt
-    open System.Security.Claims
-    open Microsoft.AspNetCore.WebUtilities
-    open GlobalPollenProject.Shared
-
-    let identityToValidationError' (e:IdentityError) =
-        {Property = e.Code; Errors = [e.Description] }
-
-    let identityToValidationError (errs:IdentityError seq) =
-        errs
-        |> Seq.map(fun e -> {Property = e.Code; Errors = [e.Description] })
-        |> Seq.toList
-
-
-    let secret = "3ce1637ed40041cd94d4853d3e766c4d"
-
-    // let login onError loginRequest : HttpHandler = 
-    //     fun next ctx ->
-    //         task {
-    //             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-    //             let! result = signInManager.PasswordSignInAsync(loginRequest.Email, loginRequest.Password, loginRequest.RememberMe, lockoutOnFailure = false)
-                // if result.Succeeded then
-                //    let logger = ctx.GetLogger()
-                //    logger.LogInformation "User logged in."
-                //    return! next ctx
-                // else
-                //    return! (onError [] loginRequest) finish ctx
-    //         }
-
-    let authenticate username password : HttpHandler =
-        fun next ctx ->
-            task {
-                let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-                let! user = userManager.FindByNameAsync username
-                let! result = signInManager.PasswordSignInAsync(user, password, false, false)
-                if result.Succeeded then
-                    let logger = ctx.GetLogger()
-                    logger.LogInformation "User logged in."
-
-                    let tokenHandler = JwtSecurityTokenHandler()
-                    let key = Encoding.ASCII.GetBytes secret
-
-                    let claims = [
-                        Claim("name", user.UserName)
-                    ]
-
-                    let tokenDescriptor = SecurityTokenDescriptor(Subject = ClaimsIdentity claims, Expires = Nullable<DateTime>(DateTime.UtcNow.AddDays 7.), SigningCredentials = SigningCredentials(SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature))
-                    let token = tokenHandler.CreateToken tokenDescriptor
-                    let jwtSecurityToken = tokenHandler.WriteToken token
-                    return! json { auth_token = jwtSecurityToken } next ctx
-                else return! json "Failed!" next ctx
-            }
-
-    let register (model:NewAppUserRequest) : HttpHandler =
-        fun next ctx ->
-            task {
-                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-                let user = ApplicationUser(UserName = model.Email, Email = model.Email)
-                let! result = userManager.CreateAsync(user, model.Password)
-                printfn "%A" result
-                match result.Succeeded with
-                | true ->
-                    let id() = Guid.Parse user.Id
-                    ctx.GetLogger().LogInformation "User created a new account with password."
-                    let! code = userManager.GenerateEmailConfirmationTokenAsync(user)
-                    let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
-                    let returnUrlBase64 = Encoding.UTF8.GetBytes(model.ReturnUrl) |> WebEncoders.Base64UrlEncode
-                    let callbackUrl = sprintf "http://localhost:5000/Account/ConfirmEmail?userId=%s&code=%s&returnUrl=%s" user.Id codeBase64 returnUrlBase64
-                    let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
-                    let sendEmail = ctx.GetService<Email.SendEmail>()
-                    sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html } |> Async.RunSynchronously |> ignore
-                    return! htmlView (Views.Pages.confirmCode model.Email) next ctx
-                | false -> return! (htmlView <| Views.Pages.register (result.Errors |> identityToValidationError) model) next ctx
-            }
+            member __.SignInAsync user properties =
+                signInManager.SignInAsync(user, properties)
 
 
 module Redirect =
@@ -316,31 +70,6 @@ module Redirect =
                     else
                         let result = results.[0]
                         result.Replace("%3A", "").Replace("%2F", "/").Replace("&", "")
-
-
-module Login =
-
-    type ILoginService<'T> =
-        
-        abstract member ValidateCredentials : 'T -> string -> Task<bool>
-        abstract member FindByUsername : string -> Task<'T>
-        abstract member SignIn : 'T -> Task
-        abstract member SignInAsync : 'T -> AuthenticationProperties -> Task
-
-    type EFLoginService(userManager:UserManager<ApplicationUser>, signInManager:SignInManager<ApplicationUser>) =
-        interface ILoginService<ApplicationUser> with
-
-            member __.FindByUsername user =
-                userManager.FindByEmailAsync(user)
-
-            member __.ValidateCredentials user password =
-                userManager.CheckPasswordAsync(user, password)
-
-            member __.SignIn user =
-                signInManager.SignInAsync(user, true)
-
-            member __.SignInAsync user properties =
-                signInManager.SignInAsync(user, properties)
 
 
 module Profile =
@@ -403,6 +132,50 @@ module Profile =
                 } :> Task
 
 
+
+module UserService =
+
+    open System.Text
+    open Microsoft.IdentityModel.Tokens
+    open System.IdentityModel.Tokens.Jwt
+    open System.Security.Claims
+    open Microsoft.AspNetCore.WebUtilities
+    open GlobalPollenProject.Shared
+
+    let identityToValidationError' (e:IdentityError) =
+        {Property = e.Code; Errors = [e.Description] }
+
+    let identityToValidationError (errs:IdentityError seq) =
+        errs
+        |> Seq.map(fun e -> {Property = e.Code; Errors = [e.Description] })
+        |> Seq.toList
+
+
+    let secret = "3ce1637ed40041cd94d4853d3e766c4d"
+
+    let register (model:NewAppUserRequest) : HttpHandler =
+        fun next ctx ->
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let user = ApplicationUser(UserName = model.Email, Email = model.Email)
+                let! result = userManager.CreateAsync(user, model.Password)
+                printfn "%A" result
+                match result.Succeeded with
+                | true ->
+                    let id() = Guid.Parse user.Id
+                    ctx.GetLogger().LogInformation "User created a new account with password."
+                    let! code = userManager.GenerateEmailConfirmationTokenAsync(user)
+                    let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
+                    let returnUrlBase64 = Encoding.UTF8.GetBytes(model.ReturnUrl) |> WebEncoders.Base64UrlEncode
+                    let callbackUrl = sprintf "http://localhost:5000/Account/ConfirmEmail?userId=%s&code=%s&returnUrl=%s" user.Id codeBase64 returnUrlBase64
+                    let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
+                    let sendEmail = ctx.GetService<Email.SendEmail>()
+                    sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html } |> Async.RunSynchronously |> ignore
+                    return! htmlView (Views.Pages.confirmCode model.Email) next ctx
+                | false -> return! (htmlView <| Views.Pages.register (result.Errors |> identityToValidationError) model) next ctx
+            }
+
+
 module Routes =
 
     open System.Collections.Generic
@@ -424,13 +197,11 @@ module Routes =
     let error : ErrorHandler =
         fun x logger ->  text <| sprintf "There was an error!: %A" x.Message
 
-    let authenticate (userRequest:Login) : HttpHandler =
-        fun next ctx -> UserService.authenticate userRequest.Username userRequest.Password next ctx
+    // let authenticate (userRequest:Login) : HttpHandler =
+    //     fun next ctx -> UserService.authenticate userRequest.Username userRequest.Password next ctx
 
     let register request : HttpHandler =
-        fun next ctx ->
-            printfn "Registering"
-            UserService.register request next ctx
+        fun next ctx -> UserService.register request next ctx
 
     let returnToOriginalApp (model:ReturnUrlQuery) : HttpHandler =
         fun next ctx ->
@@ -603,50 +374,6 @@ module Routes =
             GET  >=> route "/Account/ConfirmEmail"  >=> tryBindQuery parsingError None confirm
         ]
 
-// For external auth, see:
-// https://fullstackmark.com/post/13/jwt-authentication-with-aspnet-core-2-web-api-angular-5-net-core-identity-and-facebook-login
-
-    // POST >=> route  Urls.Account.externalLogin        >=> externalLoginHandler
-    // // POST >=> route  Urls.Account.externalLoginConf    >=> externalLoginConfirmation
-    // POST >=> route  Urls.Account.logout               >=> Authentication.mustBeLoggedIn >=> logoutHandler
-    // // POST >=> route  Urls.Account.forgotPassword       >=> mustBeLoggedIn >=> forgotPasswordHandler
-    // // POST >=> route  Urls.Account.resetPassword        >=> mustBeLoggedIn >=> resetPasswordHandler
-    // // GET  >=> route  Urls.Account.login                >=> htmlView (HtmlViews.Account.login [] Requests.Empty.login)
-    // GET  >=> route  Urls.Account.register             >=> htmlView (HtmlViews.Account.register [] Requests.Empty.newAppUserRequest) 
-    // GET  >=> route  Urls.Account.resetPassword        >=> resetPasswordView
-    // GET  >=> route  Urls.Account.resetPasswordConf    >=> htmlView (HtmlViews.Account.resetPasswordConfirmation)
-    // GET  >=> route  Urls.Account.forgotPassword       >=> htmlView (HtmlViews.Account.forgotPassword Requests.Empty.forgotPassword)
-    // // GET  >=> route  Urls.Account.confirmEmail         >=> confirmEmailHandler
-    // GET  >=> route  Urls.Account.externalLoginCallbk  >=> externalLoginCallback Urls.home
-
-    //         GET  >=> route  "/Manage"                       >=> Manage.index
-    //         // POST >=> route  "/Manage/Profile"               >=> Manage.profile
-    //         // GET  >=> route  "/Manage/Profile"               >=> htmlView HtmlViews.Manage.changePassword //renderView "Manage/ChangePublicProfile" None
-    //         POST >=> route  "/Manage/LinkLogin"             >=> Manage.linkLogin
-    //         GET  >=> route  "/Manage/LinkLoginCallback"     >=> Manage.linkLoginCallback
-    //         GET  >=> route  "/Manage/ManageLogins"          >=> Manage.manageLogins
-    //         POST >=> route  "/Manage/SetPassword"           >=> Manage.setPassword
-    //         GET  >=> route  "/Manage/SetPassword"           >=> htmlView (HtmlViews.Manage.setPassword [] 2.)
-    //         POST >=> route  "/Manage/ChangePassword"        >=> Manage.changePassword
-    //         GET  >=> route  "/Manage/ChangePassword"        >=> htmlView (HtmlViews.Manage.changePassword [] 2.)
-    //         POST >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLogin
-    //         GET  >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLoginView
-    //     ]
-
-
-// Routes
-// module Route =
-    // let routes =
-    //     choose [
-    //         POST >=> route  Urls.Account.externalLogin        >=> externalLoginHandler
-    //         POST >=> route  Urls.Account.forgotPassword       >=> mustBeLoggedIn >=> forgotPasswordHandler
-    //         POST >=> route  Urls.Account.resetPassword        >=> mustBeLoggedIn >=> resetPasswordHandler
-    //         POST >=> route  "/Manage/LinkLogin"             >=> Manage.linkLogin
-    //         POST >=> route  "/Manage/SetPassword"           >=> Manage.setPassword
-    //         POST >=> route  "/Manage/ChangePassword"        >=> Manage.changePassword
-    //         POST >=> route  "/Manage/RemoveLogin"           >=> Manage.removeLogin
-    //     ]
-
 module Config =
 
     open IdentityServer4
@@ -770,7 +497,7 @@ module Program =
         message |> Email.Cloud.sendAsync (getAppSetting "SendGridKey") (getAppSetting "EmailFromName") (getAppSetting "EmailFromAddress")
 
     let configureApp (app : IApplicationBuilder) =
-        let env = app.ApplicationServices.GetService<IHostingEnvironment>()
+        let env = app.ApplicationServices.GetService<IWebHostEnvironment>()
         // use serviceScope = app.ApplicationServices.CreateScope()
         // let context = serviceScope.ServiceProvider.GetService<UserDbContext>()
         // context.Database.Migrate()
@@ -847,12 +574,7 @@ module Program =
 
     [<EntryPoint>]
     let main args =
-        let contentRoot = Directory.GetCurrentDirectory()
-        WebHost
-            .CreateDefaultBuilder(args)
-            .UseKestrel()
-            .UseContentRoot(contentRoot)
-            .UseIISIntegration()
+        WebHost.CreateDefaultBuilder(args)
             .Configure(Action<IApplicationBuilder> configureApp)
             .ConfigureServices(configureServices)
             .ConfigureLogging(configureLogging)

@@ -47,13 +47,37 @@ let notInMaintainanceMode next ctx : HttpFuncResult =
 
 let prettyJson = Serialisation.serialise
 
-let apiResultFromQuery<'a,'b> (appService:'a->Result<'b,ServiceError>) : HttpHandler =
+let apiResultFromQuery<'a,'b> (coreAction:'a->CoreFunction<'b>) : HttpHandler =
+    let error str = text str
+    let success model : HttpHandler =
+        fun next ctx ->
+            let core = ctx.GetService<CoreMicroservice>()
+            coreAction model
+            |> core.Apply
+            |> Async.RunSynchronously
+            |> toApiResult next ctx
+    tryBindQuery<'a> error None success
+
+let viewOrError view model : HttpHandler =
     fun next ctx ->
-        ctx
-        |> bindQueryString<'a>
-        // |> bind validateModel
-        |> Result.bind appService
-        |> toApiResult next ctx
+        match model with
+        | Ok m -> view m next ctx
+        | Error e -> serviceErrorToView e next ctx
+
+let coreAction action view next (ctx:HttpContext) =
+    let core = ctx.GetService<CoreMicroservice>()
+    action
+    |> core.Apply
+    |> Async.RunSynchronously
+    |> renderViewResult view next ctx
+
+let coreApiAction action next (ctx:HttpContext) =
+    let core = ctx.GetService<CoreMicroservice>()
+    action
+    |> core.Apply
+    |> Async.RunSynchronously
+    |> toApiResult next ctx
+
 
 ////////////////////////
 /// Routing lookups
@@ -107,16 +131,6 @@ let docSectionHandler docSection =
             |> renderView next ctx
         | None -> notFoundResult next ctx
 
-// let coreFn errorHandler fn : HttpHandler =
-//     fun next ctx ->
-//         async {
-//             let core = ctx.GetService<CoreMicroservice>()
-//             let! result = fn |> core.Apply
-//             match result with
-//             | Error e -> errorHandler e
-//             | Ok r -> return 
-//         }
-
 let slideViewHandler (id:string) : HttpHandler =
     fun next ctx ->
         let core = ctx.GetService<CoreMicroservice>()
@@ -162,19 +176,18 @@ let taxonDetailById (id:string) : HttpHandler =
             |> renderViewResult HtmlViews.Taxon.view next ctx
         | (false,_) -> notFoundResult next ctx
 
-// let individualCollectionIndex next ctx =
-//     IndividualReference.list {Page = 1; PageSize = 20}
-//     |> renderViewResult HtmlViews.ReferenceCollections.listView next ctx
+let individualCollectionIndex = 
+    coreAction (CoreActions.IndividualCollections.list {Page = 1; PageSize = 20}) HtmlViews.ReferenceCollections.tableView
 
-// let individualCollection (colId:string) version next ctx =
-//     IndividualReference.getDetail colId version
-//     |> renderViewResult HtmlViews.ReferenceCollections.tableView next ctx
+let individualCollection (colId:string) version =
+    coreAction (CoreActions.IndividualCollections.collectionDetail colId version) HtmlViews.ReferenceCollections.tableView
 
-// let individualCollectionLatest (colId:string) next ctx =
-//     let latestVer = IndividualReference.getLatestVersion colId
-//     match latestVer with
-//     | Ok v -> redirectTo false (sprintf "/Reference/%s/%i" colId v) next ctx
-//     | Error _ -> notFoundResult next ctx
+let individualCollectionLatest (colId:string) next (ctx:HttpContext) =
+    let core = ctx.GetService<CoreMicroservice>()
+    let latestVer = core.Apply(CoreActions.IndividualCollections.collectionDetailLatest colId) |> Async.RunSynchronously
+    match latestVer with
+    | Ok v -> redirectTo false (sprintf "/Reference/%s/%i" colId v) next ctx
+    | Error _ -> notFoundResult next ctx
 
 let defaultIfNull (req:TaxonPageRequest) =
     match String.IsNullOrEmpty req.Rank with
@@ -193,9 +206,8 @@ let pagedTaxonomyHandler next (ctx:HttpContext) =
     |> (fun x -> printfn "Response was %A" x; x)
     |> renderViewResult HtmlViews.MRC.index next ctx
 
-// let listCollectionsHandler next ctx =
-//     Digitise.myCollections (currentUserId ctx)
-//     |> toApiResult next ctx
+// let listCollectionsHandler =
+//     coreApiAction (CoreActions.Digitise.myCollections)
 
 // let startCollectionHandler next (ctx:HttpContext) =
 //     bindJson<StartCollectionRequest> ctx
@@ -243,17 +255,14 @@ let pagedTaxonomyHandler next (ctx:HttpContext) =
 //     |> Result.bind Calibrations.calibrateMagnification
 //     |> toApiResult next ctx
 
-// let listGrains next ctx =
-//     UnknownGrains.listUnknownGrains()
-//     |> renderViewResult HtmlViews.Identify.index next ctx
+let listGrains = coreAction (CoreActions.UnknownMaterial.list()) HtmlViews.Identify.index
 
-// let showGrainDetail id next ctx =
-//     UnknownGrains.getDetail id
-//     |> renderViewResult HtmlViews.Identify.view next ctx
+let showGrainDetail id = coreAction (CoreActions.UnknownMaterial.itemDetail id) HtmlViews.Identify.view
 
 // let submitGrainHandler next (ctx:HttpContext) =
+//     let core = ctx.GetService<CoreMicroservice>()
 //     bindJson<AddUnknownGrainRequest> ctx
-//     >>= UnknownGrains.submitUnknownGrain (currentUserId ctx)
+//     |> Result.bind (core.Apply(CoreActions.UnknownMaterial.submit (currentUserId ctx)))
 //     |> toApiResult next ctx
 
 // let submitIdentificationHandler next (ctx:HttpContext) =
@@ -265,24 +274,23 @@ let pagedTaxonomyHandler next (ctx:HttpContext) =
 //     redirectTo true (sprintf "/Identify/%A" formData.GrainId) next ctx
 
 
-let homeHandler next (ctx:HttpContext) =
+let topUnknownGrainsHandler next (ctx:HttpContext) =
     let core = ctx.GetService<CoreMicroservice>()
-    CoreActions.Statistics.getHomeStatistics()
-    |> core.Apply
+    core.Apply(CoreActions.UnknownMaterial.mostWanted()) 
     |> Async.RunSynchronously
-    |> renderViewResult HtmlViews.Home.view next ctx
+    |> toApiResult next ctx
 
-// let topUnknownGrainsHandler next (ctx:HttpContext) =
-//     UnknownGrains.getTopScoringUnknownGrains()
-//     |> toApiResult next ctx
+let rebuildReadModelHandler next (ctx:HttpContext) =
+    let core = ctx.GetService<CoreMicroservice>()
+    core.Apply(CoreActions.System.rebuildReadModel ()) 
+    |> Async.RunSynchronously
+    |> toApiResult next ctx
 
 // let rebuildReadModelHandler next ctx =
 //     Admin.rebuildReadModel()
 //     text "Done" next ctx
 
-// let systemStatsHandler next ctx =
-//     Statistic.getSystemStats()
-//     |> renderViewResult HtmlViews.Statistics.view next ctx
+let systemStatsHandler = coreAction(CoreActions.Statistics.system()) HtmlViews.Statistics.view
 
 // let userAdminHandler next ctx =
 //     Admin.listUsers()
@@ -313,13 +321,6 @@ let homeHandler next (ctx:HttpContext) =
         // POST >=> routef "/Digitise/Collection/%s/Slide/%s/Void"     (fun (col,s) n c -> U.Digitise.voidSlide c)
         // POST >=> routef "/Digitise/Collection/%s/Slide/%s/AddImage" (fun (col,s) n c -> U.Digitise.uploadSlideImage)
 
-// let backboneMatch : HttpHandler =
-//     2
-
-
-
-open Account
-
 let webApp : HttpHandler = 
 
     let account =
@@ -329,14 +330,14 @@ let webApp : HttpHandler =
             route  Urls.Account.logout               >=> Authentication.logout
         ]
 
-    // let api =
-    //     GET >=> choose [
-    //         route   "/backbone/match"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> Backbone.tryMatch
-    //         route   "/backbone/trace"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> Backbone.tryTrace
-    //         route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> Backbone.searchNames
-    //         route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> Taxonomy.autocomplete
-    //         route   "/grain/location"           >=> topUnknownGrainsHandler
-    //     ]
+    let api =
+        GET >=> choose [
+            route   "/backbone/match"           >=> apiResultFromQuery CoreActions.Backbone.tryMatch
+            route   "/backbone/trace"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> CoreActions.Backbone.tryTrace
+            route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> CoreActions.Backbone.search
+            route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> CoreActions.MRC.autocompleteTaxon
+            route   "/grain/location"           >=> topUnknownGrainsHandler
+        ]
 
     let masterReferenceCollection =
         GET >=> 
@@ -347,46 +348,49 @@ let webApp : HttpHandler =
             routef  "/Taxon/%s"                 taxonDetail
         ]
 
-    // let individualRefCollections =
-    //     GET >=> choose [
-    //         route   ""                          >=> individualCollectionIndex
-    //         routef   "/Grain/%i"                (fun _ -> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound)
-    //         routef  "/%s/%i"                    (fun (id,v) -> individualCollection id v)
-    //         routef  "/%s"                       slideViewHandler
-    //     ]
+    let individualRefCollections =
+        GET >=> choose [
+            route   ""                          >=> individualCollectionIndex
+            routef   "/Grain/%i"                (fun _ -> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound)
+            routef  "/%s/%i"                    (fun (id,v) -> individualCollection id v)
+            routef  "/%s"                       slideViewHandler
+        ]
 
-    // let identify =
-    //     choose [
-    //         POST >=> route  "/Upload"           >=> Authentication.mustBeLoggedIn >=> submitGrainHandler
-    //         POST >=> route  "/Identify"         >=> submitIdentificationHandler
-    //         GET  >=> route  ""                  >=> listGrains
-    //         GET  >=> route  "/Upload"           >=> Authentication.mustBeLoggedIn >=> htmlView (HtmlViews.Identify.add 0.)
-    //         GET  >=> routef "/%s"               showGrainDetail
-    //     ]
+    let identify =
+        choose [
+            // POST >=> route  "/Upload"           >=> Authentication.mustBeLoggedIn >=> submitGrainHandler
+            // POST >=> route  "/Identify"         >=> submitIdentificationHandler
+            GET  >=> route  ""                  >=> listGrains
+            GET  >=> route  "/Upload"           >=> Authentication.mustBeLoggedIn >=> htmlView (HtmlViews.Identify.add 0.)
+            GET  >=> routef "/%s"               showGrainDetail
+        ]
 
-    // let admin =
-    //     choose [
-    //         GET  >=> route "/Curate"            >=> curateIndexHandler
-    //         POST >=> route "/Curate"            >=> curateHandler
-    //         GET  >=> route "/Users"             >=> mustBeAdmin >=> userAdminHandler
-    //         POST >=> routef "/GrantCuration/%s" grantCurationHandler
-    //         GET  >=> route "/RebuildReadModel"  >=> mustBeAdmin >=> rebuildReadModelHandler
-    //     ]
+    let admin =
+        choose [
+            // GET  >=> route "/Curate"            >=> curateIndexHandler
+            // POST >=> route "/Curate"            >=> curateHandler
+            // GET  >=> route "/Users"             >=> mustBeAdmin >=> userAdminHandler
+            // POST >=> routef "/GrantCuration/%s" grantCurationHandler
+            GET  >=> route "/RebuildReadModel"  (*>=> Authentication.mustBeAdmin*) >=> rebuildReadModelHandler
+        ]
+
+    // TODO Move maintainance mode into the core service.
+    // Make it a ServiceError, which can then be rendered here.
 
     notInMaintainanceMode >=>
     choose [
-        // subRoute    "/api"                      >=> api
+        subRoute            "/api/v1"                   api
         // subRoute           "/api/v1/digitise"         digitiseApi
         routeStartsWith     Urls.Account.root           >=> account
         routeStartsWith     Urls.MasterReference.root   >=> masterReferenceCollection
-        // routeStartsWith     Urls.Collections.root       >=> individualRefCollections
-        // routeStartsWith     Urls.Identify.root          >=> identify
-        // subRoute            "/Admin"             admin
+        subRoute            Urls.Collections.root       individualRefCollections
+        subRoute            Urls.Identify.root          identify
+        subRoute            "/Admin"                    admin
         GET >=> choose [
-            route   Urls.home                   >=> homeHandler
+            route   Urls.home                   >=> coreAction (CoreActions.Statistics.home()) HtmlViews.Home.view
             route   Urls.guide                  >=> docIndexHandler
             routef  "/Guide/%s"                 docSectionHandler
-            // route   Urls.statistics             >=> systemStatsHandler
+            route   Urls.statistics             >=> systemStatsHandler
             route   Urls.digitise               >=> Authentication.mustBeLoggedIn >=> htmlView DigitiseDashboard.appView
             route   Urls.api                    >=> docSectionHandler "API"
             route   Urls.tools                  >=> htmlView HtmlViews.Tools.main

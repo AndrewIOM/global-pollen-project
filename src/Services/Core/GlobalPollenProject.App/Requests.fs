@@ -7,6 +7,7 @@ open ReadModels
 
 [<CLIMutable>] type IdQuery = { Id: Guid }
 
+[<CLIMutable>]
 type PageRequest = { Page: int; PageSize: int }
 
 [<CLIMutable>]

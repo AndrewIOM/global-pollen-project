@@ -19,7 +19,8 @@ open Polly.Extensions.Http
 open System.IdentityModel.Tokens.Jwt
 open Microsoft.Extensions.Diagnostics.HealthChecks
 open Account
-
+open Microsoft.Extensions.Hosting
+open Microsoft.AspNetCore.HttpOverrides
 
 ///////////////////////////
 /// Custom Authentication Infrastructure
@@ -122,7 +123,7 @@ type Startup (configuration: IConfiguration) =
         this.AddCustomAuthentication(services) |> ignore
         //this.AddHealthChecks(services) |> ignore
 
-    member __.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
+    member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
 
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear()
 
@@ -133,7 +134,8 @@ type Startup (configuration: IConfiguration) =
         else 
             app.UseGiraffeErrorHandler(Handlers.errorHandler) |> ignore
             app.UseHsts() |> ignore
-
+            
+        app.UseForwardedHeaders(ForwardedHeadersOptions(ForwardedHeaders = ForwardedHeaders.XForwardedFor)) |> ignore
         app.UseStaticFiles() |> ignore
         // app.UseSession() |> ignore
         app.UseAuthentication() |> ignore

@@ -3,43 +3,23 @@ version: '3.4'
 services:
 
   core.api:
+    ports: 
+    - "5201:80"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - ASPNETCORE_URLS=http://0.0.0.0:80
-      - ConnectionString=${ESHOP_AZURE_REDIS_BASKET_DB:-basket.data}
-      - IdentityUrl=http://identity.api
-      - IdentityUrlExternal=http://${ESHOP_EXTERNAL_DNS_NAME_OR_IP}:5105
-      - RedisHostName=coreredis
-      - eventstore:eventstoreip=coreeventstore
-      - eventstore:eventstoreport=1113
-    ports:
-    - "5103:80"
-
-  identity.api:
-    environment:
-      - ConnectionStrings:UserConnection=Server=identitydb,1433;Database=gppuserdb;User=sa;Password=YourStrong!Passw0rd
-    links:
-      - "identity.sql:identitydb"
-    depends_on:
-      - identity.sql
-
-  identity.sql:
-    image: microsoft/mssql-server-linux:2017-latest
-    environment:
-      - SA_PASSWORD=Pass@word
-      - ACCEPT_EULA=Y
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:80
 
   webapigw:
-    environment:
-      - IdentityUrl=http://identity.api
+    ports:
+    - "5202:80"
 
-  # website:
-  #   environment:
-  #     - ASPNETCORE_ENVIRONMENT=Development
-  #     - ASPNETCORE_URLS=http://0.0.0.0:80
-  #     - IdentityUrl=http://identity.api
-  #     - IdentityUrlHC=http://identity.api/hc
-  #     - CoreUrl=http://core.api
-  #     - UseLoadTest=${USE_LOADTEST:-False}
-  #   ports:
-  #   - "5100:80"
+  identity.api:
+    ports:
+    - "5203:80"
+
+  web.ui:
+    environment:
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:80
+    ports:
+    - "5100:80"

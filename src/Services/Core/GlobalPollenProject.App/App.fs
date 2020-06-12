@@ -8,6 +8,7 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.Extensions.Configuration
+open Microsoft.Extensions.Hosting
 open Giraffe
 
 open GlobalPollenProject.Core.Composition
@@ -45,8 +46,11 @@ let inline postApi< ^T, ^R> (action:^T->Result< ^R,ServiceError>) : HttpHandler 
 
 let errorHandler errors = json errors
 
-let inline api< ^T, ^R> (action:^T->Result< ^R,ServiceError>) : HttpHandler =
+let inline apif< ^T, ^R> (action:^T->Result< ^R,ServiceError>) : HttpHandler =
     tryBindQuery< ^T> errorHandler None (fun model next ctx -> model |> action |> (fun r -> json r next ctx))
+
+let inline api< ^R> (action:unit->Result< ^R,ServiceError>) : HttpHandler =
+    fun next ctx -> action() |> (fun r -> json r next ctx)
 
 /////////////////////
 /// Authentication
@@ -75,26 +79,26 @@ let routes : HttpHandler =
         subRoute "/api/v1"
             (choose [
                 // Master Reference Collection
-                GET >=> route   "/MRC/Taxon/Autocomplete"   >=> api<TaxonAutocompleteRequest,TaxonAutocompleteItem list> U.Taxonomy.autocomplete
-                GET >=> route   "/MRC/Taxon"            >=> api<TaxonPageRequest, PagedResult<TaxonSummary>> U.Taxonomy.list
+                GET >=> route   "/MRC/Taxon/Autocomplete"   >=> apif<TaxonAutocompleteRequest,TaxonAutocompleteItem list> U.Taxonomy.autocomplete
+                GET >=> route   "/MRC/Taxon"            >=> apif<TaxonPageRequest, PagedResult<TaxonSummary>> U.Taxonomy.list
                 GET >=> routef  "/MRC/Taxon/%s/%s/%s"   (fun (f,g,s) n c -> U.Taxonomy.getByName f (opt g) (opt s) |> apiResult n c)
                 GET >=> routef  "/MRC/Taxon/Id/%s"      (fun i n c -> U.Taxonomy.getById (Guid(i)) |> apiResult n c)
                 GET >=> routef  "/MRC/Collection/%s/%s" (fun (col,s) n c -> U.Taxonomy.getSlide col s |> apiResult n c)
                 GET >=> routef  "/MRC/Collection/%s/%i" (fun (col,i) n c -> U.IndividualReference.getDetail col i |> apiResult n c)
                 GET >=> routef  "/MRC/Collection/%s"    (fun s n c -> U.IndividualReference.getLatestVersion s |> apiResult n c)
-                GET >=> route   "/MRC/Collection"       >=> api U.IndividualReference.list
+                GET >=> route   "/MRC/Collection"       >=> apif U.IndividualReference.list
 
                 // Backbone
-                GET >=> route  "/Taxonomy/Search"       >=> api U.Backbone.searchNames
-                GET >=> route  "/Taxonomy/Match"        >=> api U.Backbone.tryMatch
-                GET >=> route  "/Taxonomy/Trace"        >=> api U.Backbone.tryTrace
+                GET >=> route  "/Taxonomy/Search"       >=> apif U.Backbone.searchNames
+                GET >=> route  "/Taxonomy/Match"        >=> apif U.Backbone.tryMatch
+                GET >=> route  "/Taxonomy/Trace"        >=> apif U.Backbone.tryTrace
 
                 // Statistics
                 GET >=> route   "/Statistics/Home"      >=> api U.Statistic.getHomeStatistics
                 GET >=> route   "/Statistics/System"    >=> api U.Statistic.getSystemStats
 
                 // User
-                GET >=> route   "/User/Profile"         >=> api U.User.getPublicProfile
+                GET >=> route   "/User/Profile"         >=> apif U.User.getPublicProfile
                 POST >=> route  "/User/Register"        >=> postApi (getCurrentUser |> U.User.register)
 
                 // Curation
@@ -110,12 +114,12 @@ let routes : HttpHandler =
                 POST >=> route  "/Unknown/Identify"     >=> postApi (U.UnknownGrains.identifyUnknownGrain getCurrentUser)
 
                 // User's equipment
-                GET >=> route   "/User/Microscope"      >=> api U.Calibrations.getMyCalibrations
+                GET >=> route   "/User/Microscope"      >=> apif U.Calibrations.getMyCalibrations
                 POST >=> route  "/User/Microscope/Setup"        >=> postApi (getCurrentUser |> U.Calibrations.setupMicroscope)
                 POST >=> route  "/User/Microscope/Calibrate"    >=> postApi U.Calibrations.calibrateMagnification
 
                 // Digitise
-                GET >=> route   "/Digitise/Collection"          >=> api (getCurrentUser |> U.Digitise.myCollections)
+                GET >=> route   "/Digitise/Collection"          >=> apif (getCurrentUser |> U.Digitise.myCollections)
                 GET >=> routef  "/Digitise/Collection/%s"       (fun col n c -> col |> U.Digitise.getCollection |> apiResult n c)
                 POST >=> route  "/Digitise/Collection/Start"    >=> postApi (U.Digitise.startNewCollection getCurrentUser)
                 POST >=> routef "/Digitise/Collection/%s/Publish"   (fun col n c -> U.Digitise.publish getCurrentUser col |> apiResult n c)
@@ -151,7 +155,7 @@ type Startup () =
                 opt.Audience = "core" |> ignore ) |> ignore
         services.AddGiraffe() |> ignore
 
-    member __.Configure(app: IApplicationBuilder, env: IHostingEnvironment) =
+    member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
         if (env.IsDevelopment()) then
             app.UseDeveloperExceptionPage() |> ignore
             UseCases.Admin.rebuildReadModel() |> ignore

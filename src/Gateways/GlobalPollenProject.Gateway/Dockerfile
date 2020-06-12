@@ -1,15 +1,21 @@
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.2 AS base
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine AS base
 WORKDIR /app
 EXPOSE 80
 
-FROM mcr.microsoft.com/dotnet/core/sdk:2.2 AS build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build
 WORKDIR /src
 
 ARG RUN=pwd
 RUN ${RUN}
 
-COPY . .
+# Copy project and restore as distinct layers
+COPY /src/Services/Gateways/GlobalPollenProject.Gateways/GlobalPollenProject.Gateway.fsproj /src/Services/Gateways/GlobalPollenProject.Gateways/GlobalPollenProject.Gateway.fsproj
+RUN dotnet restore --disable-parallel /src/Services/Gateways/GlobalPollenProject.Gateways
+
+COPY /src/Gateways /src/Gateways
+COPY /src/Shared /src/Shared
 WORKDIR /src/src/Gateways/GlobalPollenProject.Gateway/
+RUN dotnet restore --disable-parallel
 RUN dotnet publish -c Release -o /app
 
 FROM build AS publish
