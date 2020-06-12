@@ -11,6 +11,7 @@ RUN dotnet restore --disable-parallel /src/Web/WebUI/GlobalPollenProject.Web/Glo
 
 # Copy everything else and build
 COPY /src/Web/WebUI /src/Web/WebUI
+COPY /src/Services/Core /src/Services/Core
 COPY /src/Shared /src/Shared
 WORKDIR /src/Web/WebUI/GlobalPollenProject.Web
 RUN dotnet publish -c Release -o /app

@@ -9,12 +9,12 @@ ARG RUN=pwd
 RUN ${RUN}
 
 # Copy project and restore as distinct layers
-COPY /src/Services/Gateways/GlobalPollenProject.Gateways/GlobalPollenProject.Gateway.fsproj /src/Services/Gateways/GlobalPollenProject.Gateways/GlobalPollenProject.Gateway.fsproj
-RUN dotnet restore --disable-parallel /src/Services/Gateways/GlobalPollenProject.Gateways
+COPY /src/Gateways/GlobalPollenProject.Gateway/GlobalPollenProject.Gateway.fsproj /src/Gateways/GlobalPollenProject.Gateway/GlobalPollenProject.Gateway.fsproj
+RUN dotnet restore --disable-parallel /src/Gateways/GlobalPollenProject.Gateway
 
 COPY /src/Gateways /src/Gateways
 COPY /src/Shared /src/Shared
-WORKDIR /src/src/Gateways/GlobalPollenProject.Gateway/
+WORKDIR /src/Gateways/GlobalPollenProject.Gateway/
 RUN dotnet restore --disable-parallel
 RUN dotnet publish -c Release -o /app
 
