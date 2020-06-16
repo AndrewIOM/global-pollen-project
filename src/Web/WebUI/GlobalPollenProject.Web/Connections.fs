@@ -148,7 +148,7 @@ module CoreActions =
         let list () = CGET None "/api/v1/anon/Unknown"
         let mostWanted () = CGET None "/api/v1/anon/Unknown/MostWanted"
         let submit (req:AddUnknownGrainRequest) = CPOST req "/api/v1/Unknown/Submit"
-        let identity (req:IdentifyGrainRequest) = CPOST req "/api/v1/Unknown/Identify"
+        let identify (req:IdentifyGrainRequest) = CPOST req "/api/v1/Unknown/Identify"
     
     module Digitise =
         let myCollections () : CoreFunction<EditableRefCollection list> = CGET None "/api/v1/Digitise/Collection"

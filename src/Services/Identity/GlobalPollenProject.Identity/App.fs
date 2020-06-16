@@ -3,7 +3,6 @@ namespace GlobalPollenProject.Identity
 open System
 open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
-open GlobalPollenProject.Identity.Contract
 open Microsoft.AspNetCore.Identity
 open Microsoft.Extensions.Logging
 open Microsoft.Extensions.Diagnostics.HealthChecks
@@ -83,7 +82,6 @@ module Profile =
         else Claim(name, prop) :: claims
 
     let getClaims (user:ApplicationUser) =
-
         [ Claim(IdentityModel.JwtClaimTypes.Subject, user.Id)
           Claim(IdentityModel.JwtClaimTypes.PreferredUserName, user.UserName)
           Claim(JwtRegisteredClaimNames.UniqueName, user.UserName) ]
@@ -133,13 +131,9 @@ module Profile =
 
 
 
-module UserService =
+module Handlers =
 
     open System.Text
-    open Microsoft.IdentityModel.Tokens
-    open System.IdentityModel.Tokens.Jwt
-    open System.Security.Claims
-    open Microsoft.AspNetCore.WebUtilities
     open GlobalPollenProject.Shared
 
     let identityToValidationError' (e:IdentityError) =
@@ -149,25 +143,21 @@ module UserService =
         errs
         |> Seq.map(fun e -> {Property = e.Code; Errors = [e.Description] })
         |> Seq.toList
-
-
-    let secret = "3ce1637ed40041cd94d4853d3e766c4d"
-
+ 
     let register (model:NewAppUserRequest) : HttpHandler =
         fun next ctx ->
             task {
                 let userManager = ctx.GetService<UserManager<ApplicationUser>>()
                 let user = ApplicationUser(UserName = model.Email, Email = model.Email)
                 let! result = userManager.CreateAsync(user, model.Password)
-                printfn "%A" result
                 match result.Succeeded with
                 | true ->
-                    let id() = Guid.Parse user.Id
                     ctx.GetLogger().LogInformation "User created a new account with password."
+                    let baseUrl = sprintf "%s://%s%s" ctx.Request.Scheme ctx.Request.Host.Value ctx.Request.PathBase.Value
                     let! code = userManager.GenerateEmailConfirmationTokenAsync(user)
                     let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
                     let returnUrlBase64 = Encoding.UTF8.GetBytes(model.ReturnUrl) |> WebEncoders.Base64UrlEncode
-                    let callbackUrl = sprintf "http://localhost:5000/Account/ConfirmEmail?userId=%s&code=%s&returnUrl=%s" user.Id codeBase64 returnUrlBase64
+                    let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s&returnUrl=%s" baseUrl user.Id codeBase64 returnUrlBase64
                     let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
                     let sendEmail = ctx.GetService<Email.SendEmail>()
                     sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html } |> Async.RunSynchronously |> ignore
@@ -184,7 +174,7 @@ module Routes =
 
     let isValid model =
         let context = ValidationContext(model)
-        let validationResults = new List<ValidationResult>() 
+        let validationResults = List<ValidationResult>() 
         Validator.TryValidateObject(model,context,validationResults,true)
 
     let requiresValidModel (error:'a->HttpHandler) model : HttpHandler =
@@ -195,13 +185,12 @@ module Routes =
 
 
     let error : ErrorHandler =
-        fun x logger ->  text <| sprintf "There was an error!: %A" x.Message
-
-    // let authenticate (userRequest:Login) : HttpHandler =
-    //     fun next ctx -> UserService.authenticate userRequest.Username userRequest.Password next ctx
+        fun x logger ->
+            logger.LogError(sprintf "There was an error!: %A" x.Message)    
+            text <| sprintf "There was an error!: %A" x.Message
 
     let register request : HttpHandler =
-        fun next ctx -> UserService.register request next ctx
+        fun next ctx -> Handlers.register request next ctx
 
     let returnToOriginalApp (model:ReturnUrlQuery) : HttpHandler =
         fun next ctx ->
@@ -216,24 +205,23 @@ module Routes =
                 let! error = interaction.GetErrorContextAsync(errorId)
                 if isNotNull error
                 then return! htmlView (Views.Pages.error error.ErrorDescription) next ctx
-                else return! htmlView (Views.Pages.error "Cool") next ctx
+                else return! htmlView (Views.Pages.error "Unknown error") next ctx
             }
 
     let buildLoginViewModel returnUrl (context:AuthorizationRequest) (clientStore:IClientStore) =
         task {
-            // let allowLocal =
-            //     if isNotNull context.ClientId
-            //     then 
-            //         let! client = clientStore.FindClientByIdAsync(context.ClientId)
-            //         if isNotNull client
-            //         then client.EnableLocalLogin
-            //         else true
-            //     else true
+//            let allowLocal =
+//                if isNotNull context.ClientId
+//                then 
+//                    let! client = clientStore.FindClientByIdAsync(context.ClientId)
+//                    if isNotNull client
+//                    then client.EnableLocalLogin
+//                    else true
+//                else true
             return { ReturnUrl = returnUrl; Email = context.LoginHint; Password = ""; RememberMe = false }
         }
 
     let login (model:ReturnUrlQuery) : HttpHandler =
-        printfn "%A" model
         fun next ctx ->
             task {
                 let interaction = ctx.GetService<IIdentityServerInteractionService>()
@@ -241,8 +229,6 @@ module Routes =
                 then return! RequestErrors.BAD_REQUEST "ReturnUrl was not valid" next ctx
                 else
                     let! context = interaction.GetAuthorizationContextAsync(model.ReturnUrl)
-                    printfn "Interaction is %A" interaction
-                    printfn "Context is %A" context
                     if not <| String.IsNullOrEmpty context.IdP
                     then return! invalidOp "Not implemented (external login)"
                     else
@@ -252,7 +238,6 @@ module Routes =
             }
 
     let loginPost (model:LoginRequest) : HttpHandler =
-        printfn "Model is %A" model
         fun next ctx ->
             task {
                 let loginService = ctx.GetService<Login.ILoginService<ApplicationUser>>()
@@ -264,20 +249,16 @@ module Routes =
                     props.ExpiresUtc <- DateTimeOffset.UtcNow.AddMinutes tokenLifetime |> Nullable
                     props.AllowRefresh <- true |> Nullable
                     props.RedirectUri <- model.ReturnUrl
-
                     if model.RememberMe then
                         let permanentTokenLifetime = 365.
                         props.ExpiresUtc <- DateTimeOffset.UtcNow.AddDays permanentTokenLifetime |> Nullable
                         props.IsPersistent <- true
-
                     do! loginService.SignInAsync user props
-
                     let interaction = ctx.GetService<IIdentityServerInteractionService>()
                     if interaction.IsValidReturnUrl model.ReturnUrl then
                         return! redirectTo true model.ReturnUrl next ctx
                     else
                         return! redirectTo true "~/" next ctx
-
                 else return! htmlView (Views.Pages.login model) next ctx
             }
 
@@ -285,11 +266,11 @@ module Routes =
         fun next ctx -> 
             task {
                 if String.IsNullOrEmpty(model.UserId) || String.IsNullOrEmpty(model.Code) 
-                then return! json (Error "Invalid Request") next ctx
+                then return! htmlView (Views.Pages.error "There was an unexpected error with your confirmation email") next ctx
                 else
                     let manager = ctx.GetService<UserManager<ApplicationUser>>()
                     let! user = manager.FindByIdAsync(model.UserId) |> Async.AwaitTask
-                    if isNull user then return! json (Error "User doesn't exist") next ctx
+                    if isNull user then return! htmlView (Views.Pages.error "There was an unexpected error with your confirmation email") next ctx
                     else
                         let decodedCode = WebEncoders.Base64UrlDecode(model.Code) |> System.Text.Encoding.UTF8.GetString
                         let! result = manager.ConfirmEmailAsync(user,decodedCode)
@@ -304,13 +285,12 @@ module Routes =
                             props.RedirectUri <- model.ReturnUrl
                             do! loginService.SignInAsync user props
                             let interaction = ctx.GetService<IIdentityServerInteractionService>()
-                            let decodedReturnUrl = WebEncoders.Base64UrlDecode(model.Code) |> System.Text.Encoding.UTF8.GetString
+                            let decodedReturnUrl = WebEncoders.Base64UrlDecode(model.ReturnUrl) |> System.Text.Encoding.UTF8.GetString
                             if interaction.IsValidReturnUrl decodedReturnUrl then
                                 return! redirectTo true decodedReturnUrl next ctx
                             else
-                                return! redirectTo true "/Account/Login" next ctx
-
-                        else return! json (Error "Code was not valid") next ctx
+                                return! htmlView (Views.Pages.error "Your account is now active, but an error occurred returning you to the application.") next ctx
+                        else return! htmlView (Views.Pages.error "The code was not valid. Please resend your email verification request.") next ctx
             }
 
     let challengeWithProperties (authScheme : string) properties _ (ctx : HttpContext) =
@@ -370,7 +350,7 @@ module Routes =
             GET  >=> route "/Account/ExternalLogin" >=> tryBindQuery parsingError None externalLogin
             GET  >=> route "/Account/ExternalLoginCallback" >=> tryBindQuery parsingError None externalLoginCallback
             GET  >=> route "/Account/Register"      >=> tryBindQuery parsingError None (fun (m:ReturnUrlQuery) -> htmlView (Views.Pages.register [] (ViewModels.Empty.newAppUserRequest m.ReturnUrl)))
-            POST >=> route "/Account/Register"      >=> tryBindForm parsingError None UserService.register
+            POST >=> route "/Account/Register"      >=> tryBindForm parsingError None Handlers.register
             GET  >=> route "/Account/ConfirmEmail"  >=> tryBindQuery parsingError None confirm
         ]
 
@@ -425,14 +405,7 @@ module Program =
     open Microsoft.Extensions.Configuration
     open Microsoft.EntityFrameworkCore
 
-    let appSettings = 
-        ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json")
-            .AddEnvironmentVariables()
-            .Build()
-
-    let getAppSetting name =
+    let getAppSetting (appSettings:IConfiguration) name =
         match String.IsNullOrEmpty appSettings.[name] with
         | true -> invalidOp "Appsetting is missing: " + name
         | false -> appSettings.[name]
@@ -440,13 +413,13 @@ module Program =
     open IdentityServer4.EntityFramework.Mappers
 
     // Seed configuration data
-    let seedConfigurationDbAsync (context:ConfigurationDbContext) =
+    let seedConfigurationDbAsync (appSettings:IConfiguration) (context:ConfigurationDbContext) =
         task {
             let! hasClients = context.Clients.AnyAsync()
             let! hasIdentityResources = context.IdentityResources.AnyAsync()
             let! hasApiResources = context.ApiResources.AnyAsync()
             if not hasClients then
-                let webUrl = getAppSetting "WebsiteUrl"
+                let webUrl = getAppSetting appSettings "WebsiteUrl"
                 let clients = Config.clients webUrl
                 clients |> List.map(fun c -> context.Clients.Add(c.ToEntity())) |> ignore
                 let! _ = context.SaveChangesAsync()
@@ -461,10 +434,9 @@ module Program =
                 ()
         } :> Task
 
-    let ensureRoles (serviceProvider:IServiceProvider) =
+    let ensureRoles appSettings (serviceProvider:IServiceProvider) =
         let roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>()
         let userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>()
-
         [ "Admin"; "Curator" ]
         |> List.iter (fun roleName ->
             match roleManager.RoleExistsAsync(roleName) |> Async.AwaitTask |> Async.RunSynchronously with
@@ -473,17 +445,15 @@ module Program =
                        |> Async.AwaitTask 
                        |> Async.RunSynchronously 
                        |> ignore )
-
-        let powerUser = ApplicationUser(UserName = getAppSetting "UserSettings:UserEmail",Email = getAppSetting "UserSettings:UserEmail" )
-
-        let powerPassword = getAppSetting "UserSettings:UserPassword"
-        let existing = userManager.FindByEmailAsync(getAppSetting "UserSettings:UserEmail") |> Async.AwaitTask |> Async.RunSynchronously
+        let powerUser = ApplicationUser(UserName = getAppSetting appSettings "UserSettings:UserEmail",Email = getAppSetting appSettings "UserSettings:UserEmail" )
+        let powerPassword = getAppSetting appSettings "UserSettings:UserPassword"
+        let existing = userManager.FindByEmailAsync(getAppSetting appSettings "UserSettings:UserEmail") |> Async.AwaitTask |> Async.RunSynchronously
         if existing |> isNull 
             then
                 let create = userManager.CreateAsync(powerUser, powerPassword) |> Async.AwaitTask |> Async.RunSynchronously
                 if create.Succeeded 
                     then userManager.AddToRoleAsync(powerUser, "Admin") |> Async.AwaitTask |> Async.RunSynchronously |> ignore
-                    else ()
+                    else failwithf "Could not create default user account: %A" create.Errors
             else ()
 
     let configureCors (builder : CorsPolicyBuilder) =
@@ -493,8 +463,8 @@ module Program =
                .AllowAnyHeader()
                |> ignore
 
-    let sendEmail message = 
-        message |> Email.Cloud.sendAsync (getAppSetting "SendGridKey") (getAppSetting "EmailFromName") (getAppSetting "EmailFromAddress")
+    let sendEmail appSettings message = 
+        message |> Email.Cloud.sendAsync (getAppSetting appSettings "SendGridKey") (getAppSetting appSettings "EmailFromName") (getAppSetting appSettings "EmailFromAddress")
 
     let configureApp (app : IApplicationBuilder) =
         let env = app.ApplicationServices.GetService<IWebHostEnvironment>()
@@ -511,9 +481,11 @@ module Program =
 
     let configureServices (services : IServiceCollection) =
 
+        let appSettings = services.BuildServiceProvider().GetService<IConfiguration>()
+
         services.AddCors()  |> ignore
         services.AddSingleton<UserDbContext>() |> ignore
-        services.AddSingleton<Email.SendEmail>(sendEmail) |> ignore
+        services.AddSingleton<Email.SendEmail>(sendEmail appSettings) |> ignore
         services.AddIdentity<ApplicationUser, IdentityRole>(fun opt -> 
             opt.SignIn.RequireConfirmedEmail <- true)
             .AddEntityFrameworkStores<UserDbContext>()
@@ -521,11 +493,11 @@ module Program =
         services.AddAuthentication(fun opt ->
             opt.DefaultScheme <- "Cookie")
             .AddFacebook(fun opt ->
-                opt.AppId <- getAppSetting "Authentication:Facebook:AppId"
-                opt.AppSecret <- getAppSetting "Authentication:Facebook:AppSecret")
+                opt.AppId <- getAppSetting appSettings "Authentication:Facebook:AppId"
+                opt.AppSecret <- getAppSetting appSettings "Authentication:Facebook:AppSecret")
             .AddTwitter(fun opt ->
-                opt.ConsumerKey <- getAppSetting "Authentication:Twitter:ConsumerKey"
-                opt.ConsumerSecret <- getAppSetting "Authentication:Twitter:ConsumerSecret"
+                opt.ConsumerKey <- getAppSetting appSettings "Authentication:Twitter:ConsumerKey"
+                opt.ConsumerSecret <- getAppSetting appSettings "Authentication:Twitter:ConsumerSecret"
                 opt.RetrieveUserDetails <- true) |> ignore
         services.AddTransient<Login.ILoginService<ApplicationUser>, Login.EFLoginService>() |> ignore
         services.AddTransient<Redirect.IRedirectService, Redirect.RedirectService>() |> ignore
@@ -535,7 +507,7 @@ module Program =
         services.AddHealthChecks()
             .AddCheck("self", Func<HealthCheckResult> (fun () -> HealthCheckResult.Healthy())) |> ignore
 
-        let connectionString = getAppSetting "ConnectionStrings:UserConnection"
+        let connectionString = getAppSetting appSettings "ConnectionStrings:UserConnection"
 
         services.AddIdentityServer(fun config ->
             config.IssuerUri <- "null"
@@ -562,9 +534,9 @@ module Program =
         let sp = services.BuildServiceProvider()
         let context = sp.GetService<UserDbContext>()
         context.Database.Migrate()
-        sp.GetService<ConfigurationDbContext>() |> seedConfigurationDbAsync |> ignore
+        sp.GetService<ConfigurationDbContext>() |> seedConfigurationDbAsync appSettings |> ignore
 
-        services.BuildServiceProvider() |> ensureRoles
+        services.BuildServiceProvider() |> ensureRoles appSettings
 
     let configureLogging (builder : ILoggingBuilder) =
         let filter (l: LogLevel) = l.Equals LogLevel.Error

@@ -3,13 +3,6 @@ namespace GlobalPollenProject.Identity.Views
 open Giraffe.GiraffeViewEngine
 open GlobalPollenProject.Identity.ViewModels
 
-[<CLIMutable>]
-type LoggedOutViewModel = {
-    PostLogoutRedirectUri: string
-    ClientName: string
-    SignOutIframeUrl: string
-}
-
 module Colours =
 
     let primary = "#a8699a"
@@ -38,6 +31,17 @@ module Template =
             ] stylesheets)
             body [ ] contents
         ]
+
+module Errors =
+        
+        open GlobalPollenProject.Shared
+        
+        let validationSummary (additionalErrors: ValidationError list) =
+            let errorHtml =
+                additionalErrors
+                |> List.collect (fun e -> e.Errors)
+                |> List.map encodedText
+            div [] errorHtml
 
 module Pages = 
 
@@ -68,7 +72,7 @@ module Pages =
                 form [ _method "GET"; _action "/Account/ExternalLogin" ] [
                     input [ _type "hidden"; _name "Provider"; _value "Twitter" ]
                     input [ _class "button button-social button-twitter"; _type "submit"; _value "Log in with Twitter" ] ]
-                p [] [ str "You will need an account to identity pollen, digitise collections, or access our data programatically." ]
+                p [] [ str "You must login to identity pollen, digitise collections, or access our data programatically." ]
             ]
         ] |> Template.master "Login"
 
@@ -78,7 +82,7 @@ module Pages =
                 h1 [ _class "title" ] [ str "Create an Account" ]
                 p [] [ str "An account will enable you to submit your own unknown pollen grains and identify others. You can also request access to our digitisation features." ]
                 form [ _method "POST"; _action "/Account/Register" ] [
-                    p [] [ str (sprintf "Errors were %A" errors) ]
+                    Errors.validationSummary errors
                     fieldset [] [
                         label [ _for "Title" ] [ str "Title (e.g. Mr, Mrs, Dr)"]
                         input [ _type "text"; _placeholder "Miss"; _name "Title" ]
@@ -109,7 +113,7 @@ module Pages =
                 h1 [ _class "title" ] [ str "Nearly There..." ]
                 p [] [ str <| sprintf "You've signed in with %s. The Global Pollen Project just needs a few more details from you." loginProvider ]
                 form [ _method "POST"; _action "/Account/ExternalLoginConfirmation" ] [
-                    p [] [ str (sprintf "Errors were %A" errors) ]
+                    Errors.validationSummary errors
                     fieldset [] [
                         label [ _for "Title" ] [ str "Title (e.g. Mr, Mrs, Dr)"]
                         input [ _type "text"; _placeholder "Miss"; _name "Title" ]

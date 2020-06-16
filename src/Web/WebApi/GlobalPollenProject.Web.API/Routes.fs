@@ -7,6 +7,7 @@ type HomeController() =
     inherit ControllerBase()
 
     [<HttpGet>]
+    [<Route("/")>]
     member __.Index() =
         RedirectResult "~/swagger"
 
@@ -17,6 +18,7 @@ type TaxonomyController() =
     inherit ControllerBase()
 
     [<HttpGet>]
+    [<Route("/search")>]
     member __.Search() =
         let values = [|"value1"; "value2"|]
         ActionResult<string[]>(values)

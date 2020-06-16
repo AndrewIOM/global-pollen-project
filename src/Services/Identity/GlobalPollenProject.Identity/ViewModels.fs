@@ -3,6 +3,13 @@ namespace GlobalPollenProject.Identity.ViewModels
 open System.ComponentModel.DataAnnotations
 
 [<CLIMutable>]
+type LoggedOutViewModel = {
+    PostLogoutRedirectUri: string
+    ClientName: string
+    SignOutIframeUrl: string
+}
+
+[<CLIMutable>]
 type ReturnUrlQuery = {
     ReturnUrl: string
 }

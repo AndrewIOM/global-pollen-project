@@ -19,7 +19,7 @@
     <Compile Include="ImportTaxonomy.fs" />
     <Compile Include="UseCases.fs" />
     <Compile Include="App.fs" />
-    <None Include="data/*" />
+    <None Include="data/*" CopyToPublishDirectory="Always" />
   </ItemGroup>
 
   <ItemGroup>

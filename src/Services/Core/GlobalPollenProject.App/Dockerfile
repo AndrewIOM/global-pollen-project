@@ -13,7 +13,7 @@ COPY /src/Shared /src/Shared
 WORKDIR /src/Services/Core/GlobalPollenProject.App
 RUN dotnet publish -c Release -o /app
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1-alpine
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
 EXPOSE 5000
 WORKDIR /app
 COPY --from=build-env /app .

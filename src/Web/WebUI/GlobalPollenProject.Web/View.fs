@@ -162,8 +162,8 @@ module Layout =
             ]
         | None ->
             ul [ _class "nav navbar-nav" ] [
-                li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.register ] [ encodedText "Register" ] ]
-                li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.login ] [ encodedText "Log in" ] ] ]
+                li [ _class "nav-item" ] [ a [ _class "nav-link"; _href Urls.Account.login ] [ encodedText "Register or Login" ] ]
+            ]
 
     let navigationBar profile =
         nav [ _class "navbar navbar-expand-lg navbar-toggleable-md navbar-light bg-faded fixed-top"] [

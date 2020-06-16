@@ -16,10 +16,22 @@ services:
   identity.api:
     ports:
     - "5203:80"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - WebsiteUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5101
 
   web.ui:
     environment:
     - ASPNETCORE_ENVIRONMENT=Development
     - ASPNETCORE_URLS=http://0.0.0.0:80
+    - IdentityUrl= http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5203
+    - CallBackUrl=http://GPP_EXTERNAL_DNS_NAME_OR_IP:5101
     ports:
-    - "5100:80"
+    - "5101:80"
+
+  web.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:80
+    ports:
+    - "5102:80"
