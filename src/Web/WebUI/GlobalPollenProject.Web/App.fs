@@ -8,19 +8,7 @@ open Giraffe
 open ReadModels
 open Handlers
 open Connections
-
-// TODO Move this into the error types from core API
-let inMaintenanceMode = false
-
-let maintenanceResult ctx =
-    ctx |> (clearResponse >=> setStatusCode 503 >=> htmlView HtmlViews.StatusPages.maintainance)
-
-// TODO Move function into error handler
-let notInMaintenanceMode next ctx : HttpFuncResult =
-    match inMaintenanceMode with
-    | true -> maintenanceResult next ctx
-    | false -> next ctx
-
+    
 let accessDenied = setStatusCode 401 >=> htmlView HtmlViews.StatusPages.denied
 let notFound ctx = ctx |> (clearResponse >=> setStatusCode 400 >=> htmlView HtmlViews.StatusPages.notFound)
 let mustBeLoggedIn : HttpHandler = requiresAuthentication (redirectTo false Urls.Account.login)

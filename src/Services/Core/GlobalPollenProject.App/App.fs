@@ -36,6 +36,7 @@ let apiResult next ctx result =
             match e with
             | Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
             | InvalidRequestFormat -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
+            | InMaintenanceMode -> json <| { Message = "Maintenance in progress"; Errors = [] }
             | _ -> json <| { Message = "Internal error"; Errors = [] } ) next ctx
 
 let inline postApi< ^T, ^R> (action:^T->Result< ^R,ServiceError>) : HttpHandler =
@@ -74,7 +75,13 @@ let opt (s:string) =
     | 0 -> None
     | _ -> Some s
 
+let notInMaintenanceMode next ctx : HttpFuncResult =
+    match U.inMaintenanceMode with
+    | true -> apiResult next ctx (Error InMaintenanceMode)
+    | false -> next ctx
+
 let routes : HttpHandler =
+    notInMaintenanceMode >=>
     choose [
         subRoute "/api/v1"
             (choose [

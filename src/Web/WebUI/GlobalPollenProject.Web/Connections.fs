@@ -95,7 +95,6 @@ module CoreActions =
             u.Query <- queryString
             u.Path <- route
             let! response = c.GetStringAsync(u.Uri) |> Async.AwaitTask
-            printfn "Response was %s" response
             match Serialisation.deserialise<Result<'a,ServiceError>> response with
             | Ok m -> return m
             | Error _ -> return Error InvalidRequestFormat
@@ -108,7 +107,6 @@ module CoreActions =
             if response.IsSuccessStatusCode
             then
                 let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
-                printfn "Contents returned was %A" content
                 match Serialisation.deserialise<Result<'b,ServiceError>> content with
                 | Ok m -> return m
                 | Error _ -> return Error InvalidRequestFormat

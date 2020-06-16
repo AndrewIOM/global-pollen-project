@@ -13,6 +13,7 @@ type ServiceError =
 | InvalidRequestFormat
 | Validation of ValidationError list
 | Persistence
+| InMaintenanceMode
 | NotFound
 
 type PagedResult<'TProjection> = {

@@ -1029,7 +1029,7 @@ module StatusPages =
 
     let error = statusLayout "bomb" "Sorry, there's been a slight snag..." "Your request didn't go through. You can try again, or please come back later. If this happens often, please let us know."
     
-    let maintainance = statusLayout "wrench" "Under Temporary Maintainance" "We're working on some changes, which have required us to take the Pollen Project offline. We will be back later today, so sit tight."
+    let maintenance = statusLayout "wrench" "Under Temporary Maintenance" "We're working on some changes, which have required us to take the Pollen Project offline. We will be back later today, so sit tight."
 
     let denied = statusLayout "exclamation-triangle" "Access Denied" "You're not authorised to access this content."
 

@@ -16,10 +16,16 @@ open Responses
 
 type GetCurrentUser = unit -> Guid
 
-let mutable inMaintainanceMode = false
+let mutable inMaintenanceMode = false
 
 // Load AppSettings
-let appSettings = ConfigurationBuilder().SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json").AddEnvironmentVariables().Build()
+let appSettings =
+    ConfigurationBuilder()
+        .SetBasePath(Directory.GetCurrentDirectory())
+        .AddJsonFile("appsettings.json")
+        .AddEnvironmentVariables()
+        .Build()
+
 let getAppSetting name =
     match String.IsNullOrEmpty appSettings.[name] with
     | true -> invalidOp "Appsetting is missing: " + name
@@ -583,11 +589,11 @@ module Statistic =
 module Admin =
 
     let rebuildReadModel() =
-        inMaintainanceMode <- true
+        inMaintenanceMode <- true
         redisReset() |> ignore
         ProjectionHandler.init redisSet () |> ignore
         eventStore.Value.ReplayDomainEvents()
-        inMaintainanceMode <- false
+        inMaintenanceMode <- false
         Ok "Finished"
 
     let listUsers() =

@@ -77,6 +77,7 @@ let renderView next ctx v =
 let serviceErrorToView err next ctx =
     match err with
     | ServiceError.NotFound -> ctx |> (clearResponse >=> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound) next
+    | ServiceError.InMaintenanceMode -> ctx |> (clearResponse >=> setStatusCode 503 >=> htmlView HtmlViews.StatusPages.maintenance) next
     | _ -> ctx |> (clearResponse >=> setStatusCode 500 >=> htmlView HtmlViews.StatusPages.error) next
 
 let renderViewResult v next ctx result =
@@ -169,6 +170,7 @@ let toApiResult next ctx result =
             match e with
             | Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
             | InvalidRequestFormat -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
+            | InMaintenanceMode -> json <| "System is under maintenance. Please try again later."
             | _ -> json <| { Message = "Internal error"; Errors = [] } ) next ctx
 
 let viewOrError view model : HttpHandler =
