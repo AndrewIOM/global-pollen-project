@@ -27,7 +27,6 @@ let tools = "/Tools"
 let cite = "/Cite"
 let terms = "/Terms"
 
-
 module MasterReference =
     let root = "/Taxon"
 
@@ -53,3 +52,9 @@ module Collections =
 module Identify =
 
     let root = "/Identify"
+    
+module Admin =
+    
+    let root = "/Admin"
+    let rebuildReadModel = "/RebuildReadModel"
+    let users = "/Users"

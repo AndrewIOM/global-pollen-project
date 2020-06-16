@@ -213,3 +213,10 @@ appsettings.json
 appsettings.Development.json
 
 .vscode
+.ionide
+.fake
+
+.env
+.env**
+
+tempkey.rsa

@@ -3,6 +3,7 @@ module Handlers
 open Giraffe.Core
 open Giraffe.ModelBinding
 open Giraffe.ResponseWriters
+open FSharp.Control.Tasks.V2.ContextInsensitive
 open GlobalPollenProject.Web
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging
@@ -11,13 +12,12 @@ open System
 open System.IO
 open System.Reflection
 open System.ComponentModel
-
 open Urls
 open ReadModels
-open Giraffe.Common
+open Connections
 
 ///////////////////////////
-/// User Profile Retrival
+/// User Profile Retrieval
 ///////////////////////////
 
 module LoadProfile =
@@ -92,7 +92,7 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 /// Validation
 /////////////////////
 
-let inline bindJson< ^T> (ctx:HttpContext) =
+let inline tryBindJson< ^T> (ctx:HttpContext) =
     let body = ctx.Request.Body
     use reader = new StreamReader(body, true)
     let reqBytes = reader.ReadToEndAsync() |> Async.AwaitTask |> Async.RunSynchronously
@@ -170,3 +170,41 @@ let toApiResult next ctx result =
             | Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
             | InvalidRequestFormat -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
             | _ -> json <| { Message = "Internal error"; Errors = [] } ) next ctx
+
+let viewOrError view model : HttpHandler =
+    fun next ctx ->
+        match model with
+        | Ok m -> view m next ctx
+        | Error e -> serviceErrorToView e next ctx
+
+let coreAction' action (ctx:HttpContext) =
+    task {
+        let core = ctx.GetService<CoreMicroservice>()
+        let! result = action |> core.Apply
+        return result
+    }
+
+let coreAction action view next (ctx:HttpContext) =
+    task {
+        let! result = coreAction' action ctx
+        return! renderViewResult view next ctx result
+    }
+
+let coreApiAction action : HttpHandler =
+    fun next ctx ->
+        task {
+            let! result = coreAction' action ctx
+            return! toApiResult next ctx result
+        }
+
+/// Pass-through query string model to core action and return API result
+let apiResultFromQuery<'a,'b> (coreAction:'a->CoreFunction<'b>) : HttpHandler =
+    let error str = text str
+    let success model : HttpHandler =
+        fun next ctx ->
+            task {
+                let core = ctx.GetService<CoreMicroservice>()
+                let! result = coreAction model |> core.Apply
+                return! toApiResult next ctx result
+            }
+    tryBindQuery<'a> error None success
