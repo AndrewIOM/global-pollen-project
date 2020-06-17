@@ -1,6 +1,8 @@
 namespace GlobalPollenProject.Identity.ViewModels
 
 open System.ComponentModel.DataAnnotations
+open Microsoft.AspNetCore.Identity
+open Microsoft.AspNetCore.Authentication
 
 [<CLIMutable>]
 type LoggedOutViewModel = {
@@ -103,6 +105,55 @@ type LoginRequest = {
     [<Required>] ReturnUrl: string
 }
 
+[<CLIMutable>]
+type IndexViewModel = {
+    HasPassword: bool
+    Logins: UserLoginInfo list }
+
+[<CLIMutable>]
+type ManageLoginsViewModel = {
+    CurrentLogins: UserLoginInfo list
+    OtherLogins: AuthenticationScheme list }
+
+[<CLIMutable>]
+type LinkLogin = { Provider: string }
+
+[<CLIMutable>]
+type RemoveLogin = { LoginProvider: string; ProviderKey: string }
+
+[<CLIMutable>]
+type SetPasswordViewModel = {
+    [<Required>] 
+    [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
+    [<DataType(DataType.Password)>]
+    [<Display(Name="New password")>]
+    NewPassword: string
+    [<DataType(DataType.Password)>]
+    [<Display(Name = "Confirm new password")>]
+    [<Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")>]
+    ConfirmPassword: string
+}
+
+[<CLIMutable>]
+type ChangePasswordViewModel = {
+    [<Required>] 
+    [<DataType(DataType.Password)>]
+    [<Display(Name="Current password")>]
+    OldPassword: string
+    [<Required>] 
+    [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
+    [<DataType(DataType.Password)>]
+    [<Display(Name="New password")>]
+    NewPassword: string
+    [<DataType(DataType.Password)>]
+    [<Display(Name = "Confirm new password")>]
+    [<Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")>]
+    ConfirmPassword: string
+}
+
 module Empty =
 
     let newAppUserRequest returnUrl = { ReturnUrl = returnUrl; Title = ""; FirstName = ""; LastName = ""; Organisation = ""; Email = "" ; EmailConfirmation = ""; Password = ""; ConfirmPassword = "" }
+    let setPass = { NewPassword = ""; ConfirmPassword = "" }
+    let changePass = { OldPassword = ""; NewPassword = ""; ConfirmPassword = "" }
+    

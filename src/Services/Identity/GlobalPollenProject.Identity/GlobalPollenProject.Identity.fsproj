@@ -13,6 +13,7 @@
     <Compile Include="Migrations/*" />
     <Compile Include="ViewModels.fs" />
     <Compile Include="Views.fs" />
+    <Compile Include="Manage.fs" />
     <Compile Include="App.fs" />
   </ItemGroup>
   <ItemGroup>

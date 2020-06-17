@@ -24,7 +24,6 @@ module Actions =
     let login : HttpHandler =
         requiresAuthentication (challenge "OpenIdConnect") >=>
         fun next ctx ->
-            let user = ctx.User
             let token = ctx.GetTokenAsync("access_token") |> Async.AwaitTask |> Async.RunSynchronously
             ctx.Items.Add("access_token",token)
             redirectTo true "/" next ctx
@@ -75,22 +74,20 @@ module Actions =
     
         let slideView (id:string) : HttpHandler =
             fun next ctx ->
+            task {
                 let core = ctx.GetService<CoreMicroservice>()
                 let split = id.Split '/'
                 match split.Length with
                 | 2 -> 
                     let col,slide = split.[0], split.[1] |> Net.WebUtility.UrlDecode
-                    CoreActions.MRC.getSlide col slide
-                    |> core.Apply
-                    |> Async.RunSynchronously // TODO Remove!
-                    |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
+                    let! result = CoreActions.MRC.getSlide col slide |> core.Apply
+                    return! result |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
                 | 3 ->
                     let col,slide = split.[0], split.[2] |> Net.WebUtility.UrlDecode
-                    CoreActions.MRC.getSlide col slide
-                    |> core.Apply
-                    |> Async.RunSynchronously // TODO Remove!
-                    |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
-                | _ -> notFound next ctx
+                    let! result = CoreActions.MRC.getSlide col slide |> core.Apply
+                    return! result |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
+                | _ -> return! notFound next ctx
+             }
 
         let taxonDetail (taxon:string) : HttpHandler =
             fun next ctx ->

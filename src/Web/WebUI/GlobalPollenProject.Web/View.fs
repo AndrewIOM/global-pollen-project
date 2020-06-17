@@ -968,33 +968,6 @@ module Account =
             "/lib/jquery-validation/jquery.validate.js"
             "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Forgot your password?" ""
 
-module Manage =
-
-    let index vm = 
-        [
-
-        ] |> Layout.standard [] "" ""
-
-    let removeLogin vm = 
-        [
-
-        ] |> Layout.standard [] "" ""
-
-    let manageLogins vm = 
-        [
-
-        ] |> Layout.standard [] "" ""
-
-    let setPassword errors vm = 
-        [
-
-        ] |> Layout.standard [] "" ""
-        
-    let changePassword errors vm = 
-        [
-
-        ] |> Layout.standard [] "" ""
-
 
 module StatusPages =
 

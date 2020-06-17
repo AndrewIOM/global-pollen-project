@@ -155,3 +155,108 @@ module Pages =
             ]
             else span [] [])
         ] |> Template.master "Successfully logged out"
+        
+        
+    module Manage =
+                
+        open Microsoft.AspNetCore.Identity
+        
+        let index username (vm:IndexViewModel) =
+            [
+                div [ _class "container main-panel" ] [
+                    h1 [ _class "title" ] [ str "Manage your login" ]
+                    p [] [ str "The Global Pollen Project allows you to log in using a password set with us, or using an external account such as Twitter or Facebook." ]
+                    label [] [ str "Your user name:" ]
+                    p [] [ str username ]
+                    label [] [ str "Password" ]
+                    match vm.HasPassword with
+                    | true -> a [ _href "/Manage/ChangePassword" ] [ str "Change your password" ]
+                    | false -> p [] [
+                        str "You do not currently have a local password. You can "
+                        a [ _href "/Manage/SetPassword" ] [ str "create" ]
+                        str " one now"
+                    ]
+                    label [] [ str "Connected logins (other providers)" ]
+                    match vm.Logins.Length with
+                    | 0 -> p [] [ str "None" ]
+                    | _ -> p [] [ str <| sprintf "You have %i set up." vm.Logins.Length ]
+                    a [ _href "/Manage/ManageLogins" ] [ str "Manage external logins" ]
+                ]
+            ] |> Template.master "Manage your account" 
+            
+        let changePassword errors (vm:ChangePasswordViewModel) =
+            [
+                div [ _class "container main-panel" ] [
+                    h1 [ _class "title" ] [ str "Change Password" ]
+                    form [ _action "/Manage/ChangePassword"; _method "POST" ] [
+                        Errors.validationSummary errors
+                        label [ _for "OldPassword" ] [ str "Old Password"]
+                        input [ _type "password"; _name "OldPassword"; _value vm.OldPassword ]
+                        label [ _for "NewPassword" ] [ str "New Password"]
+                        input [ _type "password"; _name "NewPassword"; _value vm.NewPassword ]
+                        label [ _for "ConfirmPassword" ] [ str "Re-enter your new password"]
+                        input [ _type "password"; _name "ConfirmPassword"; _value vm.ConfirmPassword ]
+                        button [ _class "button-primary"; _type "submit" ] [ str "Change password" ]
+                    ]
+                ]
+            ] |> Template.master "Change password"
+
+        let setPassword errors (vm:SetPasswordViewModel) =
+            [
+                div [ _class "container main-panel" ] [
+                    h1 [ _class "title" ] [ str "Set a New Password" ]
+                    p [] [ str "You do not have a local username/password for this site. Add a local password so you can log in without an external service." ]
+                    form [ _action "/Manage/ChangePassword"; _method "POST" ] [
+                        Errors.validationSummary errors
+                        label [ _for "NewPassword" ] [ str "New Password"]
+                        input [ _type "password"; _name "NewPassword"; _value vm.NewPassword ]
+                        label [ _for "ConfirmPassword" ] [ str "Re-enter your new password"]
+                        input [ _type "password"; _name "ConfirmPassword"; _value vm.ConfirmPassword ]
+                        button [ _class "button-primary"; _type "submit" ] [ str "Set password" ]
+                    ]
+                ]
+            ] |> Template.master "Set new password"
+
+        let manageLogins (vm:ManageLoginsViewModel) =
+            [
+                div [ _class "container main-panel" ] [
+                    h1 [ _class "title" ] [ str "Unlink other services" ]
+                    p [] [ str "If you unlink from other services, you will not be able to use them to log in to the Pollen Project." ]
+                    if vm.CurrentLogins.Length > 0
+                    then
+                        div [] (vm.CurrentLogins |> List.map(fun l ->
+                            form [ _method "POST"; _action "/Manage/RemoveLogin" ] [
+                                p [] [ str l.ProviderDisplayName ]
+                                input [ _type "hidden"; _name "LoginProvider"; _value l.LoginProvider ]
+                                input [ _type "hidden"; _name "ProviderKey"; _value l.ProviderKey ]
+                                input [ _class "button button-outline"; _type "submit"; _value "Remove"
+                                        _title <| sprintf "Remove this %s login from your account" l.ProviderDisplayName ]
+                                ]
+                            ))
+                    else div [] []
+                    if vm.OtherLogins.Length > 0
+                    then
+                        h4 [] [ str "Add another service to log in." ]
+                        form [ _action "/Manage/LinkLogin"; _method "POST" ] (vm.OtherLogins |> List.map(fun o ->
+                            button [ _type "submit"; _class "button"; _name "provider"; _value o.Name
+                                     _title <| sprintf "Log in using a %s account" o.DisplayName ] [ str o.Name ]
+                            ))
+                    else div [] []
+                ]
+            ] |> Template.master "Manage logins"
+
+        let removeLogin (vm:UserLoginInfo list) =
+            [
+                div [ _class "container main-panel" ] [
+                    h1 [ _class "title" ] [ str "Unlink other services" ]
+                    p [] [ str "If you unlink from other services, you will not be able to use them to log in to the Pollen Project." ]
+                    div [] (vm |> List.map(fun l ->
+                        form [ _method "POST"; _action "/Manage/RemoveLogin" ] [
+                            p [] [ str l.ProviderDisplayName ]
+                            input [ _type "hidden"; _name "LoginProvider"; _value l.LoginProvider ]
+                            input [ _type "hidden"; _name "ProviderKey"; _value l.ProviderKey ]
+                            input [ _class "button button-outline"; _type "submit"; _value "Remove" ]
+                            ]
+                        ))
+                ]
+            ] |> Template.master "Remove linked login"

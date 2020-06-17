@@ -1,58 +1,37 @@
 namespace GlobalPollenProject.Identity
 
-module ViewModels =
+open FSharp.Control.Tasks.V2.ContextInsensitive
+open Giraffe
+open Microsoft.AspNetCore.Identity
+open GlobalPollenProject.Identity.ViewModels
+open System.ComponentModel.DataAnnotations
+open System.Collections.Generic
 
-    open System.ComponentModel.DataAnnotations
+module Helpers =
 
-    [<CLIMutable>]
-    type IndexViewModel = {
-        HasPassword: bool
-        Logins: UserLoginInfo list
-        Profile: PublicProfile }
+    open Microsoft.AspNetCore.Http
+    open Microsoft.AspNetCore.Authentication
+    
+    let isValid model =
+        let context = ValidationContext(model)
+        let validationResults = List<ValidationResult>() 
+        Validator.TryValidateObject(model,context,validationResults,true)
+    
+    let challengeWithProperties (authScheme : string) properties _ (ctx : HttpContext) =
+        task {
+            do! ctx.ChallengeAsync(authScheme,properties)
+            return Some ctx }
 
-    [<CLIMutable>]
-    type ManageLoginsViewModel = {
-        CurrentLogins: UserLoginInfo list
-        OtherLogins: AuthenticationScheme list }
+    let getBaseUrl (ctx:HttpContext) = 
+        let port = 
+            if ctx.Request.Host.Port.HasValue 
+            then sprintf ":%i" ctx.Request.Host.Port.Value
+            else ""
+        sprintf "%s://%s%s" ctx.Request.Scheme ctx.Request.Host.Host port
 
-    [<CLIMutable>]
-    type LinkLogin = { Provider: string }
 
-    [<CLIMutable>]
-    type RemoveLogin = { LoginProvider: string; ProviderKey: string }
-
-    [<CLIMutable>]
-    type SetPasswordViewModel = {
-        [<Required>] 
-        [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
-        [<DataType(DataType.Password)>]
-        [<Display(Name="New password")>]
-        NewPassword: string
-        [<DataType(DataType.Password)>]
-        [<Display(Name = "Confirm new password")>]
-        [<Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")>]
-        ConfirmPassword: string
-    }
-
-    [<CLIMutable>]
-    type ChangePasswordViewModel = {
-        [<Required>] 
-        [<DataType(DataType.Password)>]
-        [<Display(Name="Current password")>]
-        OldPassword: string
-        [<Required>] 
-        [<StringLength(100, ErrorMessage = "The {0} must be at least {2} characters long.", MinimumLength = 6)>]
-        [<DataType(DataType.Password)>]
-        [<Display(Name="New password")>]
-        NewPassword: string
-        [<DataType(DataType.Password)>]
-        [<Display(Name = "Confirm new password")>]
-        [<Compare("NewPassword", ErrorMessage = "The new password and confirmation password do not match.")>]
-        ConfirmPassword: string
-    }
-
-module Handlers =
-
+module Manage =
+    
     let index : HttpHandler =
         fun next ctx ->
             task {
@@ -60,14 +39,9 @@ module Handlers =
                 let! user = userManager.GetUserAsync ctx.User
                 let! hasPassword = userManager.HasPasswordAsync(user)
                 let! logins = userManager.GetLoginsAsync(user)
-                let createVm p = 
-                    { HasPassword = hasPassword
-                      Logins = logins |> Seq.toList
-                      Profile = p }
-                let model = createVm <!> User.getPublicProfile (user.Id |> Guid)
-                match model with
-                | Ok m -> return! htmlView (HtmlViews.Manage.index m) next ctx
-                | Error _ -> return! htmlView HtmlViews.StatusPages.error next ctx
+                let model = { HasPassword = hasPassword; Logins = logins |> Seq.toList }
+                let username = userManager.GetUserName(ctx.User)
+                return! htmlView (Views.Pages.Manage.index username model) next ctx
             }
     
     let removeLoginView : HttpHandler =
@@ -78,7 +52,7 @@ module Handlers =
                 let! linkedAccounts = userManager.GetLoginsAsync user
                 let! hasPass = userManager.HasPasswordAsync user
                 ctx.Items.Add ("ShowRemoveButton", (hasPass || linkedAccounts.Count > 1))
-                return! htmlView (HtmlViews.Manage.removeLogin linkedAccounts) next ctx
+                return! htmlView (Views.Pages.Manage.removeLogin (linkedAccounts |> Seq.toList)) next ctx
             }
     
     let removeLogin : HttpHandler =
@@ -104,8 +78,8 @@ module Handlers =
                 let userManager = ctx.GetService<UserManager<ApplicationUser>>()
                 let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
                 let! model = ctx.BindFormAsync<ChangePasswordViewModel>()
-                match isValid model with
-                | false -> return! htmlView (HtmlViews.Manage.changePassword [] model) next ctx
+                match Helpers.isValid model with
+                | false -> return! htmlView (Views.Pages.Manage.changePassword [] model) next ctx
                 | true ->
                     let! user = userManager.GetUserAsync ctx.User
                     match isNull user with
@@ -124,8 +98,8 @@ module Handlers =
                 let userManager = ctx.GetService<UserManager<ApplicationUser>>()
                 let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
                 let! model = ctx.BindFormAsync<SetPasswordViewModel>()
-                match isValid model with
-                | false -> return! htmlView (HtmlViews.Manage.setPassword [] model) next ctx
+                match Helpers.isValid model with
+                | false -> return! htmlView (Views.Pages.Manage.setPassword [] model) next ctx
                 | true ->
                     let! user = userManager.GetUserAsync ctx.User
                     match isNull user with
@@ -145,13 +119,13 @@ module Handlers =
                 let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
                 let! user = userManager.GetUserAsync ctx.User
                 match isNull user with
-                | true -> return! htmlView HtmlViews.StatusPages.error next ctx
+                | true -> return! htmlView (Views.Pages.error "") next ctx
                 | false ->
                     let! userLogins = userManager.GetLoginsAsync user
                     let! otherLogins = signInManager.GetExternalAuthenticationSchemesAsync()
                     ctx.Items.Add ("ShowRemoveButton", (not (isNull user.PasswordHash)) || userLogins.Count > 1)
                     let model = { CurrentLogins = userLogins |> Seq.toList; OtherLogins = otherLogins |> Seq.toList }
-                    return! htmlView (HtmlViews.Manage.manageLogins model) next ctx
+                    return! htmlView (Views.Pages.Manage.manageLogins model) next ctx
             }
 
     let linkLogin : HttpHandler =
@@ -160,9 +134,9 @@ module Handlers =
             let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
             let provider = ctx.BindFormAsync<LinkLogin>() |> Async.AwaitTask |> Async.RunSynchronously
             let user = userManager.GetUserAsync ctx.User |> Async.AwaitTask |> Async.RunSynchronously
-            let callbackUrl = sprintf "%s/Account/Manage/LinkLoginCallback" (Urls.getBaseUrl ctx)
+            let callbackUrl = sprintf "%s/Account/Manage/LinkLoginCallback" (Helpers.getBaseUrl ctx)
             let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,callbackUrl, user.Id)
-            Identity.challengeWithProperties provider.Provider properties next ctx
+            Helpers.challengeWithProperties provider.Provider properties next ctx
 
     let linkLoginCallback : HttpHandler =
         fun next ctx ->
@@ -171,14 +145,14 @@ module Handlers =
                 let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
                 let! user = userManager.GetUserAsync ctx.User
                 match isNull user with
-                | true -> return! htmlView HtmlViews.StatusPages.error next ctx
+                | true -> return! htmlView (Views.Pages.error "") next ctx
                 | false ->
                     let! info = signInManager.GetExternalLoginInfoAsync()
                     match isNull info with
-                    | true -> return! htmlView HtmlViews.StatusPages.error next ctx
+                    | true -> return! htmlView (Views.Pages.error "") next ctx
                     | false ->
                         let! res = userManager.AddLoginAsync(user,info)
                         match res.Succeeded with 
-                        | false -> return! htmlView HtmlViews.StatusPages.error next ctx
+                        | false -> return! htmlView (Views.Pages.error "") next ctx
                         | true -> return! redirectTo true "/Account/cool" next ctx
             }

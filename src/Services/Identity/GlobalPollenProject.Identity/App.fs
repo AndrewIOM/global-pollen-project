@@ -343,15 +343,31 @@ module Routes =
 
     let parsingError (err : string) = RequestErrors.BAD_REQUEST err
 
+    let manageRoutes =
+        choose [
+            GET  >=> route "/"                       >=> Manage.index
+            POST >=> route "/LinkLogin"              >=> Manage.linkLogin
+            GET  >=> route "/LinkLoginCallback"      >=> Manage.linkLoginCallback
+            GET  >=> route "/ManageLogins"           >=> Manage.manageLogins
+            POST >=> route "/SetPassword"            >=> Manage.setPassword
+            GET  >=> route "/SetPassword"            >=> htmlView (Views.Pages.Manage.setPassword [] Empty.setPass)
+            POST >=> route "/ChangePassword"         >=> Manage.changePassword
+            GET  >=> route "/ChangePassword"         >=> htmlView (Views.Pages.Manage.changePassword [] Empty.changePass)
+            POST >=> route "/RemoveLogin"            >=> Manage.removeLogin
+            GET  >=> route "/RemoveLogin"            >=> Manage.removeLoginView
+        ]
+    
     let handler =
         choose [
-            GET  >=> route "/Account/Login"         >=> tryBindQuery parsingError None login
-            POST >=> route "/Account/Login"         >=> tryBindForm parsingError None loginPost
-            GET  >=> route "/Account/ExternalLogin" >=> tryBindQuery parsingError None externalLogin
+            GET  >=> route "/Account/Login"                 >=> tryBindQuery parsingError None login
+            POST >=> route "/Account/Login"                 >=> tryBindForm parsingError None loginPost
+            GET  >=> route "/Account/ExternalLogin"         >=> tryBindQuery parsingError None externalLogin
             GET  >=> route "/Account/ExternalLoginCallback" >=> tryBindQuery parsingError None externalLoginCallback
-            GET  >=> route "/Account/Register"      >=> tryBindQuery parsingError None (fun (m:ReturnUrlQuery) -> htmlView (Views.Pages.register [] (ViewModels.Empty.newAppUserRequest m.ReturnUrl)))
-            POST >=> route "/Account/Register"      >=> tryBindForm parsingError None Handlers.register
-            GET  >=> route "/Account/ConfirmEmail"  >=> tryBindQuery parsingError None confirm
+            GET  >=> route "/Account/Register"              >=> tryBindQuery parsingError None (fun (m:ReturnUrlQuery) -> htmlView (Views.Pages.register [] (ViewModels.Empty.newAppUserRequest m.ReturnUrl)))
+            POST >=> route "/Account/Register"              >=> tryBindForm parsingError None Handlers.register
+            GET  >=> route "/Account/ConfirmEmail"          >=> tryBindQuery parsingError None confirm
+            GET  >=> route "/Account/ForgotPassword"        >=> tryBindQuery parsingError None confirm
+            subRoute "/Manage" manageRoutes
         ]
 
 module Config =
