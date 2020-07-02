@@ -12,52 +12,92 @@ open System
 open System.IO
 open System.Reflection
 open System.ComponentModel
-open Urls
-open ReadModels
 open Connections
+open ReadModels
 
 ///////////////////////////
 /// User Profile Retrieval
 ///////////////////////////
 
-module LoadProfile =
+type ApplicationUser = {
+    Id: System.Guid
+    Title: string option
+    Firstname: string option
+    Lastname: string option
+    Organisation: string option
+    Profile: PublicProfile option
+}
 
-    open Microsoft.AspNetCore.Identity
+module Core =
+    
+    /// Access a core action using DI services
+    let coreAction' action (ctx:HttpContext) =
+        task {
+            let core = ctx.GetService<CoreMicroservice>()
+            let! result = action |> core.Apply
+            return result
+        }
+
+module Profile =
+
+    open System.Security.Principal
+    open System.Security.Claims
 
     let parseGuid (i:string) =
         match System.Guid.TryParse i with
-        | (true,g) -> Ok g
-        | (false,g) -> Error InvalidRequestFormat
-
+        | (true,g) -> Some g
+        | (false,g) -> None
+    
+    /// Access the claims provided by the external Identity.API service
+    let tryParsePrincipal (principal:IPrincipal) =
+        match principal with
+        | :? ClaimsPrincipal as claims ->
+            claims.Claims
+            |> Seq.tryFind(fun x -> x.Type = "sub")
+            |> fun x -> printfn "User ID is %A" x; x
+            |> Option.bind(fun c -> parseGuid c.Value)
+            |> Option.map(fun i ->
+                { Firstname =  claims.Claims |> Seq.tryFind(fun x -> x.Type = "given_name")  |> Option.bind(fun x -> Some x.Value)
+                  Lastname = claims.Claims |> Seq.tryFind(fun x -> x.Type = "family_name") |> Option.bind(fun x -> Some x.Value)
+                  Organisation = claims.Claims |> Seq.tryFind(fun x -> x.Type = "organisation") |> Option.bind(fun x -> Some x.Value)
+                  Title = claims.Claims |> Seq.tryFind(fun x -> x.Type = "title") |> Option.bind(fun x -> Some x.Value)
+                  Id = i
+                  Profile = None })
+        | _ -> None
+   
     let resultToOption r =
         match r with
         | Ok o -> Some o
         | Error _ -> None
+     
+    /// Access profile information specific to the Pollen Core.API
+    let getPublicProfile ctx userId =
+        userId
+        |> CoreActions.User.publicProfile
+        |> fun a -> Core.coreAction' a ctx
 
-    let currentUserId (ctx:HttpContext) () =
-        async {
-            return { Firstname = "Cool" |> Some; Lastname = "Cool" |> Some }
-            // let manager = ctx.GetService<UserManager<ApplicationUser>>()
-            // let! user = manager.GetUserAsync(ctx.User) |> Async.AwaitTask
-            // return Guid.Parse user.Id
-        } |> Async.RunSynchronously
-
-    // let getPublicProfile userId =
-    //     userId
-    //     |> parseGuid
-    //     |> Result.bind User.getPublicProfile
-    //     |> resultToOption
-
-    // let loggedInUser (ctx:HttpContext) =
-    //     async {
-    //         let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-    //         if signInManager.IsSignedIn(ctx.User) then 
-    //             let manager = ctx.GetService<UserManager<ApplicationUser>>()
-    //             let! user = manager.GetUserAsync(ctx.User) |> Async.AwaitTask
-    //             return getPublicProfile user.Id
-    //         else return None
-    //     }
-
+    /// Register a fresh public profile with the Core.API
+    let registerPublicProfile ctx req =
+        req
+        |> CoreActions.User.register
+        |> fun a -> Core.coreAction' a ctx
+    
+    /// Gets the public-facing profile information from the Core.API.
+    let getAuthenticatedUser (ctx:HttpContext) =
+        task {
+            if ctx.User.Identity.IsAuthenticated then
+                let userFromClaims = ctx.User |> tryParsePrincipal
+                printfn "User logged in is %A" userFromClaims
+                match userFromClaims with
+                | Some user ->
+                    let! profile = getPublicProfile ctx user.Id
+                    printfn "Public profile is %A" profile
+                    return { user with Profile = profile |> resultToOption } |> Some
+                | None -> return None
+            else
+                printfn "User NOT logged in"
+                return None
+        }
 
 /////////////////////
 /// View Handlers
@@ -65,11 +105,11 @@ module LoadProfile =
 
 let htmlView v : HttpHandler =
     fun next ctx ->
-        let userProfile =
-            if ctx.User.Identity.IsAuthenticated
-            then Some { Curator = false; FirstName = "LoggedIn"; Groups = []; IsPublic = false; LastName = "McLoggedIn"; Score = 200.; Title = "Mr"; UserId = Guid.NewGuid()}
-            else None
-        htmlView (v userProfile) next ctx
+        task {
+            let! user = Profile.getAuthenticatedUser ctx
+            let profile = user |> Option.bind(fun u -> u.Profile)
+            return! htmlView (v profile) next ctx
+        }
 
 let renderView next ctx v =
     htmlView v next ctx
@@ -179,23 +219,16 @@ let viewOrError view model : HttpHandler =
         | Ok m -> view m next ctx
         | Error e -> serviceErrorToView e next ctx
 
-let coreAction' action (ctx:HttpContext) =
-    task {
-        let core = ctx.GetService<CoreMicroservice>()
-        let! result = action |> core.Apply
-        return result
-    }
-
 let coreAction action view next (ctx:HttpContext) =
     task {
-        let! result = coreAction' action ctx
+        let! result = Core.coreAction' action ctx
         return! renderViewResult view next ctx result
     }
 
 let coreApiAction action : HttpHandler =
     fun next ctx ->
         task {
-            let! result = coreAction' action ctx
+            let! result = Core.coreAction' action ctx
             return! toApiResult next ctx result
         }
 

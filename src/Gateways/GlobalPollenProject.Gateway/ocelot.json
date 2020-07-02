@@ -1,5 +1,5 @@
 {
-    "ReRoutes": [{
+    "Routes": [{
             "DownstreamPathTemplate": "/api/{version}/{everything}",
             "DownstreamScheme": "http",
             "DownstreamHostAndPorts": [{
@@ -20,7 +20,7 @@
             "UpstreamHttpMethod": ["GET", "POST", "PUT"],
             "AuthenticationOptions": {
                 "AuthenticationProviderKey": "IdentityApiKey",
-                "AllowedScopes": ["core"]
+                "AllowedScopes": []
             }
         }
     ],

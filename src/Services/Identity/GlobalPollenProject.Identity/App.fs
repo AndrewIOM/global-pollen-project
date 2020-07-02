@@ -83,10 +83,12 @@ module Profile =
 
     let getClaims (user:ApplicationUser) =
         [ Claim(IdentityModel.JwtClaimTypes.Subject, user.Id)
+          Claim(IdentityModel.JwtClaimTypes.GivenName, user.GivenNames)
+          Claim(IdentityModel.JwtClaimTypes.FamilyName, user.FamilyName)
           Claim(IdentityModel.JwtClaimTypes.PreferredUserName, user.UserName)
           Claim(JwtRegisteredClaimNames.UniqueName, user.UserName) ]
-        |> appendClaim "name" user.NormalizedEmail //TODO add in all claims here
-
+        |> appendClaim "organisation" user.Organisation
+        |> appendClaim "title" user.Title
 
     type ProfileService(userManager:UserManager<ApplicationUser>) =
         interface IProfileService with
@@ -106,30 +108,8 @@ module Profile =
                     let subject = context.Subject
                     let subjectId = (subject.Claims |> Seq.where(fun x -> x.Type = "sub") |> Seq.head).Value
                     let! user = userManager.FindByIdAsync subjectId
-                    context.IsActive <- false
-                    if isNotNull user then
-                        if userManager.SupportsUserSecurityStamp then
-                            let securityStamp = subject.Claims |> Seq.where(fun c -> c.Type = "security_stamp") |> Seq.map (fun c -> c.Value) |> Seq.tryHead
-                            match securityStamp with
-                            | None -> ()
-                            | Some stamp ->
-                                let! dbSecurityStamp = userManager.GetSecurityStampAsync(user)
-                                if dbSecurityStamp <> stamp
-                                then ()
-                                else
-                                    context.IsActive <-
-                                        not user.LockoutEnabled || 
-                                        not user.LockoutEnd.HasValue// || 
-                                        //user.LockoutEnd <= DateTime.Now
-                        else
-                            context.IsActive <-
-                                not user.LockoutEnabled || 
-                                not user.LockoutEnd.HasValue// || 
-                                //user.LockoutEnd <= DateTime.Now
-                    else ()
+                    context.IsActive <- true
                 } :> Task
-
-
 
 module Handlers =
 
@@ -146,9 +126,12 @@ module Handlers =
  
     let register (model:NewAppUserRequest) : HttpHandler =
         fun next ctx ->
+            // TODO Validate model here
             task {
                 let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-                let user = ApplicationUser(UserName = model.Email, Email = model.Email)
+                let user = ApplicationUser(UserName = model.Email, Email = model.Email,
+                                           Organisation = model.Organisation, GivenNames = model.FirstName,
+                                           FamilyName = model.LastName)
                 let! result = userManager.CreateAsync(user, model.Password)
                 match result.Succeeded with
                 | true ->
@@ -461,7 +444,8 @@ module Program =
                        |> Async.AwaitTask 
                        |> Async.RunSynchronously 
                        |> ignore )
-        let powerUser = ApplicationUser(UserName = getAppSetting appSettings "UserSettings:UserEmail",Email = getAppSetting appSettings "UserSettings:UserEmail" )
+        let powerUser = ApplicationUser(UserName = getAppSetting appSettings "UserSettings:UserEmail",Email = getAppSetting appSettings "UserSettings:UserEmail",
+                                        GivenNames = "Pollen", FamilyName = "Admin", Organisation = "Global Pollen Project")
         let powerPassword = getAppSetting appSettings "UserSettings:UserPassword"
         let existing = userManager.FindByEmailAsync(getAppSetting appSettings "UserSettings:UserEmail") |> Async.AwaitTask |> Async.RunSynchronously
         if existing |> isNull 
@@ -525,6 +509,7 @@ module Program =
 
         let connectionString = getAppSetting appSettings "ConnectionStrings:UserConnection"
 
+        services.AddTransient<IProfileService, Profile.ProfileService>() |> ignore
         services.AddIdentityServer(fun config ->
             config.IssuerUri <- "null"
             config.Authentication.CookieLifetime <- TimeSpan.FromHours 2.)
@@ -544,9 +529,9 @@ module Program =
                         sqlOpt.EnableRetryOnFailure(15, TimeSpan.FromSeconds(30.), null) |> ignore
                     ) |> ignore
                 )
-            ) |> ignore
-            // .Services.AddTransient<IProfileService, ProfileService>() |> ignore
-
+            )
+            .AddProfileService<Profile.ProfileService>() |> ignore
+        
         let sp = services.BuildServiceProvider()
         let context = sp.GetService<UserDbContext>()
         context.Database.Migrate()

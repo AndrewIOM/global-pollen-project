@@ -18,23 +18,22 @@ open Polly
 open Polly.Extensions.Http
 open System.IdentityModel.Tokens.Jwt
 open Microsoft.Extensions.Diagnostics.HealthChecks
-open Account
 open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.HttpOverrides
 
 ///////////////////////////
-/// Custom Authentication Infrastructure
+/// Custom Authentication
 ///////////////////////////
 
-type HttpClientAuthorizationDelegatingHandler(httpContextAccesor:IHttpContextAccessor) =
+type HttpClientAuthorizationDelegatingHandler(httpContextAccessor:IHttpContextAccessor) =
     inherit DelegatingHandler()
-
+        
     member __.GetToken () : Task<string> =
         let accessToken = "access_token"
-        httpContextAccesor.HttpContext.GetTokenAsync(accessToken)
+        httpContextAccessor.HttpContext.GetTokenAsync(accessToken)
 
-    member this.SendAsync (request:HttpRequestMessage) (cancellationToken:CancellationToken) = 
-        let authorisationHeader = httpContextAccesor.HttpContext.Request.Headers.["Authorization"]
+    override this.SendAsync (request:HttpRequestMessage, cancellationToken:CancellationToken) = 
+        let authorisationHeader = httpContextAccessor.HttpContext.Request.Headers.["Authorization"]
         if authorisationHeader.Count > 0 then request.Headers.Add("Authorization", authorisationHeader)
         let token = this.GetToken().Result // TODO Don't call 'Result' here
         if token |> isNotNull then request.Headers.Authorization <- AuthenticationHeaderValue("Bearer", token)
@@ -43,29 +42,23 @@ type HttpClientAuthorizationDelegatingHandler(httpContextAccesor:IHttpContextAcc
 type HttpClientRequestIdDelegatingHandler() =
     inherit DelegatingHandler()
 
-    member __.SendAsync (request:HttpRequestMessage) (cancellationToken:CancellationToken) = 
+    override __.SendAsync (request:HttpRequestMessage, cancellationToken:CancellationToken) = 
         if request.Method = HttpMethod.Post || request.Method = HttpMethod.Put
         then 
-            if request.Headers.Contains "x-requestid" 
+            if request.Headers.Contains "x-requestid" |> not
             then request.Headers.Add("x-requestid", Guid.NewGuid().ToString())
         base.SendAsync(request, cancellationToken)
+
 
 ///////////////////////////
 /// App Configuration
 ///////////////////////////
 
-
-///////////////////////////
-/// Startup: Configuration
-///////////////////////////
-
 type Startup (configuration: IConfiguration) =
 
     member __.AddCustomAuthentication(services:IServiceCollection) =   
-        let useLoadTest = configuration.GetValue<bool>("UseLoadTest")
         let identityUrl = configuration.GetValue<string>("IdentityUrl")
         let callBackUrl = configuration.GetValue<string>("CallBackUrl")
-        printfn "Callback URL for OpenID is %s" callBackUrl
         let sessionCookieLifetime = configuration.GetValue("SessionCookieLifetimeMinutes", 60.)
         services
             .AddAuthentication(fun opt ->
@@ -76,9 +69,9 @@ type Startup (configuration: IConfiguration) =
                 opt.SignInScheme <- CookieAuthenticationDefaults.AuthenticationScheme
                 opt.Authority <- identityUrl.ToString()
                 opt.SignedOutRedirectUri <- callBackUrl.ToString()
-                opt.ClientId <- if useLoadTest then "mvctest" else "mvc"
+                opt.ClientId <- "mvc"
                 opt.ClientSecret <- "secret"
-                opt.ResponseType <- if useLoadTest then "code id_token token" else "code id_token"
+                opt.ResponseType <- "code id_token"
                 opt.SaveTokens <- true
                 opt.GetClaimsFromUserInfoEndpoint <- true
                 opt.RequireHttpsMetadata <- false
@@ -86,29 +79,22 @@ type Startup (configuration: IConfiguration) =
                 opt.Scope.Add("profile")
                 opt.Scope.Add("webapigw")
                 opt.Scope.Add("core"))
-
+    
     member __.AddHttpClientServices(services:IServiceCollection) =
-        services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>() |> ignore
+        services.AddHttpContextAccessor() |> ignore
         services.AddTransient<HttpClientAuthorizationDelegatingHandler>() |> ignore
         services.AddTransient<HttpClientRequestIdDelegatingHandler>() |> ignore
         services.AddHttpClient<Connections.CoreMicroservice>()
-            .SetHandlerLifetime(TimeSpan.FromMinutes(2.))
+            //.SetHandlerLifetime(TimeSpan.FromMinutes(2.))
             .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>() |> ignore
-            // .AddPolicyHandler(GetRetryPolicy())
-            // .AddPolicyHandler(GetCircuitBreakerPolicy()) |> ignore
-        services.AddHttpClient<Connections.AuthenticationService>()
-            .SetHandlerLifetime(TimeSpan.FromMinutes(2.))
-            .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>() |> ignore
-            // .AddPolicyHandler(GetRetryPolicy())
-            // .AddPolicyHandler(GetCircuitBreakerPolicy()) |> ignore
-        services.AddTransient<IdentityParser>()
+            //.AddHttpMessageHandler<HttpClientRequestIdDelegatingHandler>() |> ignore
+            //.AddPolicyHandler(GetRetryPolicy())
+            //.AddPolicyHandler(GetCircuitBreakerPolicy()) |> ignore
 
     member __.AddHealthChecks(services:IServiceCollection) =
         services.AddHealthChecks()
             .AddCheck("self", fun () -> HealthCheckResult.Healthy())
-            // .AddUrlGroup(new Uri(configuration["PurchaseUrlHC"]), name = "purchaseapigw-check", tags = [ "purchaseapigw" ])
-            // .AddUrlGroup(new Uri(configuration["MarketingUrlHC"]), name: "marketingapigw-check", tags: new string[] { "marketingapigw" })
-            // .AddUrlGroup(new Uri(configuration["IdentityUrlHC"]), name: "identityapi-check", tags: new string[] { "identityapi" });                
+            //.AddUrlGroup(new Uri(configuration["PurchaseUrlHC"]), name = "purchaseapigw-check", tags = [ "purchaseapigw" ])
 
     member this.ConfigureServices(services: IServiceCollection) =
         services
@@ -117,27 +103,22 @@ type Startup (configuration: IConfiguration) =
             .ConfigureApplicationCookie(fun opt ->
                 opt.LoginPath <- PathString "/Account/Login" )
             .AddDataProtection() |> ignore
-        // services.AddSession() |> ignore
+        services.AddMvcCore().AddDataAnnotations() |> ignore // Adds IValidationContext
         services.AddGiraffe() |> ignore
         this.AddHttpClientServices(services) |> ignore
         this.AddCustomAuthentication(services) |> ignore
-        //this.AddHealthChecks(services) |> ignore
+        this.AddHealthChecks(services) |> ignore
 
     member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
-
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear()
-
-        // app.UseHealthChecks(PathString "/health") |> ignore
-
+        app.UseHealthChecks(PathString "/health") |> ignore
         if (env.IsDevelopment()) 
         then app.UseDeveloperExceptionPage() |> ignore
         else 
             app.UseGiraffeErrorHandler(Handlers.errorHandler) |> ignore
             app.UseHsts() |> ignore
-            
+            app.UseHttpsRedirection() |> ignore
         app.UseForwardedHeaders(ForwardedHeadersOptions(ForwardedHeaders = ForwardedHeaders.XForwardedFor)) |> ignore
         app.UseStaticFiles() |> ignore
-        // app.UseSession() |> ignore
         app.UseAuthentication() |> ignore
-        // app.UseHttpsRedirection() |> ignore
         app.UseGiraffe(GlobalPollenProject.Web.App.webApp)

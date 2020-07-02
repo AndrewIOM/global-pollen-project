@@ -34,6 +34,10 @@ type Initial() =
                       PhoneNumberConfirmed = table.Column<bool>(nullable = false)
                       SecurityStamp = table.Column<string>(nullable = true)
                       TwoFactorEnabled = table.Column<bool>(nullable = false)
+                      Title = table.Column<string>(maxLength = Nullable<int>(256), nullable = true)
+                      GivenNames = table.Column<string>(maxLength = Nullable<int>(256), nullable = true)
+                      FamilyName = table.Column<string>(maxLength = Nullable<int>(256), nullable = true)
+                      Organisation = table.Column<string>(maxLength = Nullable<int>(256), nullable = true)
                       UserName = table.Column<string>(maxLength = Nullable<int>(256), nullable = true)
                     |}),
             constraints =
@@ -225,6 +229,10 @@ type Initial() =
                 b.Property<string>("SecurityStamp") |> ignore
                 b.Property<bool>("TwoFactorEnabled") |> ignore
                 b.Property<string>("UserName").HasMaxLength(256) |> ignore
+                b.Property<string>("Title") |> ignore
+                b.Property<string>("GivenNames") |> ignore
+                b.Property<string>("FamilyName") |> ignore
+                b.Property<string>("Organisation") |> ignore
                 b.HasKey("Id") |> ignore
                 b.HasIndex("NormalizedEmail").HasName("EmailIndex") |> ignore
                 b.HasIndex("NormalizedUserName").IsUnique().HasName("UserNameIndex") |> ignore

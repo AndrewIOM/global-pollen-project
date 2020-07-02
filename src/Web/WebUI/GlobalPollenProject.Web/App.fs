@@ -20,13 +20,13 @@ let mustBeAdmin ctx = requiresRole "Admin" accessDenied ctx
 /////////////////////////
 
 module Actions =
-    
+        
     let login : HttpHandler =
         requiresAuthentication (challenge "OpenIdConnect") >=>
         fun next ctx ->
             let token = ctx.GetTokenAsync("access_token") |> Async.AwaitTask |> Async.RunSynchronously
             ctx.Items.Add("access_token",token)
-            redirectTo true "/" next ctx
+            redirectTo true Urls.Account.profile next ctx
 
     let logout = signOut "Cookies" >=> redirectTo false "/"
     
@@ -127,7 +127,7 @@ module Actions =
     module Collection =
 
         let individualCollectionIndex =
-            coreAction (CoreActions.IndividualCollections.list {Page = 1; PageSize = 20}) HtmlViews.ReferenceCollections.tableView
+            coreAction (CoreActions.IndividualCollections.list {Page = 1; PageSize = 20}) HtmlViews.ReferenceCollections.listView
 
         /// Display the contents of a specific version of a reference collection 
         let individualCollection (colId:string) version =
@@ -163,10 +163,43 @@ module Actions =
             fun next ctx ->
             task {
                 let! model = ctx.BindFormAsync<IdentifyGrainRequest>()
-                let! result = coreAction' (CoreActions.UnknownMaterial.identify model) ctx
+                let! result = Core.coreAction' (CoreActions.UnknownMaterial.identify model) ctx
                 return! redirectTo true (sprintf "/Identify/%A" model.GrainId) next ctx
             }
 
+    module Account =
+        
+        let private optionToStr s =
+            match s with
+            | Some s -> s
+            | None -> ""
+        
+        // TODO Profile page and changing of public profile
+        let profile : HttpHandler =
+            fun next ctx ->
+                task {
+                    let! user = Profile.getAuthenticatedUser ctx
+                    let profile = user |> Option.bind(fun u -> u.Profile)
+                    match profile with
+                    | Some _ ->
+                        return! ResponseWriters.htmlView (HtmlViews.Profile.summary profile ctx profile) next ctx
+                    | None ->
+                        match user with
+                        | Some u ->
+                            let req = {
+                                Title = u.Title |> optionToStr
+                                FirstName = u.Firstname |> optionToStr
+                                LastName = u.Lastname |> optionToStr
+                                Organisation = u.Organisation |> optionToStr }
+                            let! result = Core.coreAction' (CoreActions.User.register req) ctx
+                            match result with
+                            | Ok _ -> return! redirectTo false Urls.Account.profile next ctx
+                            | Error _ ->
+                                printfn "Error when processing user profile. Signing out."
+                                return! (signOut "Cookies" >=> redirectTo false "/") next ctx
+                        | None -> return! (signOut "Cookies" >=> redirectTo false "/") next ctx
+                }
+    
     module Admin =
 
         let rebuildReadModel next (ctx:HttpContext) =
@@ -196,7 +229,8 @@ let webApp : HttpHandler =
         GET >=> choose [
             route  Urls.Account.login                >=> Actions.login
             route  Urls.Account.register             >=> Actions.login
-            route  Urls.Account.logout               >=> Actions.logout
+            route  Urls.Account.logout               >=> mustBeLoggedIn >=> Actions.logout
+            route  Urls.Account.profile              >=> mustBeLoggedIn >=> Actions.Account.profile
         ]
 
     let api =

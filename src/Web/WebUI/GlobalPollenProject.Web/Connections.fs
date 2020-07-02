@@ -15,52 +15,6 @@ type AppSettings = {
     IdentityUrl: string
 }
 
-type Login = {
-    userName: string
-    password: string
-}
-
-type SecurityToken = {
-    auth_token: string
-}
-
-//////////////////
-/// Identity Service
-//////////////////
-
-type AuthenticationService(client:HttpClient, appSettings:IOptions<AppSettings>) =
-
-    member __.Login(loginRequest:LoginRequest) =
-        async {
-            let url = sprintf "%s/api/authenticate" appSettings.Value.IdentityUrl
-            printfn "Connecting to: %s" url
-            printfn "Login Request: %A" loginRequest
-            let json = Serialisation.serialise {userName = loginRequest.Email; password = loginRequest.Password}
-            match json with
-            | Ok j ->
-                let! response = client.PostAsync(url, new StringContent(j, Text.Encoding.UTF8)) |> Async.AwaitTask
-                let! str = response.Content.ReadAsStringAsync() |> Async.AwaitTask
-                printfn "Returned %s" str
-                printfn "Sent %s" (response.RequestMessage.Content.ReadAsStringAsync() |> Async.AwaitTask |> Async.RunSynchronously)
-                match Serialisation.deserialise<SecurityToken> str with
-                | Ok s -> return Ok s
-                | Error e -> 
-                    printfn "Login error %s" e
-                    return Error e
-            | Error e -> return Error e
-        }
-
-    member __.Register(registerRequest:NewAppUserRequest) =
-        let url = sprintf "%s/api/register" appSettings.Value.IdentityUrl
-        printfn "Connecting to: %s" url
-        async {
-            let! response = client.PostAsJsonAsync(url, registerRequest) |> Async.AwaitTask
-            let! str = response.Content.ReadAsStringAsync() |> Async.AwaitTask
-            match Serialisation.deserialise<Result<string,ValidationError list>> str with
-            | Ok s -> return s
-            | Error e -> return invalidOp "Help"
-        }
-
 //////////////////
 /// Core / Other Services
 //////////////////
@@ -68,7 +22,7 @@ type AuthenticationService(client:HttpClient, appSettings:IOptions<AppSettings>)
 /// Represents a function that accesses a core service
 type CoreFunction<'a> = HttpClient -> System.UriBuilder -> Async<Result<'a,ServiceError>>
 
-/// A connection to the core microservice
+/// A connection to the core microservice gateway
 type CoreMicroservice(client:HttpClient, appSettings:IOptions<AppSettings>) =
     let baseUrl = appSettings.Value.CoreUrl
     member __.Apply (fn:CoreFunction<'a>) = fn client (UriBuilder(baseUrl))
@@ -78,6 +32,8 @@ module CoreActions =
 
     open Responses
     open System.Reflection
+    open System.Text
+    open System.Net.Mime
 
     let toQueryString x =
         let formatElement (pi : PropertyInfo) =
@@ -95,6 +51,7 @@ module CoreActions =
             u.Query <- queryString
             u.Path <- route
             let! response = c.GetStringAsync(u.Uri) |> Async.AwaitTask
+            printfn "Received json from GET: %s" response
             match Serialisation.deserialise<Result<'a,ServiceError>> response with
             | Ok m -> return m
             | Error _ -> return Error InvalidRequestFormat
@@ -103,14 +60,20 @@ module CoreActions =
     let CPOST<'a, 'b> (data:'a) (route:string) (c:HttpClient) (u:UriBuilder) = 
         async {
             u.Path <- route
-            let! response = c.PostAsJsonAsync(u.Uri, data) |> Async.AwaitTask
-            if response.IsSuccessStatusCode
-            then
-                let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
-                match Serialisation.deserialise<Result<'b,ServiceError>> content with
-                | Ok m -> return m
-                | Error _ -> return Error InvalidRequestFormat
-            else return Error InvalidRequestFormat
+            let json = Serialisation.serialise data
+            match json with
+            | Ok j ->
+                let stringContent = new StringContent(j, UnicodeEncoding.UTF8, MediaTypeNames.Application.Json)
+                let! response = c.PostAsync(u.Uri, stringContent) |> Async.AwaitTask
+                if response.IsSuccessStatusCode
+                then
+                    let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
+                    printfn "Received json from POST: %s" content
+                    match Serialisation.deserialise<Result<'b,ServiceError>> content with
+                    | Ok m -> return m
+                    | Error _ -> return Error InvalidRequestFormat
+                else return Error InvalidRequestFormat
+            | Error _ -> return Error InvalidRequestFormat
         }
 
     module MRC =
@@ -135,8 +98,8 @@ module CoreActions =
         let system () = CGET None "/api/v1/anon/Statistics/System"
     
     module User =
-        let publicProfile (req:Guid) = CGET (Some req) "/api/v1/anon/User/Profile"
-        let register (req:NewAppUserRequest) = CPOST req "/api/v1/User/Profile"
+        let publicProfile (req:Guid) = CGET None <| sprintf "/api/v1/anon/User/Profile/%s" (req.ToString())
+        let register (req:NewAppUserRequest) = CPOST req "/api/v1/User/Register"
 
     module Curate =
         let listPending () = CGET None "/api/v1/anon/Curate/Pending"

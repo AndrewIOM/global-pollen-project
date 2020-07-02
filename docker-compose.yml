@@ -24,6 +24,7 @@ services:
       - eventstore__eventstoreip=coreeventstore
       - eventstore__eventstoreuser=${EVENTSTORE_USER}
       - eventstore__eventstorepassword=${EVENTSTORE_PASSWORD}
+      - IdentityUrl=http://identity.api
 
   identity.api:
     image: ${REGISTRY:-gpp}/identity.api:${PLATFORM:-linux}-${TAG:-latest}
@@ -67,8 +68,7 @@ services:
       context: .
       dockerfile: src/Web/WebUI/GlobalPollenProject.Web/Dockerfile
     depends_on:
-      - core.api
-      - identity.api
+      - webapigw
     environment:
       - IdentityUrl= http://identity.api
       - CoreUrl=http://webapigw
