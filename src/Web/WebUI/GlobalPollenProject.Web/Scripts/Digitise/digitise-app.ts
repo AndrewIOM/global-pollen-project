@@ -1,4 +1,9 @@
 import * as ko from 'knockout'
+import {Viewer, ViewerEvent} from "../Components/Viewer/viewer";
+import {FocusSlider} from "../Components/Viewer/focusslider";
+import {MeasuringLine, MeasuringLineEvent, MeasuringLineState} from "../Components/Viewer/measuringline";
+import {ScaleBar} from "../Components/Viewer/scalebar";
+
 
 ////////////////////////
 /// Setup - KO Bindings
@@ -448,7 +453,7 @@ function SlideDetailViewModel(detail) {
             $("#digitisedYearStatic").val("").change();
             $("#digitisedYearStatic").datepicker({
                 format: " yyyy",
-                viewMode: "years",
+                //viewMode: "years",
                 startDate: '1850',
                 endDate: '+0d',
                 minViewMode: "years"
@@ -469,7 +474,7 @@ function SlideDetailViewModel(detail) {
             $("#digitisedYearFocus").val("").change();
             $("#digitisedYearFocus").datepicker({
                 format: " yyyy",
-                viewMode: "years",
+                //viewMode: "years",
                 startDate: '1850',
                 endDate: '+0d',
                 minViewMode: "years"
@@ -567,7 +572,7 @@ function SlideDetailViewModel(detail) {
         $("#static-image-previewer-container").html("<div id=\"static-image-previewer\"></div>");
         $("#digitisedYearStatic").datepicker({
             format: " yyyy",
-            viewMode: "years",
+            //viewMode: "years",
             startDate: '1850',
             endDate: '+0d',
             minViewMode: "years"
@@ -649,7 +654,7 @@ function SlideDetailViewModel(detail) {
 
         $("#digitisedYearFocus").datepicker({
             format: " yyyy",
-            viewMode: "years",
+            //viewMode: "years",
             startDate: '1850',
             endDate: '+0d',
             minViewMode: "years"

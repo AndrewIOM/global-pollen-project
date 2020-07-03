@@ -1,7 +1,7 @@
 function IdentifyViewModel() {
-    var self = this;
+    let self = this;
     BotanicalLookupToolViewModel.call(self);
-    self.rank() == "Genus";
+    self.rank("Genus");
 
     self.validateAndSubmit = function () {
         self.validateTaxon();
@@ -9,5 +9,5 @@ function IdentifyViewModel() {
             if (newValue != null) { (<HTMLFormElement>document.getElementById("identify-form")).submit(); }
         });
     }
-};
+}
 ko.applyBindings(new IdentifyViewModel());

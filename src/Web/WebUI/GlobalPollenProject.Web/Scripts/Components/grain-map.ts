@@ -1,7 +1,6 @@
 import * as d3 from 'd3'
 import * as $ from 'jquery'
-import * as topojson from 'topojson'
-import { GeometryCollection } from "topojson-specification";
+import * as topojson from 'topojson-client'
 
 type Grain = {
     id: string

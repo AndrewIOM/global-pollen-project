@@ -3,6 +3,10 @@
     <AssemblyName>GlobalPollenProject.Web</AssemblyName>
     <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
+  <Target Name="PrepublishScript" BeforeTargets="PrepareForPublish">
+    <Exec Command="yarn" />
+    <Exec Command="yarn run build:prod" />
+  </Target>
   <ItemGroup>
     <Compile Include="../../../Shared/Serialisation.fs" />
     <Compile Include="../../../Services/Core/GlobalPollenProject.Persistence/ReadModels.fs" />

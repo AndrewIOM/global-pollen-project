@@ -266,7 +266,8 @@ darkroom-container {
 header {
     color: #fff;
     padding-top:100px;
-    background-color:#9b538b;
+    background: rgb(155,83,139);
+    background: linear-gradient(90deg, rgb(155, 83, 139) 0%, rgb(163, 85, 146) 45%, rgb(202, 139, 188) 100%);
     padding-bottom:1em;
     margin-bottom:1em;
     // background-size: 500px;
