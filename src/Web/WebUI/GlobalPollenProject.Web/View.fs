@@ -16,6 +16,24 @@ let _on e value = KeyValue("on" + e,value)
 
 let jsBundle = "/scripts/main.bundle.js"
 
+module Settings =
+    
+    open Microsoft.Extensions.Configuration
+    
+    let appSettings =
+        ConfigurationBuilder()
+            .SetBasePath(System.IO.Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json")
+            .AddEnvironmentVariables()
+            .Build()
+
+    let getAppSetting name =
+        match String.IsNullOrEmpty appSettings.[name] with
+        | true -> invalidOp "Appsetting is missing: " + name
+        | false -> appSettings.[name]
+    
+    let googleApiKey = getAppSetting "GoogleApiKey"
+
 [<AutoOpen>]
 module Grid =
 
@@ -850,7 +868,7 @@ module Identify =
                                     a [ _href "https://twitter.com/intent/tweet?button_hashtag=GlobalPollenProject&text=Help%20identify%20this%20pollen%20grain"
                                         _class "twitter-hashtag-button"
                                         attr "url" absoluteUrl ] [ str "Tweet this grain" ]
-                                    script [] [ str "!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + '://platform.twitter.com/widgets.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'twitter-wjs');" ]
+                                    script [] [ rawText "!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + '://platform.twitter.com/widgets.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'twitter-wjs');" ]
                                 ]
                             ]
                         ]
@@ -1050,7 +1068,7 @@ module Identify =
                                 ]
                             ]
                             Grid.column Medium 9 [
-                                script [ _type "text/javascript"; _src "http://maps.google.com/maps/api/js?key=AIzaSyAgqtjZFFlVtjmCIAwzNpYJBE2ltdaUhu8" ] []
+                                script [ _type "text/javascript"; _src <| sprintf "http://maps.google.com/maps/api/js?key=%s" Settings.googleApiKey ] []
                                 div [ _id "map" ] []
                             ]
                         ]
