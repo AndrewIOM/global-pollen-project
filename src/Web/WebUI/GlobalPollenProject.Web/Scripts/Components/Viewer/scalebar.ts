@@ -1,49 +1,58 @@
+import * as d3 from 'd3';
+import { Viewer, ViewerEvent } from './viewer';
+
 /**
  * Add-on for a slide viewer - adds a scale bar to the bottom left of the
  * display. Automatically sizes based on viewer zoom level and pixel scale
- * @param {Viewer} viewer   the Viewer object to attach the scalebar to
- * @param {String} barId    the desired scalebar object id
- * @param {Float} scale     how many micrometers a single pixel represents
  */
-function ScaleBar(viewer, barId, scale) {
-    var self = this;
+export class ScaleBar {
 
-    self.viewer = viewer;
-    self.scale = scale;
-
-    self.id = barId;
-    self.svg = null;
-    self.line = null;
-    self.startText = null;
-    self.endText = null;
-
-    self.redraw = function() {
-        var endValue = ((self.viewer.width * 0.35 * self.scale) / self.viewer.getZoom()).toFixed(2);
-
-        self.line.attr("width", Math.round(self.viewer.width * 0.35));
-        self.endText.text(endValue.toString() + "μm");
-        self.endText.attr("x", 10 + Math.round(self.viewer.width * 0.35) - self.endText.node().getComputedTextLength());
+    viewer: Viewer;
+    id: string
+    scale: number;
+    svg: d3.Selection<d3.BaseType, {}, HTMLElement, any>;
+    line: d3.Selection<d3.BaseType, {}, HTMLElement, any>;
+    startText: d3.Selection<SVGTextContentElement, {}, HTMLElement, any>;
+    endText: d3.Selection<SVGTextContentElement, {}, HTMLElement, any>;
+    
+    constructor(viewer, barId, scale) {
+        this.viewer = viewer;
+        this.id = barId;
+        this.scale = scale;
+        $(this.viewer).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
+            this.initialise();
+        });
+        $(this.viewer).on(ViewerEvent.EVENT_ZOOMED, () => {
+            this.redraw();
+        });
     }
 
-    self.initialise = function() {
-        self.svg = d3.select(self.viewer.containerId).append("svg")
-            .attr("width", self.viewer.width)
+    public redraw() {
+        const endValue = ((this.viewer.width * 0.35 * this.scale) / this.viewer.getZoom()).toFixed(2);
+        this.line.attr("width", Math.round(this.viewer.width * 0.35));
+        this.endText.text(endValue.toString() + "μm");
+        this.endText.attr("x", 10 + Math.round(this.viewer.width * 0.35) - this.endText.node().getComputedTextLength());
+    }
+
+    initialise() {
+        this.svg = d3.select(this.viewer.containerId).append("svg")
+            .attr("width", this.viewer.width)
             .attr("height", 50)
             .attr("pointer-events", "none")
-            .attr("id", self.id.substr(1))
+            .attr("id", this.id.substr(1))
             .append("g");
 
-        $(self.id).css("position", "absolute");
-        $(self.id).css("left", 15);
-        $(self.id).css("bottom", 10);
+        $(this.id).css("position", "absolute");
+        $(this.id).css("left", 15);
+        $(this.id).css("bottom", 10);
 
-        self.line = self.svg.append("rect")
+        this.line = this.svg.append("rect")
             .attr("x", 10)
             .attr("y", 24)
             .attr("stroke", "white")
             .attr("height", 3);
         
-        self.startText = self.svg.append("text")
+        this.startText = this.svg.append<SVGTextContentElement>("text")
             .attr("font-family", "Courier")
             .attr("font-weight", "bold")
             .attr("font-size", "16px")
@@ -52,29 +61,20 @@ function ScaleBar(viewer, barId, scale) {
             .attr("fill", "black")
             .text("0μm");
         
-        self.endText = self.svg.append("text")
+        this.endText = this.svg.append<SVGTextContentElement>("text")
             .attr("font-family", "Courier")
             .attr("font-weight", "bold")
             .attr("font-size", "16px")
             .attr("y", 40)
             .attr("fill", "black");
 
-        self.redraw();
+        this.redraw();
     }
-
-    // initialise after the images are loaded
-    $(self.viewer).on(ViewerEvent.EVENT_LOADED_IMAGES, function () {
-        self.initialise();
-    });
-
-    $(self.viewer).on(ViewerEvent.EVENT_ZOOMED, function () {
-        self.redraw();
-    });
-
+    
     /**
      * Cleanly disposes of the viewer
      */
-    self.dispose = function() {
-        $(self.id).remove();
+    public dispose() {
+        $(this.id).remove();
     }
 }

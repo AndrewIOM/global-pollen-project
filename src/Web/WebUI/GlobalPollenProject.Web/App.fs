@@ -152,12 +152,22 @@ module Actions =
 
         let listGrains = coreAction (CoreActions.UnknownMaterial.list()) HtmlViews.Identify.index
 
-        let showGrainDetail id = coreAction (CoreActions.UnknownMaterial.itemDetail id) HtmlViews.Identify.view
+        let showGrainDetail id =
+            fun next ctx ->
+                task {
+                    let! user = Profile.getAuthenticatedUser ctx
+                    let userId = user |> Option.map(fun u -> u.Id)
+                    let absoluteUrl = sprintf "%s://%s%s" ctx.Request.Scheme ctx.Request.Host.Value ctx.Request.Path.Value
+                    return! (coreAction (CoreActions.UnknownMaterial.itemDetail id) (HtmlViews.Identify.view absoluteUrl userId)) next ctx
+                }
 
-        let submitGrain next (ctx:HttpContext) =
-             tryBindJson<AddUnknownGrainRequest> ctx
-             |> Result.map(CoreActions.UnknownMaterial.submit >> coreAction)
-             |> toApiResult next ctx
+        // TODO Remove RunSynchronously
+        let submitGrain : HttpHandler =
+             fun next ctx ->
+                tryBindJson<AddUnknownGrainRequest> ctx
+                |> Result.map(CoreActions.UnknownMaterial.submit)
+                |> Result.map(fun r -> Core.coreAction' r ctx |> Async.AwaitTask |> Async.RunSynchronously)
+                |> toApiResult next ctx
 
         let submitIdentification : HttpHandler =
             fun next ctx ->

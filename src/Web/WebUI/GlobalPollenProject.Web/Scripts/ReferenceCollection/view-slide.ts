@@ -1,4 +1,9 @@
 import 'jquery-jcrop'
+import {Viewer} from "../Components/Viewer/viewer";
+import {FocusSlider} from "../Components/Viewer/focusslider";
+import {ScaleBar} from "../Components/Viewer/scalebar";
+
+
 
 // store the components in global vars
 var viewer = null;

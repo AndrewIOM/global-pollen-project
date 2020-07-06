@@ -108,7 +108,7 @@ module CoreActions =
         let itemDetail (itemId:string) = CGET None (sprintf "/api/v1/anon/Unknown/%s" itemId)
         let list () = CGET None "/api/v1/anon/Unknown"
         let mostWanted () = CGET None "/api/v1/anon/Unknown/MostWanted"
-        let submit (req:AddUnknownGrainRequest) = CPOST req "/api/v1/Unknown/Submit"
+        let submit req = CPOST<AddUnknownGrainRequest,unit> req "/api/v1/Unknown/Submit"
         let identify (req:IdentifyGrainRequest) = CPOST req "/api/v1/Unknown/Identify"
     
     module Digitise =

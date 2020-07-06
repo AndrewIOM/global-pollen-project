@@ -29,7 +29,7 @@ const config: webpack.Configuration = {
     },
     externals: {
         jquery: "jQuery",
-        bootstrap: "bootstrap",
+        //bootstrap: "bootstrap",
         //knockout: "knockout",
         //googlemaps: "googlemaps"
     },

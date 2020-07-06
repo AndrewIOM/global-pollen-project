@@ -1,132 +1,139 @@
+import * as d3 from 'd3';
+import { Viewer, ViewerEvent } from './viewer';
+
 /**
  * Add-on for a slide viewer - when enabled, allows the user to click-drag
  * or click-click a line over the image, which shows an updating value for line length
- * @param {Viewer} viewer       the Viewer object to attach the measuring line to
- * @param {String} toolId       the desired line tool id
- * @param {Bool} disappear      should the line disappear after drawing?
- * @param {Float} scale         how many micrometers a single pixel represents - null if unknown
- * @param {String} customText   if set, shows custom text next to cursor while drawing line,
- *                              instead of distance information
  */
-function MeasuringLine(viewer, toolId, disappear, scale, customText) {
-    var self = this;
+export class MeasuringLine {
+    
+    viewer: Viewer;
+    id: string;
+    disappear: boolean;
+    scale: number;
+    customText: string;
+    state: MeasuringLineState;
+    svg: d3.Selection<d3.BaseType, {}, HTMLElement, any>;
 
-    // function parameters
-    self.viewer = viewer;
-    self.id = toolId;
-    self.disappear = disappear;
-    self.scale = scale;
-    self.customText = customText;
-
-    // the component's state
-    self.state = MeasuringLineState.STATE_INACTIVE;
-
-    // line geometry
-    self.line = null;
-    self.startX = null;
-    self.startY = null;
-    self.endX = null;
-    self.endY = null;
+    line: d3.Selection<d3.BaseType, {}, HTMLElement, any>;
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
 
     // viewer zoom information
-    self.viewerZoom = null;
-    self.savedTransformX = null;
-    self.savedTransformY = null;
+    viewerZoom: number;
+    savedTransformX: number;
+    savedTransformY: number;
 
-    self.activate = function () {
-        self.state = MeasuringLineState.STATE_ACTIVE;
+    /**
+     * @param viewer       the Viewer object to attach the measuring line to
+     * @param toolId       the desired line tool id
+     * @param disappear    should the line disappear after drawing?
+     * @param scale        how many micrometers a single pixel represents - null if unknown
+     * @param customText   if set, shows custom text next to cursor while drawing line, instead of distance information
+     */
+    constructor(viewer: Viewer, toolId: string, disappear: boolean, scale: number, customText: string) {
+        this.viewer = viewer;
+        this.id = toolId;
+        this.disappear = disappear;
+        this.scale = scale;
+        this.customText = customText;
+        this.state = MeasuringLineState.STATE_INACTIVE;
+    }
+    
+    activate() {
+        this.state = MeasuringLineState.STATE_ACTIVE;
 
-        self.svg = d3.select(self.viewer.containerId).append("svg")
-            .attr("width", self.viewer.width)
-            .attr("height", self.viewer.height)
-            .attr("id", self.id.substr(1))
-            .on("mousedown", function () {
-                var m = d3.mouse(d3.event.currentTarget);
-                if (self.state == MeasuringLineState.STATE_ACTIVE) {
-                    self.startLine(m[0], m[1]);
-                } else if (self.state == MeasuringLineState.STATE_DRAWING) {
-                    self.endLine(m[0], m[1]);
+        this.svg = d3.select(this.viewer.containerId).append("svg")
+            .attr("width", this.viewer.width)
+            .attr("height", this.viewer.height)
+            .attr("id", this.id.substr(1))
+            .on("mousedown", () => {
+                const m = d3.mouse(d3.event.currentTarget);
+                if (this.state == MeasuringLineState.STATE_ACTIVE) {
+                    this.startLine(m[0], m[1]);
+                } else if (this.state == MeasuringLineState.STATE_DRAWING) {
+                    this.endLine(m[0], m[1]);
                 }
             })
-            .on("mousemove", function () {
-                if(self.state == MeasuringLineState.STATE_DRAWING) {
-                    var m = d3.mouse(d3.event.currentTarget);
-                    self.endX = m[0];
-                    self.endY = m[1];
-                    self.redrawLine();
+            .on("mousemove", () => {
+                if(this.state == MeasuringLineState.STATE_DRAWING) {
+                    const m = d3.mouse(d3.event.currentTarget);
+                    this.endX = m[0];
+                    this.endY = m[1];
+                    this.redrawLine();
                 }
             })
             .append("g");
 
-        self.line = self.svg.append("line")
+        this.line = this.svg.append("line")
             .attr("stroke-width", "2")
             .attr("stroke", "white")
             .attr("visibility", "hidden");
 
-        $(self.id).css("position", "absolute");
-        $(self.id).css("cursor", "crosshair");
+        $(this.id).css("position", "absolute");
+        $(this.id).css("cursor", "crosshair");
 
-        $(self.viewer).on(ViewerEvent.EVENT_ZOOMED, function() {
-            if(self.state == MeasuringLineState.STATE_DRAWN) {
-                self.redrawLine();
+        $(this.viewer).on(ViewerEvent.EVENT_ZOOMED, () => {
+            if(this.state == MeasuringLineState.STATE_DRAWN) {
+                this.redrawLine();
             }
         });
     }
 
-    self.redrawLine = function () {
-        if(self.state == MeasuringLineState.STATE_DRAWING) {
-            self.line.attr("visibility", "visible");
-            self.line.attr("x1", self.startX);
-            self.line.attr("y1", self.startY);
-            self.line.attr("x2", self.endX);
-            self.line.attr("y2", self.endY);
-        } else if (self.state == MeasuringLineState.STATE_DRAWN) {
-            var zoomDelta = self.viewer.getZoom() / self.viewerZoom;
-
-            self.line.attr("visibility", "visible");
-            self.line.attr("x1", (self.startX + (self.viewer.getTransformX() / zoomDelta - self.savedTransformX)) * zoomDelta);
-            self.line.attr("y1", (self.startY + (self.viewer.getTransformY() / zoomDelta - self.savedTransformY)) * zoomDelta);
-            self.line.attr("x2", (self.endX + (self.viewer.getTransformX() / zoomDelta - self.savedTransformX)) * zoomDelta);
-            self.line.attr("y2", (self.endY + (self.viewer.getTransformY() / zoomDelta - self.savedTransformY)) * zoomDelta);
+    redrawLine() {
+        if(this.state == MeasuringLineState.STATE_DRAWING) {
+            this.line.attr("visibility", "visible");
+            this.line.attr("x1", this.startX);
+            this.line.attr("y1", this.startY);
+            this.line.attr("x2", this.endX);
+            this.line.attr("y2", this.endY);
+        } else if (this.state == MeasuringLineState.STATE_DRAWN) {
+            const zoomDelta = this.viewer.getZoom() / this.viewerZoom;
+            this.line.attr("visibility", "visible");
+            this.line.attr("x1", (this.startX + (this.viewer.getTransformX() / zoomDelta - this.savedTransformX)) * zoomDelta);
+            this.line.attr("y1", (this.startY + (this.viewer.getTransformY() / zoomDelta - this.savedTransformY)) * zoomDelta);
+            this.line.attr("x2", (this.endX + (this.viewer.getTransformX() / zoomDelta - this.savedTransformX)) * zoomDelta);
+            this.line.attr("y2", (this.endY + (this.viewer.getTransformY() / zoomDelta - this.savedTransformY)) * zoomDelta);
         }        
     }
 
-    self.startLine = function (x, y) {
-        self.state = MeasuringLineState.STATE_DRAWING;
+    startLine(x, y) {
+        this.state = MeasuringLineState.STATE_DRAWING;
         
-        self.startX = x;
-        self.startY = y;
-        self.endX = x;
-        self.endY = y;
-        self.redrawLine();
+        this.startX = x;
+        this.startY = y;
+        this.endX = x;
+        this.endY = y;
+        this.redrawLine();
         $(self).trigger(MeasuringLineEvent.EVENT_DRAWING);
     }
 
-    self.endLine = function (x, y) {
-        self.state = MeasuringLineState.STATE_DRAWN;
-        self.endX = x;
-        self.endY = y;
+    endLine(x, y) {
+        this.state = MeasuringLineState.STATE_DRAWN;
+        this.endX = x;
+        this.endY = y;
 
-        self.viewerZoom = self.viewer.getZoom();
-        self.savedTransformX = self.viewer.getTransformX();
-        self.savedTransformY = self.viewer.getTransformY();
+        this.viewerZoom = this.viewer.getZoom();
+        this.savedTransformX = this.viewer.getTransformX();
+        this.savedTransformY = this.viewer.getTransformY();
 
-        $(self.id).css("pointer-events", "none");
+        $(this.id).css("pointer-events", "none");
         $(self).trigger(MeasuringLineEvent.EVENT_DRAWN);
     }
 
-    self.getPixelPoints = function() {
-        if(self.startX == null || self.startY == null || self.endX == null || self.endY == null) return null;
+    getPixelPoints() {
+        if(this.startX == null || this.startY == null || this.endX == null || this.endY == null) return null;
 
         return [
-            [(self.startX - self.savedTransformX) / self.viewerZoom, (self.startY - self.savedTransformY) / self.viewerZoom],
-            [(self.endX - self.savedTransformX) / self.viewerZoom, (self.endY - self.savedTransformY) / self.viewerZoom]
+            [(this.startX - this.savedTransformX) / this.viewerZoom, (this.startY - this.savedTransformY) / this.viewerZoom],
+            [(this.endX - this.savedTransformX) / this.viewerZoom, (this.endY - this.savedTransformY) / this.viewerZoom]
         ];
     }
 
-    self.getPixelLength = function() {
-        var points = self.getPixelPoints();
-
+    public getPixelLength() {
+        const points = this.getPixelPoints();
         return Math.sqrt((points[0][0] - points[1][0]) * 
             (points[0][0] - points[1][0]) + 
             (points[0][1] - points[1][1]) *
@@ -136,19 +143,19 @@ function MeasuringLine(viewer, toolId, disappear, scale, customText) {
     /**
      * Cleanly disposes of the viewer
      */
-    self.dispose = function() {
-        $(self.id).remove();
+    dispose() {
+        $(this.id).remove();
     }
 }
 
-enum MeasuringLineState {
+export enum MeasuringLineState {
     STATE_INACTIVE = 0,
     STATE_ACTIVE = 1,
     STATE_DRAWING = 2,
     STATE_DRAWN = 3,
 }
 
-enum MeasuringLineEvent {
+export enum MeasuringLineEvent {
     EVENT_DRAWING = "drawing",
     EVENT_DRAWN = "drawn"
 }

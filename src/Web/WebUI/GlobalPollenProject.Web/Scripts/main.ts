@@ -2,10 +2,11 @@
 /// Global Pollen Project - Base Script Bundle
 ///////////////////////////////////////////////
 
-// Hook up individual GPP components
+import 'bootstrap';
 import * as ES6Promise from "es6-promise";
 ES6Promise.polyfill();
 
+// Individual Components
 async function autocomplete() {
     const container = document.getElementById("ref-collection-search");
     if (container !== null) {
@@ -28,6 +29,16 @@ async function unobtrusiveValidation() {
     }
 }
 
+// Page-specific compositions
+
+async function addGrainForm() {
+    const form = document.getElementById("add-grain-form");
+    if (form !== null) {
+        const component = await import("./UnknownMaterial/upload-grain");
+        component.activate(form);
+    }
+}
+
 async function digitiseSPA() {
     const container = document.getElementById("digitise-app");
     if (container !== null) {
@@ -40,3 +51,4 @@ autocomplete();
 grainMap();
 unobtrusiveValidation();
 digitiseSPA();
+addGrainForm();

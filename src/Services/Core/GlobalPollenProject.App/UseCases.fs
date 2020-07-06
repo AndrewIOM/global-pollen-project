@@ -488,8 +488,8 @@ module Backbone =
 
         let taxa = readPlantListTextFile filePath
         let commands : Command list = processTaxa [] taxa taxa
-        //printfn "Issuing %i import commands..." commands.Length
-        //commands |> List.map issueCommand |> ignore
+        printfn "Issuing %i import commands..." commands.Length
+        commands |> List.map issueCommand |> ignore
         ()
 
     let searchNames (request:BackboneSearchRequest) =

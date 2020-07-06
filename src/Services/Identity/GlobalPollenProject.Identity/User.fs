@@ -6,6 +6,10 @@ open Microsoft.AspNetCore.Http
 [<AllowNullLiteral>]
 type ApplicationUser () =
     inherit IdentityUser ()
+    member val Title = "" with get, set
+    member val GivenNames = "" with get, set
+    member val FamilyName = "" with get, set
+    member val Organisation = "" with get, set
 
 type AspNetUser(accessor:IHttpContextAccessor) =
 

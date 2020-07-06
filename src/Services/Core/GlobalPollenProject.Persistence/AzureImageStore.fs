@@ -7,6 +7,8 @@ open System.IO
 open System
 open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Composition
+open SixLabors.ImageSharp.PixelFormats
+open SixLabors.ImageSharp.Processing
 
 let calcScale maxDimension height width =
     let scale = 
@@ -52,7 +54,6 @@ let scaleImage maxDimension (stream:Stream) =
     let w = (float image.Width) * resizeRatio
     image.Mutate(fun i -> i.Resize(int w, int h) |> ignore)
     image.SaveAsPng(memoryStream)
-    // image.Resize(int w,int h).SaveAsPng(memoryStream) |> ignore
     memoryStream.Position <- int64(0)
     memoryStream
 

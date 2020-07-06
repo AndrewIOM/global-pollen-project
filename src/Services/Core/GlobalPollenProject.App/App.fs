@@ -217,9 +217,9 @@ type Startup () =
             app.UseDeveloperExceptionPage() |> ignore
             U.Admin.rebuildReadModel() |> ignore
             // Seed an extract of taxonomic names if there are none:
-            //match U.Backbone.searchNames { Rank = "Family"; LatinName = "Poaceae"; Family = "Poaceae"; Genus = ""; Species = ""; Authorship = "" } with
-            //| Ok s -> if s.Length = 0 then U.Backbone.importAll "data/plant-list-extract.txt"
-            //| Error _ -> ()
+            match U.Backbone.searchNames { Rank = "Family"; LatinName = "Poaceae"; Family = "Poaceae"; Genus = ""; Species = ""; Authorship = "" } with
+            | Ok s -> if s.Length = 0 then U.Backbone.importAll "data/plant-list-extract.txt"
+            | Error _ -> ()
         app.UseStaticFiles() |> ignore
         app.UseAuthentication() |> ignore
         app.UseGiraffe routes |> ignore

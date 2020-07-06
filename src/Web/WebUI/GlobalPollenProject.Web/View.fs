@@ -14,7 +14,7 @@ let _integrity v = KeyValue("integrity", v)
 let _role value = KeyValue("role",value)
 let _on e value = KeyValue("on" + e,value)
 
-let jsBundle = "/Scripts/main.bundle.js"
+let jsBundle = "/scripts/main.bundle.js"
 
 [<AutoOpen>]
 module Grid =
@@ -44,25 +44,15 @@ module MvcAttributeValidation =
 
     open Microsoft.AspNetCore.Mvc.DataAnnotations
     open Microsoft.AspNetCore.Mvc.ModelBinding
-    open Microsoft.AspNetCore.Mvc.ModelBinding.Metadata
     open Microsoft.AspNetCore.Mvc.ModelBinding.Validation
     open Microsoft.AspNetCore.Mvc.ViewFeatures
-    open Microsoft.Extensions.Options
+    open Microsoft.AspNetCore.Http
+    open Giraffe
+    open System.ComponentModel.DataAnnotations
+    open System.Collections.Generic
 
-    // type ModelMetadataProvider =
-    //     inherit DefaultModelMetadataProvider
-    //     static member CreateDefaultProvider() =
-    //         let detailsProviders = [
-    //             new DefaultBindingMetadataProvider() :> IMetadataDetailsProvider
-    //             new DefaultValidationMetadataProvider() :> IMetadataDetailsProvider
-    //             new DataAnnotationsMetadataProvider(Options.Create(new MvcDataAnnotationsLocalizationOptions()), null) :> IMetadataDetailsProvider
-    //             new DataMemberRequiredBindingMetadataProvider() :> IMetadataDetailsProvider
-    //         ]
-    //         let compositeDetailsProvider = new DefaultCompositeMetadataDetailsProvider(detailsProviders)
-    //         DefaultModelMetadataProvider(compositeDetailsProvider, Options.Create(Microsoft.AspNetCore.Mvc.MvcOptions()))
-
-    let clientSideInputValidationTags' (p:Type) pName attr =
-        let provider = EmptyModelMetadataProvider() //ModelMetadataProvider.CreateDefaultProvider()
+    let clientSideInputValidationTags' (p:Type) pName attr (ctx:HttpContext) =
+        let provider = ctx.GetService<IModelMetadataProvider>();
         let metadata = provider.GetMetadataForProperty(p, pName)
         let actionContext = Microsoft.AspNetCore.Mvc.ActionContext()
         let context = ClientModelValidationContext(actionContext, metadata, provider, AttributeDictionary())
@@ -73,11 +63,19 @@ module MvcAttributeValidation =
         | false -> a.AddValidation context
         context.Attributes
 
-    let clientSideInputValidationTags p pName attr =
-        clientSideInputValidationTags' p pName attr
+    let clientSideInputValidationTags p pName ctx attr =
+        clientSideInputValidationTags' p pName attr ctx
         :> seq<_>
         |> Seq.map (fun i -> KeyValue(i.Key,i.Value))
 
+    let validateModel u (ctx:HttpContext) =
+        let provider = ctx.GetService<IModelMetadataProvider>()
+        let context = ValidationContext(provider, null)
+        let validationResults = List<ValidationResult>()
+        Validator.TryValidateObject(u, context, validationResults, true) |> ignore
+        validationResults
+        |> Seq.map(fun e -> { Property = e.MemberNames |> Seq.head; Errors = [ e.ErrorMessage ] } )
+        |> Seq.toList
 
 module TagHelpers =
 
@@ -96,12 +94,12 @@ module TagHelpers =
             | None -> pi.Name
         | _ -> ""
 
-    let validationFor expr =
+    let validationFor expr ctx =
         match expr with 
         | PropertyGet(_,pi,_) -> 
             pi.GetCustomAttributes(typeof<ValidationAttribute>,false)
             |> Seq.choose (fun t -> match t with | :? ValidationAttribute as v -> Some v | _ -> None)
-            |> Seq.collect (MvcAttributeValidation.clientSideInputValidationTags pi.DeclaringType pi.Name)
+            |> Seq.collect (MvcAttributeValidation.clientSideInputValidationTags pi.DeclaringType pi.Name ctx)
             |> Seq.toList
         | _ -> []
 
@@ -119,23 +117,24 @@ module Forms =
             ]
         ]
 
-    let formField (e:Expr) =
+    let formField (e:Expr) ctx =
         let name = propertyName e
-        let validationAttributes = validationFor e
+        let validationAttributes = validationFor e ctx
         formField' name validationAttributes
 
-    let formGroup (e:Expr) helpText =
+    let formGroup (e:Expr) helpText ctx =
         let name = propertyName e
-        let validationAttributes = validationFor e
+        let validationAttributes = validationFor e ctx
         div [ _class "form-group" ] [
             label [] [ encodedText name ]
             input (List.concat [[ _id name; _name name; _class "form-control"; ]; validationAttributes ])
             small [ _id "name-help" ] [ encodedText helpText ] 
         ]
 
-    let validationSummary (additionalErrors: ValidationError list) vm =
+    let validationSummary (additionalErrors: ValidationError list) vm ctx =
         let errorHtml =
-            additionalErrors
+            MvcAttributeValidation.validateModel vm ctx
+            |> List.append additionalErrors
             |> List.collect (fun e -> e.Errors)
             |> List.map encodedText
         div [] errorHtml
@@ -157,6 +156,10 @@ module Layout =
                 li [ _class "navbar-dropdown" ] [
                     a [ _class "nav-link dropdown-toggle"; _href "#"; _id "navbarDropdownMenuLink" ] [
                         span [] [ encodedText (sprintf "%s %s" p.FirstName p.LastName) ]
+                    ]
+                    div [ _class "dropdown-menu" ] [
+                        a [ _href "/Profile" ] [ str "Your profile" ]
+                        a [ _href "/Account/Logout" ] [ str "Log out" ]
                     ]
                 ]
             ]
@@ -262,8 +265,6 @@ module Layout =
 
     let baseScripts = [
         "https://code.jquery.com/jquery-3.2.1.min.js"
-        "https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
-        "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
         jsBundle ]
 
     let master (scripts: Script list) content profile =
@@ -277,7 +278,6 @@ module Layout =
                     ((List.concat [baseScripts; scripts]) |> toScriptTags) ] )
         ]
 
-
     let standard scripts title subtitle content =
         master scripts ( headerBar title subtitle :: [ Grid.container content ])
 
@@ -289,8 +289,8 @@ module Components =
         let home = breadcrumbItem "Home" Urls.home
         let parents = parentPages |> List.map (fun p -> breadcrumbItem p.Name p.Url)
         let current = li [ _class "breadcrumb-item" ] [ a [] [ encodedText currentPageName ] ]
-        div [ _class "row" ] [
-            div [ _class "col-md-12" ] [
+        Grid.row [
+            Grid.column Medium 12 [
                 ol [ _class "breadcrumb" ] (List.concat [[home]; parents; [current]] )
             ]
         ]
@@ -760,15 +760,352 @@ module Identify =
             ]
         ] |> Layout.standard [] title "Some specimens have been submitted, for which the botanical origin is not known. Can you help with a morphological identification?"
 
-    let view vm = 
+    let disqus url =
+        []
+    
+    let view absoluteUrl currentUserId (vm:GrainDetail) =
+        let myIdentification =
+            match currentUserId with
+            | None -> None
+            | Some userId -> vm.Identifications |> Seq.tryFind(fun i -> i.User = userId)
         [
-
-        ] |> Layout.standard [] "View" "View"
+            // Scripts: d3 viewer focusSlider scalebar slide knockout lookup identify
+            // TODO Move to typescript?: $(function() {
+            // var frames = ("@Model.Images[0].Frames").slice(1, -1).split(";");
+            //     createViewer(frames, @Model.Images[0].PixelWidth);
+            // });
+            Components.breadcrumb [
+                { Name = "Home"; Url = Urls.home }
+                { Name = "Pollen of Unknown Identity"; Url = Urls.Identify.root }
+            ] "Unidentified Specimen"
+            
+            Grid.row [
+                Grid.column Medium 6 [
+                    div [ _id "viewer-container" ] []
+                    div [ _class "card" ] [
+                        div [ _class "card-header" ] [ str "Select image:" ]
+                        div [ _class "card-block" ] [
+                            div [ _class "row"; _id "slide-gallery" ] (vm.Images |> List.map(fun i ->
+                                div [ _class "slide-gallery-item col-md-3"
+                                      attr "data-frames" (i.Frames.ToString())
+                                      attr "data-pixelwidth" (i.PixelWidth.ToString()) ] [
+                                    img [ _src i.Frames.Head; _alt "Image preview" ]
+                                ]
+                             ))
+                        ]
+                    ]
+                    div [ _class "card" ] [
+                        div [ _class "card-header" ] [ str "Discussion" ]
+                        div [ _class "card-block" ] (disqus "")
+                    ]
+                ]
+                Grid.column Medium 6 [
+                    div [ _class "panel panel-default" ] [
+                        div [ _class "panel-heading" ] [
+                            Icons.fontawesome "leaf"
+                            str " Context"
+                        ]
+                        div [ _class "panel-body" ] [
+                            Grid.row [
+                                Grid.column Medium 4 [
+                                    label [] [ str "Sampling Method" ]
+                                ]
+                                Grid.column Medium 8 [
+                                    match vm.AgeType with
+                                    | "Calendar" -> span [] [
+                                        strong [] [ str "Environmental." ]
+                                        str "This grain or spore was from the environment, for example from a pollen trap, bee, honey, or soil."
+                                        ]
+                                    | _ -> span [] [
+                                        strong [] [ str "Fossil." ]
+                                        str "This grain or spore was taken from a sediment core or other environmental archive."
+                                    ]
+                                ]
+                            ]
+                            Grid.row [
+                                Grid.column Medium 4 [
+                                    match vm.AgeType with
+                                    | "Calendar" -> label [] [ str "Year of Sampling" ]
+                                    | _ -> label [] [ str "Age" ]
+                                ]
+                                Grid.column Medium 8 [
+                                    if String.IsNullOrEmpty vm.AgeType then span [] [ str "Unknown" ]
+                                    else if vm.AgeType <> "Calendar" then span [] [ str <| sprintf "%s years before present" (vm.Age.ToString("#,###")) ]
+                                    else span [] [ str <| vm.Age.ToString() ]
+                                ]
+                            ]
+                            Grid.row [
+                                Grid.column Medium 12 [
+                                    hr []
+                                    label [] [ str "Location" ]
+                                    img [ _style "text-align: left; margin-right: auto; display: block; max-width: 100%"
+                                          _alt "Pollen Location"
+                                          // TODO Move access token to appSettings
+                                          _src <| sprintf "https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/pin-s-a+9ed4bd(%f,%f)/%f,%f,3/560x200@2x?access_token=pk.eyJ1IjoibWFyZWVwMjAwMCIsImEiOiJjaWppeGUxdm8wMDQ3dmVtNHNhcHh0cHA1In0.OrAULrL8pJaL9N5WerUUDQ" vm.Longitude vm.Latitude vm.Longitude vm.Latitude ]
+                                ]
+                            ]
+                            Grid.row [
+                                Grid.column Medium 4 [ label [] [ str "Share" ] ]
+                                Grid.column Medium 8 [
+                                    a [ _href "https://twitter.com/intent/tweet?button_hashtag=GlobalPollenProject&text=Help%20identify%20this%20pollen%20grain"
+                                        _class "twitter-hashtag-button"
+                                        attr "url" absoluteUrl ] [ str "Tweet this grain" ]
+                                    script [] [ str "!function (d, s, id) { var js, fjs = d.getElementsByTagName(s)[0], p = /^http:/.test(d.location) ? 'http' : 'https'; if (!d.getElementById(id)) { js = d.createElement(s); js.id = id; js.src = p + '://platform.twitter.com/widgets.js'; fjs.parentNode.insertBefore(js, fjs); } }(document, 'script', 'twitter-wjs');" ]
+                                ]
+                            ]
+                        ]
+                    ]
+                    
+                    // Identification pane
+                    div [ _class "panel panel-primary" ] [
+                        div [ _class "panel-heading" ] [
+                            Icons.fontawesome "search"
+                            str " Identify"
+                        ]
+                        div [ _class "panel-body" ] [
+                            match currentUserId with
+                            | None ->
+                                p [] [
+                                    a [ _href Urls.Account.login ] [ str "Log in" ]
+                                    str " to identify this specimen."
+                                ]
+                            | Some _ ->
+                                match myIdentification with
+                                | Some _ -> span [] [ str "Thank you for suggesting a taxonomic identification." ]
+                                | None ->
+                                    h4 [] [ str "Can you identify this grain?" ]
+                                    form [ _method "POST"; _action Urls.Identify.identify; _id "identify-form" ] [
+                                        p [] [
+                                            str "I can identify this grain to"
+                                            select [ attr "data-bind" "value: rank"
+                                                     _class "form-control form-control-sm inline-dropdown" ] [
+                                                option [ _value "Family" ] [ str "Family" ]
+                                                option [ _value "Genus" ] [ str "Genus" ]
+                                                option [ _value "Species" ] [ str "Species" ]
+                                            ]
+                                            str "rank."
+                                        ]
+                                        Grid.row [
+                                            Grid.column Small 3 [
+                                                input [ attr "data-bind" "value: family, event: { blur: capitaliseFirstLetter($element) }"
+                                                        _type "text"; _id "original-Family"; _class "form-control"
+                                                        _onkeyup "suggest(this, 'Family');"
+                                                        _autocomplete "off"; _placeholder "Family" ]
+                                                ul [ _class "dropdown-menu taxon-dropdown"; _id "FamilyList"
+                                                     _style "display:none" ] []
+                                            ]
+                                            Grid.column Small 3 [
+                                                input [ attr "data-bind" "value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element) }"
+                                                        _type "text"; _id "original-Genus"; _class "form-control"
+                                                        _onblur "disable('Genus');"
+                                                        _onkeyup "suggest(this, 'Genus');"
+                                                        _autocomplete "off"; _placeholder "Genus" ]
+                                                ul [ _class "dropdown-menu taxon-dropdown"; _id "GenusList"
+                                                     _style "display:none" ] []
+                                            ]
+                                            Grid.column Small 3 [
+                                                input [ attr "data-bind" "value: species, disable: rank() != 'Species'"
+                                                        _type "text"; _id "original-Species"; _class "form-control"
+                                                        _onblur "disable('Species');"
+                                                        _onkeyup "suggest(this, 'Species');"
+                                                        _autocomplete "off"; _placeholder "Species" ]
+                                                ul [ _class "dropdown-menu taxon-dropdown"; _id "SpeciesList"
+                                                     _style "display:none" ] []
+                                            ]
+                                            Grid.column Small 3 [
+                                                input [ attr "data-bind" "value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }"
+                                                        _type "text"; _class "form-control"; _autocomplete "off"; _placeholder "Auth." ]
+                                            ]
+                                        ]
+                                        small [] [ str "Authorship is optional. The given name will be traced within our taxonomic backbone to the currently accepted name." ]
+                                        div [ attr "data-bind" "visible: newSlideTaxonStatus, if: newSlideTaxonStatus" ] [
+                                            div [ attr "data-bind" "visible: newSlideTaxonStatus() == 'Error'" ] [
+                                                p [] [
+                                                    Icons.fontawesome "frown-o"
+                                                    str " There was a problem communicating with the taxonomic backbone."
+                                                ]
+                                            ]
+                                            div [ attr "data-bind" "visible: newSlideTaxonStatus().length > 1" ] [
+                                                p [] [
+                                                    Icons.fontawesome "frown-o"
+                                                    str " Validation unsuccessful. There are "
+                                                    span [ attr "data-bind" "text: newSlideTaxonStatus().length" ] []
+                                                    str " matching names."
+                                                ]
+                                                ul [ attr "data-bind" "foreach: newSlideTaxonStatus" ] [
+                                                    li [ attr "data-bind" "text: LatinName + ' ' + NamedBy + ' (' + TaxonomicStatus + ' name)'" ] []
+                                                ]
+                                            ]
+                                            div [ attr "data-bind" "visible: newSlideTaxonStatus().length == 0" ] [
+                                                p [] [
+                                                    Icons.fontawesome "frown-o"
+                                                    str " Taxon was not recognised by our taxonomic backbone."
+                                                ]
+                                            ]
+                                        ]
+                                        input [ _hidden; _name "TaxonId"; _id "TaxonId"; attr "data-bind" "value: currentTaxon" ]
+                                        input [ _hidden; _name "GrainId"; _id "GrainId"; _value <| vm.Id.ToString() ]
+                                        button [ _class "btn btn-primary"; _style "display:block"
+                                                 attr "data-bind" "click: validateAndSubmit, enable: isValidTaxonSearch" ] [
+                                            str "Identify"
+                                        ]
+                                    ] // end of form
+                                    h4 [] [ str "Current Identification" ]
+                                    match vm.Identifications.Length with
+                                    | 0 -> p [] [ str "No current identifications" ]
+                                    | _ ->
+                                        table [ _class "table" ] [
+                                            thead [] [
+                                                tr [] [
+                                                    th [] [ str "Rank" ]
+                                                    th [] [ str "Method" ]
+                                                    th [] [ str "Identified as" ]
+                                                ]
+                                            ]
+                                            tbody [] (vm.Identifications |> List.map(fun i ->
+                                                tr [] [
+                                                    td [] [ str i.Rank ]
+                                                    td [] [ str i.IdentificationMethod ]
+                                                    td [] [ str <| sprintf "%s %s %s %s" i.Family i.Genus i.Species i.SpAuth ]
+                                            ]))
+                                        ]
+                                        
+                        ]
+                    ] // end identification pane
+                ]
+            ]
+        ] |> Layout.standard []
+                 "Unidentified Specimen"
+                 "This individual pollen grain or spore does not have a taxonomic identification. Can you help?"
 
     let add vm = 
         [
-
-        ] |> Layout.standard [] "Add" "Add"
+            // TODO Add datepicker to bundle call - CSS and JS
+            // TODO bootstrap, d3, jcrop, viewer, measuringline, datepicker, add
+            
+            form [ _id "add-grain-form"; _novalidate ] [
+                
+                // Alert box
+                div [ _class "alert alert-danger"; _id "errors-box" ] [
+                    div [ _class "col-md-1" ] [
+                        i [ _class "fa fa-exclamation-triangle"; _aria "hidden" "true"; _style "font-size: 2em; width: 100%; text-align: center" ] []
+                    ]
+                    div [ _class "col-md-11" ] [
+                        p [ _id "errors" ] []
+                    ]
+                ]
+                
+                // 1. Sampling Method
+                div [ _class "card identify-form-section"; _id "identity-sampling-section" ] [
+                    div [ _class "card-header" ] [ str "1 - Choose Sampling Method" ]
+                    div [ _class "card-block" ] [
+                        fieldset [ _class "form-group row"; _id "identify-sampling-method" ] [
+                            div [ _class "col-sm-10" ] [
+                                div [ _class "form-check" ] [
+                                    label [ _class "form-check-label" ] [
+                                        input [ _class "form-check-input"; _name "identify-method-radio"; _id "identify-sampling-method-fossil"; _type "radio"; _value "fossil"; _checked ]
+                                        str "A fossil pollen grain, or spore, obtained from a sedimentary sequence."
+                                    ]
+                                ]
+                                div [ _class "form-check" ] [
+                                    label [ _class "form-check-label" ] [
+                                        input [ _class "form-check-input"; _name "identify-method-radio"; _id "identify-sampling-method-environmental"; _type "radio"; _value "environmental"; _checked ]
+                                        str "A pollen grain collected from the environment, for example from a pollen trap, bee, honey, or soil. This grain has not been fossilised."
+                                    ]
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+                
+                // 2. Upload images
+                div [ _class "card identify-form-section"; _id "identify-image-section" ] [
+                    div [ _class "card-header" ] [ str "2 - Upload Image(s)" ]
+                    div [ _class "card-block" ] [
+                        label [ _for "identify-image-upload-button" ] [ str "Select image(s) (Shift-Click/Ctrl-Click to select multiple)" ]
+                        br []
+                        input [ _type "file"; _multiple; _class "upload btn"; _id "identify-image-upload-button" ]
+                        div [ _id "identify-image-configuration"; _style "display:none" ] [
+                            ul [ _class "nav nav-tabs"; _id "identify-image-config-tabs"; _role "tablist" ] []
+                            div [ _class "tab-content"; _id "identify-image-config-content" ] [] 
+                        ]
+                    ]
+                ]
+                
+                // 3. Location
+                div [ _class "card identify-form-section"; _id "identify-location-section" ] [
+                    div [ _class "card-header" ] [ str "3 - Location" ]
+                    div [ _class "card-block" ] [
+                        Grid.row [
+                            Grid.column Medium 3 [
+                                label [] [ str "Where was the pollen grain collected from? Click on the map to drop a pin in the correct location." ]
+                                hr []
+                                div [ _class "input-group" ] [
+                                    input [ _class "text"; _readonly; _id "latitude-input"; _class "form-control"; _placeholder "Latitude" ]
+                                    span [ _class "input-group-addon" ] []
+                                ]
+                                div [ _class "input-group" ] [
+                                    input [ _class "text"; _readonly; _id "longitude-input"; _class "form-control"; _placeholder "Longitude" ]
+                                    span [ _class "input-group-addon" ] []
+                                ]
+                            ]
+                            Grid.column Medium 9 [
+                                script [ _type "text/javascript"; _src "http://maps.google.com/maps/api/js?key=AIzaSyAgqtjZFFlVtjmCIAwzNpYJBE2ltdaUhu8" ] []
+                                div [ _id "map" ] []
+                            ]
+                        ]
+                    ]
+                ]
+                
+                // 4. Time
+                div [ _class "card identify-form-section"; _id "identify-temporal-section" ] [
+                    div [ _class "card-header" ] [ str "4 - Temporal Context" ]
+                    div [ _class "card-block" ] [
+                        div [ _id "identify-temporal-fossil" ] [
+                            fieldset [ _class "form-group"; _id "identify-temporal-fossil-type" ] [
+                                div [ _class "form-check form-check-inline" ] [
+                                    label [ _class "form-check-label" ] [
+                                        input [ _class "form-check-input"; _type "radio"; _name "identify-temporal-fossil-type"; _id "identify-temporal-fossil-radiocarbon"; _value "radiocarbon" ]
+                                        str "Radiocarbon (years before present)"
+                                    ]
+                                ]
+                                div [ _class "form-check form-check-inline" ] [
+                                    label [ _class "form-check-label" ] [
+                                        input [ _class "form-check-input"; _type "radio"; _name "identify-temporal-fossil-type"; _id "identify-temporal-fossil-lead"; _value "lead" ]
+                                        str "Lead210"
+                                    ]
+                                ]
+                                div [ _class "form-check form-check-inline" ] [
+                                    label [ _class "form-check-label" ] [
+                                        input [ _class "form-check-input"; _type "radio"; _name "identify-temporal-fossil-type"; _id "identify-temporal-fossil-unknown"; _value "unknown" ]
+                                        str "Unknown"
+                                    ]
+                                ]
+                            ]
+                            div [ _id "identify-temporal-fossil-value-section"; _style "display:none" ] [
+                                hr []
+                                label [ _for "identify-temporal-fossil-ybp" ] [ str "Years before present: " ]
+                                input [ _type "number"; _name "identify-temporal-fossil-ybp"; _id "identify-temporal-fossil-ybp"; _placeholder "0" ]
+                                br []
+                                span [] [ i [] [ str "Baseline year is 1950" ] ]
+                            ]
+                        ]
+                        div [ _id "identify-temporal-environmental"; _style "display:none" ] [
+                            div [ _class "form-group" ] [
+                                label [ _for "identify-temporal-environmental-year" ] [ str "What year was this sample collected?" ]
+                                input [ _id "identify-temporal-environmental-year"; _class "form-control" ]
+                            ]
+                        ]
+                    ]
+                    div [ _id "upload-progress"; _class "progress"; _style "display:none" ] [
+                        div [ _class "progress-bar progress-bar-striped progress-bar-animated"; _role "progressbar"; _aria "valuenow" "0"; _aria "valuemin" "0"; _aria "valuemax" "100"; _style "width:0%" ] []
+                    ]
+                    a [ _id "submit"; _class "btn btn-primary" ] [ str "Submit my grain" ]
+                ]                
+            ]   
+        ] |> Layout.standard []
+                 "Request Identification - Unknown Grain"
+                 "Upload a pollen grain or spore, for crowd-sourced taxonomic identification."
 
 
 module Statistics =
@@ -813,161 +1150,6 @@ module Statistics =
                 ]
             ]
         ] |> Layout.standard [] "Statistics" ""
-
-
-module Account =
-
-    open Forms
-
-    let login errors (vm:Requests.LoginRequest) =
-        [
-            Grid.row [
-                Grid.column Medium 8 [
-                    form [ _action "/Account/Login"; _method "POST"; _class "form-horizontal" ] [
-                        validationSummary errors vm
-                        formField <@ vm.Email @>
-                        formField <@ vm.Password @>
-                        formField <@ vm.RememberMe @>
-                        div [ _class "row form-group" ] [
-                            div [ _class "offset-sm-2 col-sm-10" ] [
-                                button [ _type "submit"; _class "btn btn-primary" ] [ encodedText "Sign in" ]
-                                a [ _class "btn btn-secondary"; _href "/Account/ForgotPassword" ] [ encodedText "Forgotten Password" ] 
-                            ]
-                        ]
-                    ]
-                ]
-                Grid.column Medium 4 [
-                    section [] [
-                        form [ _action "/Account/ExternalLogin"; _method "POST"; _class "form-horizontal" ] [
-                            button [ _name "provider"; _class "btn btn-block btn-social btn-facebook"; _type "submit"; _value "Facebook" ] [ 
-                                Icons.fontawesome "facebook"
-                                encodedText "Sign in with Facebook" ]
-                            button [ _name "provider"; _class "btn btn-block btn-social btn-twitter"; _type "submit"; _value "Twitter" ] [ 
-                                Icons.fontawesome "twitter"
-                                encodedText "Sign in with Twitter" ]
-                        ]
-                        br []
-                        div [ _class "panel panel-primary" ] [
-                            div [ _class "panel-heading" ] [
-                                Icons.fontawesome "pencil"
-                                encodedText "Sign up today"
-                            ]
-                            div [ _class "panel-body" ] [
-                                p [] [ encodedText "Register to submit your pollen and exchange identifications." ]
-                                a [ _class "btn btn-secondary"; _href "/Account/Register" ] [ encodedText "Register" ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ] |> Layout.standard [] "Log in" "Use your existing Global Pollen Project account, Facebook or Twitter"
-
-    let register errors (vm:NewAppUserRequest) =
-        [
-            form [ _action "/Account/Register"; _method "POST"; _class "form-horizontal" ] [
-                p [] [ encodedText "An account will enable you to submit your own unknown pollen grains and identify others. You can also request access to our digitisation features." ]
-                p [] [ encodedText "You can also alternatively"; a [ _href "/Account/Login" ] [ encodedText "sign in with your Facebook or Twitter account." ] ]
-                hr []
-                validationSummary errors vm
-                h4 [] [ encodedText "About You" ]
-                formField <@ vm.Title @>
-                formField <@ vm.FirstName @>
-                formField <@ vm.LastName @>
-                formField <@ vm.Email @>
-                formField <@ vm.EmailConfirmation @>
-                formField <@ vm.Password @>
-                formField <@ vm.ConfirmPassword @>
-                hr []
-                h4 [] [ encodedText "Your Organisation" ]
-                p [] [ encodedText "Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By using a common group name, you can build up your score together. Can your organisation become top identifiers?" ]
-                formField <@ vm.Organisation @>
-                p [] [ encodedText "By registering, you agree to the Global Pollen Project"; a [ _href "/Guide/Terms" ] [ encodedText "Terms and Conditions." ] ]
-                button [ _type "submit"; _class "btn btn-primary" ] [ encodedText "Register" ]
-            ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Register" "Create a new account"
-
-    let externalRegistration provider errors (vm:ExternalLoginConfirmationViewModel) =
-        [
-            form [ _action "/Account/ExternalLoginConfirmation"; _method "POST"; _class "form-horizontal" ] [
-                p [] [ encodedText ("You've successfully authenticated with " + provider + ". We just need a few more personal details from you before you can log in.") ]
-                validationSummary errors vm
-                h4 [] [ encodedText "About You" ]
-                formField <@ vm.Title @>
-                formField <@ vm.FirstName @>
-                formField <@ vm.LastName @>
-                formField <@ vm.Email @>
-                formField <@ vm.EmailConfirmation @>
-                hr []
-                h4 [] [ encodedText "Your Organisation" ]
-                p [] [ encodedText "Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By using a common group name, you can build up your score together. Can your organisation become top identifiers?" ]
-                formField <@ vm.Organisation @>
-                p [] [ encodedText "By registering, you agree to the Global Pollen Project"; a [ _href "/Guide/Terms" ] [ encodedText "Terms and Conditions." ] ]
-                button [ _type "submit"; _class "btn btn-primary" ] [ encodedText "Register" ]
-            ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Nearly logged in..." ("Associate your" + provider + "account")
-
-    let awaitingEmailConfirmation =
-        [
-            p [] [ encodedText "Please check your email for an activation link. You must do this before you can log in." ]
-        ] |> Layout.standard [] "Confirm Email" ""
-
-    let confirmEmail =
-        [
-            p [] [ 
-                encodedText "Thank you for confirming your email. Please"
-                a [ _href Urls.Account.login ] [ encodedText "Click here to Log in" ]
-                encodedText "." ]
-        ] |> Layout.standard [] "Confirm Email" ""
-
-    let forgotPasswordConfirmation =
-        [ p [] [ encodedText "Please check your email to reset your password" ]
-        ] |> Layout.standard [] "Confirm Email" ""
-
-    let externalLoginFailure =
-        [ p [] [ encodedText "Unsuccessful login with service" ] ]
-        |> Layout.standard [] "Login failure" ""
-
-    let resetPassword (vm:ResetPasswordViewModel) =
-        [
-            form [ _action "/Account/ResetPassowrd"; _method "POST"; _class "form-horizontal" ] [
-                // Validation summary
-                input [ _hidden; _value vm.Code ]
-                Forms.formField <@ vm.Email @>
-                Forms.formField <@ vm.Password @>
-                Forms.formField <@ vm.ConfirmPassword @>
-                Forms.submit
-            ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Reset Password" ""
-
-    let resetPasswordConfirmation =
-        [ p [] [ 
-            encodedText "Your password has been reset."
-            a [ _href "/Account/Login" ] [ encodedText "Click here to login." ] ]
-        ] |> Layout.standard [] "Confirm Email" ""
-
-    let lockout =
-        [
-
-        ] |> Layout.standard [] "" ""
-
-    let forgotPassword (vm:ForgotPasswordViewModel) =
-        [
-            form [ _href "/Account/ForgotPassword"; _method "POST"; _class "form-horizontal" ] [
-                h4 [] [ encodedText "Enter your email." ]
-                // Validation summary here
-                formField <@ vm.Email @>
-                Forms.submit
-            ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Forgot your password?" ""
-
 
 module StatusPages =
 
@@ -1025,3 +1207,30 @@ module Admin =
         [
             
         ] |> Layout.standard [] "Curate" "Curate"
+       
+        
+module Profile =
+    
+    /// View to allow quick creation and editing of a basic public profile
+    let summary (vm:PublicProfile option) ctx =
+        [
+            match vm with
+            | None ->
+                
+                // Profile: use name or mask into 
+                p [] [ str "Your profile has not been created" ]
+                //form [ _action Urls.Account.createProfile; _method "POST" ] [
+                //    Forms.formField <@  @>
+                //]
+                
+                
+            | Some profile ->
+                p [] [ str "Please " ]
+                h3 [] [ str "" ]
+                
+                Forms.formField <@ profile.FirstName @> ctx
+                p [] [ str profile.FirstName ]
+                p [] [ str profile.LastName ]
+        ] |> Layout.standard [] "Your Profile" "Your Profile"
+    
+    

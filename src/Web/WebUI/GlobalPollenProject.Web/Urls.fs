@@ -2,12 +2,6 @@ module GlobalPollenProject.Web.Urls
 
 open Microsoft.AspNetCore.Http
 
-[<CLIMutable>]
-type ApplicationUser = {
-    Firstname: string option
-    Lastname: string option
-}
-
 let getBaseUrl (ctx:HttpContext) = 
     let port = 
         if ctx.Request.Host.Port.HasValue 
@@ -35,15 +29,8 @@ module Account =
     let root = "/Account"
     let login = root + "/Login"
     let register = root + "/Register"
-    let externalLogin = root + "/ExternalLogin"
-    let externalLoginFailure = root + "/ExternalLoginFailure"
-    let externalLoginConf = root + "/ExternalLoginConfirmation"
     let logout = root + "/Logout"
-    let forgotPassword = root + "/ForgotPassword"
-    let resetPassword = root + "/ResetPassword"
-    let resetPasswordConf = root + "/ResetPasswordConfirmation"
-    let confirmEmail = root + "/ConfirmEmail"
-    let externalLoginCallbk = root + "/ExternalLoginCallback"
+    let profile = root + "/Profile"
 
 module Collections =
 
@@ -52,6 +39,7 @@ module Collections =
 module Identify =
 
     let root = "/Identify"
+    let identify = root + "Identify"
     
 module Admin =
     
