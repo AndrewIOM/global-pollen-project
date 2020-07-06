@@ -1,4 +1,6 @@
-﻿.guide-sections-card-deck {
+﻿@import '../_Palette';
+
+.guide-sections-card-deck {
     .card {
         border-top: 5px solid $primary-color;
         border-top-left-radius: 3px;

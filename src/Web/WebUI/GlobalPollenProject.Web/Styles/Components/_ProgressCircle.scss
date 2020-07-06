@@ -6,6 +6,7 @@
 *****************************************************************/
 
 // Compass utilities
+@import '../_Palette';
 @import "~compass-mixins/lib/_compass";
 // VARS
 $circle-width: 0.08em;
@@ -57,7 +58,6 @@ $bg-color: #fff;
     } // centered value inside circle
     >span {
         position: absolute;
-        width: 100%;
         z-index: 1;
         left: 0;
         top: 0;

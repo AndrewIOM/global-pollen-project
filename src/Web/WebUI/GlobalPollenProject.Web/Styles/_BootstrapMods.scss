@@ -165,11 +165,11 @@ select.form-control {
 
 .dropdown-menu>li>a:hover,
 .dropdown-menu>li>a:focus {
-    background-color: none;
+    background-color: white;
 }
 
 .form-control:focus {
-    box-shadow: 0px 0px 0px 1.5px $primary-color-accent;
+    box-shadow: 0 0 0 1.5px $primary-color-accent;
 }
 
 .pagination>.active>a,
