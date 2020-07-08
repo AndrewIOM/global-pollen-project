@@ -63,9 +63,19 @@ module ExternalConnections =
         taxa |> lift (List.map (refreshEolConnection issueCommand)) |> ignore
         taxa |> lift (List.map (refreshNeotomaConnection issueCommand)) |> ignore
 
+    let refreshFromGrain issueCommand grainId =
+        refreshGbifConnection issueCommand grainId |> ignore
+        refreshEolConnection issueCommand grainId |> ignore
+        refreshNeotomaConnection issueCommand grainId |> ignore
+    
     let refresh get issueTaxonCommand (e:string*obj*DateTime) =
         let ev (s,o,d) = o
         match e |> ev with
+        | :? GlobalPollenProject.Core.Aggregates.Grain.Event as e ->
+            match e with
+            | GlobalPollenProject.Core.Aggregates.Grain.GrainIdentityConfirmed con -> refreshFromGrain issueTaxonCommand con.Taxon
+            | GlobalPollenProject.Core.Aggregates.Grain.GrainIdentityChanged con -> refreshFromGrain issueTaxonCommand con.Taxon
+            | _ -> ()
         | :? GlobalPollenProject.Core.Aggregates.ReferenceCollection.Event as e ->
             match e with
             | GlobalPollenProject.Core.Aggregates.ReferenceCollection.Event.CollectionPublished (id,d,v) -> refreshPublishedTaxa get issueTaxonCommand id
