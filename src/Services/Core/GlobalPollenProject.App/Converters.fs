@@ -266,7 +266,10 @@ module Taxonomy =
         match dto.Rank with
         | "Family" -> Ok <| Family (LatinName dto.LatinName)
         | "Genus" -> Ok <| Genus (LatinName dto.LatinName)
-        | "Species" -> Ok <| Species (LatinName dto.LatinName,SpecificEphitet dto.Species,Scientific "")
+        | "Species" ->
+            match dto.Species with
+            | Some sp -> Ok <| Species (LatinName dto.LatinName,SpecificEphitet sp,Scientific "")
+            | None -> Ok <| Species (LatinName dto.LatinName,SpecificEphitet "",Scientific "")
         | _ -> Error "Invalid request format"
 
     let createLivingSpecimen institutionCode internalId =

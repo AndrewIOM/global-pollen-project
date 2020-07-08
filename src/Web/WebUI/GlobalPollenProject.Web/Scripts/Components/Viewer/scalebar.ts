@@ -14,16 +14,19 @@ export class ScaleBar {
     line: d3.Selection<d3.BaseType, {}, HTMLElement, any>;
     startText: d3.Selection<SVGTextContentElement, {}, HTMLElement, any>;
     endText: d3.Selection<SVGTextContentElement, {}, HTMLElement, any>;
+    loaded: boolean;
     
     constructor(viewer, barId, scale) {
+        this.loaded = false;
         this.viewer = viewer;
         this.id = barId;
         this.scale = scale;
-        $(this.viewer).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
+        $(this.viewer.id).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
             this.initialise();
+            this.loaded = true;
         });
-        $(this.viewer).on(ViewerEvent.EVENT_ZOOMED, () => {
-            this.redraw();
+        $(this.viewer.id).on(ViewerEvent.EVENT_ZOOMED, () => {
+            if (this.loaded) this.redraw();
         });
     }
 

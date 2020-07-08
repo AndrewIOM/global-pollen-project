@@ -1,6 +1,7 @@
 module GlobalPollenProject.Web.HtmlViews
 
 open System
+open System.Text.Json
 open Giraffe.GiraffeViewEngine 
 open ReadModels
 
@@ -33,6 +34,7 @@ module Settings =
         | false -> appSettings.[name]
     
     let googleApiKey = getAppSetting "GoogleApiKey"
+    let mapboxToken = getAppSetting "MapboxToken"
 
 [<AutoOpen>]
 module Grid =
@@ -781,6 +783,85 @@ module Identify =
     let disqus url =
         []
     
+    let identifyForm grainId = section [] [
+        h4 [] [ str "Can you identify this grain?" ]
+        form [ _method "POST"; _action Urls.Identify.identify; _id "identify-form" ] [
+            p [] [
+                str "I can identify this grain to"
+                select [ attr "data-bind" "value: rank"
+                         _class "form-control form-control-sm inline-dropdown" ] [
+                    option [ _value "Family" ] [ str "Family" ]
+                    option [ _value "Genus" ] [ str "Genus" ]
+                    option [ _value "Species" ] [ str "Species" ]
+                ]
+                str "rank."
+            ]
+            Grid.row [
+                Grid.column Small 3 [
+                    input [ attr "data-bind" "value: family, event: { blur: capitaliseFirstLetter($element),
+                            keyup: suggest($element, 'Family') }"
+                            _type "text"; _id "original-Family"; _class "form-control"
+                            _autocomplete "off"; _placeholder "Family" ]
+                    ul [ _class "dropdown-menu taxon-dropdown"; _id "FamilyList"
+                         _style "display:none" ] []
+                ]
+                Grid.column Small 3 [
+                    input [ attr "data-bind" "value: genus, enable: rank() != 'Family',
+                            event: { blur: capitaliseFirstLetter($element),
+                            keyup: suggest($element, 'Genus'),
+                            blur: disable('Genus') }"
+                            _type "text"; _id "original-Genus"; _class "form-control"
+                            _autocomplete "off"; _placeholder "Genus" ]
+                    ul [ _class "dropdown-menu taxon-dropdown"; _id "GenusList"
+                         _style "display:none" ] []
+                ]
+                Grid.column Small 3 [
+                    input [ attr "data-bind" "value: species, disable: rank() != 'Species',
+                            event: { blur: disable('Species'), keyup: suggest($element, 'Species') }"
+                            _type "text"; _id "original-Species"; _class "form-control"
+                            _autocomplete "off"; _placeholder "Species" ]
+                    ul [ _class "dropdown-menu taxon-dropdown"; _id "SpeciesList"
+                         _style "display:none" ] []
+                ]
+                Grid.column Small 3 [
+                    input [ attr "data-bind" "value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }"
+                            _type "text"; _class "form-control"; _autocomplete "off"; _placeholder "Auth." ]
+                ]
+            ]
+            small [] [ str "Authorship is optional. The given name will be traced within our taxonomic backbone to the currently accepted name." ]
+            div [ attr "data-bind" "visible: newSlideTaxonStatus, if: newSlideTaxonStatus" ] [
+                div [ attr "data-bind" "visible: newSlideTaxonStatus() == 'Error'" ] [
+                    p [] [
+                        Icons.fontawesome "frown-o"
+                        str " There was a problem communicating with the taxonomic backbone."
+                    ]
+                ]
+                div [ attr "data-bind" "visible: newSlideTaxonStatus().length > 1" ] [
+                    p [] [
+                        Icons.fontawesome "frown-o"
+                        str " Validation unsuccessful. There are "
+                        span [ attr "data-bind" "text: newSlideTaxonStatus().length" ] []
+                        str " matching names."
+                    ]
+                    ul [ attr "data-bind" "foreach: newSlideTaxonStatus" ] [
+                        li [ attr "data-bind" "text: latinName + ' ' + namedBy + ' (' + taxonomicStatus + ' name)'" ] []
+                    ]
+                ]
+                div [ attr "data-bind" "visible: newSlideTaxonStatus().length == 0" ] [
+                    p [] [
+                        Icons.fontawesome "frown-o"
+                        str " Taxon was not recognised by our taxonomic backbone."
+                    ]
+                ]
+            ]
+            input [ _hidden; _name "TaxonId"; _id "TaxonId"; attr "data-bind" "value: currentTaxon" ]
+            input [ _hidden; _name "GrainId"; _id "GrainId"; _value <| grainId ]
+            button [ _class "btn btn-primary"; _style "display:block"
+                     attr "data-bind" "click: validateAndSubmit, enable: isValidSearch" ] [
+                str "Identify"
+            ]
+        ]]
+    
     let view absoluteUrl currentUserId (vm:GrainDetail) =
         let myIdentification =
             match currentUserId with
@@ -805,7 +886,7 @@ module Identify =
                         div [ _class "card-block" ] [
                             div [ _class "row"; _id "slide-gallery" ] (vm.Images |> List.map(fun i ->
                                 div [ _class "slide-gallery-item col-md-3"
-                                      attr "data-frames" (i.Frames.ToString())
+                                      attr "data-frames" (JsonSerializer.Serialize(i.Frames))
                                       attr "data-pixelwidth" (i.PixelWidth.ToString()) ] [
                                     img [ _src i.Frames.Head; _alt "Image preview" ]
                                 ]
@@ -858,8 +939,7 @@ module Identify =
                                     label [] [ str "Location" ]
                                     img [ _style "text-align: left; margin-right: auto; display: block; max-width: 100%"
                                           _alt "Pollen Location"
-                                          // TODO Move access token to appSettings
-                                          _src <| sprintf "https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/pin-s-a+9ed4bd(%f,%f)/%f,%f,3/560x200@2x?access_token=pk.eyJ1IjoibWFyZWVwMjAwMCIsImEiOiJjaWppeGUxdm8wMDQ3dmVtNHNhcHh0cHA1In0.OrAULrL8pJaL9N5WerUUDQ" vm.Longitude vm.Latitude vm.Longitude vm.Latitude ]
+                                          _src <| sprintf "https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/pin-s-a+9ed4bd(%f,%f)/%f,%f,3/560x200@2x?access_token=%s" vm.Longitude vm.Latitude vm.Longitude vm.Latitude Settings.mapboxToken ]
                                 ]
                             ]
                             Grid.row [
@@ -890,104 +970,26 @@ module Identify =
                             | Some _ ->
                                 match myIdentification with
                                 | Some _ -> span [] [ str "Thank you for suggesting a taxonomic identification." ]
-                                | None ->
-                                    h4 [] [ str "Can you identify this grain?" ]
-                                    form [ _method "POST"; _action Urls.Identify.identify; _id "identify-form" ] [
-                                        p [] [
-                                            str "I can identify this grain to"
-                                            select [ attr "data-bind" "value: rank"
-                                                     _class "form-control form-control-sm inline-dropdown" ] [
-                                                option [ _value "Family" ] [ str "Family" ]
-                                                option [ _value "Genus" ] [ str "Genus" ]
-                                                option [ _value "Species" ] [ str "Species" ]
-                                            ]
-                                            str "rank."
+                                | None -> identifyForm <| vm.Id.ToString()
+                            h4 [] [ str "Current Identification" ]
+                            match vm.Identifications.Length with
+                            | 0 -> p [] [ str "No current identifications" ]
+                            | _ ->
+                                table [ _class "table" ] [
+                                    thead [] [
+                                        tr [] [
+                                            th [] [ str "Rank" ]
+                                            th [] [ str "Method" ]
+                                            th [] [ str "Identified as" ]
                                         ]
-                                        Grid.row [
-                                            Grid.column Small 3 [
-                                                input [ attr "data-bind" "value: family, event: { blur: capitaliseFirstLetter($element) }"
-                                                        _type "text"; _id "original-Family"; _class "form-control"
-                                                        _onkeyup "suggest(this, 'Family');"
-                                                        _autocomplete "off"; _placeholder "Family" ]
-                                                ul [ _class "dropdown-menu taxon-dropdown"; _id "FamilyList"
-                                                     _style "display:none" ] []
-                                            ]
-                                            Grid.column Small 3 [
-                                                input [ attr "data-bind" "value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element) }"
-                                                        _type "text"; _id "original-Genus"; _class "form-control"
-                                                        _onblur "disable('Genus');"
-                                                        _onkeyup "suggest(this, 'Genus');"
-                                                        _autocomplete "off"; _placeholder "Genus" ]
-                                                ul [ _class "dropdown-menu taxon-dropdown"; _id "GenusList"
-                                                     _style "display:none" ] []
-                                            ]
-                                            Grid.column Small 3 [
-                                                input [ attr "data-bind" "value: species, disable: rank() != 'Species'"
-                                                        _type "text"; _id "original-Species"; _class "form-control"
-                                                        _onblur "disable('Species');"
-                                                        _onkeyup "suggest(this, 'Species');"
-                                                        _autocomplete "off"; _placeholder "Species" ]
-                                                ul [ _class "dropdown-menu taxon-dropdown"; _id "SpeciesList"
-                                                     _style "display:none" ] []
-                                            ]
-                                            Grid.column Small 3 [
-                                                input [ attr "data-bind" "value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }"
-                                                        _type "text"; _class "form-control"; _autocomplete "off"; _placeholder "Auth." ]
-                                            ]
-                                        ]
-                                        small [] [ str "Authorship is optional. The given name will be traced within our taxonomic backbone to the currently accepted name." ]
-                                        div [ attr "data-bind" "visible: newSlideTaxonStatus, if: newSlideTaxonStatus" ] [
-                                            div [ attr "data-bind" "visible: newSlideTaxonStatus() == 'Error'" ] [
-                                                p [] [
-                                                    Icons.fontawesome "frown-o"
-                                                    str " There was a problem communicating with the taxonomic backbone."
-                                                ]
-                                            ]
-                                            div [ attr "data-bind" "visible: newSlideTaxonStatus().length > 1" ] [
-                                                p [] [
-                                                    Icons.fontawesome "frown-o"
-                                                    str " Validation unsuccessful. There are "
-                                                    span [ attr "data-bind" "text: newSlideTaxonStatus().length" ] []
-                                                    str " matching names."
-                                                ]
-                                                ul [ attr "data-bind" "foreach: newSlideTaxonStatus" ] [
-                                                    li [ attr "data-bind" "text: LatinName + ' ' + NamedBy + ' (' + TaxonomicStatus + ' name)'" ] []
-                                                ]
-                                            ]
-                                            div [ attr "data-bind" "visible: newSlideTaxonStatus().length == 0" ] [
-                                                p [] [
-                                                    Icons.fontawesome "frown-o"
-                                                    str " Taxon was not recognised by our taxonomic backbone."
-                                                ]
-                                            ]
-                                        ]
-                                        input [ _hidden; _name "TaxonId"; _id "TaxonId"; attr "data-bind" "value: currentTaxon" ]
-                                        input [ _hidden; _name "GrainId"; _id "GrainId"; _value <| vm.Id.ToString() ]
-                                        button [ _class "btn btn-primary"; _style "display:block"
-                                                 attr "data-bind" "click: validateAndSubmit, enable: isValidTaxonSearch" ] [
-                                            str "Identify"
-                                        ]
-                                    ] // end of form
-                                    h4 [] [ str "Current Identification" ]
-                                    match vm.Identifications.Length with
-                                    | 0 -> p [] [ str "No current identifications" ]
-                                    | _ ->
-                                        table [ _class "table" ] [
-                                            thead [] [
-                                                tr [] [
-                                                    th [] [ str "Rank" ]
-                                                    th [] [ str "Method" ]
-                                                    th [] [ str "Identified as" ]
-                                                ]
-                                            ]
-                                            tbody [] (vm.Identifications |> List.map(fun i ->
-                                                tr [] [
-                                                    td [] [ str i.Rank ]
-                                                    td [] [ str i.IdentificationMethod ]
-                                                    td [] [ str <| sprintf "%s %s %s %s" i.Family i.Genus i.Species i.SpAuth ]
-                                            ]))
-                                        ]
-                                        
+                                    ]
+                                    tbody [] (vm.Identifications |> List.map(fun i ->
+                                        tr [] [
+                                            td [] [ str i.Rank ]
+                                            td [] [ str i.IdentificationMethod ]
+                                            td [] [ str <| sprintf "%s %s %s %s" i.Family i.Genus i.Species i.SpAuth ]
+                                    ]))
+                                ]
                         ]
                     ] // end identification pane
                 ]
@@ -998,9 +1000,6 @@ module Identify =
 
     let add vm = 
         [
-            // TODO Add datepicker to bundle call - CSS and JS
-            // TODO bootstrap, d3, jcrop, viewer, measuringline, datepicker, add
-            
             form [ _id "add-grain-form"; _novalidate ] [
                 
                 // Alert box

@@ -1,143 +1,160 @@
-function BotanicalLookupToolViewModel() {
-    let self = this;
-    self.rank = ko.observable("");
-    self.family = ko.observable("");
-    self.genus = ko.observable("");
-    self.species = ko.observable("");
-    self.author = ko.observable("");
-    self.newSlideTaxonStatus = ko.observable(null);
-    self.currentTaxon = ko.observable();
+import * as ko from 'knockout';
 
-    self.rank.subscribe(function (rank) {
+const traceEndpoint = "/api/v1/backbone/trace?"
+const searchEndpoint = "/api/v1/backbone/search?"
+
+export class BotanicalLookupToolViewModel {
+
+    rank: KnockoutObservable<string>
+    family: KnockoutObservable<string>
+    genus: KnockoutObservable<string>
+    species: KnockoutObservable<string>
+    author: KnockoutObservable<string>
+    isValidSearch: KnockoutComputed<boolean>
+    currentTaxon: KnockoutObservable<string> // Valid taxon ID (GUID)
+    newSlideTaxonStatus: KnockoutObservable<any> // Contains array of API results
+    
+    doneTypingInterval: number
+    typingTimer: number
+
+    constructor() {
+        this.rank = ko.observable("");
+        this.family = ko.observable("");
+        this.genus = ko.observable("");
+        this.species = ko.observable("");
+        this.author = ko.observable("");
+        this.newSlideTaxonStatus = ko.observable(null);
+        this.currentTaxon = ko.observable("");
+        this.rank.subscribe((rank) => this.switchRank(rank));
+        this.isValidSearch = ko.computed(this.searchIsValid, this);
+        this.doneTypingInterval = 100;
+    }
+    
+    switchRank = (rank) => {
         if (rank == "Family") {
-            self.genus("");
-            self.species("");
-            self.author("");
+            this.genus("");
+            this.species("");
+            this.author("");
         } else if (rank == "Genus") {
-            self.species("");
-            self.author("");
+            this.species("");
+            this.author("");
         }
-    });
+    }
 
-    self.isValidTaxonSearch = ko.computed(function () {
-        if (self.rank() == "Family" && self.family().length > 0) return true;
-        if (self.rank() == "Genus" && self.genus().length > 0) return true;
-        if (self.rank() == "Species" && self.genus().length > 0 && self.species().length > 0) return true;
-        return false;
-    }, self);
+    public searchIsValid = () => {
+        if (this.rank() == "Family" && this.family().length > 0) return true;
+        if (this.rank() == "Genus" && this.genus().length > 0) return true;
+        return this.rank() == "Species" && this.genus().length > 0 && this.species().length > 0;
+    }
 
-    self.validateTaxon = function () {
-        var query;
-        if (self.rank() == "Family") {
-            query = "rank=Family&family=" + self.family() + "&latinname=" + self.family();
-        } else if (self.rank() == 'Genus') {
-            query = "rank=Genus&family=" + self.family() + "&genus=" + self.genus() + "&latinname=" + self.genus();
-        } else if (self.rank() == "Species") {
-            query = "rank=Species&family=" + self.family() + "&genus=" + self.genus() + "&species=" + self.species() + "&latinname=" + self.genus() + " " + self.species() + "&authorship=" + encodeURIComponent(self.author());
+    public requestValidation = () => {
+        let queryString;
+        if (this.rank() == "Family") {
+            queryString = "rank=Family&family=" + this.family() + "&latinname=" + this.family();
+        } else if (this.rank() == 'Genus') {
+            queryString = "rank=Genus&family=" + this.family() + "&genus=" + this.genus() + "&latinname=" + this.genus();
+        } else if (this.rank() == "Species") {
+            queryString = "rank=Species&family=" + this.family() + "&genus=" + this.genus() + "&species=" + 
+                this.species() + "&latinname=" + this.genus() + " " + this.species() + 
+                "&authorship=" + encodeURIComponent(this.author());
         }
         $.ajax({
-                url: "/api/v1/backbone/trace?" + query,
-                type: "GET"
-            })
-            .done(function (data) {
-                if (data.length == 1 && data[0].TaxonomicStatus == "accepted") self.currentTaxon(data[0].Id);
-                self.newSlideTaxonStatus(data);
+            url: traceEndpoint + queryString,
+            type: "GET"
+        }).done(data => {
+                if (data.length == 1 && data[0].TaxonomicStatus == "accepted") this.currentTaxon(data[0].Id);
+                this.newSlideTaxonStatus(data);
             })
     }
-
-    self.capitaliseFirstLetter = function (element) {
-        $(element).val($(element).val().toString().charAt(0).toUpperCase() + $(element).val().toString().slice(1));
-    }
-
-    self.getTaxonIdIfValid = function() {
-        if (self.currentTaxon() != null) return self.currentTaxon();
+    
+    public getTaxonIdIfValid() {
+        if (this.currentTaxon() != null) return this.currentTaxon();
         return null;
     }
-}
-
-// Helpers
-var typingTimer;
-var doneTypingInterval = 100;
-
-function capitaliseFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-function suggest(entryBox, rank) {
-    clearTimeout(typingTimer);
-    if (entryBox.value) {
-        typingTimer = setTimeout(function () {
-            updateList(entryBox, rank);
-        }, doneTypingInterval);
-    }
-};
-
-//Update suggestion list when timeout complete
-function updateList(entryBox, rank) {
-    var query = '';
-    var value = entryBox.value;
-    if (rank == "Family" || rank == "Genus") {
-        value = capitaliseFirstLetter(value);
+    
+    public capitaliseFirstLetter = element => {
+        const currentValue = $(element).val();
+        if (typeof(currentValue) == "string") {
+            $(element).val(this.capitaliseString(currentValue));
+        }
     }
 
-    if (rank == 'Species') {
+    public suggest(entryBox:HTMLInputElement, rank:string) {
+        window.clearTimeout(this.typingTimer);
+        if (entryBox.value) {
+            this.typingTimer = window.setTimeout(() => {
+                this.rateLimitedSuggestionList(entryBox, rank);
+            }, this.doneTypingInterval);
+        }
+    }
+
+    // Hides the dropdown menu when the user navigates away
+    // from the input box
+    public disable(rank) {
+        let element;
+        if (rank == 'Family') element = 'FamilyList';
+        if (rank == 'Genus') element = 'GenusList';
+        if (rank == 'Species') element = 'SpeciesList';
+        function fade() { $('#' + element).fadeOut(); }
+        setTimeout(fade, 100);
+    }
+
+    // Renders a suggestion list for a taxonomic rank depending
+    // on a rate-limiting timeout
+    public rateLimitedSuggestionList(entryBox:HTMLInputElement, rank:string) {
+        let query = '';
+        let value = entryBox.value;
+        if (rank == "Family" || rank == "Genus") {
+            value = this.capitaliseString(value);
+        }
         //Combine genus and species for canonical name
-        var genus = (<HTMLInputElement>document.getElementById('original-Genus')).value;
-        query += genus + " ";
-    }
-    query += value;
+        if (rank == 'Species') {
+            const genus = (<HTMLInputElement>document.getElementById('original-Genus')).value;
+            query += genus + " ";
+        }
+        query += value;
+        if (value != "") {
+            const request = searchEndpoint + "rank=" + rank + "&latinName=" + query;
+            $.ajax({
+                url: request,
+                type: "GET"
+            }).done(data => {
+                const list = document.getElementById(rank + 'List');
+                $('#' + rank + 'List').css('display', 'block');
+                list.innerHTML = "";
+                for (let i = 0; i < data.length; i++) {
+                    if (i > 10) continue;
+                    const option = document.createElement('li');
+                    const link = document.createElement('a');
+                    option.appendChild(link);
+                    link.innerHTML = data[i];
 
-    if (value == "") {
-
-    } else {
-        var request = "/api/v1/backbone/search?rank=" + rank + "&latinName=" + query;
-        $.ajax({
-            url: request,
-            type: "GET"
-        }).done(function (data) {
-            var list = document.getElementById(rank + 'List');
-            $('#' + rank + 'List').css('display', 'block');
-            list.innerHTML = "";
-            for (var i = 0; i < data.length; i++) {
-                if (i > 10) continue;
-                var option = document.createElement('li');
-                var link = document.createElement('a');
-                option.appendChild(link);
-                link.innerHTML = data[i];
-
-                var matchCount = 0;
-                for (var j = 0; j < data.length; j++) {
-                    if (data[j].latinName == data[i]) {
-                        matchCount++;
+                    let matchCount = 0;
+                    for (let j = 0; j < data.length; j++) {
+                        if (data[j].latinName == data[i]) {
+                            matchCount++;
+                        }
                     }
-                };
-                link.addEventListener('click', function (e) {
-                    var name = this.innerHTML;
-                    if (rank == 'Species') {
-                        $('#original-Species').val(name.split(' ')[1]).change();
-                        $('#original-Genus').val(name.split(' ')[0]).change();
-                    } else if (rank == 'Genus') {
-                        $('#original-Genus').val(name).change();
-                    } else if (rank == 'Family') {
-                        $('#original-Family').val(name).change();
-                    }
-                    $('#' + rank + 'List').fadeOut();
-                });
-                list.appendChild(option);
-            }
-        });
+                    link.addEventListener('click', e => {
+                        const name = link.innerHTML;
+                        if (rank == 'Species') {
+                            $('#original-Species').val(name.split(' ')[1]).change();
+                            $('#original-Genus').val(name.split(' ')[0]).change();
+                        } else if (rank == 'Genus') {
+                            $('#original-Genus').val(name).change();
+                        } else if (rank == 'Family') {
+                            $('#original-Family').val(name).change();
+                        }
+                        $('#' + rank + 'List').fadeOut();
+                    });
+                    list.appendChild(option);
+                }
+            });
+        }
     }
-}
 
-function disable(rank) {
-    var element;
-    if (rank == 'Family') element = 'FamilyList';
-    if (rank == 'Genus') element = 'GenusList';
-    if (rank == 'Species') element = 'SpeciesList';
-
-    setTimeout(func, 100);
-
-    function func() {
-        $('#' + element).fadeOut();
+    capitaliseString(string:string) {
+        return string.charAt(0).toUpperCase() + string.slice(1);
     }
+
 }

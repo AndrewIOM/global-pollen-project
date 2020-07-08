@@ -75,7 +75,7 @@ export class MeasuringLine {
         $(this.id).css("position", "absolute");
         $(this.id).css("cursor", "crosshair");
 
-        $(this.viewer).on(ViewerEvent.EVENT_ZOOMED, () => {
+        $(this.viewer.id).on(ViewerEvent.EVENT_ZOOMED, () => {
             if(this.state == MeasuringLineState.STATE_DRAWN) {
                 this.redrawLine();
             }

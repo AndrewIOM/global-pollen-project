@@ -391,13 +391,13 @@ module TaxonomicBackbone =
             | "misapplied" ->  lookupSynonym matches.[0].TaxonomicAlias
             | _ -> Error "Could not determine taxonomic status"
         | _ ->
-            match String.IsNullOrEmpty auth with
-            | true -> 
+            match auth with
+            | None -> 
                 // Return only the accepted genus if in multiple families
                 match rank with
                 | "Genus" -> matches |> List.filter (fun t -> t.TaxonomicStatus = "accepted") |> Ok
                 | _ -> matches |> Ok
-            | false ->
+            | Some auth ->
                 // Search by author (NB currently not fuzzy)
                 let m = matches |> List.tryFind(fun t -> t.NamedBy = auth)
                 match m with

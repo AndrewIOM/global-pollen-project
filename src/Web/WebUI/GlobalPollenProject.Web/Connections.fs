@@ -4,6 +4,7 @@ open System
 open System.Net.Http
 open Microsoft.Extensions.Options
 open ReadModels
+open FSharp.Control.Tasks.V2.ContextInsensitive
 
 //////////////////
 /// Models
@@ -42,7 +43,8 @@ module CoreActions =
         |> Array.map formatElement
         |> String.concat "&"
 
-    let CGET<'a,'b> (queryData:'b option) (route:string) (c:HttpClient) (u:UriBuilder) = 
+    let CGET<'a,'b> (queryData:'b option) (route:string) : CoreFunction<'a> = 
+        fun (c:HttpClient) (u:UriBuilder) ->
         async {
             let queryString =
                 match queryData with
@@ -50,11 +52,13 @@ module CoreActions =
                 | None -> ""
             u.Query <- queryString
             u.Path <- route
-            let! response = c.GetStringAsync(u.Uri) |> Async.AwaitTask
-            printfn "Received json from GET: %s" response
-            match Serialisation.deserialise<Result<'a,ServiceError>> response with
-            | Ok m -> return m
-            | Error _ -> return Error InvalidRequestFormat
+            let! response = c.GetAsync(u.Uri) |> Async.AwaitTask
+            if response.IsSuccessStatusCode then
+                let! responseString = response.Content.ReadAsStringAsync() |> Async.AwaitTask
+                match Serialisation.deserialise<Result<'a,ServiceError>> responseString with
+                | Ok m -> return m
+                | Error _ -> return Error InvalidRequestFormat
+            else return Error Core
         }
 
     let CPOST<'a, 'b> (data:'a) (route:string) (c:HttpClient) (u:UriBuilder) = 

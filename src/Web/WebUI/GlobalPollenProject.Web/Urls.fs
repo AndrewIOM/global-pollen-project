@@ -39,7 +39,7 @@ module Collections =
 module Identify =
 
     let root = "/Identify"
-    let identify = root + "Identify"
+    let identify = root + "/Identify"
     
 module Admin =
     

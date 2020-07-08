@@ -77,10 +77,10 @@ type SlideImageRequest = {
 type BackboneSearchRequest = {
     [<Required>] LatinName: string
     [<Required>] Rank: string
-    Family: string
-    Genus: string
-    Species: string
-    Authorship: string
+    Family: string option
+    Genus: string option
+    Species: string option
+    Authorship: string option
 }
 
 [<CLIMutable>]

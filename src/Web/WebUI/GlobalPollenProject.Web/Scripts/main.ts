@@ -6,7 +6,8 @@ import 'bootstrap';
 import * as ES6Promise from "es6-promise";
 ES6Promise.polyfill();
 
-// Individual Components
+// Autocomplete field for latin names, limited to the master reference
+// collection taxonomy.
 async function autocomplete() {
     const container = document.getElementById("ref-collection-search");
     if (container !== null) {
@@ -15,6 +16,17 @@ async function autocomplete() {
     }
 }
 
+// A gallery component for displaying one to many microscopic images.
+// Includes scale bars and focus levels.
+async function gallery() {
+    const container = document.getElementById("slide-gallery");
+    if (container !== null) {
+        const component = await import("./Components/gallery");
+        component.activate(container);
+    }
+}
+
+// Global map of point locations, used on home page
 async function grainMap() {
     const container = document.getElementById("locations-map");
     if (container !== null) {
@@ -29,7 +41,8 @@ async function unobtrusiveValidation() {
     }
 }
 
-// Page-specific compositions
+// Page-specific components
+// --------------------------
 
 async function addGrainForm() {
     const form = document.getElementById("add-grain-form");
@@ -39,6 +52,17 @@ async function addGrainForm() {
     }
 }
 
+// Family, Genus, Species boxes and dropdowns for looking up
+// names in the taxonomic backbone.
+async function identifyGrainForm() {
+    const form = document.getElementById("identify-form");
+    if (form !== null) {
+        const component = await import("./UnknownMaterial/identify-grain");
+        component.activate(form);
+    }
+}
+
+// A single page digitise app using Knockout.
 async function digitiseSPA() {
     const container = document.getElementById("digitise-app");
     if (container !== null) {
@@ -48,7 +72,9 @@ async function digitiseSPA() {
 }
 
 autocomplete();
+gallery();
 grainMap();
 unobtrusiveValidation();
 digitiseSPA();
 addGrainForm();
+identifyGrainForm();

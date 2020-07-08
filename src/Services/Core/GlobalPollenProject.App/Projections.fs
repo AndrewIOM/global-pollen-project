@@ -336,8 +336,12 @@ module MasterReferenceCollection =
             | "accepted" -> Some t |> Ok
             | "misapplied"
             | "synonym" ->
+                let namedBy =
+                    match String.IsNullOrEmpty t.NamedBy with
+                    | true -> None
+                    | false -> Some t.NamedBy
                 let m =[t] 
-                        |> TaxonomicBackbone.tryTrace t.Rank t.NamedBy get deserialise
+                        |> TaxonomicBackbone.tryTrace t.Rank namedBy get deserialise
                         |> Result.bind isMultiMatch
                 match m with
                 | Ok t -> Some t |> Ok
