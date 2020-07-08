@@ -23,7 +23,8 @@ let terms = "/Terms"
 
 module MasterReference =
     let root = "/Taxon"
-
+    let family family = root + "/" + family
+    let genus family genus = root + "/" + family + "/" + genus
 
 module Account =
     let root = "/Account"

@@ -89,20 +89,16 @@ module Actions =
                 | _ -> return! notFound next ctx
              }
 
-        let taxonDetail (taxon:string) : HttpHandler =
+        let taxonDetail family genus species : HttpHandler =
             fun next ctx ->
-                let core = ctx.GetService<CoreMicroservice>()
-                let (f,g,s) =
-                    let split = taxon.Split '/'
-                    match split.Length with
-                    | 1 -> split.[0],None,None
-                    | 2 -> split.[0],Some split.[1],None
-                    | 3 -> split.[0],Some split.[1],Some split.[2]
-                    | _ -> "",None,None
-                CoreActions.MRC.getByName f "" "" //g s //TODO Fix this
-                |> core.Apply
-                |> Async.RunSynchronously
-                |> renderViewResult HtmlViews.Taxon.view next ctx
+                let cmd =
+                    match genus with
+                    | None -> CoreActions.MRC.getFamily family
+                    | Some g ->
+                        match species with
+                        | None -> CoreActions.MRC.getGenus family g
+                        | Some sp -> CoreActions.MRC.getSpecies family g sp
+                coreAction cmd HtmlViews.Taxon.view next ctx
 
         let taxonDetailLegacyId id =
             let old = LegacyTaxonomy.taxonLookup |> Seq.tryFind(fun t -> t.OriginalId = id)
@@ -258,7 +254,9 @@ let webApp : HttpHandler =
             route   Urls.MasterReference.root   >=> Actions.MasterCollection.pagedTaxonomy
             routef  "/Taxon/View/%i"            Actions.MasterCollection.taxonDetailLegacyId
             routef  "/Taxon/ID/%s"              Actions.MasterCollection.taxonDetailById
-            routef  "/Taxon/%s"                 Actions.MasterCollection.taxonDetail
+            routef  "/Taxon/%s/%s/%s"           (fun (f,g,s) -> Actions.MasterCollection.taxonDetail f (Some g) (Some s))
+            routef  "/Taxon/%s/%s"              (fun (f,g) -> Actions.MasterCollection.taxonDetail f (Some g) None)
+            routef  "/Taxon/%s"                 (fun f -> Actions.MasterCollection.taxonDetail f None None)
         ]
 
     let individualRefCollections =

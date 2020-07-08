@@ -141,6 +141,8 @@ let routes : HttpHandler =
                 GET >=> route   "/MRC/Taxon/Autocomplete"   >=> apif<TaxonAutocompleteRequest,TaxonAutocompleteItem list> U.Taxonomy.autocomplete
                 GET >=> route   "/MRC/Taxon"            >=> apif<TaxonPageRequest, PagedResult<TaxonSummary>> U.Taxonomy.list
                 GET >=> routef  "/MRC/Taxon/%s/%s/%s"   (fun (f,g,s) n c -> U.Taxonomy.getByName f (opt g) (opt s) |> apiResult n c)
+                GET >=> routef  "/MRC/Taxon/%s/%s"      (fun (f,g) n c -> U.Taxonomy.getByName f (opt g) None |> apiResult n c)
+                GET >=> routef  "/MRC/Taxon/%s"         (fun f n c -> U.Taxonomy.getByName f None None |> apiResult n c)
                 GET >=> routef  "/MRC/Taxon/Id/%s"      (fun i n c -> U.Taxonomy.getById (Guid(i)) |> apiResult n c)
                 GET >=> routef  "/MRC/Collection/%s/%s" (fun (col,s) n c -> U.Taxonomy.getSlide col s |> apiResult n c)
                 GET >=> routef  "/MRC/Collection/%s/%i" (fun (col,i) n c -> U.IndividualReference.getDetail col i |> apiResult n c)

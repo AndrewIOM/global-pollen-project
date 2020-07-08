@@ -83,7 +83,9 @@ module CoreActions =
     module MRC =
         let autocompleteTaxon (req:TaxonAutocompleteRequest) = CGET (Some req) "/api/v1/anon/MRC/Taxon/Autocomplete"
         let list (req:TaxonPageRequest) = CGET (Some req) "/api/v1/anon/MRC/Taxon"
-        let getByName family genus species = CGET None (sprintf "/api/v1/anon/MRC/Taxon/%s/%s/%s" family genus species)
+        let getFamily family = CGET None (sprintf "/api/v1/anon/MRC/Taxon/%s" family)
+        let getGenus family genus = CGET None (sprintf "/api/v1/anon/MRC/Taxon/%s/%s" family genus)
+        let getSpecies family genus species = CGET None (sprintf "/api/v1/anon/MRC/Taxon/%s/%s/%s" family genus species)
         let getById (guid:Guid) = CGET None (sprintf "/api/v1/anon/MRC/Taxon/Id/%s" (guid.ToString()))
         let getSlide colId slideId = CGET None (sprintf "/api/v1/anon/MRC/Collection/%s/%s" colId slideId)
 

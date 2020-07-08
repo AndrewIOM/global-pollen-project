@@ -35,6 +35,15 @@ async function grainMap() {
     }
 }
 
+async function distributionMap() {
+    const container = document.getElementById("distribution-map-component");
+    if (container !== null) {
+        const component = await import("./Components/distribution-map");
+        component.activate(container);
+    }
+}
+
+
 async function unobtrusiveValidation() {
     if (document.forms.length > 0) {
         await import("./Components/validation");
@@ -78,3 +87,4 @@ unobtrusiveValidation();
 digitiseSPA();
 addGrainForm();
 identifyGrainForm();
+distributionMap();

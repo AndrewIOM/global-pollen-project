@@ -346,7 +346,12 @@ module Components =
                 div [ _class "fill" ] []
             ]
         ]
-
+        
+    let panel style heading body =
+        div [ _class <| sprintf "panel panel-%s" style ] [
+            div [ _class "panel-heading" ] heading
+            div [ _class "panel-body" ] body
+        ]
 
 module Home =
 
@@ -486,41 +491,58 @@ module Taxon =
 
     let distributionMap gbifId neotomaId =
         let view = 
-            div [ _class "panel panel-black" ] [
-                div [ _class "panel-heading" ] [
-                    Icons.fontawesome "globe"
-                    encodedText "Distribution"
-                    div [ _class "btn-group"; _data "toggle" "buttons"; _style "float:right" ] [
-                        label [ _class "btn btn-primary btn-sm active" ] [
-                            input [ _type "radio"; _name "distribution"; _value "recent"; _autocomplete "off"; _checked ]
-                            encodedText "Recent"
-                        ]
-                        label [ _class "btn btn-primary btn-sm" ] [
-                            input [ _type "radio"; _name "distribution"; _value "palaeo"; _autocomplete "off"]
-                            encodedText "Palaeo"
+            Components.panel "black" [
+                Icons.fontawesome "globe"
+                encodedText "Distribution"
+                div [ _class "btn-group"; _data "toggle" "buttons"; _style "float:right" ] [
+                    label [ _class "btn btn-primary btn-sm active" ] [
+                        input [ _type "radio"; _name "distribution"; _value "recent"; _autocomplete "off"; _checked ]
+                        encodedText "Recent"
+                    ]
+                    label [ _class "btn btn-primary btn-sm" ] [
+                        input [ _type "radio"; _name "distribution"; _value "palaeo"; _autocomplete "off"]
+                        encodedText "Palaeo"
+                    ]
+                ]
+            ] [
+                input [ _hidden; _id "NeotomaId"; _value (sprintf "%i" neotomaId) ]
+                input [ _hidden; _id "GbifId"; _value (sprintf "%i" gbifId) ]
+                div [ _class "row"; _id "warnings-container"; _style "display:none" ] [
+                    Grid.column Medium 12 [
+                        div [ _class "alert alert-warning"; _role "alert" ] [
+                            p [ _style "display:none"; _id "gbif-warning" ] [
+                                Icons.fontawesome "warning"
+                                str "GBIF Link: Present distribution currently unavailable for this taxon."
+                            ]
+                            p [ _style "display:none"; _id "gbif-warning-desc" ] [
+                                Icons.fontawesome "warning"
+                                str "GBIF Link: No English descriptions can be retrieved for this taxon."
+                            ]
                         ]
                     ]
                 ]
-                div [ _class "panel-body" ] [
-                    input [ _hidden; _id "NeotomaId"; _value (sprintf "%i" neotomaId) ]
-                    input [ _hidden; _id "NeotomaId"; _value (sprintf "%i" gbifId) ]
-
-                    div [ _id "modern" ] [
-                        div [ _id "map"; _style "height:300px" ] []
+                div [ _id "modern" ] [
+                    div [ _id "map"; _style "height:300px" ] []
+                ]
+                div [ _id "palaeo"; _style "display:none" ] [
+                    div [ _id "palaeo-loading" ] [ encodedText "Fetching from Neotoma..." ]
+                    div [ _id "neotoma-map-unavailable"; _style "display:none" ] [ encodedText "Past distributions unavailable from Neotoma." ]
+                    span [ _class "timespan" ] [
+                        str "Showing "
+                        a [ _href "http://neotomadb.org" ] [ str "NeotomaDB" ]
+                        str " occurrences from "
+                        span [ _id "palaeo-range-low" ] []
+                        str " to "
+                        span [ _id "palaeo-range-high" ] []
+                        str " years before present."
                     ]
-
-                    div [ _id "palaeo" ] [
-                        div [ _id "palaeo-loading" ] [ encodedText "Fetching from Neotoma..." ]
-                        div [ _id "neotoma-map-unavailable"; _style "display:none" ] [ encodedText "Past distributions unavailable from Neotoma." ]
-                        span [ _class "timespan" ] [ encodedText "Showing NeotomaDB occurrences from x to x years before present."] 
-                        div [ _id "neotoma-map" ] []
-                        div [ _id "range" ] []
-                    ]
+                    div [ _id "neotoma-map" ] []
+                    div [ _id "range" ] []
                 ]
             ]
         let scripts = 
             [ "/Scripts" ]
-        { View = view; Scripts = scripts }
+        { View = section [ _id "distribution-map-component" ] [ view ]; Scripts = scripts }
 
 
     let descriptionCard (eolCache:EncyclopediaOfLifeCache) =
@@ -530,36 +552,74 @@ module Taxon =
             ]
         ]
 
-    let slideListPanel (slides: ReadModels.SlideSummary list) =
-        div [ _class "panel panel-white" ] [
-            div [ _class "panel-heading" ] [
-                Icons.fontawesome "film"
-                encodedText "Digitised Reference Slides"
-            ]
-            div [ _class "panel-body" ] [
-                    encodedText (sprintf "We currently have %i digitsed slides." (slides |> List.length))
-                    ul [ _class "grain-grid columns-8" ] (slides |> List.map (fun s -> 
-                        li [] [
-                            a [ _href (sprintf "/Reference/%A/%s" s.ColId s.SlideId) ] [ 
-                                div [ _class "img-container" ] [ img [ _src s.Thumbnail ] ] 
-                            ] ] ))
-            ]
+    let taxonomyDetailCard () =
+        Components.panel "green" [
+            Icons.fontawesome "external-link"
+            str "Connected datasets"
+        ] [
+            
         ]
 
+    let connectedDataCard latinName gbifId =
+        Components.panel "green" [
+            Icons.fontawesome "external-link"
+            str "Connected data sources"
+        ] [
+            p [] [ str "This taxon is currently linked to the following locations." ]
+            a [ _class "btn btn-primary"; _target "blank"
+                _href <| sprintf "http://www.theplantlist.org/tpl1.1/search?q=%s" latinName ] [ str "The Plant List" ]
+            a [ _class "btn btn-primary"; _target "blank"
+                _href <| sprintf "http://gbif.org/species/%i" gbifId ] [ str "Global Biodiversity Information Facility" ]
+        ]
+
+    let slideListPanel (slides: ReadModels.SlideSummary list) =   
+        Components.panel "white" [
+            Icons.fontawesome "film"
+            encodedText "Digitised Reference Slides"
+        ] [
+            encodedText (sprintf "We currently have %i digitsed slides." (slides |> List.length))
+            ul [ _class "grain-grid columns-8" ] (slides |> List.map (fun s -> 
+                li [] [
+                    a [ _href (sprintf "/Reference/%A/%s" s.ColId s.SlideId) ] [ 
+                        div [ _class "img-container" ] [ img [ _src s.Thumbnail ] ] 
+                    ] ] ))
+        ]
+
+    let grainListPanel (grains: ReadModels.GrainSummary list) =   
+        Components.panel "white" [
+            Icons.fontawesome "film"
+            encodedText "Identified Specimens"
+        ] [
+            encodedText (sprintf "%i individual grains have been identified." (grains |> List.length))
+            ul [ _class "grain-grid columns-8" ] (grains |> List.map (fun s -> 
+                li [] [
+                    a [ _href <| sprintf "%s/%s" Urls.Identify.identify (s.Id.ToString()) ] [ 
+                        div [ _class "img-container" ] [ img [ _src s.Thumbnail ] ] 
+                    ] ] ))
+        ]
+    
     let view (vm:TaxonDetail) =
         let title = sprintf "%s (%s) - Master Reference Collection" vm.LatinName vm.Rank
         let distributionMap = distributionMap vm.GbifId vm.NeotomaId
-        [ 
-            link [ _rel "stylesheet"; _href "/lib/nouislider/distribute/nouislider.min.css"]
-            link [ _rel "stylesheet"; _href "/lib/leaflet/dist/leaflet.css"]
-            Components.breadcrumb [] "Cool Page"
+        let breadcrumbs =
+            if vm.Rank = "Family" then []
+            else if vm.Rank = "Genus" then [
+                {Name = vm.Family; Url = Urls.MasterReference.family vm.Family } ]
+            else [
+                {Name = vm.Family; Url = Urls.MasterReference.family vm.Family }
+                {Name = vm.Family; Url = Urls.MasterReference.family vm.Family } ]
+        [
+            Components.breadcrumb breadcrumbs vm.LatinName
             Grid.row [
                 Grid.column Medium 6 [
                     slideListPanel vm.Slides
+                    grainListPanel vm.Grains
                 ]
                 Grid.column Medium 6 [
                     distributionMap.View
                     descriptionCard vm.EolCache
+                    taxonomyDetailCard ()
+                    connectedDataCard vm.LatinName vm.GbifId
                 ]
             ]
         ] |> Layout.standard distributionMap.Scripts title ""
