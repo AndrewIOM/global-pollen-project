@@ -3,7 +3,7 @@ module GlobalPollenProject.App.EventHandlers
 open System
 
 let inline deserialise< ^a> json = 
-    let unwrap (ReadStore.Json j) = j
+    let unwrap (ReadStore.Json.Json j) = j
     Serialisation.deserialise< ^a> (unwrap json)
 
 module ExternalConnections =
@@ -31,7 +31,7 @@ module ExternalConnections =
         |> ignore
 
     let getCol get (id:Guid) = 
-        RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
+        RepositoryBase.getSingle id get deserialise<EditableRefCollection>
 
     let nullableToOption (n:Nullable<'a>) =
         if n.HasValue then Some n.Value else None
@@ -40,7 +40,7 @@ module ExternalConnections =
         match slide.CurrentTaxonId with
         | None -> Ok []
         | Some i ->
-            RepositoryBase.getSingle<BackboneTaxon> (i.ToString()) get deserialise
+            RepositoryBase.getSingle<BackboneTaxon> i get deserialise
             |> lift (fun t -> [Some t.FamilyId; nullableToOption t.GenusId; nullableToOption t.SpeciesId] )
             |> lift (List.choose id)
 

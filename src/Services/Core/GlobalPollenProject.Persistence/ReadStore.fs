@@ -5,7 +5,20 @@ open ReadModels
 open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Composition
 
-type Json = Json of string
+[<AutoOpen>]
+module Json =
+
+    type Json = Json of string
+    
+    let inline deserialise< ^a> json =
+        let unwrap (Json j) = j
+        Serialisation.deserialise< ^a> (unwrap json)
+    let serialise s = 
+        let result = Serialisation.serialise s
+        match result with
+        | Ok r -> Ok <| Json r
+        | Error e -> Error e
+        
 type Serialise = obj -> Result<Json,string>
 type Deserialise<'a> = Json -> Result<'a,string>
 
@@ -130,7 +143,7 @@ module RepositoryBase =
     let getTypeName<'a> =
         typeof<'a>.Name
 
-    let getSingle<'a> id =
+    let getSingle<'a> (id:Guid) =
         generateKey getTypeName<'a> (id.ToString())
         |> KeyValueStore.getKey<'a>
 
@@ -147,11 +160,15 @@ module RepositoryBase =
 
     let setKey item key =
         KeyValueStore.setKey key item
-
-    let setSingle id item =
-        generateKey (item.GetType().Name) id
+    
+    let setSingle (id:Guid) item =
+        generateKey (item.GetType().Name) (id.ToString())
         |> setKey item
 
+    let setSingleCustom (id:string) item =
+        generateKey (item.GetType().Name) id
+        |> setKey item
+    
     let setListItem item list =
         KeyValueStore.setItemInList list item
 
@@ -305,7 +322,7 @@ module TaxonomicBackbone =
         RepositoryBase.getAll<BackboneTaxon>
 
     let getById id =
-        (taxonIdToGuid id).ToString()
+        (taxonIdToGuid id)
         |> RepositoryBase.getSingle<BackboneTaxon>
 
     let private getPage r = match r with | AllPages p -> p | _ -> []
@@ -315,9 +332,9 @@ module TaxonomicBackbone =
         let tryFindReadModel (ids:Guid list) = 
             // Where there are multiple matches for a genus, return the accepted one...
             match ids |> List.length with
-            | 1 -> RepositoryBase.getSingle<BackboneTaxon> (ids.Head.ToString()) getSingle deserialise
+            | 1 -> RepositoryBase.getSingle<BackboneTaxon> (ids.Head) getSingle deserialise
             | id when ids.Length > 1 ->
-                let results = ids |> List.map (fun i -> RepositoryBase.getSingle<BackboneTaxon> (i.ToString()) getSingle deserialise)
+                let results = ids |> List.map (fun i -> RepositoryBase.getSingle<BackboneTaxon> i getSingle deserialise)
                 let m = results |> List.tryFind(fun x -> match x with | Ok t -> t.TaxonomicStatus = "accepted" | Error e -> false)
                 match m with
                 | Some t -> t
@@ -334,7 +351,7 @@ module TaxonomicBackbone =
         let search key = KeyValueStore.getSortedList All key getSortedList deserialiseGuid
         let fetchAllById ids = 
             ids 
-            |> List.map (fun id -> RepositoryBase.getSingle<BackboneTaxon> (id.ToString()) getSingle deserialise)
+            |> List.map (fun id -> RepositoryBase.getSingle<BackboneTaxon> id getSingle deserialise)
             |> List.choose (fun x -> match x with | Ok r -> Some r | Error e -> None)
             |> Ok
         identity
@@ -411,7 +428,7 @@ module TaxonomicBackbone =
                     | _ -> Error "Could not determine taxonomic status"
 
     let import set setSortedList serialise (taxon:BackboneTaxon) = 
-        RepositoryBase.setSingle (taxon.Id.ToString()) taxon set serialise |> ignore
+        RepositoryBase.setSingle taxon.Id taxon set serialise |> ignore
         RepositoryBase.setSortedListItem (taxon.Id.ToString()) (sprintf "BackboneTaxon:%s:%s" taxon.Rank taxon.LatinName) 0. setSortedList |> ignore
         RepositoryBase.setSortedListItem taxon.LatinName ("Autocomplete:BackboneTaxon:" + taxon.Rank) 0. setSortedList |> ignore
         Ok ()

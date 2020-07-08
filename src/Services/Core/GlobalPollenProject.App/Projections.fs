@@ -20,24 +20,6 @@ let toTime (_,_,d) = d
 let readModelErrorHandler() =
     invalidOp "The read model is corrupt or out-of-sync. Rebuild now."
 
-let inline deserialise< ^a> json = 
-    let unwrap (Json j) = j
-    Serialisation.deserialise< ^a> (unwrap json)
-
-let serialise s = 
-    let result = Serialisation.serialise s
-    match result with
-    | Ok r -> Ok <| Json r
-    | Error e -> Error e
-
-module Result = 
-
-    let toOption r =
-        match r with
-        | Ok x -> Some x
-        | Error _ -> None
-
-
 module Checkpoint =
 
     let init setKey =
@@ -49,9 +31,9 @@ module Checkpoint =
     let increment getKey setKey () =
         let incrementCheck current = 
             RepositoryBase.setKey (current + 1) K.checkpoint setKey serialise
-            |> Result.bind (fun x -> Ok (current + 1))
+            >>= (fun _ -> Ok (current + 1))
         getCurrentVersion getKey
-        |> Result.bind incrementCheck
+        >>= incrementCheck
 
 
 module GrainLocation =
@@ -99,22 +81,24 @@ module Statistics =
                 incrementStat K.Statistic.unknownTotal get set |> ignore
                 incrementStat K.Statistic.unknownRemaining get set
             | Grain.Event.GrainIdentityConfirmed _ ->
-                decrementStat "Statistic:UnknownSpecimenRemaining" get set
+                decrementStat K.Statistic.unknownRemaining get set
             | Grain.Event.GrainIdentified _ ->
-                incrementStat "Statistic:UnknownSpecimenIdentificationsTotal" get set
+                incrementStat K.Statistic.totalIdentifications get set
             | Grain.Event.GrainIdentityUnconfirmed _ ->
-                incrementStat "Statistic:UnknownSpecimenRemaining" get set
+                incrementStat K.Statistic.unknownRemaining get set
             | _ -> Ok()
         | _ -> Ok()
 
 
+/// Indexes summary and detail view-models for families,
+/// genera, and species in the master reference collection.
+/// Keys:
+/// - TaxonSummary:{Guid}              : TaxonSummary
+/// - TaxonSummary:{rank}:index        : Guid list
+/// - TaxonDetail:{Guid}               : TaxonDetail
+/// - Taxon:{Family}:{Genus}:{species} : Guid
+/// - Autocomplete:Taxon:{Rank}        : string list
 module MasterReferenceCollection =
-
-    // TaxonSummary:{Guid}              : TaxonSummary
-    // TaxonSummary:{rank}:index        : Guid list
-    // TaxonDetail:{Guid}               : TaxonDetail
-    // Taxon:{Family}:{Genus}:{species} : Guid
-    // Autocomplete:Taxon:{Rank}        : string list
 
     type SlideDiff =
     | Add of SlideDetail                
@@ -223,8 +207,8 @@ module MasterReferenceCollection =
 
     let getTaxon' get taxonId =
         let id : Guid = taxonId |> Converters.DomainToDto.unwrapTaxonId
-        let summary = RepositoryBase.getSingle<TaxonSummary> (id.ToString()) get deserialise
-        let detail = RepositoryBase.getSingle<TaxonDetail> (id.ToString()) get deserialise
+        let summary = RepositoryBase.getSingle<TaxonSummary> id get deserialise
+        let detail = RepositoryBase.getSingle<TaxonDetail> id get deserialise
         match summary with
         | Error e -> Error e
         | Ok s ->
@@ -238,30 +222,29 @@ module MasterReferenceCollection =
         match bbTaxon with
         | Error e -> Error e
         | Ok t ->
-            RepositoryBase.setSingle (id.ToString()) readModel.Summary set serialise |> ignore
-            RepositoryBase.setSortedListItem (generateLookupValue t) ("TaxonSummary:" + readModel.Summary.Rank) 0. setSortedList |> ignore
-            RepositoryBase.setSingle (id.ToString()) readModel.Detail set serialise |> ignore
-            RepositoryBase.setSortedListItem t.LatinName ("Autocomplete:Taxon:" + t.Rank) 0. setSortedList |> ignore
-            RepositoryBase.setSortedListItem (generateLookupValue t) ("Autocomplete:Taxon") 0. setSortedList |> ignore
+            RepositoryBase.setSingle id readModel.Summary set serialise |> ignore
+            RepositoryBase.setSortedListItem (generateLookupValue t) (K.MRC.taxonSummary readModel.Summary.Rank) 0. setSortedList |> ignore
+            RepositoryBase.setSingle id readModel.Detail set serialise |> ignore
+            RepositoryBase.setSortedListItem t.LatinName (K.MRC.autocomplete t.Rank) 0. setSortedList |> ignore
+            RepositoryBase.setSortedListItem (generateLookupValue t) K.MRC.autocompleteAll 0. setSortedList |> ignore
             RepositoryBase.setKey (id.ToString()) (getRankKey t) set serialise
 
     let getBackboneChildCount get bbTaxon =
         match bbTaxon.TaxonomicStatus with
         | "accepted" ->
             match bbTaxon.Rank with
-            | "Family" -> RepositoryBase.getKey ("Statistic:BackboneTaxa:" + bbTaxon.Family) get deserialise
-            | "Genus" -> RepositoryBase.getKey ("Statistic:BackboneTaxa:" + bbTaxon.Family + ":" + bbTaxon.Genus) get deserialise
+            | "Family" -> RepositoryBase.getKey (K.Statistic.familySubTaxaCount bbTaxon.Family) get deserialise
+            | "Genus" -> RepositoryBase.getKey (K.Statistic.genusSubTaxaCount bbTaxon.Family bbTaxon.Genus) get deserialise
             | "Species" -> 0 |> Ok
             | _ -> Error "Invalid rank specified"
         | _ -> Error "Cannot currently import taxa that are not accepted into MRC"
 
     let incrementTotal rank get set =
         match rank with
-        | "Family" -> Statistics.incrementStat "Statistic:Taxon:FamilyTotal" get set
-        | "Genus" -> Statistics.incrementStat "Statistic:Taxon:GenusTotal" get set
-        | "Species" -> Statistics.incrementStat "Statistic:Taxon:SpeciesTotal" get set
+        | "Family" -> Statistics.incrementStat K.Statistic.familyCount get set
+        | "Genus" -> Statistics.incrementStat K.Statistic.genusCount get set
+        | "Species" -> Statistics.incrementStat K.Statistic.speciesCount get set
         | _ -> Ok()
-
 
     let initTaxon get set backboneId : Result<TaxonReadModel,string> =
         let bbTaxon = TaxonomicBackbone.getById backboneId get deserialise
@@ -297,9 +280,11 @@ module MasterReferenceCollection =
                 Summary = { taxon.Summary with DirectChildren = newChild :: taxon.Summary.DirectChildren }; 
                 Detail = { taxon.Detail with Children = newChild :: taxon.Detail.Children } }
 
-    let getHeirarchy get set t =
-        let heirarchy = getBackboneHeirarchy get t
-        match heirarchy with
+    /// Gets a taxonomic hierarchy from the master reference collection.
+    /// If a taxon has not been created, it is created now.
+    let getHierarchy get set t =
+        let hierarchy = getBackboneHeirarchy get t
+        match hierarchy with
         | Error e -> Error e
         | Ok h ->
             let getParent (c:TaxonReadModel) (p:Guid) =
@@ -389,7 +374,7 @@ module MasterReferenceCollection =
                 let summary = { taxon.Summary with SlideCount = taxon.Summary.SlideCount + 1; ThumbnailUrl = slide.Thumbnail }
                 let detail = { taxon.Detail with Slides = slide :: taxon.Detail.Slides }
                 { Summary = summary; Detail = detail }
-            Statistics.incrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
+            Statistics.incrementStat K.Statistic.totalSlidesDigitised get set |> ignore
             bbId
             |> TaxonId
             |> currentAcceptedTaxon get
@@ -398,7 +383,7 @@ module MasterReferenceCollection =
                 | None -> Ok()
                 | Some t ->
                     t
-                    |> getHeirarchy get set
+                    |> getHierarchy get set
                     |> lift (List.map (add slideSummary))
                     |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
                     |> lift ignore )
@@ -412,13 +397,13 @@ module MasterReferenceCollection =
                 let summary = { taxon.Summary with SlideCount = taxon.Summary.SlideCount - 1 }
                 let detail = { taxon.Detail with Slides = taxon.Detail.Slides |> List.filter (fun s -> not (s = slide)) }
                 { Summary = summary; Detail = detail }
-            Statistics.decrementStat "Statistic:SlideDigitisedTotal" get set |> ignore
+            Statistics.decrementStat K.Statistic.totalSlidesDigitised get set |> ignore
             currentAcceptedTaxon get (bbId |> TaxonId)
             |> bind (fun current ->
                 match current with
                 | None -> Ok()
                 | Some t ->
-                    getHeirarchy get set t
+                    getHierarchy get set t
                     |> lift (List.map (remove slideSummary))
                     |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
                     |> lift ignore )
@@ -441,7 +426,7 @@ module MasterReferenceCollection =
 
     let publishCollection id version get getSortedList set setSortedList =
         let colId : Guid = id |> Converters.DomainToDto.unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) get deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId get deserialise<EditableRefCollection>
         let ver = version |> Converters.DomainToDto.unwrapColVer
         match col with
         | Error e -> Error e
@@ -455,7 +440,7 @@ module MasterReferenceCollection =
                 |> mapResult (execute get set setSortedList)
                 |> lift ignore
             | _ ->
-                let previousVersion = RepositoryBase.getKey<ReferenceCollectionDetail> (sprintf "ReferenceCollectionDetail:%s:V%i" (colId.ToString()) ((ver) - 1)) get deserialise
+                let previousVersion = RepositoryBase.getKey<ReferenceCollectionDetail> (K.IndividualCollections.collection colId (ver - 1)) get deserialise
                 match previousVersion with
                 | Error e -> Error e
                 | Ok prevC ->
@@ -464,8 +449,8 @@ module MasterReferenceCollection =
                     |> lift ignore
 
     let establishConnection get set id externalId =
-        let getExisting (id:Guid) = RepositoryBase.getSingle<TaxonDetail> (id.ToString()) get deserialise
-        let save (taxon:TaxonDetail) = RepositoryBase.setSingle (taxon.Id.ToString()) taxon set serialise
+        let getExisting (id:Guid) = RepositoryBase.getSingle<TaxonDetail> id get deserialise
+        let save (taxon:TaxonDetail) = RepositoryBase.setSingle taxon.Id taxon set serialise
         let updateId taxon =
             match externalId with
             | Taxonomy.ThirdPartyTaxonId.NeotomaId i -> {taxon with NeotomaId = i}
@@ -481,14 +466,36 @@ module MasterReferenceCollection =
         |> lift updateId
         |> bind save
 
-    let addGrain (grainId:GrainId) (taxonId:TaxonId) =
-        // Get taxon and add grain for it and every parent level
-        Ok()
-
-    let removeGrainFromMrc (grainId:GrainId) =
-
-        // Figure out the current taxon in MRC
-        // Get taxon and remove grain for it and every parent
+    let addGrain' (grain:GrainSummary) (taxon:TaxonReadModel) =
+        let summary = { taxon.Summary with GrainCount = taxon.Summary.GrainCount + 1; ThumbnailUrl = grain.Thumbnail }
+        let detail = { taxon.Detail with Grains = grain :: taxon.Detail.Grains }
+        { Summary = summary; Detail = detail }
+    
+    let addGrain get set setSortedList (grainId:GrainId) (taxonId:TaxonId) =
+        let id : Guid = Converters.DomainToDto.unwrapGrainId grainId
+        let grain = ReadStore.RepositoryBase.getSingle<GrainSummary> id get deserialise
+        taxonId
+        |> currentAcceptedTaxon get
+        >>= (fun current ->
+                match current with
+                | None ->
+                    printfn "[read-model WARN] Inconsistency."
+                    Ok()
+                | Some t ->
+                    match grain with
+                    | Error _ ->
+                        printfn "[read-model WARN] Inconsistency."
+                        Ok()
+                    | Ok g ->
+                        getHierarchy get set t
+                        |> lift (List.map (addGrain' g))
+                        |> bind (mapResult (fun rm -> setTaxon get set setSortedList (rm.Summary.Id |> TaxonId) rm))
+                        |> lift ignore )
+    
+    let removeGrainFromMrc get set setSortedList (grainId:GrainId) =
+        let id : Guid = Converters.DomainToDto.unwrapGrainId grainId
+        let grain = ReadStore.RepositoryBase.getSingle<GrainDetail> id get deserialise
+        // TODO Remove grain from taxon hierarchy. Not implemented
         Ok()
 
     let handle get getSortedList set setSortedList (e:EventMessage) =
@@ -499,11 +506,11 @@ module MasterReferenceCollection =
             | _ -> Ok()
         | :? Grain.Event as e ->
             match e with
-            | Grain.Event.GrainIdentityConfirmed e -> addGrain e.Id e.Taxon
+            | Grain.Event.GrainIdentityConfirmed e -> addGrain get set setSortedList e.Id e.Taxon
             | Grain.Event.GrainIdentityChanged e -> 
-                removeGrainFromMrc e.Id |> ignore
-                addGrain e.Id e.Taxon
-            | Grain.Event.GrainIdentityUnconfirmed e -> removeGrainFromMrc e.Id
+                removeGrainFromMrc get set setSortedList e.Id |> ignore
+                addGrain get set setSortedList e.Id e.Taxon
+            | Grain.Event.GrainIdentityUnconfirmed e -> removeGrainFromMrc get set setSortedList e.Id
             | _ -> Ok()
         | :? Taxonomy.Event as e ->
             match e with
@@ -554,7 +561,7 @@ module Grain =
 
         let getMag mag = 
             let calId,level = Converters.DomainToDto.unwrapMagId mag
-            RepositoryBase.getSingle<Calibration> (calId.ToString()) getKey deserialise
+            RepositoryBase.getSingle<Calibration> calId getKey deserialise
             |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
 
         let cacheImage url =
@@ -577,16 +584,16 @@ module Grain =
             ConfirmedSpecies = ""
             ConfirmedSpAuth = "" }
 
-        ReadStore.RepositoryBase.setSingle (summary.Id.ToString()) summary setReadModel serialise |> ignore
-        ReadStore.RepositoryBase.setSingle (detail.Id.ToString()) detail setReadModel serialise |> ignore
+        ReadStore.RepositoryBase.setSingle summary.Id summary setReadModel serialise |> ignore
+        ReadStore.RepositoryBase.setSingle detail.Id detail setReadModel serialise |> ignore
         RepositoryBase.setListItem (summary.Id.ToString()) "GrainSummary:index" setList
 
     let identified get set (e:GrainIdentified) =
         let id : Guid = Converters.DomainToDto.unwrapGrainId e.Id
-        let grain = ReadStore.RepositoryBase.getSingle<GrainDetail> (id.ToString()) get deserialise
+        let grain = ReadStore.RepositoryBase.getSingle<GrainDetail> id get deserialise
         let taxon = ReadStore.TaxonomicBackbone.getById e.Taxon get deserialise
 
-        let toHeirarchy (taxon:BackboneTaxon) =
+        let toHierarchy (taxon:BackboneTaxon) =
             taxon.Family,taxon.Genus,taxon.Species,taxon.NamedBy,taxon.Rank
 
         let idMethod = "Morphological"
@@ -603,20 +610,20 @@ module Grain =
 
         let identification =
             createIdentification e.IdentifiedBy idMethod
-            <!> (taxon |> lift toHeirarchy)
+            <!> (taxon |> lift toHierarchy)
 
         let addId id grain = { grain with Identifications = id :: grain.Identifications }
-        let save (grain:GrainDetail) = ReadStore.RepositoryBase.setSingle (id.ToString()) grain set serialise
+        let save (grain:GrainDetail) = ReadStore.RepositoryBase.setSingle id grain set serialise
 
         addId
         <!> identification
         <*> grain
-        |> bind save
+        >>= save
 
     let identityChanged get set (taxon:TaxonId option) grainId = 
         let id : Guid = Converters.DomainToDto.unwrapGrainId grainId
-        let grain = ReadStore.RepositoryBase.getSingle<GrainDetail> (id.ToString()) get deserialise
-        let save grain = ReadStore.RepositoryBase.setSingle (id.ToString()) grain set serialise
+        let grain = ReadStore.RepositoryBase.getSingle<GrainDetail> id get deserialise
+        let save grain = ReadStore.RepositoryBase.setSingle id grain set serialise
 
         match taxon with
         | Some t ->
@@ -666,16 +673,16 @@ module TaxonomicBackbone =
     // Statistic:BackboneTaxa:{F/G/S/Total}
 
     let init set =
-        RepositoryBase.setKey 0 "Statistic:BackboneTaxa:Families" set serialise |> ignore     
-        RepositoryBase.setKey 0 "Statistic:BackboneTaxa:Genera" set serialise |> ignore     
-        RepositoryBase.setKey 0 "Statistic:BackboneTaxa:Species" set serialise |> ignore     
-        RepositoryBase.setKey 0 "Statistic:BackboneTaxa:Total" set serialise
+        RepositoryBase.setKey 0 K.Statistic.backboneFamilies set serialise |> ignore     
+        RepositoryBase.setKey 0 K.Statistic.backboneGenera set serialise |> ignore     
+        RepositoryBase.setKey 0 K.Statistic.backboneSpecies set serialise |> ignore     
+        RepositoryBase.setKey 0 K.Statistic.backboneTotal set serialise
 
     let getById getKey id =
         match id with
         | Some id ->
             let u : Guid = Converters.DomainToDto.unwrapTaxonId id
-            match ReadStore.RepositoryBase.getSingle<BackboneTaxon> (u.ToString()) getKey deserialise with
+            match ReadStore.RepositoryBase.getSingle<BackboneTaxon> u getKey deserialise with
             | Ok t -> t
             | Error e -> readModelErrorHandler()
         | None -> readModelErrorHandler()
@@ -778,11 +785,11 @@ module ReferenceCollectionReadOnly =
 
     let updateSlideReadModel set slide =
         let slidePublishedId = sprintf "%s:%s" (slide.CollectionId.ToString()) slide.CollectionSlideId
-        RepositoryBase.setSingle slidePublishedId slide set serialise
+        RepositoryBase.setSingleCustom slidePublishedId slide set serialise
 
     let published get set setList (colId:CollectionId) time version =
         let id : Guid = colId |> Converters.DomainToDto.unwrapRefId
-        let col = RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle id get deserialise<EditableRefCollection>
         match col with
         | Ok c ->
             let summary = {
@@ -804,7 +811,7 @@ module ReferenceCollectionReadOnly =
                 c.Slides 
                 |> List.map (fun s -> s.CollectorName)
                 |> List.distinct
-            let getUser (id:Guid) = ReadStore.RepositoryBase.getSingle<PublicProfile> (id.ToString()) get deserialise
+            let getUser (id:Guid) = ReadStore.RepositoryBase.getSingle<PublicProfile> id get deserialise
             let digitisers =
                 c.EditUserIds
                 |> List.map getUser
@@ -825,7 +832,7 @@ module ReferenceCollectionReadOnly =
                 Digitisers      = match digitisers with | Ok u -> u | Error _ -> []
                 Collectors      = collectors
             }
-            RepositoryBase.setSingle (id.ToString()) summary set serialise |> ignore
+            RepositoryBase.setSingle id summary set serialise |> ignore
             RepositoryBase.setKey detail (sprintf "ReferenceCollectionDetail:%s:V%i" (id.ToString()) v) set serialise |> ignore
             RepositoryBase.setListItem (id.ToString()) "ReferenceCollectionSummary:index" setList |> ignore
             c.Slides |> List.map (updateSlideReadModel set) |> ignore
@@ -855,16 +862,16 @@ module UserProfile =
             Groups = []
             Curator = false
             IsPublic = true }
-        RepositoryBase.setSingle (profile.UserId.ToString()) profile set serialise |> ignore
+        RepositoryBase.setSingle profile.UserId profile set serialise |> ignore
         RepositoryBase.setListItem (profile.UserId.ToString()) "PublicProfile:index" setList
 
     let updateProperty get set userId updater newValue =
         let id = userId |> Converters.DomainToDto.unwrapUserId
-        let existing = RepositoryBase.getSingle<PublicProfile> (id.ToString()) get deserialise
+        let existing = RepositoryBase.getSingle<PublicProfile> id get deserialise
         match existing with
         | Ok u ->
             let updated = updater u newValue
-            RepositoryBase.setSingle (id.ToString()) updated set serialise
+            RepositoryBase.setSingle id updated set serialise
         | Error e -> Error e
 
     let changeVisibility get set visibility userId =
@@ -919,12 +926,12 @@ module Digitisation =
             AwaitingReview = false }
         let id : Guid = e.Id |> unwrapRefId
         let userId : Guid = e.Owner |> unwrapUserId
-        RepositoryBase.setSingle (id.ToString()) col set serialise |> ignore
+        RepositoryBase.setSingle id col set serialise |> ignore
         RepositoryBase.setListItem (id.ToString()) ("CollectionAccessList:" + (userId.ToString())) setList
 
     let recordSlide getKey setKey (e:SlideRecorded) =
         let colId : Guid = e.Id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
@@ -967,11 +974,11 @@ module Digitisation =
                 LocationType = locationType
                 PreppedBy = ""
                 Voided = false }
-            RepositoryBase.setSingle (colId.ToString()) { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
+            RepositoryBase.setSingle colId { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
 
     let imageUploaded getKey setKey generateCacheImage toAbsoluteUrl id image =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
@@ -992,7 +999,7 @@ module Digitisation =
                     | Error _ -> ""
                 let getMag mag = 
                     let calId,level = Converters.DomainToDto.unwrapMagId mag
-                    RepositoryBase.getSingle<Calibration> (calId.ToString()) getKey deserialise
+                    RepositoryBase.getSingle<Calibration> calId getKey deserialise
                     |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
                 let cacheImage url =
                     match generateCacheImage webImageSize "web" url with
@@ -1005,11 +1012,11 @@ module Digitisation =
                     |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
                     |> List.sortBy (fun s -> s.CollectionSlideId)
                 let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise
+                RepositoryBase.setSingle colId updatedCol setKey serialise
 
     let digitised getKey setKey id =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
@@ -1020,11 +1027,11 @@ module Digitisation =
                 let updatedSlide = { s with IsFullyDigitised = true }
                 let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
                 let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise
+                RepositoryBase.setSingle colId updatedCol setKey serialise
 
     let gainedIdentity getKey setKey id taxonId =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
@@ -1033,18 +1040,18 @@ module Digitisation =
             | None -> readModelErrorHandler()
             | Some s ->
                 let f,g,sp,auth,status = 
-                    let bbTaxon = RepositoryBase.getSingle ((taxonId |> unwrapTaxonId).ToString()) getKey deserialise<BackboneTaxon>
+                    let bbTaxon = RepositoryBase.getSingle ((taxonId |> unwrapTaxonId)) getKey deserialise<BackboneTaxon>
                     match bbTaxon with
                     | Error e -> readModelErrorHandler()
                     | Ok t -> t.Family, t.Genus, t.Species, t.NamedBy, t.TaxonomicStatus
                 let updatedSlide = { s with CurrentTaxonStatus = status; CurrentFamily = f; CurrentGenus = g; CurrentSpecies = sp; CurrentSpAuth = auth; CurrentTaxonId = taxonId |> Converters.DomainToDto.unwrapTaxonId |> Some }
                 let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
                 let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise
+                RepositoryBase.setSingle colId updatedCol setKey serialise
 
     let gainedPrep getKey setKey id person =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
@@ -1056,38 +1063,38 @@ module Digitisation =
                 let updatedSlide = { s with PreppedBy = personName }
                 let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
                 let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle (colId.ToString()) updatedCol setKey serialise
+                RepositoryBase.setSingle colId updatedCol setKey serialise
 
     let published getKey setKey id time (version:ColVersion) =
         let colId : Guid = id |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) getKey deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
-            RepositoryBase.setSingle (colId.ToString()) { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time } setKey serialise
+            RepositoryBase.setSingle colId { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time } setKey serialise
 
     let requestedPublication get set setList colId =
         let id = colId |> Converters.DomainToDto.unwrapRefId
-        let col = RepositoryBase.getSingle (id.ToString()) get deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle id get deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
             let updated = { c with AwaitingReview = true }
             RepositoryBase.setListItem (id.ToString()) "Curation:InReview" setList |> ignore
-            RepositoryBase.setSingle (colId.ToString()) updated set serialise
+            RepositoryBase.setSingle id updated set serialise
 
     let revision get set id note =
         let colId : Guid = id |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) get deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId get deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
             let updated = { c with AwaitingReview = false; CommentsFromReview = note |> Converters.DomainToDto.unwrapLongText }
-            RepositoryBase.setSingle (colId.ToString()) updated set serialise
+            RepositoryBase.setSingle colId updated set serialise
 
     let publicAccess get set id curator access =
         let colId : Guid = id |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) get deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId get deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
@@ -1115,11 +1122,11 @@ module Digitisation =
                                    AccessMethod = accessMethod
                                    Institution = institution
                                    InstitutionUrl = institutionUrl  }
-            RepositoryBase.setSingle (colId.ToString()) updated set serialise
+            RepositoryBase.setSingle colId updated set serialise
 
     let voidSlide get set id =
         let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle (colId.ToString()) get deserialise<EditableRefCollection>
+        let col = RepositoryBase.getSingle colId get deserialise<EditableRefCollection>
         match col with
         | Error e -> Error e
         | Ok c -> 
@@ -1129,7 +1136,7 @@ module Digitisation =
             | Some s ->
                 let updatedSlides = c.Slides |> List.except [s]
                 let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle (colId.ToString()) updatedCol set serialise
+                RepositoryBase.setSingle colId updatedCol set serialise
 
     let handle get getSortedList set setList generateCacheImage toAbsoluteUrl (e:EventMessage) =
         match e |> toEvent with
@@ -1162,13 +1169,13 @@ module Calibration =
 
     let setup set setList (e:SetupMicroscope) =
         let cal = Converters.DomainToDto.calibration e.Id e.User e.FriendlyName e.Microscope
-        let id = (e.Id |> unwrapCalId).ToString()
+        let id = e.Id |> unwrapCalId
         RepositoryBase.setSingle id cal set serialise |> ignore
-        RepositoryBase.setListItem id ("Calibration:User:" + ((e.User |> unwrapUserId).ToString())) setList
+        RepositoryBase.setListItem (id.ToString()) ("Calibration:User:" + ((e.User |> unwrapUserId).ToString())) setList
 
     let calibrated get set toAbsoluteUrl e =
         let calId : Guid = e.Id |> unwrapCalId
-        let cal = RepositoryBase.getSingle (calId.ToString()) get deserialise<Calibration> 
+        let cal = RepositoryBase.getSingle calId get deserialise<Calibration> 
         match cal with
         | Error e -> Error e
         | Ok c ->
@@ -1181,7 +1188,7 @@ module Calibration =
                 c with
                     Magnifications = newMag :: c.Magnifications
                     UncalibratedMags = c.UncalibratedMags |> List.filter (fun m -> not (m = (e.Magnification |> removeUnitInt))) }
-            RepositoryBase.setSingle (calId.ToString()) updated set serialise
+            RepositoryBase.setSingle calId updated set serialise
 
     let handle get getList set setList toAbsoluteUrl (e:EventMessage) =
         match e |> toEvent with

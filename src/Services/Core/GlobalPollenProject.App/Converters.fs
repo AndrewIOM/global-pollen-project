@@ -29,16 +29,16 @@ module Identity =
     open ReadStore
 
     let inline deserialise< ^a> json = 
-        let unwrap (ReadStore.Json j) = j
+        let unwrap (Json j) = j
         Serialisation.deserialise< ^a> (unwrap json)
 
     let existingUserOrError get (id:Guid) =
-        match RepositoryBase.getSingle<PublicProfile> (id.ToString()) get deserialise with
+        match RepositoryBase.getSingle<PublicProfile> id get deserialise with
         | Ok u -> u.UserId |> UserId |> Ok
         | Error e -> NotFound |> Error
 
     let existingGrainOrError get (id:Guid) =
-        match RepositoryBase.getSingle<GrainDetail> (id.ToString()) get deserialise with
+        match RepositoryBase.getSingle<GrainDetail> id get deserialise with
         | Ok u -> u.Id |> GrainId |> Ok
         | Error e -> NotFound |> Error
 
@@ -47,7 +47,7 @@ module Identity =
         |> List.tryFind (fun m -> m.Level = mag)
 
     let existingMagnificationOrError get (calId:Guid) (mag:int) =
-        match RepositoryBase.getSingle<Calibration> (calId.ToString()) get deserialise with
+        match RepositoryBase.getSingle<Calibration> calId get deserialise with
         | Ok c ->
             match tryGetMagnification c mag with
             | Some m -> MagnificationId (CalibrationId c.Id, mag) |> Ok
@@ -55,7 +55,7 @@ module Identity =
         | Error e -> validationError "Calibration" "Calibration does not exist"
 
     let existingSlideIdOrError get (collection:Guid) (slide:string) =
-        match RepositoryBase.getSingle<EditableRefCollection> (collection.ToString()) get deserialise with
+        match RepositoryBase.getSingle<EditableRefCollection> collection get deserialise with
         | Error e -> validationError "CollectionId" "The collection does not exist"
         | Ok c ->
             c.Slides
@@ -64,7 +64,7 @@ module Identity =
             |> optionToResult
 
     let existingBackboneTaxonOrError get (taxon:Guid) =
-        match RepositoryBase.getSingle<BackboneTaxon> (taxon.ToString()) get deserialise with
+        match RepositoryBase.getSingle<BackboneTaxon> taxon get deserialise with
         | Error e -> validationError "TaxonId" "The specified taxon does not exist"
         | Ok t -> t.Id |> TaxonId |> Ok
 

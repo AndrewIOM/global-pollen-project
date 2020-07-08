@@ -86,7 +86,7 @@ export class Viewer {
                         if(!error) {
                             // only trigger once!
                             error = true;
-                            $(self).trigger(ViewerEvent.EVENT_IMAGES_MISMATCHED_SIZE);
+                            $(this.id).trigger(ViewerEvent.EVENT_IMAGES_MISMATCHED_SIZE);
                         }
                         return;
                     }
@@ -108,7 +108,7 @@ export class Viewer {
 
                     // proceed if all images have been loaded - trigger a jQuery function too
                     callback();
-                    $(self).trigger(ViewerEvent.EVENT_LOADED_IMAGES);
+                    $(this.id).trigger(ViewerEvent.EVENT_LOADED_IMAGES);
                 }
             }
             img.src = this.imagePaths[i];
@@ -143,7 +143,7 @@ export class Viewer {
             this.transform = d3.event.transform;
 
             // trigger a zoom event
-            $(this).trigger(ViewerEvent.EVENT_ZOOMED);
+            $(this.id).trigger(ViewerEvent.EVENT_ZOOMED);
         }
 
         const defaultZoom = Math.min(this.width / this.imgWidth, this.height / this.imgHeight);

@@ -8,6 +8,18 @@ let (|Prefix|_|) (p:string) (s:string) =
     else
         None
 
+let (|Guid|_|) str =
+   match System.Guid.TryParse(str:string) with
+   | (true,g) -> Some g
+   | _ -> None
+
+module Result = 
+
+    let toOption r =
+        match r with
+        | Ok x -> Some x
+        | Error _ -> None
+
 type LogMessage =
 | DomainError of string
 | Info of string

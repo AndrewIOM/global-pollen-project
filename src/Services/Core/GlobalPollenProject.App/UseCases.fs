@@ -14,6 +14,8 @@ open ReadStore
 open Converters
 open Responses
 
+module K = ReadStoreKeys
+
 type GetCurrentUser = unit -> Guid
 
 let mutable inMaintenanceMode = false
@@ -59,13 +61,13 @@ let readStoreGet,readStoreGetList,readStoreGetSortedList,readLex,redisSet,redisS
     redis.Value |> ReadStore.Redis.reset
 
 let inline deserialise< ^a> json = 
-    let unwrap (ReadStore.Json j) = j
+    let unwrap (Json j) = j
     Serialisation.deserialise< ^a> (unwrap json)
 
 let serialise s = 
     let result = Serialisation.serialise s
     match result with
-    | Ok r -> Ok <| ReadStore.Json r
+    | Ok r -> Ok <| Json r
     | Error e -> Error e
 
 let projectionHandler e =
@@ -82,7 +84,7 @@ eventStore.Value.SaveEvent
 |> ignore
 
 let private deserialiseGuid json =
-    let unwrap (ReadStore.Json j) = j
+    let unwrap (Json j) = j
     let s = (unwrap json).Replace("\"", "")
     match Guid.TryParse(s) with
     | true,g -> Ok g
@@ -145,23 +147,25 @@ let toValidationError domainResult =
 module Digitise =
 
     open GlobalPollenProject.Core.Aggregates.ReferenceCollection
-    open Converters
    
-    let myCollections getCurrentUser () = 
+    let myCollections (getCurrentUser:GetCurrentUser) () = 
         let userId = getCurrentUser()
-        let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("CollectionAccessList:" + (userId.ToString())) readStoreGetList deserialiseGuid
+        let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("CollectionAccessList:" + userId.ToString()) readStoreGetList deserialiseGuid
         match cols with
         | Error e -> Error Persistence
         | Ok clist -> 
-            let getCol id = ReadStore.RepositoryBase.getSingle<EditableRefCollection> (id.ToString()) readStoreGet deserialise
+            let getCol id = ReadStore.RepositoryBase.getSingle<EditableRefCollection> id readStoreGet deserialise
             clist 
             |> List.map getCol 
             |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
             |> Ok
 
-    let getCollection id =
-        ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<EditableRefCollection>
-        |> toAppResult
+    let getCollection collectionId =
+        match collectionId with
+        | Guid id ->
+            ReadStore.RepositoryBase.getSingle id readStoreGet deserialise<EditableRefCollection>
+            |> toAppResult
+        | _ -> Error InvalidRequestFormat
 
     let private issueCommand = 
         let aggregate = { initial = State.Initial; evolve = State.Evolve; handle = handle; getId = getId }
@@ -223,7 +227,7 @@ module Calibrations =
         eventStore.Value.MakeCommandHandler "Calibration" aggregate domainDependencies
 
     let private deserialiseGuid json =
-        let unwrap (ReadStore.Json j) = j
+        let unwrap (Json j) = j
         let s = (unwrap json).Replace("\"", "")
         match Guid.TryParse(s) with
         | true,g -> Ok g
@@ -235,7 +239,7 @@ module Calibrations =
         match cols with
         | Error e -> Error Persistence
         | Ok clist -> 
-            let getCol id = ReadStore.RepositoryBase.getSingle<ReadModels.Calibration> (id.ToString()) readStoreGet deserialise
+            let getCol id = ReadStore.RepositoryBase.getSingle<ReadModels.Calibration> id readStoreGet deserialise
             clist 
             |> List.map getCol 
             |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
@@ -293,8 +297,11 @@ module UnknownGrains =
         |> toAppResult
 
     let getDetail grainId =
-        ReadStore.RepositoryBase.getSingle<GrainDetail> grainId readStoreGet deserialise
-        |> toAppResult
+        match grainId with
+        | Guid id ->
+            ReadStore.RepositoryBase.getSingle<GrainDetail> id readStoreGet deserialise
+            |> toAppResult
+        | _ -> Error InvalidRequestFormat
 
     let identifyUnknownGrain getCurrentUser (req:IdentifyGrainRequest) =
         let taxonIdOrError = Converters.Identity.existingBackboneTaxonOrError readStoreGet req.TaxonId
@@ -313,7 +320,7 @@ module UnknownGrains =
         match grainIds with
         | Error e -> Error Persistence
         | Ok clist -> 
-            let getCol id = ReadStore.RepositoryBase.getSingle<GrainSummary> (id.ToString()) readStoreGet deserialise
+            let getCol id = ReadStore.RepositoryBase.getSingle<GrainSummary> id readStoreGet deserialise
             clist 
             |> List.map getCol 
             |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
@@ -321,7 +328,7 @@ module UnknownGrains =
 
     let getTopScoringUnknownGrains() =
         let getCol (id:Guid) = 
-            ReadStore.RepositoryBase.getSingle<GrainDetail> (id.ToString()) readStoreGet deserialise
+            ReadStore.RepositoryBase.getSingle<GrainDetail> id readStoreGet deserialise
             |> lift (fun d -> { Id = d.Id; Latitude = d.Latitude; Longitude = d.Longitude })
         RepositoryBase.getListKey<Guid> All "GrainSummary:index" readStoreGetList deserialiseGuid
         |> bind (mapResult getCol)
@@ -329,8 +336,6 @@ module UnknownGrains =
 
 
 module Taxonomy =
-
-    open GlobalPollenProject.Core.Aggregates.Taxonomy
 
     let toSearchResult (name:string) =
         let parts = name.Split(':')
@@ -407,12 +412,15 @@ module Taxonomy =
         | Error _ -> Error NotFound
 
     let getSlide colId slideId =
-        let key = sprintf "SlideDetail:%s:%s" colId slideId
-        let createViewModel slide col = { Slide = slide; Collection = col }
-        createViewModel
-        <!> RepositoryBase.getKey<SlideDetail> key readStoreGet deserialise
-        <*> RepositoryBase.getSingle<ReferenceCollectionSummary> colId readStoreGet deserialise
-        |> toNotFoundResult
+        match colId with
+        | Guid col ->
+            let key = sprintf "SlideDetail:%s:%s" colId slideId
+            let createViewModel slide col = { Slide = slide; Collection = col }
+            createViewModel
+            <!> RepositoryBase.getKey<SlideDetail> key readStoreGet deserialise
+            <*> RepositoryBase.getSingle<ReferenceCollectionSummary> col readStoreGet deserialise
+            |> toNotFoundResult
+        | _ -> Error InvalidRequestFormat
 
     let getById (taxonId:Guid) =
         let key = sprintf "TaxonDetail:%s" (taxonId.ToString())
@@ -426,7 +434,7 @@ module IndividualReference =
         match cols with
         | Error e -> Error Persistence
         | Ok clist -> 
-            let getCol id = ReadStore.RepositoryBase.getSingle<ReferenceCollectionSummary> (id.ToString()) readStoreGet deserialise
+            let getCol id = ReadStore.RepositoryBase.getSingle<ReferenceCollectionSummary> id readStoreGet deserialise
             clist 
             |> List.map getCol 
             |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
@@ -536,7 +544,7 @@ module User =
         |> toAppResult
 
     let getPublicProfile (id:Guid) =
-        RepositoryBase.getSingle<PublicProfile> (id.ToString()) readStoreGet deserialise
+        RepositoryBase.getSingle<PublicProfile> id readStoreGet deserialise
         |> toAppResult
 
     let grantCuration (id:string) =
@@ -560,10 +568,10 @@ module Statistic =
               UnidentifiedGrains = u }
         let getStat key = RepositoryBase.getKey<int> key readStoreGet deserialise
         createStatModel
-        <!> getStat "Statistic:SlideDigitisedTotal"
-        <*> getStat "Statistic:Taxon:SpeciesTotal"
-        <*> getStat "Statistic:Grain:Total"
-        <*> getStat "Statistic:UnknownSpecimenRemaining"
+        <!> getStat K.Statistic.totalSlidesDigitised
+        <*> getStat K.Statistic.totalSpecies
+        <*> getStat K.Statistic.totalGrains
+        <*> getStat K.Statistic.unknownRemaining
         |> toAppResult
 
     let getSystemStats() : Result<AllStatsViewModel,ServiceError> =
@@ -578,12 +586,12 @@ module Statistic =
         let getInt key = RepositoryBase.getKey<int> key readStoreGet deserialise
 
         createViewModel
-        <!> getInt "Statistic:Taxon:FamilyTotal"
-        <*> getInt "Statistic:BackboneTaxa:Families"
-        <*> getInt "Statistic:Taxon:GenusTotal"
-        <*> getInt "Statistic:BackboneTaxa:Genera"
-        <*> getInt "Statistic:Taxon:SpeciesTotal"
-        <*> getInt "Statistic:BackboneTaxa:Species"
+        <!> getInt K.Statistic.familyCount
+        <*> getInt K.Statistic.backboneFamilies
+        <*> getInt K.Statistic.genusCount
+        <*> getInt K.Statistic.backboneGenera
+        <*> getInt K.Statistic.speciesCount
+        <*> getInt K.Statistic.backboneSpecies
         |> toAppResult
 
 module Admin =
@@ -598,8 +606,8 @@ module Admin =
 
     let listUsers() =
         let get (id:Guid) = 
-            ReadStore.RepositoryBase.getSingle<PublicProfile> (id.ToString()) readStoreGet deserialise
-        RepositoryBase.getListKey<Guid> All "PublicProfile:index" readStoreGetList deserialiseGuid
+            ReadStore.RepositoryBase.getSingle<PublicProfile> id readStoreGet deserialise
+        RepositoryBase.getListKey<Guid> All K.Profiles.index readStoreGetList deserialiseGuid
         |> bind (mapResult get)
         |> toAppResult
 
@@ -613,7 +621,7 @@ module Curation =
 
     let listPending() =
         let get (id:Guid) = 
-            ReadStore.RepositoryBase.getSingle<EditableRefCollection> (id.ToString()) readStoreGet deserialise
+            ReadStore.RepositoryBase.getSingle<EditableRefCollection> id readStoreGet deserialise
         RepositoryBase.getListKey<Guid> All "Curation:InReview" readStoreGetList deserialiseGuid
         |> bind (mapResult get)
         |> toAppResult
@@ -621,7 +629,7 @@ module Curation =
     let issueDecision getCurrentUser (request:CurateCollectionRequest) =
         
         let isCurator = 
-            ReadStore.RepositoryBase.getSingle<PublicProfile> (getCurrentUser().ToString()) readStoreGet deserialise
+            ReadStore.RepositoryBase.getSingle<PublicProfile> (getCurrentUser()) readStoreGet deserialise
             |> lift (fun u -> u.Curator)
 
         let decision =
