@@ -353,64 +353,61 @@ module Routes =
             subRoute "/Manage" manageRoutes
         ]
 
-module Config =
-
-    open IdentityServer4
-    open IdentityServer4.Models
-    
-    let apis = [
-        ApiResource("core", "Core Pollen Services")
-        ApiResource("webapigw", "Website Aggregator")
-    ]
-
-    let resources : IdentityResource list = [
-        IdentityResources.OpenId()
-        IdentityResources.Profile()
-    ]
-
-    let clients websiteUrl = [
-        Client(
-            ClientId = "mvc",
-            ClientName = "MVC Client",
-            ClientSecrets = [| Secret("secret".Sha256()) |],
-            ClientUri = websiteUrl,
-            AllowedGrantTypes = [| GrantType.Hybrid |],
-            AllowAccessTokensViaBrowser = false,
-            RequireConsent = false,
-            AllowOfflineAccess = true,
-            AlwaysIncludeUserClaimsInIdToken = true,
-            RedirectUris = [| sprintf "%s/signin-oidc" websiteUrl  |],
-            PostLogoutRedirectUris = [| sprintf "%s/signout-callback-oidc" websiteUrl |],
-            AllowedScopes = [|
-                IdentityServerConstants.StandardScopes.OpenId
-                IdentityServerConstants.StandardScopes.Profile
-                IdentityServerConstants.StandardScopes.OfflineAccess
-                "core"
-                "webapigw"
-            |])
-    ]
-
 
 // ---------------------------------
 // Config and Main
 // ---------------------------------
 module Program = 
 
-    open System.IO
     open Microsoft.AspNetCore.Builder
     open Microsoft.AspNetCore.Cors.Infrastructure
     open Microsoft.AspNetCore.Hosting
     open Microsoft.Extensions.DependencyInjection
     open Microsoft.Extensions.Configuration
     open Microsoft.EntityFrameworkCore
+    open IdentityServer4.EntityFramework.Mappers
 
     let getAppSetting (appSettings:IConfiguration) name =
         match String.IsNullOrEmpty appSettings.[name] with
         | true -> invalidOp "Appsetting is missing: " + name
         | false -> appSettings.[name]
 
-    open IdentityServer4.EntityFramework.Mappers
+    module Config =
 
+        open IdentityServer4
+        
+        let apis = [
+            ApiResource("core", "Core Pollen Services")
+            ApiResource("webapigw", "Website Aggregator")
+        ]
+
+        let resources : IdentityResource list = [
+            IdentityResources.OpenId()
+            IdentityResources.Profile()
+        ]
+        
+        let clients (mvcSecret:string) websiteUrl = [
+            Client(
+                ClientId = "mvc",
+                ClientName = "MVC Client",
+                ClientSecrets = [| Secret(mvcSecret.Sha256()) |],
+                ClientUri = websiteUrl,
+                AllowedGrantTypes = [| GrantType.Hybrid |],
+                AllowAccessTokensViaBrowser = false,
+                RequireConsent = false,
+                AllowOfflineAccess = true,
+                AlwaysIncludeUserClaimsInIdToken = true,
+                RedirectUris = [| sprintf "%s/signin-oidc" websiteUrl  |],
+                PostLogoutRedirectUris = [| sprintf "%s/signout-callback-oidc" websiteUrl |],
+                AllowedScopes = [|
+                    IdentityServerConstants.StandardScopes.OpenId
+                    IdentityServerConstants.StandardScopes.Profile
+                    IdentityServerConstants.StandardScopes.OfflineAccess
+                    "core"
+                    "webapigw"
+                |])
+        ]
+    
     // Seed configuration data
     let seedConfigurationDbAsync (appSettings:IConfiguration) (context:ConfigurationDbContext) =
         task {
@@ -419,7 +416,8 @@ module Program =
             let! hasApiResources = context.ApiResources.AnyAsync()
             if not hasClients then
                 let webUrl = getAppSetting appSettings "WebsiteUrl"
-                let clients = Config.clients webUrl
+                let mvcSecret = getAppSetting appSettings "ClientSecretMvc"
+                let clients = Config.clients mvcSecret webUrl
                 clients |> List.map(fun c -> context.Clients.Add(c.ToEntity())) |> ignore
                 let! _ = context.SaveChangesAsync()
                 ()

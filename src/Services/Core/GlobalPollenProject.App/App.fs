@@ -1,6 +1,8 @@
 module GlobalPollenProject.App.App
 
 open System
+open System.Globalization
+open Giraffe.Serialization
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Builder
@@ -195,7 +197,7 @@ let routes : HttpHandler =
 /////////////////////////////
 
 type Startup () =
-
+    
     new (configuration: IConfiguration) as this =
         Startup() then
         this.Configuration <- configuration
@@ -207,18 +209,32 @@ type Startup () =
             opt.DefaultAuthenticateScheme <- JwtBearerDefaults.AuthenticationScheme
             opt.DefaultChallengeScheme <- JwtBearerDefaults.AuthenticationScheme )
             .AddJwtBearer(fun opt ->
-                opt.Authority <- U.getAppSetting "IdentityUrl" //this.Configuration.GetValue<string> "IdentityUrl"
+                opt.Authority <- U.getAppSetting "IdentityUrl"
                 opt.RequireHttpsMetadata <- false
                 opt.Audience <- "core" ) |> ignore
         services.AddGiraffe() |> ignore
-
+        let customSettings = Newtonsoft.Json.JsonSerializerSettings(Culture = CultureInfo("en-GB"))
+        customSettings.Converters.Add(Microsoft.FSharpLu.Json.CompactUnionJsonConverter(true))
+        services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(customSettings)) |> ignore    
+    
     member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
         if (env.IsDevelopment()) then
             app.UseDeveloperExceptionPage() |> ignore
             U.Admin.rebuildReadModel() |> ignore
             // Seed an extract of taxonomic names if there are none:
-            match U.Backbone.searchNames { Rank = "Family"; LatinName = "Poaceae"; Family = "Poaceae"; Genus = ""; Species = ""; Authorship = "" } with
-            | Ok s -> if s.Length = 0 then U.Backbone.importAll "data/plant-list-extract.txt"
+            match U.Backbone.searchNames
+                      { Rank = "Species"
+                        LatinName = "Ternatea flagellaris"
+                        Family = Some "Leguminosae"
+                        Genus = Some "Ternatea"
+                        Species = Some "flagellaris"
+                        Authorship = Some "(Benth.)" } with
+            | Ok s ->
+                if s.Length = 0
+                then
+                    printfn "The taxonomic backbone is empty. Importing seed data..."
+                    //U.Backbone.importAll "data/plant-list-extract.txt"
+                    printfn "Import of seed data complete."
             | Error _ -> ()
         app.UseStaticFiles() |> ignore
         app.UseAuthentication() |> ignore

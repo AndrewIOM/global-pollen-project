@@ -1,6 +1,8 @@
 module Startup
 
 open System
+open System.Globalization
+open Giraffe.Serialization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
@@ -59,6 +61,7 @@ type Startup (configuration: IConfiguration) =
     member __.AddCustomAuthentication(services:IServiceCollection) =   
         let identityUrl = configuration.GetValue<string>("IdentityUrl")
         let callBackUrl = configuration.GetValue<string>("CallBackUrl")
+        let authSecret = configuration.GetValue<string>("AuthSecret")
         let sessionCookieLifetime = configuration.GetValue("SessionCookieLifetimeMinutes", 60.)
         services
             .AddAuthentication(fun opt ->
@@ -70,7 +73,7 @@ type Startup (configuration: IConfiguration) =
                 opt.Authority <- identityUrl.ToString()
                 opt.SignedOutRedirectUri <- callBackUrl.ToString()
                 opt.ClientId <- "mvc"
-                opt.ClientSecret <- "secret"
+                opt.ClientSecret <- authSecret
                 opt.ResponseType <- "code id_token"
                 opt.SaveTokens <- true
                 opt.GetClaimsFromUserInfoEndpoint <- true
@@ -94,7 +97,6 @@ type Startup (configuration: IConfiguration) =
     member __.AddHealthChecks(services:IServiceCollection) =
         services.AddHealthChecks()
             .AddCheck("self", fun () -> HealthCheckResult.Healthy())
-            //.AddUrlGroup(new Uri(configuration["PurchaseUrlHC"]), name = "purchaseapigw-check", tags = [ "purchaseapigw" ])
 
     member this.ConfigureServices(services: IServiceCollection) =
         services
@@ -108,7 +110,10 @@ type Startup (configuration: IConfiguration) =
         this.AddHttpClientServices(services) |> ignore
         this.AddCustomAuthentication(services) |> ignore
         this.AddHealthChecks(services) |> ignore
-
+        let customSettings = Newtonsoft.Json.JsonSerializerSettings(Culture = CultureInfo("en-GB"))
+        customSettings.Converters.Add(Microsoft.FSharpLu.Json.CompactUnionJsonConverter(true))
+        services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(customSettings)) |> ignore
+    
     member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear()
         app.UseHealthChecks(PathString "/health") |> ignore

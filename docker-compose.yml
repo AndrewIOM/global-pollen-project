@@ -49,6 +49,7 @@ services:
       - UserSettings__UserPassword=${USER_PASSWORD}
       - TokenLifetimeMinutes=120
       - PermanentTokenLifetimeDays=365
+      - ClientSecretMvc=${WEB_MVC_CLIENT_SECRET}
 
   # Routes access to internal APIs from web apps
   webapigw:
@@ -73,6 +74,9 @@ services:
       - IdentityUrl= http://identity.api
       - CoreUrl=http://webapigw
       - CallBackUrl=http://0.0.0.0:80
+      - MapboxToken=${MAPBOX_TOKEN}
+      - GoogleApiKey=${GOOGLE_KEY}
+      - AuthSecret=${WEB_MVC_CLIENT_SECRET}
 
   web.api:
     image: gpp/webapi:${TAG:-latest}
