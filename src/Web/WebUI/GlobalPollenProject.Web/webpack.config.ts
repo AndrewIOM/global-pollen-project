@@ -28,10 +28,8 @@ const config: webpack.Configuration = {
         }
     },
     externals: {
-        jquery: "jQuery",
+        jquery: "jQuery"
         //bootstrap: "bootstrap",
-        //knockout: "knockout",
-        //googlemaps: "googlemaps"
     },
     module: {
         rules: [{
@@ -42,6 +40,9 @@ const config: webpack.Configuration = {
             {
                 test: /\.(sass|scss)$/,
                 loader: ExtractTextPlugin.extract(['css-loader', 'sass-loader'])
+            },{
+                test: /\.(png|jpg)$/,
+                loader: 'url-loader'
             }
         ]
     },

@@ -1,7 +1,7 @@
 import * as d3 from 'd3'
 import * as topojson from 'topojson-client'
-import * as noUiSlider from 'noUiSlider'
 import * as L from 'leaflet'
+import * as noUiSlider from "nouislider"
 
 // Component that displays modern distributions using leaflet maps,
 // and Holocene distributions using D3 maps.
@@ -17,8 +17,8 @@ export function activate(container: HTMLElement) {
         } else {
             console.warn("There was no GBIF ID present (in #GbifId")
         }
-        const neotomaId = $('#NeotomaId').val();
-        if (typeof(neotomaId) == "number") {
+        const neotomaId = parseInt($('#NeotomaId').val() as string);
+        if (neotomaId) {
             new PointDistributionMap(neotomaId);
         } else {
             console.warn("Neotoma ID was invalid")

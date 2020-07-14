@@ -2,14 +2,37 @@
 @import '_Palette';
 @import '_Fonts';
 
-body {
-    line-height: 1.8em;
-    font-size: 14px;
-    color: $clr-text-primary;
-}
+$primary:               $primary-color;
+$secondary:             $secondary-colour;
+$font-family-base:      $hind;
+$headings-font-family:  $mottserrat;
 
-h3 {
-    font-size: 1.5rem;
+$font-size-base:        0.875rem;
+$line-height-base:      1.428571429;
+$font-size-h3:          1.5rem;
+
+$brand-primary:         $primary-color;
+$brand-success:         #5cb85c;
+$brand-info:            #5bc0de;
+$brand-warning:         #f0ad4e;
+$brand-danger:          #d9534f;
+
+$border-radius-base:    0;
+$border-radius-large:   0;
+$border-radius-small:   0;
+
+// Links
+$link-hover-color:      $primary-color-accent;
+
+// Pagination
+$pager-border-radius:   0;
+
+// Buttons
+$btn-primary-border:        none;
+$btn-link-disabled-color:   $clr-button-disabled;
+
+.btn-primary.disabled:hover {
+    cursor: not-allowed !important;
 }
 
 .col-centered {
@@ -40,28 +63,6 @@ div.card {
     }
 }
 
-a {
-    color: $primary-color;
-}
-
-a:hover,
-a:focus {
-    color: $primary-color-accent;
-}
-
-body {
-    font-family: $hind;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: $mottserrat;
-}
-
 input.form-control,
 textarea.form-control,
 select.form-control {
@@ -73,24 +74,6 @@ select.form-control {
     background-color: $primary-color !important;
 }
 
-.btn {
-    border-radius: 0;
-    border: 1px solid lightgrey;
-}
-
-.btn:hover {
-    cursor: pointer;
-}
-
-.btn-primary {
-    background-color: $primary-color;
-    border: none;
-}
-
-.btn-primary:hover,
-.btn-primary:focus,
-.btn-primary:active,
-.btn-primary.active,
 .open .dropdown-toggle.btn-primary {
     background-color: $primary-color-accent;
     border-color: #000;
@@ -105,6 +88,7 @@ select.form-control {
     border-radius: 0;
 }
 
+// Navbar
 .navbar {
     background-color: white;
     opacity: .95;
@@ -184,25 +168,4 @@ select.form-control {
 
 .breadcrumb {
     border-radius: 0;
-}
-
-.btn-primary.disabled, .btn-primary:disabled {
-    background-color: $clr-button-disabled;
-}
-
-.btn-primary.disabled:hover {
-    cursor: not-allowed !important;
-}
-
-//Pagination
-.page-item:first-child .page-link {
-    border-radius: 0;
-}
-
-.page-item:last-child .page-link {
-    border-radius: 0;
-}
-
-.page-link {
-    color: $primary-color;
 }

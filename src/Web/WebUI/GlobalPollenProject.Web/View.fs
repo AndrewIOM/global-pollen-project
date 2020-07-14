@@ -264,7 +264,6 @@ module Layout =
             meta [_charset "utf-8"]
             meta [_name "viewport"; _content "width=device-width, initial-scale=1.0" ]
             title [] [ pageTitle |> sprintf "%s - Global Pollen Project" |> encodedText ]
-            link [ _rel "stylesheet"; _href "https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" ]
             link [ _rel "stylesheet"; _href "https://use.fontawesome.com/releases/v5.0.10/css/all.css" ]
             link [ _rel "stylesheet"; _href "/css/styles.css" ]
         ]
@@ -326,15 +325,22 @@ module Components =
             ]
         ]
 
-    let pagination currentPage itemsPerPage totalItems totalPages linkBase =
-        nav [] [
+    let paginationLink link = 
+        li [ _class "page-item" ] [
+            a [ _class "page-link"; _href link ] []
+        ]
+
+    let pagination (vm:PagedResult<'a>) linkBase =
+        let backLink = paginationLink <| sprintf "%s&page=%i" linkBase (vm.CurrentPage - 1)
+        let forwardLink = paginationLink  <| sprintf "%s&page=%i" linkBase (vm.CurrentPage + 1)
+        nav [ _aria "label" "pagination" ] [
             ul [ _class "pagination" ] (
-                // First button
-                [ 1 .. totalPages ] |> List.map (fun i ->
+                [ 1 .. vm.TotalPages ] |> List.map (fun i ->
                     li [ _class "page-item" ] [ 
-                        a [ _class "page-link"; _href (sprintf "%s=%i" linkBase i) ] [encodedText (sprintf "%i" i) ]
+                        a [ _class "page-link"; _href (sprintf "%s&page=%i" linkBase i) ] [encodedText (sprintf "%i" i) ]
                     ] )
-                // Last button
+                |> fun l -> if vm.CurrentPage > 1 then backLink::l else l
+                |> fun l -> if vm.CurrentPage > 1 then List.concat[l; [forwardLink]] else l
             )
         ]
 
@@ -494,7 +500,7 @@ module Taxon =
             Components.panel "black" [
                 Icons.fontawesome "globe"
                 encodedText "Distribution"
-                div [ _class "btn-group"; _data "toggle" "buttons"; _style "float:right" ] [
+                div [ _class "btn-group btn-group-toggle"; _data "toggle" "buttons"; _style "float:right" ] [
                     label [ _class "btn btn-primary btn-sm active" ] [
                         input [ _type "radio"; _name "distribution"; _value "recent"; _autocomplete "off"; _checked ]
                         encodedText "Recent"
@@ -545,19 +551,74 @@ module Taxon =
         { View = section [ _id "distribution-map-component" ] [ view ]; Scripts = scripts }
 
 
-    let descriptionCard (eolCache:EncyclopediaOfLifeCache) =
+    let descriptionCard latinName eolId (eolCache:EncyclopediaOfLifeCache) =
         div [ _class "card" ] [
             div [ _class "card-fixed-height-image" ] [
-                img [ _src eolCache.PhotoUrl; _alt (sprintf "") ] 
+                img [ _src eolCache.PhotoUrl; _alt <| sprintf "%s (rights holder: %s)"latinName eolCache.PhotoAttribution ]
+                if not <| String.IsNullOrEmpty eolCache.PhotoAttribution then
+                    span [ _class "image-attribution" ] [ str <| "&copy " + eolCache.PhotoAttribution ]
+            ]
+            div [ _class "card-block" ] [
+                if String.IsNullOrEmpty eolCache.CommonEnglishName
+                then h4 [ _class "card-title" ] [ str latinName ]
+                else h4 [ _class "card-title" ] [ str eolCache.CommonEnglishName ]
+                if String.IsNullOrEmpty eolCache.Description |> not
+                then p [ _class "card-text" ] [ rawText (if eolCache.Description.Length > 400
+                                                         then eolCache.Description.Substring(0,400)
+                                                         else eolCache.Description) ]
+                a [ _class "card-link"; _href <| sprintf "http://eol.org/pages/%i/overview" eolId; _target "blank" ]
+                    [ str "See more in the Encyclopedia of Life..." ]
             ]
         ]
-
-    let taxonomyDetailCard () =
-        Components.panel "green" [
-            Icons.fontawesome "external-link"
-            str "Connected datasets"
+    
+    let taxonomyDefinitionCard (vm:TaxonDetail) =
+        let subName = if vm.Rank = "Family" then "Genera" else "Species"
+        let completionPercentage =
+            if vm.BackboneChildren > 0
+            then((double)vm.Children.Length / (double)vm.BackboneChildren) * 100.00
+            else 100.00
+        Components.panel "white" [
+            Icons.fontawesome "book"
+            str " Definition"
         ] [
-            
+            if vm.Rank <> "Family" then
+                dl [ _class "row" ] [
+                    dt [ _class "col-sm-3" ] [ str "Parent Taxon" ]
+                    dd [ _class "col-sm-9" ] [
+                        if vm.Rank = "Genus" then a [ _href <| "/Taxon/" + vm.Family ] [ str vm.Family ]
+                        else a [ _href <| "/Taxon/" + vm.Family + "/" + vm.Genus ] [ str vm.Genus ]
+                    ]
+                ]
+            if vm.Rank <> "Species" then
+                dl [ _class "row" ] [
+                    dt [ _class "col-sm-3" ] [ str subName ]
+                    dt [ _class "col-sm-9" ] [
+                        ul [ _class "list-inline" ] (vm.Children |> List.sortBy(fun c -> c.Name) |> List.map(fun c ->
+                            li [ _class "list-inline-item" ] [ a [ _href <| Urls.MasterReference.taxonById c.Id ] [] ]
+                        ))
+                    ]
+                ]
+                dl [ _class "row" ] [
+                    dt [ _class "col-sm-3" ] [ str "Taxonomic Completion" ]
+                    dd [ _class "col-sm-9" ] [ Components.percentCircle completionPercentage ]
+                ]
+            dl [ _class "row" ] [
+                dt [ _class "col-sm-3" ] [ str "Global Pollen Project UUID" ]
+                dd [ _class "col-sm-9" ] [ str <| vm.Id.ToString() ]
+            ]
+            dl [ _class "row" ] [
+                dt [ _class "col-sm-3" ] [ str "Botanical Reference" ]
+                dd [ _class "col-sm-9" ] [
+                    if not <| String.IsNullOrEmpty vm.ReferenceName then
+                        p [] [
+                            strong [] [ str "Reference: " ]
+                            if String.IsNullOrEmpty vm.ReferenceUrl
+                            then a [ _href vm.ReferenceUrl; _target "blank" ] [ str vm.ReferenceName ]
+                            else str vm.ReferenceName
+                        ]
+                    else span [] [ str "None available." ]
+                ]
+            ]
         ]
 
     let connectedDataCard latinName gbifId =
@@ -577,7 +638,7 @@ module Taxon =
             Icons.fontawesome "film"
             encodedText "Digitised Reference Slides"
         ] [
-            encodedText (sprintf "We currently have %i digitsed slides." (slides |> List.length))
+            encodedText (sprintf "We currently have %i digitised slides." (slides |> List.length))
             ul [ _class "grain-grid columns-8" ] (slides |> List.map (fun s -> 
                 li [] [
                     a [ _href (sprintf "/Reference/%A/%s" s.ColId s.SlideId) ] [ 
@@ -617,8 +678,8 @@ module Taxon =
                 ]
                 Grid.column Medium 6 [
                     distributionMap.View
-                    descriptionCard vm.EolCache
-                    taxonomyDetailCard ()
+                    descriptionCard vm.LatinName vm.EolId vm.EolCache
+                    taxonomyDefinitionCard vm
                     connectedDataCard vm.LatinName vm.GbifId
                 ]
             ]
@@ -688,15 +749,16 @@ module Guide =
 
 module MRC =
 
-    open System
-
+    let specificEphitet (latinName:string) =
+        latinName.Split(' ') |> Array.last
+    
     let taxonCard (summary:TaxonSummary) =
         let taxonLink =
             match summary.Rank with
-            | "Family" -> "/Taxon/" + summary.Family
-            | "Genus" -> "/Taxon/" + summary.Family + "/" + summary.Genus
-            | "Species" -> "/Taxon/" + summary.Family + "/" + summary.Genus + "/" + summary.Species
-            | _ -> "/NotFound"
+            | "Family" -> Urls.MasterReference.family summary.Family
+            | "Genus" -> Urls.MasterReference.genus summary.Family summary.Genus
+            | "Species" -> Urls.MasterReference.species summary.Family summary.Genus (specificEphitet summary.Species)
+            | _ -> Urls.notFound
 
         div [ _class "taxon-list-item" ] [
             div [ _class "img-container" ] [
@@ -711,27 +773,42 @@ module MRC =
                     li [ _class "list-inline-item" ] [ Icons.fontawesome "object-group"; encodedText (sprintf "%i" summary.SlideCount) ]
                 ]
             ]
-            // (match summary.DirectChildren.Length with
-            //  | 0 -> ()
-            //  | _ -> div [ _class "taxon-toggle" ] [
-            //             div [] []
-            //         ])
+            if summary.DirectChildren.Length > 0 then
+                let taxonId = summary.Id.ToString()
+                div [ _class "taxon-toggle" ] [
+                    a [ _class "subtaxa-button"; _role "button"
+                        _data "toggle" "collapse"; _data "target" (sprintf "#taxon-%s" taxonId)] [
+                        Icons.fontawesome "list"
+                    ]
+                ]
+                ul [ _id <| sprintf "#taxon-%s" taxonId; _class "panel-collapse collapse"
+                     _role "tabpanel" ] (summary.DirectChildren |> List.sortBy(fun t -> t.Name) |> List.map(fun t ->
+                    li [] [ a [ _href <| Urls.MasterReference.taxonById t.Id ] [ str t.Name ] ] ))
+        ]
+    
+    let rankToggle isActive rank letter =
+        let styling = if isActive then "header-toggle header-toggle-active" else "header-toggle"
+        a [ _class styling; _href <| Urls.MasterReference.rootBy rank letter ] [ encodedText rank ]
+    
+    let alphabetIndex activeLetter activeRank =
+        [
+            rankToggle (activeRank = "Family") "Family" activeLetter
+            rankToggle (activeRank = "Genus") "Genus" activeLetter
+            rankToggle (activeRank = "Species") "Species" activeLetter
+            div [ _class "alphabet-index" ] (['A'..'Z'] |> List.map (fun l ->
+                let isActive = if activeLetter = l.ToString() then "header-toggle-active" else ""
+                a [ _class isActive; _href <| Urls.MasterReference.rootBy (l.ToString()) activeRank ]
+                    [ encodedText (sprintf "%c" l) ] )
+            |> List.append [ a [ _class (if activeLetter = "" then "header-toggle-active" else "")
+                                 _href <| Urls.MasterReference.rootBy "" activeRank ] [ str "All" ] ])
         ]
 
-    let alphabetIndex =
+    let index activeLetter activeRank (vm:PagedResult<TaxonSummary>) =
         [
-            a [ _class "header-toggle"; _href "/Taxon?rank=Family" ] [ encodedText "Family" ]
-            a [ _class "header-toggle"; _href "/Taxon?rank=Genus" ] [ encodedText "Genus" ]
-            a [ _class "header-toggle"; _href "/Taxon?rank=Species" ] [ encodedText "Species" ]
-            div [ _class "alphabet-index" ] (['A'..'Z'] |> List.map (fun l -> a [] [ encodedText (sprintf "%c" l) ] ))
-        ]
-
-    let index (vm:PagedResult<TaxonSummary>) =
-        [
-            Components.breadcrumb [] "Cool Page"
-            Grid.row [ Grid.column Medium 12 alphabetIndex ]
+            Components.breadcrumb [] "Master Reference Collection"
+            Grid.row [ Grid.column Medium 12 (alphabetIndex activeLetter activeRank) ]
             Grid.row (vm.Items |> List.map (fun t -> Grid.column Medium 6 [ taxonCard t ] ))
-            Components.pagination vm.CurrentPage vm.ItemsPerPage vm.ItemTotal vm.TotalPages "/Taxon?rank=Genus"
+            Components.pagination vm (Urls.MasterReference.rootBy activeRank activeLetter)
         ] |> Layout.standard [] "Master Reference Collection" "The Global Pollen Project collates information from independent reference collections into this global reference collection. We use the Global Pollen Project's taxonomic backbone to define botanical names."
 
 
@@ -748,7 +825,7 @@ module ReferenceCollections =
     let collectionCard (refCol:ReadModels.ReferenceCollectionSummary) =
         div [ _class "card" ] [
             div [ _class "card-block" ] [
-                h4 [ _class "card-title" ] [ a [ _href "/Reference/ColId/ColVersion" ] [ encodedText refCol.Name ] ]
+                h4 [ _class "card-title" ] [ a [ _href <| sprintf "/Reference/%s/%i" (refCol.Id.ToString()) refCol.Version ] [ encodedText refCol.Name ] ]
                 h6 [ _class "card-subtitle mb-2 text-muted" ] [ encodedText <| sprintf "%s, %s / %s" refCol.CuratorSurname refCol.CuratorFirstNames refCol.Institution ]
                 p [ _class "card-text" ] [ encodedText refCol.Description ] //TODO Shorten to 300 chars followed by epsilon
                 p [ _class "card-text" ] [ small [ _class "text-muted" ] [ encodedText <| sprintf "Version %i published on %s" refCol.Version (refCol.Published.ToLongDateString())]]
@@ -928,16 +1005,9 @@ module Identify =
             | None -> None
             | Some userId -> vm.Identifications |> Seq.tryFind(fun i -> i.User = userId)
         [
-            // Scripts: d3 viewer focusSlider scalebar slide knockout lookup identify
-            // TODO Move to typescript?: $(function() {
-            // var frames = ("@Model.Images[0].Frames").slice(1, -1).split(";");
-            //     createViewer(frames, @Model.Images[0].PixelWidth);
-            // });
             Components.breadcrumb [
-                { Name = "Home"; Url = Urls.home }
                 { Name = "Pollen of Unknown Identity"; Url = Urls.Identify.root }
             ] "Unidentified Specimen"
-            
             Grid.row [
                 Grid.column Medium 6 [
                     div [ _id "viewer-container" ] []
@@ -1235,7 +1305,7 @@ module StatusPages =
         [
             div [ _class "row justify-content-center"; _style "text-align:center;margin: 12.5em 0 7.5em;" ] [
                 Grid.column Medium 4 [
-                    i [ _class "fa fa-meh-o"; _style "font-size: 6em;margin-bottom: 0.25em;" ] []
+                    i [ _class "far fa-meh"; _style "font-size: 6em;margin-bottom: 0.25em;" ] []
                     h4 [] [ encodedText "Sorry, we couldn't find what you were looking for." ]
                     p [] [ encodedText "We've recently revamped the Global Pollen Project. We hope we haven't broken any links, but if you find any please let us know." ]
                     a [ _href Urls.home ] [ encodedText "Get me back to the homepage" ]

@@ -65,28 +65,19 @@ module Actions =
         let pagedTaxonomy : HttpHandler =
             fun next ctx ->
                 task {
+                    let req = ctx.BindQueryString<TaxonPageRequest>() |> defaultIfNull
                     return!
-                        ctx.BindQueryString<TaxonPageRequest>()
-                        |> defaultIfNull
+                        req
                         |> CoreActions.MRC.list
-                        |> fun act -> coreAction act HtmlViews.MRC.index next ctx
+                        |> fun act -> coreAction act (HtmlViews.MRC.index req.Lex req.Rank) next ctx
                 }
     
-        let slideView (id:string) : HttpHandler =
+        let slideView (col:Guid) slide : HttpHandler =
             fun next ctx ->
             task {
                 let core = ctx.GetService<CoreMicroservice>()
-                let split = id.Split '/'
-                match split.Length with
-                | 2 -> 
-                    let col,slide = split.[0], split.[1] |> Net.WebUtility.UrlDecode
-                    let! result = CoreActions.MRC.getSlide col slide |> core.Apply
-                    return! result |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
-                | 3 ->
-                    let col,slide = split.[0], split.[2] |> Net.WebUtility.UrlDecode
-                    let! result = CoreActions.MRC.getSlide col slide |> core.Apply
-                    return! result |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
-                | _ -> return! notFound next ctx
+                let! result = CoreActions.MRC.getSlide (col.ToString()) slide |> core.Apply
+                return! result |> renderViewResult HtmlViews.ReferenceCollections.slideView next ctx
              }
 
         let taxonDetail family genus species : HttpHandler =
@@ -126,25 +117,27 @@ module Actions =
             coreAction (CoreActions.IndividualCollections.list {Page = 1; PageSize = 20}) HtmlViews.ReferenceCollections.listView
 
         /// Display the contents of a specific version of a reference collection 
-        let individualCollection (colId:string) version =
-            coreAction (CoreActions.IndividualCollections.collectionDetail colId version) HtmlViews.ReferenceCollections.tableView
+        let individualCollection (colId:Guid) version =
+            coreAction (CoreActions.IndividualCollections.collectionDetail (colId.ToString()) version) HtmlViews.ReferenceCollections.tableView
 
         /// Display the latest version of a specific reference collection
-        let individualCollectionLatest (colId:string) next (ctx:HttpContext) =
+        let individualCollectionLatest (colId:Guid) next (ctx:HttpContext) =
             let core = ctx.GetService<CoreMicroservice>()
-            let latestVer = core.Apply(CoreActions.IndividualCollections.collectionDetailLatest colId) |> Async.RunSynchronously
+            let latestVer = core.Apply(CoreActions.IndividualCollections.collectionDetailLatest (colId.ToString())) |> Async.RunSynchronously
             match latestVer with
-            | Ok v -> redirectTo false (sprintf "/Reference/%s/%i" colId v) next ctx
+            | Ok v -> redirectTo false (sprintf "/Reference/%s/%i" (colId.ToString()) v) next ctx
             | Error _ -> notFound next ctx
 
     module Identify =
 
          /// List the most sought identifications
-        let topUnknownGrains next (ctx:HttpContext) =
-            let core = ctx.GetService<CoreMicroservice>()
-            core.Apply(CoreActions.UnknownMaterial.mostWanted()) 
-            |> Async.RunSynchronously
-            |> toApiResult next ctx
+        let topUnknownGrains : HttpHandler =
+            fun next ctx ->
+                task {
+                    let core = ctx.GetService<CoreMicroservice>()
+                    let! r = core.Apply(CoreActions.UnknownMaterial.mostWanted()) 
+                    return! r |> toApiResult next ctx
+                }
 
         let listGrains = coreAction (CoreActions.UnknownMaterial.list()) HtmlViews.Identify.index
 
@@ -262,9 +255,10 @@ let webApp : HttpHandler =
     let individualRefCollections =
         GET >=> choose [
             route   ""                          >=> Actions.Collection.individualCollectionIndex
-            routef   "/Grain/%i"                (fun _ -> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound)
-            routef  "/%s/%i"                    (fun (id,v) -> Actions.Collection.individualCollection id v)
-            routef  "/%s"                       Actions.MasterCollection.slideView
+            routef  "/%O"                       Actions.Collection.individualCollectionLatest
+            routef  "/%O/%i"                    (fun (id,v) -> Actions.Collection.individualCollection id v)
+            routef  "/%O/%s"                    (fun (c,s) -> Actions.MasterCollection.slideView c s)
+            routef  "/Grain/%i"                 (fun _ -> setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound)
         ]
 
     let identify =
@@ -298,6 +292,7 @@ let webApp : HttpHandler =
             route   Urls.tools                  >=> htmlView HtmlViews.Tools.main
             route   Urls.cite                   >=> Actions.Docs.docSection "Cite"
             route   Urls.terms                  >=> Actions.Docs.docSection "Terms"
+            route   Urls.digitise               >=> htmlView DigitiseDashboard.appView
         ]
         setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound
     ]

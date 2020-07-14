@@ -22,6 +22,7 @@ open System.IdentityModel.Tokens.Jwt
 open Microsoft.Extensions.Diagnostics.HealthChecks
 open Microsoft.Extensions.Hosting
 open Microsoft.AspNetCore.HttpOverrides
+open Newtonsoft.Json
 
 ///////////////////////////
 /// Custom Authentication
@@ -110,7 +111,8 @@ type Startup (configuration: IConfiguration) =
         this.AddHttpClientServices(services) |> ignore
         this.AddCustomAuthentication(services) |> ignore
         this.AddHealthChecks(services) |> ignore
-        let customSettings = Newtonsoft.Json.JsonSerializerSettings(Culture = CultureInfo("en-GB"))
+        let customSettings = JsonSerializerSettings(Culture = CultureInfo("en-GB"),
+                                                    ContractResolver = Serialization.CamelCasePropertyNamesContractResolver())
         customSettings.Converters.Add(Microsoft.FSharpLu.Json.CompactUnionJsonConverter(true))
         services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(customSettings)) |> ignore
     

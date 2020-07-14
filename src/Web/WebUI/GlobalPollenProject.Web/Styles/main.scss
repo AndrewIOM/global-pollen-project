@@ -3,13 +3,10 @@
     Copyright Andrew Martin 2015
 */
 
-// Dependencies
-//@import '../node_modules/bootstrap/scss/bootstrap';
-@import '~bootstrap-social/bootstrap-social.css';
-
 // Base
 @import '_Palette';
 @import '_BootstrapMods';
+@import "~bootstrap/scss/bootstrap";
 @import '_Structure';
 
 // Components

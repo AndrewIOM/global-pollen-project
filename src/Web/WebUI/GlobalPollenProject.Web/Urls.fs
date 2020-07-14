@@ -20,11 +20,15 @@ let api = "/Guide/API"
 let tools = "/Tools"
 let cite = "/Cite"
 let terms = "/Terms"
+let notFound = "/NotFound"
 
 module MasterReference =
     let root = "/Taxon"
+    let rootBy rank letter = root + "?rank=" + rank + "&lex=" + letter
     let family family = root + "/" + family
     let genus family genus = root + "/" + family + "/" + genus
+    let species family genus species = root + "/" + family + "/" + genus + "/" + species
+    let taxonById (id:System.Guid) = sprintf "%s/ID/%s" root (id.ToString())
 
 module Account =
     let root = "/Account"
