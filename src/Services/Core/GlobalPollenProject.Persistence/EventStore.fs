@@ -91,7 +91,9 @@ type EventStore(store:IEventStoreConnection) =
 
     member this.ReplayDomainEvents() =
         let events = readAll store Position.Start
-        events |> Seq.iter (fun e -> saveEvent.Trigger(e.EventStreamId, Serialisation.deserialiseEventByName e.EventType e.Data, e.Created))
+        events |> Seq.iter (fun e ->
+            let event = Serialisation.deserialiseEventByName e.EventType e.Data
+            saveEvent.Trigger(e.EventStreamId, event, e.Created))
 
     member this.MakeCommandHandler aggName aggregate deps =
         let read = this.ReadStream<'TEvent>

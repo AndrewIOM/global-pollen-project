@@ -20,7 +20,7 @@ let serialiseEventToBytes (e:'a) =
     case.Name, json
 
 let inline deserialiseEventFromBytes< ^E> eventType (data:byte[]) =
-    printfn "Deserialising a domain event: %s" typeof< ^E>.FullName
+    printfn "De-serialising a domain event of type: %s" typeof< ^E>.FullName
     use stream = new System.IO.MemoryStream(data)
     try BackwardCompatible.deserializeStream< ^E> stream
     with

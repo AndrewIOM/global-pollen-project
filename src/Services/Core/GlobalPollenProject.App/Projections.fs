@@ -451,12 +451,14 @@ module MasterReferenceCollection =
     let establishConnection get set id externalId =
         let getExisting (id:Guid) = RepositoryBase.getSingle<TaxonDetail> id get deserialise
         let save (taxon:TaxonDetail) = RepositoryBase.setSingle taxon.Id taxon set serialise
+        printfn "Establishing connection with %A" externalId
         let updateId taxon =
             match externalId with
             | Taxonomy.ThirdPartyTaxonId.NeotomaId i -> {taxon with NeotomaId = i}
             | Taxonomy.ThirdPartyTaxonId.GbifId i -> {taxon with GbifId = i}
             | Taxonomy.ThirdPartyTaxonId.EncyclopediaOfLifeId i -> 
                 let cache = ExternalLink.getEncyclopediaOfLifeCacheData i
+                printfn "Got cache for EoL"
                 match cache with
                 | Some c -> { taxon with EolId = i; EolCache = c }
                 | None -> { taxon with EolId = i }
@@ -499,6 +501,7 @@ module MasterReferenceCollection =
         Ok()
 
     let handle get getSortedList set setSortedList (e:EventMessage) =
+        printfn "E is %A" e
         match e |> toEvent with
         | :? ReferenceCollection.Event as e -> 
             match e with
@@ -623,25 +626,24 @@ module Grain =
     let identityChanged get set (taxon:TaxonId option) grainId = 
         let id : Guid = Converters.DomainToDto.unwrapGrainId grainId
         let grain = ReadStore.RepositoryBase.getSingle<GrainDetail> id get deserialise
-        let save grain = ReadStore.RepositoryBase.setSingle id grain set serialise
+        let save (grain:GrainDetail) = ReadStore.RepositoryBase.setSingle id grain set serialise
 
         match taxon with
         | Some t ->
             let taxon = ReadStore.TaxonomicBackbone.getById t get deserialise
-            let toHeirarchy (taxon:BackboneTaxon) =
+            let toHierarchy (taxon:BackboneTaxon) =
                 taxon.Family,taxon.Genus,taxon.Species,taxon.NamedBy,taxon.Rank
-            let switchCurrentTaxon heirarchy grain =
-                let family,genus,species,namedBy,rank = heirarchy
+            let switchCurrentTaxon hierarchy grain =
+                let family,genus,species,namedBy,rank = hierarchy
                 { grain with ConfirmedFamily = family
                              ConfirmedGenus = genus
                              ConfirmedSpecies = species
                              ConfirmedSpAuth = namedBy
                              ConfirmedRank = rank }
             switchCurrentTaxon
-            <!> (taxon |> lift toHeirarchy)
+            <!> (taxon |> lift toHierarchy)
             <*> grain
-            |> save
-        
+            >>= save
         | None ->
             let update grain = { grain with ConfirmedFamily = ""
                                             ConfirmedGenus = ""

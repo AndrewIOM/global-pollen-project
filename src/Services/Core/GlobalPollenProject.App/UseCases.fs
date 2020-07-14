@@ -30,7 +30,7 @@ let appSettings =
 
 let getAppSetting name =
     match String.IsNullOrEmpty appSettings.[name] with
-    | true -> invalidOp "Appsetting is missing: " + name
+    | true -> invalidOp "AppSetting is missing: " + name
     | false -> appSettings.[name]
 
 // Image Store
@@ -64,18 +64,14 @@ let inline deserialise< ^a> json =
     let unwrap (Json j) = j
     Serialisation.deserialise< ^a> (unwrap json)
 
-let serialise s = 
-    let result = Serialisation.serialise s
-    match result with
-    | Ok r -> Ok <| Json r
-    | Error e -> Error e
-
 let projectionHandler e =
     let router = ProjectionHandler.route readStoreGet readStoreGetList readStoreGetSortedList redisSet redisSetList redisSetSortedList generateCacheImage toAbsoluteUrl
     let getEventCount = eventStore.Value.Checkpoint
-    let result = (ProjectionHandler.readModelAgent router readStoreGet redisSet getEventCount).PostAndReply(fun rc -> e, rc)
+    let mailbox = ProjectionHandler.readModelAgent router readStoreGet redisSet getEventCount
+    mailbox.Error.Add(fun err -> failwithf "Error in projection. [%s] %s" err.Message err.StackTrace)
+    let result = mailbox.PostAndReply(fun rc -> e, rc)
     match result with 
-    | Ok r -> ()
+    | Ok _ -> ()
     | Error e -> invalidOp ("Read model is corrupt: " + e)
 
 eventStore.Value.SaveEvent 
@@ -186,12 +182,10 @@ module Digitise =
         let newColCommand = 
             CreateCollection { Id = newId; Name = request.Name; Owner = currentUser; Description = request.Description }
 
-        let curCommand =
-            curatorCommand
-            <!> curator
-            <*> access
-        issueCommands newColCommand
-        <!> curCommand
+        curatorCommand
+        <!> curator
+        <*> access
+        |> bind (issueCommands newColCommand)
 
     let publish getCurrentUser (colId:string) =
         let currentUser = UserId <| getCurrentUser()
@@ -602,7 +596,7 @@ module Admin =
         ProjectionHandler.init redisSet () |> ignore
         eventStore.Value.ReplayDomainEvents()
         inMaintenanceMode <- false
-        Ok "Finished"
+        Ok "Read model has been rebuilt."
 
     let listUsers() =
         let get (id:Guid) = 

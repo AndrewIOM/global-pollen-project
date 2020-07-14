@@ -20,7 +20,7 @@ type GbifTaxonResult =
 type NeotomaTaxonResult = {
     [<JsonProperty("TaxonName")>] TaxonName:string
     [<JsonProperty("TaxonCode")>] TaxonCode:string
-    [<JsonProperty("TaxonId")>] TaxonId:int
+    [<JsonProperty("TaxonID")>] TaxonId:int
 }
 
 [<CLIMutable>]
@@ -40,12 +40,31 @@ type EolSearchResult =
     { [<JsonProperty("totalResults")>] TotalResults:int
       [<JsonProperty("results")>] Results:EolSearchResultItem list }
 
-let getRequest baseUri (query:string) =
-    use client = new HttpClient()
-    client.BaseAddress <- Uri(baseUri)
-    client.DefaultRequestHeaders.Accept.Clear ()
-    client.DefaultRequestHeaders.Accept.Add(MediaTypeWithQualityHeaderValue("application/json"))
-    client.GetAsync(query) |> Async.AwaitTask |> Async.RunSynchronously
+let tryGetRequest baseUri (query:string) =
+    async {
+        use client = new HttpClient()
+        client.BaseAddress <- Uri(baseUri)
+        client.DefaultRequestHeaders.Accept.Clear ()
+        client.DefaultRequestHeaders.Accept.Add(MediaTypeWithQualityHeaderValue("application/json"))
+        try
+            let! result = client.GetAsync(query) |> Async.AwaitTask
+            match result.IsSuccessStatusCode with
+            | false -> return None
+            | true ->
+                use! responseStream = result.Content.ReadAsStreamAsync() |> Async.AwaitTask
+                let streamReader = new StreamReader(responseStream)
+                let jsonMessage = streamReader.ReadToEnd()
+                return Some jsonMessage
+        with
+        | _ ->
+            printfn "There was a problem requesting %s" query
+            return None
+    }
+
+let tryDeserialiseJson<'a> str =
+    try JsonConvert.DeserializeObject<'a> str |> Some
+    with
+    | _ -> None
 
 let unwrap (LatinName l) = l
 let unwrapS (SpecificEphitet s) = s
@@ -64,10 +83,10 @@ let toLinkRequest (taxon:BackboneTaxon) =
 
 let getGbifId (req:LinkRequest) =
     let query =
-        let qbase = sprintf "species/match?status=accepted&kingdom=Plantae&family=%s" req.Family
+        let qBase = sprintf "species/match?status=accepted&kingdom=Plantae&family=%s" req.Family
         let q1 = match req.Genus with
-                 | Some g -> sprintf "%s&genus=%s" qbase g
-                 | None -> qbase
+                 | Some g -> sprintf "%s&genus=%s" qBase g
+                 | None -> qBase
         let q2 = match req.Species with
                  | Some s -> sprintf "%s&species=%s" q1 s
                  | None -> q1
@@ -76,51 +95,54 @@ let getGbifId (req:LinkRequest) =
         | Genus g -> sprintf "%s&rank=genus&name=%s" q2 (unwrap g)
         | Species (s,_,_) -> sprintf "%s&rank=species&name=%s" q2 (unwrap s)
 
-    let response = getRequest "http://api.gbif.org/v1/" query
-    match response.IsSuccessStatusCode with
-    | false -> None
-    | true ->
-        use responseStream = response.Content.ReadAsStreamAsync() |> Async.AwaitTask |> Async.RunSynchronously
-        let jsonMessage = (new StreamReader(responseStream)).ReadToEnd()
-        let gbifResult : GbifTaxonResult = JsonConvert.DeserializeObject<GbifTaxonResult>(jsonMessage)
-        match gbifResult.MatchType with
-        | "EXACT" -> Some gbifResult.GbifId
-        | _ -> None
+    let json = tryGetRequest "http://api.gbif.org/v1/" query |> Async.RunSynchronously
+    match json with
+    | None -> None
+    | Some json ->
+        let gbifResult = tryDeserialiseJson<GbifTaxonResult> json
+        match gbifResult with
+        | None -> None
+        | Some gbif ->
+            match gbif.MatchType with
+            | "EXACT" -> Some gbif.GbifId
+            | _ -> None
 
 let getNeotomaId (req:LinkRequest) =
     let query = match req.Identity with
                 | Family f -> unwrap f
                 | Genus g -> unwrap g
-                | Species (g,s,_) -> unwrapS s
-    let response = getRequest "http://api.neotomadb.org/v1/data/" ("taxa?taxonname=" + query)
-    match response.IsSuccessStatusCode with
-    | false -> None
-    | true ->
-        use responseStream = response.Content.ReadAsStreamAsync() |> Async.AwaitTask |> Async.RunSynchronously
-        let jsonMessage = (new StreamReader(responseStream)).ReadToEnd()
-        let neoResult : NeotomaResult = JsonConvert.DeserializeObject<NeotomaResult>(jsonMessage)
-        match neoResult.Success with
-        | 0 -> None
-        | _ ->
-            match neoResult.Result.Length with
-            | 1 -> Some neoResult.Result.Head.TaxonId
-            | _ -> None
+                | Species (_,s,_) -> unwrapS s
+    let response = tryGetRequest "http://api.neotomadb.org/v1/data/" ("taxa?taxonname=" + query) |> Async.RunSynchronously
+    match response with
+    | None -> None
+    | Some json ->
+        let result = tryDeserialiseJson<NeotomaResult> json
+        match result with
+        | None -> None
+        | Some neoResult ->
+            match neoResult.Success with
+            | 0 -> None
+            | _ ->
+                match neoResult.Result.Length with
+                | 1 -> Some neoResult.Result.Head.TaxonId
+                | _ -> None
 
 let getEncyclopediaOfLifeId (req:LinkRequest) =
     let query = match req.Identity with
                 | Family f -> unwrap f
                 | Genus g -> unwrap g
-                | Species (g,s,auth) -> (unwrapS s) + " " + (unwrapAuth auth)
-    let response = getRequest "http://eol.org/api/search/" ("1.0.json?q=" + query + "&page=1&exact=true")
-    match response.IsSuccessStatusCode with
-    | false -> None
-    | true ->
-        use responseStream = response.Content.ReadAsStreamAsync() |> Async.AwaitTask |> Async.RunSynchronously
-        let jsonMessage = (new StreamReader(responseStream)).ReadToEnd()
-        let result : EolSearchResult = JsonConvert.DeserializeObject<EolSearchResult>(jsonMessage)
-        match result.TotalResults with
-        | 0 -> None
-        | _ -> Some result.Results.Head.Id
+                | Species (_,s,auth) -> (unwrapS s) + " " + (unwrapAuth auth)
+    let response = tryGetRequest "http://eol.org/api/search/" ("1.0.json?q=" + query + "&page=1&exact=true") |> Async.RunSynchronously
+    match response with
+    | None -> None
+    | Some json ->
+        let result = tryDeserialiseJson<EolSearchResult> json
+        match result with
+        | None -> None
+        | Some eolResult ->
+            match eolResult.TotalResults with
+            | 0 -> None
+            | _ -> Some eolResult.Results.Head.Id
 
 [<CLIMutable>]
 type EolVernacularName = 
@@ -143,6 +165,9 @@ type EolPageResult =
     { [<JsonProperty("vernacularNames")>] VernacularNames:EolVernacularName list
       [<JsonProperty("dataObjects")>] DataObjects: EolDataObject list }
 
+[<CLIMutable>]
+type EoLResult = { [<JsonProperty("taxonConcept")>] Concept: EolPageResult }
+
 let stripTags html =
     System.Text.RegularExpressions.Regex.Replace(html, "<[^>]*>", "")
 
@@ -151,47 +176,49 @@ let capitaliseFirstLetters s =
 
 let getEncyclopediaOfLifeCacheData taxonId =
     let req = taxonId |> sprintf "1.0.json?batch=false&id=%i&images_per_page=1&images_page=1&videos_per_page=0&videos_page=0&sounds_per_page=0&sounds_page=0&maps_per_page=0&maps_page=0&texts_per_page=2&texts_page=1&subjects=overview&licenses=all&details=true&common_names=true&synonyms=false&references=true&taxonomy=false&vetted=0&cache_ttl=&language=en"
-    let response = getRequest "http://eol.org/api/pages/" req
-    match response.IsSuccessStatusCode with
-    | false -> None
-    | true ->
-        use responseStream = response.Content.ReadAsStreamAsync() |> Async.AwaitTask |> Async.RunSynchronously
-        let jsonMessage = (new StreamReader(responseStream)).ReadToEnd()
-        let result : EolPageResult = JsonConvert.DeserializeObject<EolPageResult>(jsonMessage)
-
-        let commonEnglishName =
-            let n =
-                result.VernacularNames
-                |> List.filter (fun n -> n.Preferred)
-                |> List.tryFind (fun n -> n.Language = "en")
-            match n with
-            | Some name -> name.Name |> capitaliseFirstLetters
-            | None -> "" 
-
-        let photoUrl,photoAttribution =
-            let r =
-                result.DataObjects
-                |> List.filter (fun o -> o.MimeType = "image/jpeg")
-                |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
-            match r with
-            | Some i -> i.MediaUrl, i.RightsHolder
-            | None -> "",""
-
-        let desc,descAttribution =
-            let r =
-                result.DataObjects
-                |> List.filter (fun o -> o.MimeType = "text/html" || o.MimeType = "text/plain")
-                |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
-            match r with
-            | Some t -> 
-                (if isNull t.Description then "" else t.Description |> stripTags), 
-                (if isNull t.RightsHolder then "" else t.RightsHolder |> stripTags)
-            | None -> "",""
-
-        { CommonEnglishName         = commonEnglishName
-          PhotoUrl                  = photoUrl
-          PhotoAttribution          = photoAttribution
-          Description               = desc
-          DescriptionAttribution    = descAttribution
-          Retrieved                 = DateTime.Now }
-        |> Some
+    let response = tryGetRequest "https://eol.org/api/pages/" req |> Async.RunSynchronously
+    match response with
+    | None ->
+        printfn "Could not get EoL cache data for %i" taxonId
+        None
+    | Some json ->
+        let deserialiseResult = tryDeserialiseJson<EoLResult> json
+        match deserialiseResult with
+        | None ->
+            printfn "Error: could not deserialise EoL result: %s" json
+            None
+        | Some result ->
+            printfn "%A" result
+            let commonEnglishName =
+                let n =
+                    result.Concept.VernacularNames
+                    |> List.filter (fun n -> n.Preferred)
+                    |> List.tryFind (fun n -> n.Language = "en")
+                match n with
+                | Some name -> name.Name |> capitaliseFirstLetters
+                | None -> ""             
+            let photoUrl,photoAttribution =
+                let r =
+                    result.Concept.DataObjects
+                    |> List.filter (fun o -> o.MimeType = "image/jpeg")
+                    |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
+                match r with
+                | Some i -> i.MediaUrl, i.RightsHolder
+                | None -> "",""
+            let desc,descAttribution =
+                let r =
+                    result.Concept.DataObjects
+                    |> List.filter (fun o -> o.MimeType = "text/html" || o.MimeType = "text/plain")
+                    |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
+                match r with
+                | Some t -> 
+                    (if isNull t.Description then "" else t.Description |> stripTags), 
+                    (if isNull t.RightsHolder then "" else t.RightsHolder |> stripTags)
+                | None -> "",""            
+            { CommonEnglishName         = commonEnglishName
+              PhotoUrl                  = photoUrl
+              PhotoAttribution          = photoAttribution
+              Description               = desc
+              DescriptionAttribution    = descAttribution
+              Retrieved                 = DateTime.Now }
+            |> Some
