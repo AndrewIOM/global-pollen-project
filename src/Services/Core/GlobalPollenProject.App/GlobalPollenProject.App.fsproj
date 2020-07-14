@@ -18,6 +18,7 @@
     <Compile Include="EventHandlers.fs" />
     <Compile Include="ImportTaxonomy.fs" />
     <Compile Include="UseCases.fs" />
+    <Compile Include="Seed.fs" />
     <Compile Include="App.fs" />
     <None Include="data/*" CopyToPublishDirectory="Always" />
   </ItemGroup>

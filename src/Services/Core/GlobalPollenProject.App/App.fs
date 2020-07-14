@@ -223,21 +223,7 @@ type Startup () =
         if (env.IsDevelopment()) then
             app.UseDeveloperExceptionPage() |> ignore
             U.Admin.rebuildReadModel() |> ignore
-            // Seed an extract of taxonomic names if there are none:
-            match U.Backbone.searchNames
-                      { Rank = "Species"
-                        LatinName = "Ternatea flagellaris"
-                        Family = Some "Leguminosae"
-                        Genus = Some "Ternatea"
-                        Species = Some "flagellaris"
-                        Authorship = Some "(Benth.)" } with
-            | Ok s ->
-                if s.Length = 0
-                then
-                    printfn "The taxonomic backbone is empty. Importing seed data..."
-                    //U.Backbone.importAll "data/plant-list-extract.txt"
-                    printfn "Import of seed data complete."
-            | Error _ -> ()
+            Seed.seedTestData()
         app.UseStaticFiles() |> ignore
         app.UseAuthentication() |> ignore
         app.UseGiraffe routes |> ignore
