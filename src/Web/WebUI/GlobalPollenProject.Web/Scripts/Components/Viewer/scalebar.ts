@@ -21,11 +21,11 @@ export class ScaleBar {
         this.viewer = viewer;
         this.id = barId;
         this.scale = scale;
-        $(this.viewer.id).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
+        $(self).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
             this.initialise();
             this.loaded = true;
         });
-        $(this.viewer.id).on(ViewerEvent.EVENT_ZOOMED, () => {
+        $(self).on(ViewerEvent.EVENT_ZOOMED, () => {
             if (this.loaded) this.redraw();
         });
     }

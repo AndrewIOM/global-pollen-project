@@ -434,15 +434,20 @@ module IndividualReference =
             |> List.choose (fun r -> match r with | Ok c -> Some c | Error e -> None)
             |> Ok
 
-    let getDetail id version =
-        let key = sprintf "ReferenceCollectionDetail:%s:V%i" id version
-        RepositoryBase.getKey<ReferenceCollectionDetail> key readStoreGet deserialise
-        |> toAppResult
-
     let getLatestVersion id =
         RepositoryBase.getKey<EditableRefCollection> id readStoreGet deserialise
         |> lift (fun c -> c.PublishedVersion)
         |> toAppResult
+    
+    let getDetail (id:string) version =
+        let v =
+            match version with
+            | Some v -> Ok v
+            | None -> getLatestVersion id
+        v
+        |> lift (sprintf "ReferenceCollectionDetail:%s:V%i" id)
+        |> lift (fun key -> RepositoryBase.getKey<ReferenceCollectionDetail> key readStoreGet deserialise)
+        |> bind toAppResult
 
 module Backbone =
 

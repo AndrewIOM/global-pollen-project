@@ -2,21 +2,24 @@
 @import '_Palette';
 @import '_Fonts';
 
+$enable-rounded:        false;
+
 $primary:               $primary-color;
 $secondary:             $secondary-colour;
-$font-family-base:      $hind;
-$headings-font-family:  $mottserrat;
-
-$font-size-base:        0.875rem;
-$line-height-base:      1.428571429;
-$font-size-h3:          1.5rem;
-
 $brand-primary:         $primary-color;
 $brand-success:         #5cb85c;
 $brand-info:            #5bc0de;
 $brand-warning:         #f0ad4e;
 $brand-danger:          #d9534f;
 
+$font-family-base:      $hind;
+$headings-font-family:  $mottserrat;
+$body-color:            #636c72;
+$font-size-base:        0.875rem;
+$line-height-base:      1.8;
+$font-size-h3:          1.5rem;
+
+$border-radius:         0;
 $border-radius-base:    0;
 $border-radius-large:   0;
 $border-radius-small:   0;
@@ -93,12 +96,15 @@ select.form-control {
     background-color: white;
     opacity: .95;
     color: #777;
-    font-family: Montserrat, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: $mottserrat;
     font-weight: 400;
     border-color: #e7e7e7;
     border-bottom: 2px solid $primary-color;
-
+    line-height: 1.6em;
     .container {
+        .navbar-brand {
+            font-size: 1.25rem;
+        }
         margin: 0;
     }
 }

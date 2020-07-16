@@ -70,18 +70,18 @@ class PointDistributionMap {
     svg: d3.Selection<d3.BaseType, unknown, HTMLElement, any>
     
     constructor(neotomaId:number) {
-        $('#palaeo-loading').show();
         
         this.neotomaId = neotomaId;
         this.yearOldest = 10000;
         this.yearYoungest = 1000;
-        this.loadingElement = $('#paleo-loading');
+        this.loadingElement = $('#palaeo-loading');
+        this.loadingElement.show();
         this.color =
             d3.scaleLinear<string>()
                 .domain([this.yearYoungest, this.yearOldest])
                 .range(["yellow", "#83296F"]);
 
-        let mapElement = document.getElementById('paleo');
+        let mapElement = document.getElementById('palaeo');
         mapElement.style.display = 'block';
         const width = $('#neotoma-map').closest('div').width();
         const height = 250;
@@ -91,7 +91,7 @@ class PointDistributionMap {
             .translate([width / 2, height / 2])
             .precision(.1);
         
-        const slider = setupSlider();
+        this.slider = setupSlider();
         const svg = d3.select('#neotoma-map')
             .append('svg')
             .attr('width', width)
@@ -112,7 +112,7 @@ class PointDistributionMap {
         } else {
             this.getNeotomaPoints();
             this.updatePastDistributionText();
-            slider.on('slide', () => {
+            this.slider.on('slide', () => {
                 this.updatePastDistributionText();
                 this.redraw();
             });

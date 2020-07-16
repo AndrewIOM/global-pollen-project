@@ -18,9 +18,8 @@ export class FocusSlider {
     constructor(viewer, sliderId) {
         this.id = sliderId;
         this.viewer = viewer;
-        let self = this;
-        $(this.viewer.id).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
-            self.append();
+        $(self).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
+            this.append();
         });
     }
     
@@ -34,8 +33,8 @@ export class FocusSlider {
             .attr("id", this.id.substr(1));
 
         $(this.id).css("position", "absolute");
-        $(this.id).css("right", 15);
-        $(this.id).css("top", this.viewer.height * 0.25);
+        $(this.id).css("right", 0);
+        $(this.id).css("top", (this.viewer.height - (this.viewer.height * 0.65)) / 2);
 
         let slider = svg.append("g");
 
@@ -52,12 +51,12 @@ export class FocusSlider {
 
         // "eye" icon
         slider.append("text")
-            .attr("font-family", "FontAwesome")
+            .attr("class", "fa")
             .attr("font-size", "26px")
             .attr("x", 11)
             .attr("y", this.viewer.height * 0.07)
             .attr("fill", "white")
-            .text("\uf030");
+            .text("\uf083");
 
         // create the line for the slider
         const ly = this.viewer.height * 0.1;

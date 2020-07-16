@@ -40,6 +40,7 @@ module Account =
 module Collections =
 
     let root = "/Reference"
+    let byId (id:System.Guid) = root + "/" + (id.ToString())
 
 module Identify =
 

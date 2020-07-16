@@ -16,8 +16,6 @@ open System.Threading
 open Microsoft.AspNetCore.Authentication
 open System.Threading.Tasks
 open System.Net.Http.Headers
-open Polly
-open Polly.Extensions.Http
 open System.IdentityModel.Tokens.Jwt
 open Microsoft.Extensions.Diagnostics.HealthChecks
 open Microsoft.Extensions.Hosting
@@ -89,11 +87,8 @@ type Startup (configuration: IConfiguration) =
         services.AddTransient<HttpClientAuthorizationDelegatingHandler>() |> ignore
         services.AddTransient<HttpClientRequestIdDelegatingHandler>() |> ignore
         services.AddHttpClient<Connections.CoreMicroservice>()
-            //.SetHandlerLifetime(TimeSpan.FromMinutes(2.))
             .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>() |> ignore
             //.AddHttpMessageHandler<HttpClientRequestIdDelegatingHandler>() |> ignore
-            //.AddPolicyHandler(GetRetryPolicy())
-            //.AddPolicyHandler(GetCircuitBreakerPolicy()) |> ignore
 
     member __.AddHealthChecks(services:IServiceCollection) =
         services.AddHealthChecks()

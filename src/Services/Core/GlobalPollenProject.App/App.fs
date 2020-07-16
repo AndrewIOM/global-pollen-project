@@ -144,10 +144,10 @@ let routes : HttpHandler =
                 GET >=> routef  "/MRC/Taxon/%s/%s"      (fun (f,g) n c -> U.Taxonomy.getByName f (opt g) None |> apiResult n c)
                 GET >=> routef  "/MRC/Taxon/%s"         (fun f n c -> U.Taxonomy.getByName f None None |> apiResult n c)
                 GET >=> routef  "/MRC/Taxon/Id/%s"      (fun i n c -> U.Taxonomy.getById (Guid(i)) |> apiResult n c)
-                GET >=> routef  "/MRC/Collection/%s/%s" (fun (col,s) n c -> U.Taxonomy.getSlide col s |> apiResult n c)
-                GET >=> routef  "/MRC/Collection/%s/%i" (fun (col,i) n c -> U.IndividualReference.getDetail col i |> apiResult n c)
-                GET >=> routef  "/MRC/Collection/%s"    (fun s n c -> U.IndividualReference.getLatestVersion s |> apiResult n c)
                 GET >=> route   "/MRC/Collection"       >=> apif U.IndividualReference.list
+                GET >=> routef  "/MRC/Collection/%s/%i" (fun (col,i) n c -> U.IndividualReference.getDetail col (Some i) |> apiResult n c)
+                GET >=> routef  "/MRC/Collection/%s"    (fun s n c -> U.IndividualReference.getDetail s None |> apiResult n c)
+                GET >=> routef  "/MRC/Collection/%s/Slide/%s" (fun (col,s) n c -> U.Taxonomy.getSlide col s |> apiResult n c)
 
                 // Backbone
                 GET >=> route  "/Taxonomy/Search"       >=> apif U.Backbone.searchNames
