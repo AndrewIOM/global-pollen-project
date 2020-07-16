@@ -1,28 +1,78 @@
 namespace GlobalPollenProject.Web.API
 
+open Connections
 open Microsoft.AspNetCore.Mvc
+
+module ActionResult =
+    let ofAsync (res: Async<IActionResult>) =
+        res |> Async.StartAsTask    
 
 [<ApiController>]
 type HomeController() =
     inherit ControllerBase()
-
+    
     [<HttpGet>]
     [<Route("/")>]
-    member __.Index() =
+    member __.Index() =  
         RedirectResult "~/swagger"
 
 
 [<Route("api/v1/[controller]")>]
 [<ApiController>]
-type TaxonomyController() =
+type TaxonomyController(core: Connections.CoreMicroservice) =
     inherit ControllerBase()
 
     [<HttpGet>]
     [<Route("/search")>]
-    member __.Search() =
-        let values = [|"value1"; "value2"|]
-        ActionResult<string[]>(values)
+    member this.Search(req:Requests.BackboneSearchRequest) =
+        ActionResult.ofAsync <| async {
+            if not this.ModelState.IsValid
+            then return BadRequestResult() :> IActionResult
+            else
+                let! result =
+                    req
+                    |> CoreActions.Backbone.search
+                    |> core.Apply
+                match result with
+                | Ok r -> return JsonResult(r) :> IActionResult
+                | Error _ -> return StatusCodeResult(500) :> IActionResult
+        }
+ 
+    [<HttpGet>]
+    [<Route("/trace")>]
+    member this.Trace(req:BackboneSearchRequest) =
+        ActionResult.ofAsync <| async {
+            if not this.ModelState.IsValid
+            then return BadRequestResult() :> IActionResult
+            else
+                let! result =
+                    req
+                    |> CoreActions.Backbone.search
+                    |> core.Apply
+                match result with
+                | Ok r -> return JsonResult(r) :> IActionResult
+                | Error _ -> return StatusCodeResult(500) :> IActionResult
+        }
 
+[<Route("api/v1/[controller]")>]
+[<ApiController>]
+type ReferenceController(core: Connections.CoreMicroservice) =
+    inherit ControllerBase()
+
+    [<HttpGet>]
+    member this.Index(id:System.Guid) =
+        ActionResult.ofAsync <| async {
+            if not this.ModelState.IsValid
+            then return BadRequestResult() :> IActionResult
+            else
+                let! result =
+                    id
+                    |> CoreActions.MRC.getById
+                    |> core.Apply
+                match result with
+                | Ok r -> return JsonResult(r) :> IActionResult
+                | Error _ -> return StatusCodeResult(500) :> IActionResult
+        }
 
 
 // GPP Public API

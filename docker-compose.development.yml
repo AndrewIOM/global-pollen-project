@@ -35,3 +35,7 @@ services:
       - ASPNETCORE_URLS=http://0.0.0.0:80
     ports:
     - "5102:80"
+
+  core.eventstore:
+    environment:
+      - EVENTSTORE_DEV=true

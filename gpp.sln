@@ -45,6 +45,13 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GlobalPollenProject.Persist
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "web", "web", "{CEBA6DB2-2541-468B-A023-60955AFDA37D}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{AB8F43EB-AD1C-423F-9BF3-39D48E183955}"
+ProjectSection(SolutionItems) = preProject
+	src\Shared\Serialisation.fs = src\Shared\Serialisation.fs
+	src\Shared\Responses.fs = src\Shared\Responses.fs
+	src\Shared\Connections.fs = src\Shared\Connections.fs
+EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -199,5 +206,6 @@ Global
 		{90E3AE49-69E3-4B6C-8A48-D0499E8B534E} = {F11D01EF-E4BF-4FB9-86EA-422EF5A07FBB}
 		{A3D7C899-FD18-4477-AC08-16FC9083A171} = {F11D01EF-E4BF-4FB9-86EA-422EF5A07FBB}
 		{CEBA6DB2-2541-468B-A023-60955AFDA37D} = {59BF3DA1-2EAA-4702-9142-11A66EB6D319}
+		{AB8F43EB-AD1C-423F-9BF3-39D48E183955} = {DA349832-1036-46C5-89CD-0A09C6684FCE}
 	EndGlobalSection
 EndGlobal

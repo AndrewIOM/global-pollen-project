@@ -12,7 +12,7 @@
     <Compile Include="../../../Services/Core/GlobalPollenProject.Persistence/ReadModels.fs" />
     <Compile Include="../../../Services/Core/GlobalPollenProject.App/Requests.fs" />
     <Compile Include="../../../Services/Core/GlobalPollenProject.App/Responses.fs" />
-    <Compile Include="Connections.fs" />
+    <Compile Include="../../../Shared/Connections.fs" />
     <Compile Include="Urls.fs" />
     <Compile Include="Docs.fs" />
     <Compile Include="View.fs" />

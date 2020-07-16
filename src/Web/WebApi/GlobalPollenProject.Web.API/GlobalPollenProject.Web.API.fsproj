@@ -5,12 +5,20 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="../../../Shared/Serialisation.fs" />
+    <Compile Include="../../../Services/Core/GlobalPollenProject.Persistence/ReadModels.fs" />
+    <Compile Include="../../../Services/Core/GlobalPollenProject.App/Requests.fs" />
+    <Compile Include="../../../Services/Core/GlobalPollenProject.App/Responses.fs" />
+    <Compile Include="../../../Shared/Connections.fs" />
     <Compile Include="Routes.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Swashbuckle.AspNetCore" Version="5.4.1" />
+    <PackageReference Include="TaskBuilder.fs" Version="2.1.*" />
+    <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.11.6" />
+    <PackageReference Include="IdentityServer4.AccessTokenValidation" Version="3.0.1" />
   </ItemGroup>
 
 </Project>
