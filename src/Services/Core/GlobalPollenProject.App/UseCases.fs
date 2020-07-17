@@ -653,6 +653,13 @@ module Curation =
         |> toAppResult
 
 
+module Cache =
+    
+    let neotoma (neotomaId:int) =
+        RepositoryBase.getKey<NeotomaCache> (sprintf "NeotomaCache:%i" neotomaId) readStoreGet deserialise
+        |> toAppResult
+
+
 // Additional event handlers:
 
 eventStore.Value.SaveEvent 

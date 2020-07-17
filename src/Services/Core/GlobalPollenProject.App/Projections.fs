@@ -454,7 +454,15 @@ module MasterReferenceCollection =
         printfn "Establishing connection with %A" externalId
         let updateId taxon =
             match externalId with
-            | Taxonomy.ThirdPartyTaxonId.NeotomaId i -> {taxon with NeotomaId = i}
+            | Taxonomy.ThirdPartyTaxonId.NeotomaId i ->
+                let cache = ExternalLink.getNeotomaCacheData i
+                match cache with
+                | Some c ->
+                    match RepositoryBase.setSingleCustom (i.ToString()) c set serialise with
+                    | Ok _ -> ()
+                    | Error _ -> printfn "Error saving neotoma cache"
+                | None -> ()
+                { taxon with NeotomaId = i }
             | Taxonomy.ThirdPartyTaxonId.GbifId i -> {taxon with GbifId = i}
             | Taxonomy.ThirdPartyTaxonId.EncyclopediaOfLifeId i -> 
                 let cache = ExternalLink.getEncyclopediaOfLifeCacheData i

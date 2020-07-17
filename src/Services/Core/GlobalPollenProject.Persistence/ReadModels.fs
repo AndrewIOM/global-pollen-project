@@ -85,6 +85,22 @@ type TaxonDetail = {
 }
 
 [<CLIMutable>]
+type NeotomaSite = {
+    AgeOldest: int
+    AgeYoungest: int
+    Latitude: float
+    Longitude: float
+    Proxy: string
+    SiteId: int
+}
+
+[<CLIMutable>]
+type NeotomaCache = {
+    RefreshTime: DateTime
+    Occurrences: NeotomaSite list
+}
+
+[<CLIMutable>]
 type TaxonAutocompleteItem = {
     LatinName: string
     Rank: string

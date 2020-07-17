@@ -125,6 +125,9 @@ module CoreActions =
         let recordSlide (req:SlideRecordRequest) = CPOST req "/api/v1/Digitise/Slide/Add"
         let voidSlide (req:VoidSlideRequest) = CPOST req "/api/v1/Digitise/Slide/Void"
         let uploadImage (req:SlideImageRequest) = CPOST req "/api/v1/Digitise/Slide/AddImage"
-    
+   
+    module Cache =
+        let neotoma (neotomaId:int) = CGET None (sprintf "/api/v1/anon/Cache/Neotoma/%i" neotomaId)
+     
     module System =
         let rebuildReadModel () = CPOST () "/api/v1/Admin/RebuildReadModel"

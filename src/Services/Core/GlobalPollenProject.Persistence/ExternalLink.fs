@@ -64,7 +64,9 @@ let tryGetRequest baseUri (query:string) =
 let tryDeserialiseJson<'a> str =
     try JsonConvert.DeserializeObject<'a> str |> Some
     with
-    | _ -> None
+    | e ->
+        printfn "Error when de-serialising json from API: %s" e.Message
+        None
 
 let unwrap (LatinName l) = l
 let unwrapS (SpecificEphitet s) = s
@@ -222,3 +224,61 @@ let getEncyclopediaOfLifeCacheData taxonId =
               DescriptionAttribution    = descAttribution
               Retrieved                 = DateTime.Now }
             |> Some
+        
+[<CLIMutable>]
+type NeotomaSite = {
+    LongitudeWest: float
+    LongitudeEast: float
+    LatitudeNorth: float
+    LatitudeSouth: float
+    SiteID: int
+}
+
+[<CLIMutable>]
+type NeotomaOccurrenceData = {
+    AgeOldest: Nullable<float>
+    AgeYoungest: Nullable<float>
+    DatasetType: string
+    DatasetID: int
+    Site: NeotomaSite
+}
+      
+[<CLIMutable>]
+type NeotomaOccurrenceApiResult = {
+    [<JsonProperty("success")>] Success: int
+    [<JsonProperty("data")>] Data: NeotomaOccurrenceData list
+}
+
+/// Caches occurrences from 50kyBP for a neotoma taxon id.
+let getNeotomaCacheData neotomaId =
+    let neotomaUri = sprintf "https://api.neotomadb.org/v1/data/datasets?taxonids=%i&ageof=taxon&ageold=%i&ageyoung=%i" neotomaId 50000 1000
+    let response = tryGetRequest "https://eol.org/api/pages/" neotomaUri |> Async.RunSynchronously
+    match response with
+    | None ->
+        printfn "Could not get neotoma cache data for %i" neotomaId
+        None
+    | Some json ->
+        let deserialiseResult = tryDeserialiseJson<NeotomaOccurrenceApiResult> json
+        match deserialiseResult with
+        | None ->
+            printfn "Error: could not deserialise neotoma result. Has their API changed? %s" json
+            None
+        | Some result ->
+            if result.Success <> 1 then
+                printfn "Neotoma API reported an error"
+                None
+            else
+                result.Data
+                |> List.where(fun ds -> ds.AgeOldest.HasValue && ds.AgeYoungest.HasValue)
+                |> List.map(fun ds -> {
+                    AgeOldest = int ds.AgeOldest.Value
+                    AgeYoungest = int ds.AgeYoungest.Value
+                    Latitude = ds.Site.LatitudeNorth
+                    Longitude = ds.Site.LongitudeEast
+                    Proxy = ds.DatasetType
+                    SiteId = ds.Site.SiteID
+                }) |> List.distinctBy(fun s -> s.SiteId)
+                |> fun occ -> {
+                    RefreshTime = DateTime.Now
+                    Occurrences = occ
+                } |> Some

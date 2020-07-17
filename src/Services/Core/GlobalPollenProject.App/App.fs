@@ -157,7 +157,7 @@ let routes : HttpHandler =
                 // Statistics
                 GET >=> route   "/Statistics/Home"      >=> api U.Statistic.getHomeStatistics
                 GET >=> route   "/Statistics/System"    >=> api U.Statistic.getSystemStats
-
+                
                 // User
                 GET >=> routef   "/User/Profile/%s"     (fun g n c -> U.User.getPublicProfile (Guid.Parse(g)) |> apiResult n c)
                 POST >=> route  "/User/Register"        >=> postAuthApi U.User.register
@@ -188,6 +188,9 @@ let routes : HttpHandler =
                 POST >=> route  "/Digitise/Slide/Void"      >=> postApi U.Digitise.voidSlide
                 POST >=> route  "/Digitise/Slide/AddImage"  >=> postApi U.Digitise.uploadSlideImage
 
+                // Caches
+                GET >=> routef  "/Cache/Neotoma/%i"     (fun i n c -> U.Cache.neotoma i |> apiResult n c)
+                
                 // Administration
                 POST >=> route "/Admin/RebuildReadModel"    >=> postApi U.Admin.rebuildReadModel
                 POST >=> route "/Admin/Users"               >=> postApi U.Admin.listUsers

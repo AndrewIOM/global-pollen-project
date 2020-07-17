@@ -79,20 +79,19 @@ export class Viewer {
             img.onload = (_) => {
                 // ensure all focus level images have the same dimensions
                 if (this.imgWidth != undefined && this.imgHeight != undefined) {
-                    if (this.width != this.imgWidth || this.height != this.imgHeight) {
+                    if (img.width != this.imgWidth || img.height != this.imgHeight) {
                         console.error("Focus images are not of equal size! Size of image #" + i + ": " +
-                            this.width + "x" + this.height + " - expected size: " + 
+                            img.width + "x" + img.height + " - expected size: " + 
                             this.imgWidth + "x" + this.imgHeight);
                         if(!error) {
-                            // only trigger once!
                             error = true;
                             $(this.id).trigger(ViewerEvent.EVENT_IMAGES_MISMATCHED_SIZE);
                         }
                         return;
                     }
                 } else {
-                    this.imgWidth = this.nativeWidth = this.width;
-                    this.imgHeight = this.nativeHeight = this.height;
+                    this.imgWidth = this.nativeWidth = img.width;
+                    this.imgHeight = this.nativeHeight = img.height;
                 }
 
                 this.loadedCounter++;

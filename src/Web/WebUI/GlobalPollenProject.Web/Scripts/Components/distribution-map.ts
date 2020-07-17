@@ -92,14 +92,14 @@ class PointDistributionMap {
             .precision(.1);
         
         this.slider = setupSlider();
-        const svg = d3.select('#neotoma-map')
+        this.svg = d3.select('#neotoma-map')
             .append('svg')
             .attr('width', width)
             .attr('height', height);
         const path = d3.geoPath().projection(this.projection);
-        const g = svg.append("g");
+        const g = this.svg.append("g");
         d3.json('/geojson/world110.json'), (error, topology) => {
-            const geoJson : any = topojson.feature(topology, topology.objects.countries)
+            const geoJson : any = topojson.feature(topology, topology.objects.countries);
             g.selectAll("path")
                 .data(geoJson.features)
                 .enter().append("path")
@@ -137,42 +137,39 @@ class PointDistributionMap {
     }
 
     getNeotomaPoints() {
-        const neotomaUri = "https://api.neotomadb.org/v1/data/datasets?callback=neotomaCallback&taxonids=" + this.neotomaId + "&ageof=taxon&ageold=" + 50000 + "&ageyoung=" + 1000;
+        const neotomaUri = "/api/v1/neotoma-cache/" + this.neotomaId;
         $.ajax({
             url: neotomaUri,
-            jsonp: false,
-            jsonpCallback: 'neotomaCallback',
-            cache: true,
-            dataType: 'jsonp',
-            error: function(xhr, textStatus, errorThrown) {
-                $('#palaeo-loading').text("Sorry, we couldn't establish a secure connection with NeotomaDB. Please try later.");
+            type: "GET",
+            dataType: "json",
+            error: _ => {
+                $('#palaeo-loading').text("Sorry, we couldn't establish a connection with Neotoma.");
             }
-        })
+        }).done(data => { this.neotomaCallback(data); })
     }
     
     neotomaCallback(result) {
-        if (result.success == 0) {} else {
-            this.points = [];
-            for (let i = 0; i < result.data.length; i++) {
-                const coordinate = {
-                    east: result.data[i].Site.LongitudeEast,
-                    north: result.data[i].Site.LatitudeNorth,
-                    youngest: result.data[i].AgeYoungest,
-                    oldest: result.data[i].AgeOldest
-                };
-                this.points.push(coordinate);
-            }
-            this.domPoints = this.svg.selectAll("circle").data(this.points).enter().append("circle").attr("cx", d => {
-                return this.projection([d.east, d.north])[0];
-            }).attr("cy", d => {
-                return this.projection([d.east, d.north])[1];
-            }).attr("r", "1.5px").style("opacity", 0.75).attr("fill", d => {
-                return this.color(d.youngest);
-            });
-            $('#palaeo-loading').fadeOut(1000);
-            const sliderElem = document.getElementById('range');
-            sliderElem.removeAttribute('disabled');
+        this.points = [];
+        for (let i = 0; i < result.Occurrences.length; i++) {
+            const coordinate = {
+                east: result.Occurrences[i].Longitude,
+                north: result.Occurrences[i].Latitude,
+                youngest: result.Occurrences[i].AgeYoungest,
+                oldest: result.Occurrences[i].AgeOldest
+            };
+            this.points.push(coordinate);
         }
+        //$('#palaeo-refresh-time').text("Data refreshed at ...")
+        this.domPoints = this.svg.selectAll("circle").data(this.points).enter().append("circle").attr("cx", d => {
+            return this.projection([d.east, d.north])[0];
+        }).attr("cy", d => {
+            return this.projection([d.east, d.north])[1];
+        }).attr("r", "1.5px").style("opacity", 0.75).attr("fill", d => {
+            return this.color(d.youngest);
+        });
+        $('#palaeo-loading').fadeOut(1000);
+        const sliderElem = document.getElementById('range');
+        sliderElem.removeAttribute('disabled');
     }
 }
 

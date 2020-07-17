@@ -404,8 +404,8 @@ module Components =
     let detailList items =
         items
         |> List.map(fun (name,value) ->
-            [ dd [ _class "col-sm-5" ] [ str name ]
-              dt [ _class "col-sm-7" ] [ value ] ] )
+            [ dt [ _class "col-sm-5" ] [ str name ]
+              dd [ _class "col-sm-7" ] [ value ] ] )
         |> List.concat
         |> Grid.row
 
@@ -701,6 +701,7 @@ module Taxon =
                         str " to "
                         span [ _id "palaeo-range-high" ] []
                         str " years before present."
+                        span [ _id "palaeo-refresh-time" ] []
                     ]
                     div [ _id "neotoma-map" ] []
                     div [ _id "range" ] []

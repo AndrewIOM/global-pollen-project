@@ -29,7 +29,7 @@ module Actions =
             redirectTo true Urls.Account.profile next ctx
 
     let logout = signOut "Cookies" >=> redirectTo false "/"
-    
+           
     module Docs =
 
         open Docs
@@ -239,6 +239,7 @@ let webApp : HttpHandler =
             route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> CoreActions.Backbone.search
             route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> CoreActions.MRC.autocompleteTaxon
             route   "/grain/location"           >=> Actions.Identify.topUnknownGrains
+            routef  "/neotoma-cache/%i"         (fun i -> coreApiAction (CoreActions.Cache.neotoma i) )
         ]
 
     let masterReferenceCollection =
