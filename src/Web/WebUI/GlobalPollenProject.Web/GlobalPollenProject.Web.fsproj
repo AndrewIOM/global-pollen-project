@@ -28,6 +28,7 @@
     <None Include="Docs/*" CopyToPublishDirectory="Always" />
     <Content Include="Styles\Components\*.scss" />
     <Content Include="Styles\*.scss" />
+    <Content Include="Scripts\**" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Giraffe" Version="4.1.0" />

@@ -3,6 +3,12 @@ import * as ko from 'knockout';
 const traceEndpoint = "/api/v1/backbone/trace?"
 const searchEndpoint = "/api/v1/backbone/search?"
 
+export function activate(_: HTMLElement) {
+    $(() => {
+        ko.applyBindings(new BotanicalLookupToolViewModel());
+    })
+}
+
 export class BotanicalLookupToolViewModel {
 
     rank: KnockoutObservable<string>

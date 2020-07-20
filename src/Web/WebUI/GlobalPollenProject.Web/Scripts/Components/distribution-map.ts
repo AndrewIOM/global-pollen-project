@@ -98,14 +98,20 @@ class PointDistributionMap {
             .attr('height', height);
         const path = d3.geoPath().projection(this.projection);
         const g = this.svg.append("g");
-        d3.json('/geojson/world110.json'), (error, topology) => {
-            const geoJson : any = topojson.feature(topology, topology.objects.countries);
+
+        const topo = d3.json<TopoJSON.Topology>('/geojson/world110.json');
+        topo.then((topology) => {
+            const geojson = topojson.feature(topology, topology.objects.countries);
+            if (geojson.type != "FeatureCollection" ) {
+                throw "World topology not in correct format";
+            }
             g.selectAll("path")
-                .data(geoJson.features)
-                .enter().append("path")
+                .data(geojson.features)
+                .enter()
+                .append("path")
                 .attr("d", path)
                 .attr('fill', 'grey');
-        };
+        });
         if (neotomaId == 0) {
             this.loadingElement.text('Past occurrences for this taxon are not available from Neotoma.');
             this.loadingElement.show();

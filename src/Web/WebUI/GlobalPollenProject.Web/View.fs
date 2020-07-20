@@ -248,7 +248,7 @@ module Layout =
                         ]
                         h4 [] [ encodedText "Tools" ]
                         ul [] [
-                            li [] [ a [ _href Urls.digitise ] [ encodedText "Online Digitisation Tools"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Preview" ] ] ]
+                            li [] [ a [ (*_href Urls.digitise*) ] [ encodedText "Online Digitisation Tools"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Under Maintenance" ] ] ]
                             li [] [ a [ _href Urls.tools ] [ encodedText "Botanical Name Tracer"] ]
                         ]
                     ]
@@ -265,7 +265,7 @@ module Layout =
                             encodedText "The Global Pollen Project 2.0"
                             span [ _class "hide-xs" ] [ encodedText " · " ]
                             encodedText "Code available at "
-                            a [ _href "https://github.com/AndrewIOM/gpp-cqrs" ] [ encodedText "GitHub" ] ]
+                            a [ _href "https://github.com/AndrewIOM/gpp-cqrs"; _target "_blank" ] [ encodedText "GitHub" ] ]
                     ]
                 ]
             ]
@@ -601,7 +601,7 @@ module Slide =
             else if model.Slide.Rank = "Genus" then model.Slide.CurrentGenus
             else model.Slide.CurrentSpecies
         let title = sprintf "%s: %s" model.Slide.CollectionSlideId latinName
-        let subtitle = sprintf "%O - digitised reference slide" model.Slide.CollectionId
+        let subtitle = sprintf "%s - digitised reference slide" model.Collection.Name
         [ 
             Components.breadcrumb (breadcrumbLinks model) model.Slide.CollectionSlideId
             Grid.row [
@@ -751,7 +751,7 @@ module Taxon =
             if vm.Rank <> "Species" then
                 dl [ _class "row" ] [
                     dt [ _class "col-sm-3" ] [ str subName ]
-                    dt [ _class "col-sm-9" ] [
+                    dl [ _class "col-sm-9" ] [
                         ul [ _class "list-inline" ] (vm.Children |> List.sortBy(fun c -> c.Name) |> List.map(fun c ->
                             li [ _class "list-inline-item" ] [ a [ _href <| Urls.MasterReference.taxonById c.Id ] [ str c.Name ] ]
                         ))
@@ -759,7 +759,7 @@ module Taxon =
                 ]
                 dl [ _class "row" ] [
                     dt [ _class "col-sm-3" ] [ str "Taxonomic Completion" ]
-                    dd [ _class "col-sm-9" ] [
+                    dl [ _class "col-sm-9" ] [
                         Components.percentCircle completionPercentage
                         span [] [ str <| sprintf "%i of %i accepted %s" vm.Children.Length vm.BackboneChildren subName ]
                     ]
@@ -836,7 +836,7 @@ module Taxon =
             Grid.row [
                 Grid.column Medium 6 [
                     slideListPanel vm.Slides
-                    grainListPanel vm.Grains
+                    if not vm.Grains.IsEmpty then grainListPanel vm.Grains
                 ]
                 Grid.column Medium 6 [
                     distributionMap.View
@@ -1002,19 +1002,43 @@ module ReferenceCollections =
                 Grid.column Medium 3 [ infoCard ]
             ]
         ]
-        |> Layout.standard [] "Individual Reference Collections" "Digitised and undigitised reference material from individual collections and institutions."
+        |> Layout.standard [] "Individual Reference Collections" "Digitised and un-digitised reference material from individual collections and institutions."
 
     let tableView (vm:ReferenceCollectionDetail) =
         [
-            Components.breadcrumb [] "Cool Page"
+            link [ _rel "stylesheet"; _href "https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap4.min.css" ]
+            Components.breadcrumb [{Name = "Individual Reference Collections"; Url = Urls.individualCollections} ] vm.Name
             p [] [ encodedText vm.Description ]
-            div [ _class "card" ] [
-                div [ _class "card-block" ] [
-                    h4 [ _class "card-title" ] [ encodedText "Contributors" ]
-                    p [] [ strong [] [ encodedText "Curator:" ]; encodedText <| sprintf "%s %s" vm.CuratorFirstNames vm.CuratorSurname ]
+            div [ _class "card-group mb-4" ] [
+                div [ _class "card" ] [
+                    div [ _class "card-block" ] [
+                        h4 [ _class "card-title" ] [ encodedText "Contributors" ]
+                        p [] [ strong [] [ encodedText "Curator:" ]; encodedText <| sprintf "%s %s" vm.CuratorFirstNames vm.CuratorSurname ]
+                        p [] ((strong [] [encodedText "Digitised by:"])::(vm.Digitisers |> List.map(fun d -> span [] [ str d ])))
+                        p [] ((strong [] [encodedText "Material contributed by:"])::(vm.Collectors |> List.map(fun d -> span [] [ str d ])))
+                    ]
+                ]
+                div [ _class "card" ] [
+                    div [ _class "card-block" ] [
+                        h4 [ _class "card-title" ] [ encodedText "Access to Material" ]
+                        p [ _class "card-text" ] [
+                            match vm.AccessMethod with
+                            | "digital" -> span [] [ str "This collection is only available to view in digitally. The curator does not have access to the original physical reference slides." ]
+                            | "institution" -> span [] [
+                                str "The physical reference slides are located within an institution: "
+                                a [ _href vm.InstitutionUrl ] [ str vm.Institution ] ]
+                            | _ -> span [] [ str "This is a personal collection. Access to the physical reference material may be granted on request. Please contact the curator for more information." ]
+                        ]
+                    ]
+                ]
+                div [ _class "card" ] [
+                    div [ _class "card-block" ] [
+                        h4 [ _class "card-title" ] [ encodedText "Citation" ]
+                        p [ _class "card-text" ] [ str <| sprintf "%s, %s, %s (Version %i). Digitised palynological Reference Collection accessed via globalpollenproject.org on %s"
+                                                               vm.CuratorSurname vm.CuratorFirstNames vm.Name vm.Version (DateTime.Now.ToLongDateString()) ]
+                    ]
                 ]
             ]
-
             table [ _class "table table-responsive"; _id "reference-table"; _data "page-length" "100" ] [
                 thead [ _class "thead-default" ] [
                     tr [] [
@@ -1027,16 +1051,36 @@ module ReferenceCollections =
                     ]
                 ]
                 tbody [] (vm.Slides |> List.map(fun s ->
-                    tr [ _class "taxon-status-" ] [
+                    tr [ _class <| sprintf "taxon-status-%s" s.CurrentTaxonStatus ] [
                         th [ _scope "row" ] [ encodedText s.CollectionSlideId ]
-                        td [] [ a [ _href "" ] [ encodedText s.CurrentFamily ] ]
-                        td [] [ a [ _href "" ] [ encodedText s.CurrentGenus ] ]
-                        td [] [ a [ _href "" ] [ encodedText s.CurrentSpecies ] ]
+                        if s.CurrentTaxonStatus = "accepted" && s.IsFullyDigitised then
+                            td [] [ a [ _href <| Urls.MasterReference.family s.CurrentFamily ] [ encodedText s.CurrentFamily ]
+                                    em [ _class "table-orig-name" ] [ str s.FamilyOriginal ] ]
+                            td [] [ a [ _href <| Urls.MasterReference.genus s.CurrentFamily s.CurrentGenus ] [ encodedText s.CurrentGenus ]
+                                    em [ _class "table-orig-name" ] [ str s.GenusOriginal ] ]
+                            td [] [ a [ _href <| Urls.MasterReference.species s.CurrentFamily s.CurrentGenus s.CurrentSpecies ] [ encodedText s.CurrentSpecies ]
+                                    em [ _class "table-orig-name" ] [ str s.SpeciesOriginal ] ]
+                        else
+                            td [] [ em [ _class "table-orig-name" ] [ encodedText s.CurrentFamily ] ]
+                            td [] [ em [ _class "table-orig-name" ] [ encodedText s.CurrentGenus ] ]
+                            td [] [ em [ _class "table-orig-name" ] [ encodedText s.CurrentSpecies ] ]
+                        td [] [
+                            if s.IsFullyDigitised
+                            then span [] [ str <| sprintf "Yes: %i image(s)" s.Images.Length ]
+                            else span [] [ str "No" ]
+                        ]
+                        td [] [
+                            if s.IsFullyDigitised then
+                                a [ _href <| Urls.Collections.slide vm.Id s.CollectionSlideId
+                                    _class "btn btn-secondary" ] [ str "View" ]
+                        ]
                     ]
                 ))
             ]
-
-        ] |> Layout.standard [] vm.Name "Individual Reference Collection"
+        ] |> Layout.standard [ "https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"
+                               "https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js"
+                               "$(document).ready(function() { $('#reference-table').DataTable({paging: false, order: [[ 2, 'asc' ]]});})" ]
+                               vm.Name "Individual Reference Collection"
 
 
 module Identify =
@@ -1077,6 +1121,68 @@ module Identify =
     let disqus url =
         []
     
+    let taxonDropdownBoxes =
+        Grid.row [
+            Grid.column Small 3 [
+                input [ attr "data-bind" "value: family, event: { blur: capitaliseFirstLetter($element),
+                        keyup: suggest($element, 'Family') }"
+                        _type "text"; _id "original-Family"; _class "form-control"
+                        _autocomplete "off"; _placeholder "Family" ]
+                ul [ _class "dropdown-menu taxon-dropdown"; _id "FamilyList"
+                     _style "display:none" ] []
+            ]
+            Grid.column Small 3 [
+                input [ attr "data-bind" "value: genus, enable: rank() != 'Family',
+                        event: { blur: capitaliseFirstLetter($element),
+                        keyup: suggest($element, 'Genus'),
+                        blur: disable('Genus') }"
+                        _type "text"; _id "original-Genus"; _class "form-control"
+                        _autocomplete "off"; _placeholder "Genus" ]
+                ul [ _class "dropdown-menu taxon-dropdown"; _id "GenusList"
+                     _style "display:none" ] []
+            ]
+            Grid.column Small 3 [
+                input [ attr "data-bind" "value: species, disable: rank() != 'Species',
+                        event: { blur: disable('Species'), keyup: suggest($element, 'Species') }"
+                        _type "text"; _id "original-Species"; _class "form-control"
+                        _autocomplete "off"; _placeholder "Species" ]
+                ul [ _class "dropdown-menu taxon-dropdown"; _id "SpeciesList"
+                     _style "display:none" ] []
+            ]
+            Grid.column Small 3 [
+                input [ attr "data-bind" "value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }"
+                        _type "text"; _class "form-control"; _autocomplete "off"; _placeholder "Auth." ]
+            ]
+        ]
+    
+    let taxonValidationSpace =
+        div [ attr "data-bind" "visible: newSlideTaxonStatus, if: newSlideTaxonStatus" ] [
+            div [ attr "data-bind" "visible: newSlideTaxonStatus() == 'Error'" ] [
+                p [] [
+                    Icons.fontawesome "frown-o"
+                    str " There was a problem communicating with the taxonomic backbone."
+                ]
+            ]
+            div [ attr "data-bind" "visible: newSlideTaxonStatus().length > 1" ] [
+                p [] [
+                    Icons.fontawesome "frown-o"
+                    str " Validation unsuccessful. There are "
+                    span [ attr "data-bind" "text: newSlideTaxonStatus().length" ] []
+                    str " matching names."
+                ]
+                ul [ attr "data-bind" "foreach: newSlideTaxonStatus" ] [
+                    li [ attr "data-bind" "text: latinName + ' ' + namedBy + ' (' + taxonomicStatus + ' name)'" ] []
+                ]
+            ]
+            div [ attr "data-bind" "visible: newSlideTaxonStatus().length == 0" ] [
+                p [] [
+                    Icons.fontawesome "frown-o"
+                    str " Taxon was not recognised by our taxonomic backbone."
+                ]
+            ]
+        ]
+    
+    
     let identifyForm grainId = section [] [
         h4 [] [ str "Can you identify this grain?" ]
         form [ _method "POST"; _action Urls.Identify.identify; _id "identify-form" ] [
@@ -1090,64 +1196,9 @@ module Identify =
                 ]
                 str "rank."
             ]
-            Grid.row [
-                Grid.column Small 3 [
-                    input [ attr "data-bind" "value: family, event: { blur: capitaliseFirstLetter($element),
-                            keyup: suggest($element, 'Family') }"
-                            _type "text"; _id "original-Family"; _class "form-control"
-                            _autocomplete "off"; _placeholder "Family" ]
-                    ul [ _class "dropdown-menu taxon-dropdown"; _id "FamilyList"
-                         _style "display:none" ] []
-                ]
-                Grid.column Small 3 [
-                    input [ attr "data-bind" "value: genus, enable: rank() != 'Family',
-                            event: { blur: capitaliseFirstLetter($element),
-                            keyup: suggest($element, 'Genus'),
-                            blur: disable('Genus') }"
-                            _type "text"; _id "original-Genus"; _class "form-control"
-                            _autocomplete "off"; _placeholder "Genus" ]
-                    ul [ _class "dropdown-menu taxon-dropdown"; _id "GenusList"
-                         _style "display:none" ] []
-                ]
-                Grid.column Small 3 [
-                    input [ attr "data-bind" "value: species, disable: rank() != 'Species',
-                            event: { blur: disable('Species'), keyup: suggest($element, 'Species') }"
-                            _type "text"; _id "original-Species"; _class "form-control"
-                            _autocomplete "off"; _placeholder "Species" ]
-                    ul [ _class "dropdown-menu taxon-dropdown"; _id "SpeciesList"
-                         _style "display:none" ] []
-                ]
-                Grid.column Small 3 [
-                    input [ attr "data-bind" "value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }"
-                            _type "text"; _class "form-control"; _autocomplete "off"; _placeholder "Auth." ]
-                ]
-            ]
+            taxonDropdownBoxes
             small [] [ str "Authorship is optional. The given name will be traced within our taxonomic backbone to the currently accepted name." ]
-            div [ attr "data-bind" "visible: newSlideTaxonStatus, if: newSlideTaxonStatus" ] [
-                div [ attr "data-bind" "visible: newSlideTaxonStatus() == 'Error'" ] [
-                    p [] [
-                        Icons.fontawesome "frown-o"
-                        str " There was a problem communicating with the taxonomic backbone."
-                    ]
-                ]
-                div [ attr "data-bind" "visible: newSlideTaxonStatus().length > 1" ] [
-                    p [] [
-                        Icons.fontawesome "frown-o"
-                        str " Validation unsuccessful. There are "
-                        span [ attr "data-bind" "text: newSlideTaxonStatus().length" ] []
-                        str " matching names."
-                    ]
-                    ul [ attr "data-bind" "foreach: newSlideTaxonStatus" ] [
-                        li [ attr "data-bind" "text: latinName + ' ' + namedBy + ' (' + taxonomicStatus + ' name)'" ] []
-                    ]
-                ]
-                div [ attr "data-bind" "visible: newSlideTaxonStatus().length == 0" ] [
-                    p [] [
-                        Icons.fontawesome "frown-o"
-                        str " Taxon was not recognised by our taxonomic backbone."
-                    ]
-                ]
-            ]
+            taxonValidationSpace
             input [ _hidden; _name "TaxonId"; _id "TaxonId"; attr "data-bind" "value: currentTaxon" ]
             input [ _hidden; _name "GrainId"; _id "GrainId"; _value <| grainId ]
             button [ _class "btn btn-primary"; _style "display:block"
@@ -1419,7 +1470,7 @@ module Statistics =
         let speciesPercent = float model.Species.Count / float model.Species.Total * 100.
 
         [
-            Components.breadcrumb [] "Cool Page"
+            Components.breadcrumb [] "Statistics"
             Grid.row [
                 Grid.column Medium 3 [ stickySidebar ]
                 Grid.column Medium 9 [
@@ -1438,6 +1489,37 @@ module Statistics =
                         Grid.column Small 4 [ 
                             Components.percentCircle speciesPercent
                             p [] [ encodedText <| sprintf "or %i of %s species." model.Species.Count (String.Format("{0:n0}", model.Species.Total)) ]
+                        ]
+                    ]
+                    h3 [ _id "contributions" ] [ str "Contributions" ]
+                    p [] [ str "Once a grain has been identified and transferred to the online reference collection all participating users will gain points
+                                both for themselves and their affiliated institutions. The number of points will be determined by the current score placed
+                                on an individual grain as as well as the level of taxonomic identification (i.e. more points will be awarded for a species
+                                level than a genus level identification)." ]
+                    Grid.row [
+                        Grid.column Medium 6 [
+                            div [ _class "card" ] [
+                                div [ _class "card-block primary-header" ] [
+                                    h4 [ _class "card-title" ] [
+                                        Icons.fontawesome "users"
+                                        str "Top Groups"
+                                    ]
+                                ]
+                                ul [ _class "list-group list-group-flush" ] [
+                                    li [ _class "list-group-item" ] [ str "Contribution scores are temporarily deactivated" ]
+                                ]
+                            ]
+                            div [ _class "card" ] [
+                                div [ _class "card-block primary-header" ] [
+                                    h4 [ _class "card-title" ] [
+                                        Icons.fontawesome "user"
+                                        str "Top People"
+                                    ]
+                                ]
+                                ul [ _class "list-group list-group-flush" ] [
+                                    li [ _class "list-group-item" ] [ str "Contribution scores are temporarily deactivated" ]
+                                ]
+                            ]
                         ]
                     ]
                 ]
@@ -1483,9 +1565,38 @@ module StatusPages =
 
 module Tools =
 
+    let sidebar =
+        div [ _class "sticky-sidebar" ] [
+            label [] [ str "Tools" ]
+            nav [ _id "sidebar"; _class "nav flex-column" ] [
+                a [ _class "nav-link"; _href ("#botanical-names") ] [ str "Botanical Name Tracer" ]
+            ]
+        ]
+    
     let main =
         [
-
+            Grid.row [
+                Grid.column Medium 3 [ sidebar ]
+                Grid.column Medium 9 [
+                    div [ _id "botanical-lookup-component" ] [
+                        p [] [ str "The Global Pollen Project incorporates a taxonomic backbone - a checklist of global plant families, genera, and species." ]
+                        p [] [
+                            str "Lookup rank:"
+                            select [ attr "data-bind" "value: rank"
+                                     _class "form-control form-control-sm inline-dropdown" ] [
+                                option [ _value "Family" ] [ str "Family" ]
+                                option [ _value "Genus" ] [ str "Genus" ]
+                                option [ _value "Species" ] [ str "Species" ]
+                            ]
+                        ]
+                        Identify.taxonDropdownBoxes
+                        small [] [ str "Authorship is optional. The given name will be traced within our taxonomic backbone to the currently accepted name." ]
+                        button [ _class "btn btn-secondary"; _style "display:block"
+                                 _data "bind" "click: requestValidation, enable: isValidSearch" ] [ str "Trace" ]
+                        Identify.taxonValidationSpace
+                    ]
+                ]
+            ]
         ] |> Layout.standard [] "Tools" "Some tools"
 
 
@@ -1493,7 +1604,7 @@ module Admin =
 
     let users vm =
         [
-
+            
         ] |> Layout.standard [] "Users" "Admin"
 
     let curate vm =

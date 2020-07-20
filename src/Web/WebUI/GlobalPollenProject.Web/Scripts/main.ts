@@ -53,6 +53,15 @@ async function unobtrusiveValidation() {
 // Page-specific components
 // --------------------------
 
+// Botanical lookup tool (e.g. in tools section)
+async function botanicalLookup() {
+    const container = document.getElementById("botanical-lookup-component");
+    if (container !== null) {
+        const component = await import("./Components/botanical-lookup");
+        component.activate(container);
+    }
+}
+
 async function addGrainForm() {
     const form = document.getElementById("add-grain-form");
     if (form !== null) {
@@ -88,3 +97,4 @@ digitiseSPA();
 addGrainForm();
 identifyGrainForm();
 distributionMap();
+botanicalLookup();

@@ -33,6 +33,7 @@ export class Gallery {
      */
     constructor(frames:string[], pixelWidth:number) {
         this.changeImage(frames, pixelWidth);
+        this.activateGalleryLinks();
     }
     
     changeImage(frames: string[], pixelWidth: number) {
@@ -48,7 +49,12 @@ export class Gallery {
         this.scaleBar = new ScaleBar(this.viewer, scaleBarId, pixelWidth);
     }
     
-    public clickedGalleryItem(element:MouseEvent) {
+    activateGalleryLinks() {
+        $("#slide-gallery")
+            .find(".slide-gallery-item").on("click", e => this.clickedGalleryItem(e));
+    }
+    
+    clickedGalleryItem(element:JQuery.Event) {
         if($(element.target).hasClass("active")) return;
         $("#slide-gallery")
             .find(".slide-gallery-item")

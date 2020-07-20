@@ -41,6 +41,7 @@ module Collections =
 
     let root = "/Reference"
     let byId (id:System.Guid) = root + "/" + (id.ToString())
+    let slide (col:System.Guid) (id:string) = root + "/" + (col.ToString()) + "/" + id
 
 module Identify =
 
