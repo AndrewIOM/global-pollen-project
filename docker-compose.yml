@@ -31,10 +31,6 @@ services:
     build:
       context: .
       dockerfile: src/Services/Identity/GlobalPollenProject.Identity/Dockerfile
-    depends_on:
-      - identity.sqldb
-    links:
-      - "identity.sqldb:identitydb"
     environment:
       - Authentication__Facebook__AppId=${FACEBOOK_ID}
       - Authentication__Facebook__AppSecret=${FACEBOOK_SECRET}
@@ -84,38 +80,14 @@ services:
       context: .
       dockerfile: src/Web/WebApi/GlobalPollenProject.Web.API/Dockerfile
 
-  # nginx for SSL, ddos protection etc. of web app
-  reverse-proxy:
-    image: nginx:1.17-alpine
-    depends_on:
-    - identity.api
-    ports:
-      - "5100:5100"
-    volumes:
-      - ./nginx.conf:/etc/nginx/nginx.conf
-
   core.readmodel:
-    image: redis:latest
+    image: redis:6.0-alpine
     command: redis-server --appendonly yes
     ports:
       - "6379:6379"
-
-  #core.readmodel:
-  #  image: elasticsearch:7.6.2
-  #  environment: 
-  #    - discovery.type=single-node
 
   core.eventstore:
     image: eventstore/eventstore:release-5.0.8
     ports:
       - "2113:2113"
       - "1113:1113"
-
-  identity.sqldb:
-    image: "microsoft/mssql-server-linux:2017-CU12"
-    ports:
-    - "1433:1433"
-    environment:
-        SA_PASSWORD: "${USER_SQL_PASSWORD}"
-        ACCEPT_EULA: "Y"
-        MSSQL_PID: "Express"
