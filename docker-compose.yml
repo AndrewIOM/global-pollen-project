@@ -79,6 +79,11 @@ services:
     build:
       context: .
       dockerfile: src/Web/WebApi/GlobalPollenProject.Web.API/Dockerfile
+    depends_on:
+        - webapigw
+    environment:
+      - IdentityUrl= http://identity.api
+      - CoreUrl=http://webapigw
 
   web.lab:
     image: gpp/lab:${TAG:-latest}

@@ -7,6 +7,8 @@ open System.Net.Http.Headers
 open System.Threading
 open System.Threading.Tasks
 open Microsoft.AspNetCore.HttpOverrides
+open Microsoft.AspNetCore.Mvc.ApplicationModels
+open Microsoft.AspNetCore.Routing
 open Microsoft.Extensions.Configuration
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Authentication
@@ -17,6 +19,15 @@ open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Hosting
 open Microsoft.Extensions.DependencyInjection
 open Microsoft.OpenApi.Models
+
+/// Converts controller action URLs into lower-case from LowerCase.
+type SlugifyParameterTransformer() =
+    interface IOutboundParameterTransformer with
+    
+        member __.TransformOutbound(value) =
+            if isNull value then null
+            else System.Text.RegularExpressions.Regex.Replace(value.ToString(), "([a-z])([A-Z])", "$1-$2").ToLower()
+
 
 type HttpClientAuthorizationDelegatingHandler(httpContextAccessor:IHttpContextAccessor) =
     inherit DelegatingHandler()
@@ -45,6 +56,9 @@ type Startup (configuration: IConfiguration) =
 
     member __.AddApiDocumentation(services:IServiceCollection) =
         services.AddSwaggerGen(fun options ->
+            let xmlFile = sprintf "%s.xml" (System.Reflection.Assembly.GetExecutingAssembly().GetName().Name)
+            let xmlPath = System.IO.Path.Combine(AppContext.BaseDirectory, xmlFile)
+            options.IncludeXmlComments(xmlPath)
             options.SwaggerDoc("v1", OpenApiInfo
                 ( Title = "Global Pollen Project: Data Access API",
                   Version = "v1",
@@ -53,13 +67,17 @@ type Startup (configuration: IConfiguration) =
             options.AddSecurityDefinition("oauth2", OpenApiSecurityScheme
                 ( Type = SecuritySchemeType.OAuth2,
                   Flows = OpenApiOAuthFlows() )) |> ignore )
-
+                
     member this.ConfigureServices(services: IServiceCollection) =
         services.AddOptions()
             .Configure<Connections.AppSettings>(configuration)
             .AddDataProtection() |> ignore
-        services.AddControllers() |> ignore
+        services
+            .AddControllers(fun opt ->
+                opt.Conventions.Add(RouteTokenTransformerConvention(SlugifyParameterTransformer())))
+            .AddNewtonsoftJson() |> ignore
         services.AddHttpContextAccessor() |> ignore
+        services.AddTransient<HttpClientAuthorizationDelegatingHandler>() |> ignore
         services.AddHttpClient<Connections.CoreMicroservice>()
             .AddHttpMessageHandler<HttpClientAuthorizationDelegatingHandler>() |> ignore
         this.AddCustomAuthentication(services) |> ignore
@@ -69,7 +87,8 @@ type Startup (configuration: IConfiguration) =
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear()
         if (env.IsDevelopment()) 
         then app.UseDeveloperExceptionPage() |> ignore
-        else 
+        else
+            app.UseExceptionHandler("/error") |> ignore
             app.UseHsts() |> ignore
             app.UseHttpsRedirection() |> ignore
         app.UseForwardedHeaders(ForwardedHeadersOptions(ForwardedHeaders = ForwardedHeaders.XForwardedFor)) |> ignore
@@ -80,13 +99,14 @@ type Startup (configuration: IConfiguration) =
         app.UseEndpoints(fun endpoints ->
                         endpoints.MapControllers() |> ignore
                         ) |> ignore
-        app.UseSwaggerUI() |> ignore
+        app.UseSwagger() |> ignore
+        app.UseSwaggerUI(fun opt ->
+            opt.SwaggerEndpoint("/swagger/v1/swagger.json", "GPP API v1")) |> ignore
 
 let BuildWebHost args =
     WebHost
         .CreateDefaultBuilder(args)
-        .UseKestrel(fun opt ->
-            opt.Limits.MaxRequestBodySize <- Nullable<int64>(int64 (1024 * 1024 * 10)))
+        .UseKestrel()
         .UseStartup<Startup>()
         .Build()
 

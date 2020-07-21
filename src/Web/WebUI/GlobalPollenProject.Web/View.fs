@@ -1007,6 +1007,7 @@ module ReferenceCollections =
     let tableView (vm:ReferenceCollectionDetail) =
         [
             link [ _rel "stylesheet"; _href "https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap4.min.css" ]
+            script [ _type "text/javascript" ] [ str "$(document).ready(function() { $('#reference-table').DataTable({paging: false, order: [[ 2, 'asc' ]]});})" ]
             Components.breadcrumb [{Name = "Individual Reference Collections"; Url = Urls.individualCollections} ] vm.Name
             p [] [ encodedText vm.Description ]
             div [ _class "card-group mb-4" ] [
@@ -1078,8 +1079,7 @@ module ReferenceCollections =
                 ))
             ]
         ] |> Layout.standard [ "https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"
-                               "https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js"
-                               "$(document).ready(function() { $('#reference-table').DataTable({paging: false, order: [[ 2, 'asc' ]]});})" ]
+                               "https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js" ]
                                vm.Name "Individual Reference Collection"
 
 
