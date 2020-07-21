@@ -1509,6 +1509,8 @@ module Statistics =
                                     li [ _class "list-group-item" ] [ str "Contribution scores are temporarily deactivated" ]
                                 ]
                             ]
+                        ]
+                        Grid.column Medium 6 [
                             div [ _class "card" ] [
                                 div [ _class "card-block primary-header" ] [
                                     h4 [ _class "card-title" ] [

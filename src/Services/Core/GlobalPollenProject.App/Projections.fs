@@ -62,7 +62,7 @@ module Statistics =
         RepositoryBase.setKey 0 K.Statistic.totalSlides set serialise |> ignore
         RepositoryBase.setKey 0 K.Statistic.totalDigitisedSlides set serialise |> ignore
         RepositoryBase.setKey 0 K.Representation.family set serialise |> ignore
-        RepositoryBase.setKey 0 K.Statistic.totalSpecies set serialise
+        RepositoryBase.setKey 0 K.Statistic.totalSpecies set serialise |> ignore
 
     let incrementStat key get set =
         match RepositoryBase.getKey<int> key get deserialise with

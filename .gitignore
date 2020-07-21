@@ -215,6 +215,7 @@ appsettings.Development.json
 .vscode
 .ionide
 .fake
+.idea
 
 .env
 .env**

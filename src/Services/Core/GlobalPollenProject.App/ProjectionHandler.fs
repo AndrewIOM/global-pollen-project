@@ -19,7 +19,7 @@ let validateCheckpoint get set getEventCount e =
 
 let init set () =
     Checkpoint.init set |> ignore
-    Statistics.init set |> ignore
+    Statistics.init set
     TaxonomicBackbone.init set
 
 let route 
@@ -36,7 +36,7 @@ let route
     let feed (f:(string*obj*DateTime)->Result<unit,string>) (e:string*obj*DateTime) =
         let r = f e
         match r with
-        | Ok o -> Ok e
+        | Ok _ -> Ok e
         | Error e -> Error e
 
     e

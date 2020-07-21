@@ -11,10 +11,9 @@ module ExternalConnections =
     open GlobalPollenProject.Core.Composition
     open GlobalPollenProject.Core.DomainTypes
     open GlobalPollenProject.Core.Aggregates.Taxonomy
-    open GlobalPollenProject.Core.Aggregate
     open ReadStore
     open ReadModels
-
+    
     let refreshNeotomaConnection issueTaxonCommand taxonId = 
         ConnectToExternalDatabase (taxonId,ThirdParty.Neotoma)
         |> issueTaxonCommand
@@ -36,7 +35,7 @@ module ExternalConnections =
     let nullableToOption (n:Nullable<'a>) =
         if n.HasValue then Some n.Value else None
 
-    let getHeirarchyIds get (slide:SlideDetail) =
+    let getHierarchyIds get (slide:SlideDetail) =
         match slide.CurrentTaxonId with
         | None -> Ok []
         | Some i ->
@@ -47,7 +46,7 @@ module ExternalConnections =
     let toGppTaxa get (collection:EditableRefCollection) =
         collection.Slides
         |> List.filter (fun s -> s.IsFullyDigitised)
-        |> List.map (fun s -> getHeirarchyIds get s)
+        |> List.map (fun s -> getHierarchyIds get s)
         |> mapResult id
         |> lift (fun x -> x |> List.concat)
         |> lift List.distinct
@@ -63,10 +62,10 @@ module ExternalConnections =
         taxa |> lift (List.map (refreshEolConnection issueCommand)) |> ignore
         taxa |> lift (List.map (refreshNeotomaConnection issueCommand)) |> ignore
 
-    let refreshFromGrain issueCommand grainId =
-        refreshGbifConnection issueCommand grainId |> ignore
-        refreshEolConnection issueCommand grainId |> ignore
-        refreshNeotomaConnection issueCommand grainId |> ignore
+    let refreshFromGrain issueCommand taxonId =
+        refreshGbifConnection issueCommand taxonId |> ignore
+        refreshEolConnection issueCommand taxonId |> ignore
+        refreshNeotomaConnection issueCommand taxonId |> ignore
     
     let refresh get issueTaxonCommand (e:string*obj*DateTime) =
         let ev (s,o,d) = o

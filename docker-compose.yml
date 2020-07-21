@@ -80,6 +80,16 @@ services:
       context: .
       dockerfile: src/Web/WebApi/GlobalPollenProject.Web.API/Dockerfile
 
+  web.lab:
+    image: gpp/lab:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Web/Lab/GlobalPollenProject.Lab.Server/Dockerfile
+    environment:
+      - IdentityUrl= http://identity.api
+      - CoreUrl=http://webapigw
+      - CallBackUrl=http://0.0.0.0:80
+
   core.readmodel:
     image: redis:6.0-alpine
     command: redis-server --appendonly yes
