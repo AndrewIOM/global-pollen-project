@@ -159,3 +159,33 @@ type VoidSlideRequest = {
 
 module Empty =
     let addCollection =  { Name = ""; Description = ""; CuratorFirstNames = ""; CuratorSurname = ""; CuratorEmail = ""; AccessMethod = ""; Institution = ""; InstitutionUrl = "" }
+    let recordSlide = {
+        Collection = Guid.Empty
+        OriginalFamily = ""
+        ValidatedTaxonId = Guid.Empty
+        SamplingMethod = ""
+        OriginalGenus = ""
+        OriginalSpecies = ""
+        OriginalAuthor = ""
+        ExistingId = ""
+        PlantIdMethod = {
+            Method = ""
+            InstitutionCode = ""
+            InternalId = ""
+            IdentifiedByFirstNames = []
+            IdentifiedBySurname = "" }
+        YearCollected = Nullable<int>()
+        YearSlideMade = Nullable<int>()
+        LocationType = ""
+        LocationLocality = ""
+        LocationDistrict = ""
+        LocationRegion = ""
+        LocationCountry = ""
+        LocationContinent = ""
+        PreparedByFirstNames = []
+        PreparedBySurname = ""
+        PreperationMethod = ""
+        MountingMaterial = ""
+        CollectedByFirstNames = []
+        CollectedBySurname = ""
+    }

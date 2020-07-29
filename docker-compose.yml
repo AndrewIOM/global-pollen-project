@@ -46,6 +46,8 @@ services:
       - TokenLifetimeMinutes=120
       - PermanentTokenLifetimeDays=365
       - ClientSecretMvc=${WEB_MVC_CLIENT_SECRET}
+      - LabWebsiteUrl=http://localhost:5000
+      - ClientSecretLabBolero=${LAB_BOLERO_CLIENT_SECRET}
 
   # Routes access to internal APIs from web apps
   webapigw:

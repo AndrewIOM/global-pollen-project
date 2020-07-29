@@ -16,7 +16,6 @@
     <Compile Include="Urls.fs" />
     <Compile Include="Docs.fs" />
     <Compile Include="View.fs" />
-    <Compile Include="DigitiseDashboard.fs" />
     <Compile Include="Handlers.fs" />
     <Compile Include="Validation.fs" />
     <Compile Include="Account.fs" />

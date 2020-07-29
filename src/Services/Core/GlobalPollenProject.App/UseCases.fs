@@ -271,7 +271,7 @@ module Calibrations =
         |> bind getUrl
         |> lift generateCommand
         |> lift issueCommand
-        |> Ok
+        |> toAppResult
 
 
 module UnknownGrains =

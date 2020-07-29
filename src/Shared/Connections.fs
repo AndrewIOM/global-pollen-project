@@ -106,7 +106,10 @@ module CoreActions =
     module User =
         let publicProfile (req:Guid) = CGET None <| sprintf "/api/v1/anon/User/Profile/%s" (req.ToString())
         let register (req:NewAppUserRequest) = CPOST req "/api/v1/User/Register"
-
+        let myCalibrations () : CoreFunction<Calibration list> = CGET None "/api/v1/User/Microscope"
+        let setupMicroscope (req:AddMicroscopeRequest) = CPOST req "/api/v1/User/Microscope/Setup"
+        let calibrateMicroscope (req:CalibrateRequest) = CPOST req "/api/v1/User/Microscope/Calibrate"
+    
     module Curate =
         let listPending () = CGET None "/api/v1/anon/Curate/Pending"
     
@@ -121,7 +124,7 @@ module CoreActions =
         let myCollections () : CoreFunction<EditableRefCollection list> = CGET None "/api/v1/Digitise/Collection"
         let getCollection (req:string) = CGET None (sprintf "/api/v1/Digitise/Collection/%s" req)
         let startCollection (req:StartCollectionRequest) = CPOST req "/api/v1/Digitise/Collection/Start"
-        let publishCollection (req:string) = CPOST req (sprintf "/api/v1/Digitise/Collection/%s/Publish" req)
+        let publishCollection (req:Guid) = CPOST req (sprintf "/api/v1/Digitise/Collection/%O/Publish" req)
         let recordSlide (req:SlideRecordRequest) = CPOST req "/api/v1/Digitise/Slide/Add"
         let voidSlide (req:VoidSlideRequest) = CPOST req "/api/v1/Digitise/Slide/Void"
         let uploadImage (req:SlideImageRequest) = CPOST req "/api/v1/Digitise/Slide/AddImage"

@@ -68,3 +68,10 @@ module ``When importing a taxon`` =
                               Parent = Some parentId
                               Reference = None }]
 
+
+    module ``When revising a taxon's status`` =
+        
+        [<Fact>]
+        let ``It is moved between higher ranks`` () =
+            invalidOp "Not implemented"
+            

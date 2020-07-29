@@ -386,7 +386,7 @@ module Program =
             IdentityResources.Profile()
         ]
         
-        let clients (mvcSecret:string) websiteUrl = [
+        let clients (mvcSecret:string) websiteUrl (labAppSecret:string) labAppUrl = [
             Client(
                 ClientId = "mvc",
                 ClientName = "MVC Client",
@@ -406,6 +406,25 @@ module Program =
                     "core"
                     "webapigw"
                 |])
+            Client(
+                ClientId = "lab-ui",
+                ClientName = "Lab Bolero Client",
+                ClientSecrets = [| Secret(labAppSecret.Sha256()) |],
+                ClientUri = labAppUrl,
+                AllowedGrantTypes = [| GrantType.Hybrid |],
+                AllowAccessTokensViaBrowser = false,
+                RequireConsent = false,
+                AllowOfflineAccess = true,
+                AlwaysIncludeUserClaimsInIdToken = true,
+                RedirectUris = [| sprintf "%s/signin-oidc" labAppUrl  |],
+                PostLogoutRedirectUris = [| sprintf "%s/signout-callback-oidc" labAppUrl |],
+                AllowedScopes = [|
+                    IdentityServerConstants.StandardScopes.OpenId
+                    IdentityServerConstants.StandardScopes.Profile
+                    IdentityServerConstants.StandardScopes.OfflineAccess
+                    "core"
+                    "webapigw"
+                |])
         ]
     
     // Seed configuration data
@@ -417,7 +436,9 @@ module Program =
             if not hasClients then
                 let webUrl = getAppSetting appSettings "WebsiteUrl"
                 let mvcSecret = getAppSetting appSettings "ClientSecretMvc"
-                let clients = Config.clients mvcSecret webUrl
+                let labUrl = getAppSetting appSettings "LabWebsiteUrl"
+                let labSecret = getAppSetting appSettings "ClientSecretLabBolero"
+                let clients = Config.clients mvcSecret webUrl labSecret labUrl
                 clients |> List.map(fun c -> context.Clients.Add(c.ToEntity())) |> ignore
                 let! _ = context.SaveChangesAsync()
                 ()

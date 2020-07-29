@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <Compile Include="Converters.fs" />
+    <Compile Include="Projections.fs" />
   </ItemGroup>
 
   <ItemGroup>
