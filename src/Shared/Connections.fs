@@ -4,7 +4,6 @@ open System
 open System.Net.Http
 open Microsoft.Extensions.Options
 open ReadModels
-open FSharp.Control.Tasks.V2.ContextInsensitive
 
 //////////////////
 /// Models

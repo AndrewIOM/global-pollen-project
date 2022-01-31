@@ -2,7 +2,6 @@ module Startup
 
 open System
 open System.Globalization
-open Giraffe.Serialization
 open Microsoft.AspNetCore.Builder
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Http
@@ -109,7 +108,7 @@ type Startup (configuration: IConfiguration) =
         let customSettings = JsonSerializerSettings(Culture = CultureInfo("en-GB"),
                                                     ContractResolver = Serialization.CamelCasePropertyNamesContractResolver())
         customSettings.Converters.Add(Microsoft.FSharpLu.Json.CompactUnionJsonConverter(true))
-        services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(customSettings)) |> ignore
+        services.AddSingleton<Json.ISerializer>(NewtonsoftJson.Serializer(customSettings)) |> ignore
     
     member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear()

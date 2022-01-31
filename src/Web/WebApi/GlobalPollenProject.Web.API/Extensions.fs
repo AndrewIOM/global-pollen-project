@@ -26,6 +26,6 @@ type ControllerBase with
                 | InMaintenanceMode
                 | Persistence -> return StatusCodeResult(500) :> IActionResult
                 | NotFound -> return NotFoundResult() :> IActionResult
-                | Validation
+                | Validation _ -> return BadRequestResult() :> IActionResult
                 | InvalidRequestFormat -> return BadRequestResult() :> IActionResult
         }

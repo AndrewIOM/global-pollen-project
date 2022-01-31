@@ -1,9 +1,6 @@
 module Handlers
 
-open Giraffe.Core
-open Giraffe.ModelBinding
-open Giraffe.ResponseWriters
-open FSharp.Control.Tasks.V2.ContextInsensitive
+open Giraffe
 open GlobalPollenProject.Web
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Logging

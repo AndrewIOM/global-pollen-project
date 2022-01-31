@@ -200,14 +200,14 @@ module Redis =
 
     let get (redis:ConnectionMultiplexer) (key:string) =
         let db = redis.GetDatabase()
-        let result : string = ~~db.StringGet(~~key)
+        let result : string = ~~db.StringGet(RedisKey.op_Implicit key)
         match result with
         | NotNull -> Ok <| Json result
         | _ -> Error (sprintf "Could not get read model from Redis: %s" key)
 
     let delete (redis:ConnectionMultiplexer) (key:string) =
         let db = redis.GetDatabase()
-        match db.KeyDelete(~~key) with
+        match db.KeyDelete(RedisKey.op_Implicit key) with
         | true -> Ok()
         | false -> "Could not remove the key from redis: " + key |> Error
 
@@ -265,24 +265,24 @@ module Redis =
     let set (redis:ConnectionMultiplexer) (key:string) (thing:Json) =
         let db = redis.GetDatabase()
         let u (Json s) = s
-        match db.StringSet(~~key, ~~(u thing)) with
+        match db.StringSet(RedisKey.op_Implicit key, RedisValue.op_Implicit (u thing)) with
         | true -> Ok ()
         | false -> Error <| "Could not save key" + key + " to redis"
 
     let addToIndex (redis:ConnectionMultiplexer) (key:string) (model:'a) =
         let db = redis.GetDatabase()
         let indexKey = RepositoryBase.generateIndexKey (model.GetType().Name)
-        db.SetAdd(~~indexKey, ~~key)
+        db.SetAdd(RedisKey.op_Implicit indexKey, RedisValue.op_Implicit key)
 
     let addToList (redis:ConnectionMultiplexer) (key:string) (model:string) =
         let db = redis.GetDatabase()
-        match db.SetAdd(~~key, ~~model) with
+        match db.SetAdd(RedisKey.op_Implicit key, RedisValue.op_Implicit model) with
         | true -> Ok()
         | false -> Error <| "Could not update read model"
 
     let addToSortedList (redis:ConnectionMultiplexer) (key:string) (model:string) (score:float) =
         let db = redis.GetDatabase()
-        match db.SortedSetAdd(~~key, ~~model, score) with
+        match db.SortedSetAdd(RedisKey.op_Implicit key, RedisValue.op_Implicit model, score) with
         | true -> Ok ()
         | false -> Error <| "Could not update read model"
 

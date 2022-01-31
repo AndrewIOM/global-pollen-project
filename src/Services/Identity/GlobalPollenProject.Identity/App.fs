@@ -1,7 +1,6 @@
 namespace GlobalPollenProject.Identity
 
 open System
-open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 open Microsoft.AspNetCore.Identity
 open Microsoft.Extensions.Logging

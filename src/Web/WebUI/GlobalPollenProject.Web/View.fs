@@ -3,7 +3,7 @@ module GlobalPollenProject.Web.HtmlViews
 open System
 open System.Text.Json
 open System.Text.RegularExpressions
-open Giraffe.GiraffeViewEngine 
+open Giraffe.ViewEngine 
 open ReadModels
 
 type Script = string

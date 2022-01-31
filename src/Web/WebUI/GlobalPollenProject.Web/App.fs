@@ -3,7 +3,6 @@ module GlobalPollenProject.Web.App
 open System
 open Microsoft.AspNetCore.Http
 open Microsoft.AspNetCore.Authentication
-open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 open ReadModels
 open Handlers
@@ -181,7 +180,7 @@ module Actions =
                     let profile = user |> Option.bind(fun u -> u.Profile)
                     match profile with
                     | Some _ ->
-                        return! ResponseWriters.htmlView (HtmlViews.Profile.summary profile ctx profile) next ctx
+                        return! Giraffe.Core.htmlView (HtmlViews.Profile.summary profile ctx profile) next ctx
                     | None ->
                         match user with
                         | Some u ->
@@ -293,7 +292,7 @@ let webApp : HttpHandler =
             route   Urls.tools                  >=> htmlView HtmlViews.Tools.main
             route   Urls.cite                   >=> Actions.Docs.docSection "Cite"
             route   Urls.terms                  >=> Actions.Docs.docSection "Terms"
-            route   Urls.digitise               >=> htmlView DigitiseDashboard.appView
+            //route   Urls.digitise               >=> htmlView DigitiseDashboard.appView
         ]
         setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound
     ]

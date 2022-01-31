@@ -1,6 +1,5 @@
 namespace GlobalPollenProject.Identity
 
-open FSharp.Control.Tasks.V2.ContextInsensitive
 open Giraffe
 open Microsoft.AspNetCore.Identity
 open GlobalPollenProject.Identity.ViewModels

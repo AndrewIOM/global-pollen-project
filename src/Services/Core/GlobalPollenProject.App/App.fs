@@ -2,7 +2,6 @@ module GlobalPollenProject.App.App
 
 open System
 open System.Globalization
-open Giraffe.Serialization
 open Microsoft.AspNetCore
 open Microsoft.AspNetCore.Hosting
 open Microsoft.AspNetCore.Builder
@@ -220,7 +219,7 @@ type Startup () =
         services.AddGiraffe() |> ignore
         let customSettings = Newtonsoft.Json.JsonSerializerSettings(Culture = CultureInfo("en-GB"))
         customSettings.Converters.Add(Microsoft.FSharpLu.Json.CompactUnionJsonConverter(true))
-        services.AddSingleton<IJsonSerializer>(NewtonsoftJsonSerializer(customSettings)) |> ignore    
+        services.AddSingleton<Json.ISerializer>(NewtonsoftJson.Serializer(customSettings)) |> ignore    
     
     member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
         if (env.IsDevelopment()) then

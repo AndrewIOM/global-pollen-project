@@ -1,6 +1,6 @@
 namespace GlobalPollenProject.Identity.Views
 
-open Giraffe.GiraffeViewEngine
+open Giraffe.ViewEngine
 open GlobalPollenProject.Identity.ViewModels
 
 module Colours =
