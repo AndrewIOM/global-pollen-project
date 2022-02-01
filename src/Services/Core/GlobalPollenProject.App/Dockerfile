@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1-alpine AS build-env
+FROM mcr.microsoft.com/dotnet/sdk:6.0-alpine AS build-env
 WORKDIR /src
 
 # Copy project and restore as distinct layers
@@ -13,7 +13,7 @@ COPY /src/Shared /src/Shared
 WORKDIR /src/Services/Core/GlobalPollenProject.App
 RUN dotnet publish -c Release -o /app
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
 EXPOSE 5000
 WORKDIR /app
 COPY --from=build-env /app .

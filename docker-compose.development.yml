@@ -25,7 +25,7 @@ services:
       - WebsiteUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5101
 
   identity.sqldb:
-    image: "microsoft/mssql-server-linux:2017-CU12"
+    image: "mcr.microsoft.com/mssql/server:2019-CU15-ubuntu-20.04"
     ports:
       - "1433:1433"
     environment:

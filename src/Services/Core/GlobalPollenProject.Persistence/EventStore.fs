@@ -29,6 +29,9 @@ let connect host port username userpass =
             |> Array.map (fun x -> x.MapToIPv4()) |> Array.head
         let endpoint = IPEndPoint(ipAddress, port)
         let esSettings = ConnectionSettings.Create()
+                            // TODO Remove disable
+                            .DisableTls()
+                            .DisableServerCertificateValidation()
                             .UseConsoleLogger()
                             .SetDefaultUserCredentials(SystemData.UserCredentials(username, userpass))
                             .Build()

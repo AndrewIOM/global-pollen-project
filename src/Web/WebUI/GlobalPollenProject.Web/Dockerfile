@@ -1,8 +1,8 @@
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
 WORKDIR /app
 EXPOSE 5000
 
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 
 # set up node
@@ -19,6 +19,8 @@ RUN curl -SL "$NODE_DOWNLOAD_URL" --output nodejs.tar.gz \
 # set up yarn
 ENV YARN_VERSION 1.22.4
 
+RUN apt-get update
+RUN apt-get install -y  gnupg dirmngr
 RUN set -ex \
   && wget -qO- https://dl.yarnpkg.com/debian/pubkey.gpg | gpg --import \
   && curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
