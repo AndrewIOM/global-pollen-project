@@ -21,7 +21,7 @@ services:
     environment:
       - VIRTUAL_HOST=api.${GPP_EXTERNAL_DNS_NAME_OR_IP}
       - VIRTUAL_PORT=80
-      - LETSENCRYPT_HOST=${GPP_EXTERNAL_DNS_NAME_OR_IP}
+      - LETSENCRYPT_HOST=api.${GPP_EXTERNAL_DNS_NAME_OR_IP}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - ASPNETCORE_ENVIRONMENT=${DOTNET_ENV}
       - ASPNETCORE_URLS=http://0.0.0.0:80
@@ -30,9 +30,9 @@ services:
     environment:
       - VIRTUAL_HOST=identity.${GPP_EXTERNAL_DNS_NAME_OR_IP}
       - VIRTUAL_PORT=80
-      - LETSENCRYPT_HOST=${GPP_EXTERNAL_DNS_NAME_OR_IP}
+      - LETSENCRYPT_HOST=identity.${GPP_EXTERNAL_DNS_NAME_OR_IP}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
-      - ConnectionStrings__UserConnection=Server=${USER_SQL_HOST},1433;Database=${USER_SQL_DB};User=${USER_SQL_USER};Password=${USER_SQL_PASSWORD}
+      - ConnectionStrings__UserConnection=Server=tcp:${USER_SQL_HOST},1433;Initial Catalog=${USER_SQL_DB};Persist Security Info=False;User ID=${USER_SQL_USER};Password=${USER_SQL_PASSWORD};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
       - ASPNETCORE_ENVIRONMENT=${DOTNET_ENV}
       - ASPNETCORE_URLS=http://0.0.0.0:80
       - WebsiteUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:80
@@ -48,13 +48,14 @@ services:
   core.eventstore:
     environment:
       - VIRTUAL_HOST=eventstore.${GPP_EXTERNAL_DNS_NAME_OR_IP}
-      - VIRTUAL_PORT=80
-      - LETSENCRYPT_HOST=globalpollenproject.org
+      - VIRTUAL_PORT=2113
+      - LETSENCRYPT_HOST=eventstore.${GPP_EXTERNAL_DNS_NAME_OR_IP}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - EVENTSTORE_DEV=false
 
   nginx-proxy:
-    image: jwilder/nginx-proxy:alpine
+    image: nginxproxy/nginx-proxy
+    container_name: nginx-proxy
     depends_on:
       - identity.api
       - web.api
@@ -64,26 +65,28 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - html:/usr/share/nginx/html
-      - dhparam:/etc/nginx/dhparam
+      - conf:/etc/nginx/conf.d
       - vhost:/etc/nginx/vhost.d
+      - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
-  
-  letsencrypt:
-    image: jrcs/letsencrypt-nginx-proxy-companion:v1.13
-    container_name: nginx-proxy-le
-    depends_on:
-      - nginx-proxy
+
+  acme-companion:
+    image: nginxproxy/acme-companion
+    container_name: nginx-proxy-acme
     volumes:
-      - certs:/etc/nginx/certs:rw
+      - conf:/etc/nginx/conf.d
       - vhost:/etc/nginx/vhost.d
       - html:/usr/share/nginx/html
+      - certs:/etc/nginx/certs:rw
+      - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    restart: always
-  
+    environment:
+      - NGINX_PROXY_CONTAINER=nginx-proxy
+
 volumes:
-  certs:
-  html:
+  conf:
   vhost:
-  dhparam:
+  html:
+  certs:
+  acme:

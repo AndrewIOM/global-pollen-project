@@ -87,15 +87,15 @@ services:
       - IdentityUrl= http://identity.api
       - CoreUrl=http://webapigw
 
-  web.lab:
-    image: gpp/lab:${TAG:-latest}
-    build:
-      context: .
-      dockerfile: src/Web/Lab/GlobalPollenProject.Lab.Server/Dockerfile
-    environment:
-      - IdentityUrl= http://identity.api
-      - CoreUrl=http://webapigw
-      - CallBackUrl=http://0.0.0.0:80
+  # web.lab:
+  #   image: gpp/lab:${TAG:-latest}
+  #   build:
+  #     context: .
+  #     dockerfile: src/Web/Lab/GlobalPollenProject.Lab.Server/Dockerfile
+  #   environment:
+  #     - IdentityUrl= http://identity.api
+  #     - CoreUrl=http://webapigw
+  #     - CallBackUrl=http://0.0.0.0:80
 
   core.readmodel:
     image: redis:6.0-alpine
