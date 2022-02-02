@@ -292,7 +292,7 @@ let webApp : HttpHandler =
             route   Urls.tools                  >=> htmlView HtmlViews.Tools.main
             route   Urls.cite                   >=> Actions.Docs.docSection "Cite"
             route   Urls.terms                  >=> Actions.Docs.docSection "Terms"
-            //route   Urls.digitise               >=> htmlView DigitiseDashboard.appView
+            route   Urls.digitise               >=> htmlView DigitiseDashboard.appView
         ]
         setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound
     ]

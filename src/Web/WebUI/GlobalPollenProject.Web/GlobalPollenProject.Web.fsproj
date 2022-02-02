@@ -20,6 +20,7 @@
     <Compile Include="Validation.fs" />
     <Compile Include="Account.fs" />
     <Compile Include="LegacyTaxonomy.fs" />
+    <Compile Include="LegacyDigitiseDashboard.fs" />
     <Compile Include="App.fs" />
     <Compile Include="Startup.fs" />
     <Compile Include="Program.fs" />
