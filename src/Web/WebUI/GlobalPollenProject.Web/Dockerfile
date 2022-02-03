@@ -6,9 +6,9 @@ FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 
 # set up node
-ENV NODE_VERSION 14.5.0
+ENV NODE_VERSION 17.4.0
 ENV NODE_DOWNLOAD_URL https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz
-ENV NODE_DOWNLOAD_SHA d5a05bbf5ef7f49752eca0d4fc946834dfda86088627248856795a61c81df1a2
+ENV NODE_DOWNLOAD_SHA 132c61652c315a6f784167b97a53e9638bac45853f1544a84d4cbb90fe7a3bda
 
 RUN curl -SL "$NODE_DOWNLOAD_URL" --output nodejs.tar.gz \
     && echo "$NODE_DOWNLOAD_SHA nodejs.tar.gz" | sha256sum -c - \

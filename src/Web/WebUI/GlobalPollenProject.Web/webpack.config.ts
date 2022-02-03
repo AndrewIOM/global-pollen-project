@@ -1,16 +1,20 @@
 import * as webpack from 'webpack'
 import * as path from 'path'
 
-const ExtractTextPlugin = require('extract-text-webpack-plugin');
-const OptimiseCssAssets = require('optimize-css-assets-webpack-plugin');
-const UglifyJSPlugin = require('uglifyjs-webpack-plugin');
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const TerserPlugin = require('terser-webpack-plugin');
 
 const config: webpack.Configuration = {
     mode: "production",
+    stats: {
+        errorDetails: true
+    },
     entry: {
         main: "./Scripts/main.ts",
         styles: "./Styles/main.scss"
     },
+    devtool: 'inline-source-map',
     output: {
         filename: "[name].bundle.js",
         chunkFilename: "[name].chunk.js",
@@ -27,6 +31,10 @@ const config: webpack.Configuration = {
             "jquery.validation": "jquery-validation/dist/jquery.validate.js"
         }
     },
+    optimization: {
+        minimize: true,
+        minimizer: [new TerserPlugin()],
+    },
     externals: {
         jquery: "jQuery"
         //bootstrap: "bootstrap",
@@ -39,26 +47,27 @@ const config: webpack.Configuration = {
             },
             {
                 test: /\.(sass|scss)$/,
-                loader: ExtractTextPlugin.extract(['css-loader', 'sass-loader'])
+                use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"]
             },{
-                test: /\.(png|jpg)$/,
-                loader: 'url-loader'
+                test: /\.(png|svg|jpg|jpeg|gif)$/i,
+                type: 'asset/resource'
             }
         ]
     },
     plugins: [
-        new ExtractTextPlugin({
+        new MiniCssExtractPlugin({
             filename: './../css/styles.css',
-            allChunks: true,
+            chunkFilename: "[id].css",
         }),
-        new OptimiseCssAssets({
-            assetNameRegExp: /\.min\.css$/,
-            cssProcessorOptions: { discardComments: { removeAll: true } }
-        }),
-        new UglifyJSPlugin({
-            sourceMap: true,
-            include: /\.min\.js$/
-        })
+        new CssMinimizerPlugin(),
+        // new OptimiseCssAssets({
+        //     assetNameRegExp: /\.min\.css$/,
+        //     cssProcessorOptions: { discardComments: { removeAll: true } }
+        // }),
+        // new UglifyJSPlugin({
+        //     sourceMap: true,
+        //     include: /\.min\.js$/
+        // })
     ],
 }
 

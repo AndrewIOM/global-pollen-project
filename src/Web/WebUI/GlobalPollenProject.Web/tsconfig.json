@@ -8,7 +8,8 @@
     "module": "esnext",
     //"strict": true,
     "moduleResolution": "node",
-    "lib": ["dom", "es5", "es6"]
+    "lib": ["dom", "es5", "es6"],
+    "sourceMap": true,
   },
   "exclude": [
     "node_modules",

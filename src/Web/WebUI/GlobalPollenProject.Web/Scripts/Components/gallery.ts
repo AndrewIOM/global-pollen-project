@@ -54,7 +54,7 @@ export class Gallery {
             .find(".slide-gallery-item").on("click", e => this.clickedGalleryItem(e));
     }
     
-    clickedGalleryItem(element:JQuery.Event) {
+    clickedGalleryItem(element:JQuery.ClickEvent) {
         if($(element.target).hasClass("active")) return;
         $("#slide-gallery")
             .find(".slide-gallery-item")
