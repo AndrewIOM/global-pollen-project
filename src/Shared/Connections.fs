@@ -121,7 +121,7 @@ module CoreActions =
     
     module Digitise =
         let myCollections () : CoreFunction<EditableRefCollection list> = CGET None "/api/v1/Digitise/Collection"
-        let getCollection (req:string) = CGET None (sprintf "/api/v1/Digitise/Collection/%s" req)
+        let getCollection (req:Guid) = CGET None (sprintf "/api/v1/Digitise/Collection/%s" (req.ToString()))
         let startCollection (req:StartCollectionRequest) = CPOST req "/api/v1/Digitise/Collection/Start"
         let publishCollection (req:Guid) = CPOST req (sprintf "/api/v1/Digitise/Collection/%O/Publish" req)
         let recordSlide (req:SlideRecordRequest) = CPOST req "/api/v1/Digitise/Slide/Add"

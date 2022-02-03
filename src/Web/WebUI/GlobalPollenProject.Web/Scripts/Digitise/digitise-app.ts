@@ -88,7 +88,7 @@ function DigitiseViewModel() {
                 break;
             case CurrentView.DETAIL:
                 $.ajax({
-                        url: apiPrefix + "collection?id=" + data.id,
+                        url: apiPrefix + "collection/" + data.id,
                         type: "GET"
                     })
                     .done(function (col) {
@@ -124,7 +124,7 @@ function DigitiseViewModel() {
     };
 
     self.publish = function () {
-        let requestUrl = "/api/v1/digitise/collection/publish?id=" + self.activeCollection().id;
+        let requestUrl = "/api/v1/digitise/collection/publish/" + self.activeCollection().id;
         $.ajax({
                 url: requestUrl,
                 type: "GET"

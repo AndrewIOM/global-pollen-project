@@ -231,14 +231,30 @@ let webApp : HttpHandler =
             route  Urls.Account.profile              >=> mustBeLoggedIn >=> Actions.Account.profile
         ]
 
+    let digitiseApi =
+        mustBeLoggedIn >=>
+        choose [
+            GET  >=> routef  "/collection/%O"            (fun id -> coreApiAction (CoreActions.Digitise.getCollection id))
+            GET  >=> route   "/collection/list"          >=> coreApiAction (CoreActions.Digitise.myCollections())
+            POST >=> route   "/collection/start"         >=> apiResultFromQuery CoreActions.Digitise.startCollection
+            GET  >=> routef  "/collection/publish/%O"    (fun id -> coreApiAction (CoreActions.Digitise.publishCollection id))
+            POST >=> route   "/collection/slide/add"     >=> apiResultFromQuery CoreActions.Digitise.recordSlide
+            POST >=> route   "/collection/slide/void"    >=> apiResultFromQuery CoreActions.Digitise.voidSlide
+            POST >=> route   "/collection/slide/addimage">=> apiResultFromQuery CoreActions.Digitise.uploadImage
+            GET  >=> route   "/calibration/list"         >=> coreApiAction (CoreActions.User.myCalibrations())
+            POST >=> route   "/calibration/use"          >=> apiResultFromQuery CoreActions.User.setupMicroscope
+            POST >=> route   "/calibration/use/mag"      >=> apiResultFromQuery CoreActions.User.calibrateMicroscope
+        ]
+
     let api =
-        GET >=> choose [
-            route   "/backbone/match"           >=> apiResultFromQuery CoreActions.Backbone.tryMatch
-            route   "/backbone/trace"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> CoreActions.Backbone.tryTrace
-            route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> CoreActions.Backbone.search
-            route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> CoreActions.MRC.autocompleteTaxon
-            route   "/grain/location"           >=> Actions.Identify.topUnknownGrains
-            routef  "/neotoma-cache/%i"         (fun i -> coreApiAction (CoreActions.Cache.neotoma i) )
+        choose [
+            GET >=> route   "/backbone/match"           >=> apiResultFromQuery CoreActions.Backbone.tryMatch
+            GET >=> route   "/backbone/trace"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> CoreActions.Backbone.tryTrace
+            GET >=> route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> CoreActions.Backbone.search
+            GET >=> route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> CoreActions.MRC.autocompleteTaxon
+            GET >=> route   "/grain/location"           >=> Actions.Identify.topUnknownGrains
+            GET >=> routef  "/neotoma-cache/%i"         (fun i -> coreApiAction (CoreActions.Cache.neotoma i) )
+            subRoute        "/digitise"                 digitiseApi
         ]
 
     let masterReferenceCollection =
