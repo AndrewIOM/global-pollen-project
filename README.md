@@ -1,8 +1,6 @@
 # [GlobalPollenProject](https://globalpollenproject.org)
 *Key Words: Pollen; Palynology; Reference-Collection; Digitisation; Dissemination; Crowdsourcing*
 
-[![Build status](https://ci.appveyor.com/api/projects/status/oy51ibjqbo8y7ltq?svg=true)](https://ci.appveyor.com/project/AndrewIOM/gpp-cqrs)
-
 The Global Pollen Project is a web-based tool to enable:
 
 1. **crowdsourcing** of pollen identification using images; and
@@ -24,7 +22,7 @@ The GPP can run in a docker container or independently.
 3. **Compile TypeScript and SASS.** Run `yarn run:dev` in the src/GlobalPollenProject.Web directory to compile the SCSS styles. This will watch the directory for any changed source files.
 
 
-# Changes implemented in this branch
+## Components
 
 GPP consists of the following components:
 
@@ -34,10 +32,4 @@ GPP consists of the following components:
 
 3. **Web App**. The public-facing website that exposes the library and basic identification functions.
 
-4. **Lab UI**. Digitisation tools are split into a seperate interface. This is a SPA Borelo F# app.
-
-TODO List.
-1. Expose non-authentication actions in GPP core via a REST webapi.
-2. Connect non-authentication actions in GPP core to GPP website.
-
-A. Move read models from redis to Cosmos / mongoDB.
+4. **Lab UI**. Digitisation tools are split into a seperate interface (in progress). This is a SPA Borelo F# app.
