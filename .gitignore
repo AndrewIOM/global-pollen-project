@@ -209,9 +209,6 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
-appsettings.json
-appsettings.Development.json
-
 .vscode
 .ionide
 .fake
