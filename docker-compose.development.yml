@@ -1,0 +1,54 @@
+version: '3.4'
+
+services:
+
+  core.api:
+    ports: 
+    - "5201:80"
+    environment:
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:80
+
+  webapigw:
+    ports:
+    - "5202:80"
+
+  identity.api:
+    ports:
+    - "5203:80"
+    depends_on:
+      - identity.sqldb
+    links:
+      - "identity.sqldb:identitydb"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - WebsiteUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5101
+
+  identity.sqldb:
+    image: "mcr.microsoft.com/mssql/server:2019-CU15-ubuntu-20.04"
+    ports:
+      - "1433:1433"
+    environment:
+      SA_PASSWORD: "${USER_SQL_PASSWORD}"
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Express"
+
+  web.ui:
+    environment:
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:80
+    - IdentityUrl= http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5203
+    - CallBackUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5101
+    ports:
+    - "5101:80"
+
+  web.api:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:80
+    ports:
+    - "5102:80"
+
+  core.eventstore:
+    environment:
+      - EVENTSTORE_DEV=true

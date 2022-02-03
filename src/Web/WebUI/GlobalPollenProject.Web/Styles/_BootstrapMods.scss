@@ -1,0 +1,177 @@
+/* Bootstrap 4 Customisations for GPP */
+@import '_Palette';
+@import '_Fonts';
+
+$enable-rounded:        false;
+
+$primary:               $primary-color;
+$secondary:             $secondary-colour;
+$brand-primary:         $primary-color;
+$brand-success:         #5cb85c;
+$brand-info:            #5bc0de;
+$brand-warning:         #f0ad4e;
+$brand-danger:          #d9534f;
+
+$font-family-base:      $hind;
+$headings-font-family:  $mottserrat;
+$body-color:            #636c72;
+$font-size-base:        0.875rem;
+$line-height-base:      1.8;
+$font-size-h3:          1.5rem;
+
+$border-radius:         0;
+$border-radius-base:    0;
+$border-radius-large:   0;
+$border-radius-small:   0;
+
+// Links
+$link-hover-color:      $primary-color-accent;
+
+// Pagination
+$pager-border-radius:   0;
+
+// Buttons
+$btn-primary-border:        none;
+$btn-link-disabled-color:   $clr-button-disabled;
+
+.btn-primary.disabled:hover {
+    cursor: not-allowed !important;
+}
+
+.col-centered {
+    float: none;
+    margin: 0 auto;
+}
+
+.icon-bar {
+    background-color: #999999 !important;
+}
+
+// Panels and Cards
+.card {
+    margin-bottom: 1em;
+}
+
+div.card {
+    border-radius: 0;
+}
+
+.panel-primary {
+    border-color: $primary-color-accent;
+
+    .panel-heading {
+        background-color: $primary-color-accent;
+        border-color: $primary-color-accent;    
+        color: #fff;
+    }
+}
+
+input.form-control,
+textarea.form-control,
+select.form-control {
+    border-radius: 0;
+}
+
+.progress-bar {
+    border-radius: 0;
+    background-color: $primary-color !important;
+}
+
+.open .dropdown-toggle.btn-primary {
+    background-color: $primary-color-accent;
+    border-color: #000;
+}
+
+.list-group-item.active {
+    background-color: $primary-color !important;
+    border-color: $primary-color !important;
+}
+
+.alert {
+    border-radius: 0;
+}
+
+// Navbar
+.navbar {
+    background-color: white;
+    opacity: .95;
+    color: #777;
+    font-family: $mottserrat;
+    font-weight: 400;
+    border-color: #e7e7e7;
+    border-bottom: 2px solid $primary-color;
+    line-height: 1.6em;
+    .container {
+        .navbar-brand {
+            font-size: 1.25rem;
+        }
+        margin: 0;
+    }
+}
+
+.navbar {
+    .dropdown-menu {
+        right:0;
+        left:auto;
+        .dropdown-item {
+            form {
+                input {
+                    padding: 0;
+                    cursor: pointer;    
+                }
+            }
+        }    
+    }
+}
+
+@media (min-width: 575px) {
+    .navbar {
+        .container {
+            margin: auto;
+        }
+    }
+}
+
+.navbar-toggler-right {
+    border: none;
+    margin-top: 0.5em;
+    right: 0;
+}
+
+.top {
+    display: block;
+    text-align: center;
+    color: black;
+}
+
+.bottom {
+    text-align: center;
+    color: $primary-color;
+}
+
+.bottom-margin {
+    margin-bottom: 1em;
+}
+
+.dropdown-menu>li>a:hover,
+.dropdown-menu>li>a:focus {
+    background-color: white;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 1.5px $primary-color-accent;
+}
+
+.pagination>.active>a,
+.pagination>.active>span,
+.pagination>.active>a:hover,
+.pagination>.active>span:hover,
+.pagination>.active>a:focus,
+.pagination>.active>span:focus {
+    background-color: $primary-color-accent;
+    border-color: $primary-color-accent;
+}
+
+.breadcrumb {
+    border-radius: 0;
+}

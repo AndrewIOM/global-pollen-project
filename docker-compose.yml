@@ -1,0 +1,110 @@
+version: '3.4'
+
+# Define GPP_EXTERNAL_DNS_NAME_OR_IP in the .env file (e.g. localhost)
+
+services:
+
+  core.api:
+    image: gpp/core:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Core/GlobalPollenProject.App/Dockerfile
+    links:
+      - "core.readmodel:coreredis"
+      - "core.eventstore:coreeventstore"
+    depends_on:
+      - core.readmodel
+      - core.eventstore
+    environment:
+      - imagestore__azureconnectionstring=${IMAGESTORE_AZURE_CONN_STR}
+      - imagestore__baseurl=${IMAGESTORE_BASEURL}
+      - imagestore__container=${IMAGESTORE_CONTAINER}
+      - imagestore__cachecontainer=${IMAGESTORE_CONTAINER_CACHE}
+      - RedisHostName=coreredis
+      - eventstore__eventstoreip=coreeventstore
+      - eventstore__eventstoreuser=${EVENTSTORE_USER}
+      - eventstore__eventstorepassword=${EVENTSTORE_PASSWORD}
+      - IdentityUrl=http://identity.api
+
+  identity.api:
+    image: ${REGISTRY:-gpp}/identity.api:${PLATFORM:-linux}-${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Services/Identity/GlobalPollenProject.Identity/Dockerfile
+    environment:
+      - Authentication__Facebook__AppId=${FACEBOOK_ID}
+      - Authentication__Facebook__AppSecret=${FACEBOOK_SECRET}
+      - Authentication__Twitter__ConsumerKey=${TWITTER_KEY}
+      - Authentication__Twitter__ConsumerSecret=${TWITTER_SECRET}
+      - ConnectionStrings__UserConnection=Server=identitydb,1433;Database=${USER_SQL_DB};User=${USER_SQL_USER};Password=${USER_SQL_PASSWORD}
+      - EmailFromName=${EMAIL_FROM_NAME}
+      - EmailFromAddress=${EMAIL_FROM_ADDR}
+      - SendGridKey=${SENDGRID_KEY}
+      - WebsiteUrl=http://web.ui
+      - UserSettings__UserEmail=${USER_EMAIL}
+      - UserSettings__UserPassword=${USER_PASSWORD}
+      - TokenLifetimeMinutes=120
+      - PermanentTokenLifetimeDays=365
+      - ClientSecretMvc=${WEB_MVC_CLIENT_SECRET}
+      - LabWebsiteUrl=http://localhost:5000
+      - ClientSecretLabBolero=${LAB_BOLERO_CLIENT_SECRET}
+
+  # Routes access to internal APIs from web apps
+  webapigw:
+    image: gpp/webapigw:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Gateways/GlobalPollenProject.Gateway/Dockerfile
+    depends_on:
+      - core.api
+      - identity.api
+    environment:
+      - IdentityUrl=http://identity.api
+
+  web.ui:
+    image: gpp/webmvc:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Web/WebUI/GlobalPollenProject.Web/Dockerfile
+    depends_on:
+      - webapigw
+    environment:
+      - IdentityUrl= http://identity.api
+      - CoreUrl=http://webapigw
+      - CallBackUrl=http://0.0.0.0:80
+      - MapboxToken=${MAPBOX_TOKEN}
+      - GoogleApiKey=${GOOGLE_KEY}
+      - AuthSecret=${WEB_MVC_CLIENT_SECRET}
+
+  web.api:
+    image: gpp/webapi:${TAG:-latest}
+    build:
+      context: .
+      dockerfile: src/Web/WebApi/GlobalPollenProject.Web.API/Dockerfile
+    depends_on:
+        - webapigw
+    environment:
+      - IdentityUrl= http://identity.api
+      - CoreUrl=http://webapigw
+
+  # web.lab:
+  #   image: gpp/lab:${TAG:-latest}
+  #   build:
+  #     context: .
+  #     dockerfile: src/Web/Lab/GlobalPollenProject.Lab.Server/Dockerfile
+  #   environment:
+  #     - IdentityUrl= http://identity.api
+  #     - CoreUrl=http://webapigw
+  #     - CallBackUrl=http://0.0.0.0:80
+
+  core.readmodel:
+    image: redis:6.0-alpine
+    command: redis-server --appendonly yes
+    ports:
+      - "6379:6379"
+
+  core.eventstore:
+    image: eventstore/eventstore:release-5.0.8
+    ports:
+      - "2113:2113"
+      - "1113:1113"

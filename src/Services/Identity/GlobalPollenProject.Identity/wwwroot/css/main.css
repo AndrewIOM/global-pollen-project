@@ -1,0 +1,50 @@
+body {
+    background-color: #435058;
+    background-image: url(/images/pollen-tiles-white.png);
+    background-repeat: repeat; 
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+}
+
+h1 {
+    font-size: 2.25em;
+}
+
+form {
+    margin-bottom: 0;
+}
+
+.main-panel {
+    max-width: 50rem;
+    padding: 2em 1em 0.5em;
+    background-color: #f2f7f2;
+    border-radius: 0.3em;
+    border-top: 0;
+    margin-bottom: 7.5rem;
+    margin-top: 7.5rem;
+    position: relative;
+    text-align: center;
+    overflow-x: scroll;
+}
+
+.button, .button-primary {
+    background-color: #a8699a !important;
+    border-color: #a8699a !important;
+}
+
+.button-register, .button-social {
+    display: block;
+    width: 100%;
+}
+
+.button-facebook {
+    background-color: #4267B2 !important;
+    border-color: #4267B2 !important;
+}
+
+.button-twitter {
+    background-color: #38A1F3 !important;
+    border-color: #38A1F3 !important;
+}

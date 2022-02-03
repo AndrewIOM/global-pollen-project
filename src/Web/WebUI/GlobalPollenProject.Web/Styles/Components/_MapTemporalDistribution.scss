@@ -1,0 +1,45 @@
+﻿/* Map: Distribution in Space and Time */
+
+@import "~leaflet/dist/leaflet.css";
+
+#time-slicer {
+    width: 100%;
+}
+
+.slider-handle {
+    background-color: #83296f;
+    border-radius: 0.3em;
+}
+
+#country-picker {
+    text-align: center;
+}
+
+.noUi-connect {
+    background: linear-gradient(to right, yellow, #83296F) fixed !important;
+}
+
+.timespan {
+    color: white;
+    font-size: 0.75em;
+}
+
+#range.noUi-target {
+    width: 90%;
+    margin: 0 2em 3em;
+    height:1em;
+    border-radius:0;
+    background-color:black;
+
+    .noUi-background{
+        background-color:black;
+        box-shadow: none;
+    }
+
+    .noUi-handle {
+        box-shadow: none;
+        border-radius:5em;
+        background-color:#808080;
+        border: none;
+    }
+}

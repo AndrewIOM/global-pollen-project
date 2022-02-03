@@ -1,0 +1,246 @@
+taxonID	acceptedNameUsageID	taxonomicStatus	family	genus	specificEpithet	infraspecificEpithet	scientificName	taxonRank	scientificNameAuthorship	nameAccordingTo	nameAccordingToID	scientificNameID	namePublishedIn	references
+kew-331386	kew-21505	synonym	Betulaceae	Chamaebetula	nana		Chamaebetula nana	species	(L.) Opiz	WCSP	331386	urn:lsid:ipni.org:names:295430-1		
+kew-331387	kew-21671	synonym	Betulaceae	Chamaebetula	pumila		Chamaebetula pumila	species	(L.) Opiz	WCSP	331387	urn:lsid:ipni.org:names:295431-1		
+kew-331388	kew-21520	synonym	Betulaceae	Chamaebetula	rotundifolia		Chamaebetula rotundifolia	species	(Spach) Opiz	WCSP	331388	urn:lsid:ipni.org:names:295432-1		
+kew-404349	kew-403296	synonym	Poaceae	Chamaecalamus	spectabilis		Chamaecalamus spectabilis	species	Meyen	WCSP	404349	urn:lsid:ipni.org:names:395596-1		
+kew-2714603	kew-2336903	synonym	Cactaceae	Chamaecereus	grandiflorus		Chamaecereus grandiflorus	species	(Britton & Rose) Frič	WCSP (in review)		urn:lsid:ipni.org:names:130842-1		
+kew-2714604	kew-2783338	synonym	Cactaceae	Chamaecereus	silvestrii		Chamaecereus silvestrii	species	(Speg.) Britton & Rose	WCSP (in review)		urn:lsid:ipni.org:names:130843-1		
+kew-37443	kew-90109	synonym	Lamiaceae	Chamaecissos	hederaceus		Chamaecissos hederaceus	species	(L.) Nieuwl. & Lunell	WCSP	37443	urn:lsid:ipni.org:names:54309-2	Lunell J (1916) Enumerantur Plantae Dakotae Septentrionalis Vasculares/The Vascular Plants of North Dakota. IX. American Midland Naturalist 4(12): 503. doi: 10.2307/2993044.	http://doi.org/10.2307/2993044
+kew-2714607	kew-2427321	synonym	Ericaceae	Chamaecistus	austriacus		Chamaecistus austriacus	species	Regel	WCSP (in review)		urn:lsid:ipni.org:names:327536-1		
+kew-2714608	tro-50108303	synonym	Ericaceae	Chamaecistus	kamtschaticus		Chamaecistus kamtschaticus	species	Regel	WCSP (in review)		urn:lsid:ipni.org:names:327537-1		
+kew-2714609	kew-2337993	synonym	Ericaceae	Chamaecistus	procumbens		Chamaecistus procumbens	species	(L.) Kuntze	WCSP (in review)		urn:lsid:ipni.org:names:327538-1		
+kew-2714610	kew-2337993	synonym	Ericaceae	Chamaecistus	serpyllifolius		Chamaecistus serpyllifolius	species	Gray	WCSP (in review)		urn:lsid:ipni.org:names:327539-1		
+kew-37445	kew-99972	synonym	Araceae	Chamaecladon	angustifolium		Chamaecladon angustifolium	species	(Jack) Schott	WCSP	37445	urn:lsid:ipni.org:names:86554-1		
+kew-37446	kew-99919	synonym	Araceae	Chamaecladon	consobrinum		Chamaecladon consobrinum	species	Schott	WCSP	37446	urn:lsid:ipni.org:names:86555-1		
+kew-37447	kew-99949	synonym	Araceae	Chamaecladon	griffithii		Chamaecladon griffithii	species	Schott	WCSP	37447	urn:lsid:ipni.org:names:86556-1		
+kew-37448	kew-99967	synonym	Araceae	Chamaecladon	humile		Chamaecladon humile	species	(Jack) Miq.	WCSP	37448	urn:lsid:ipni.org:names:86557-1		
+kew-37449	kew-99969	synonym	Araceae	Chamaecladon	lanceolatum		Chamaecladon lanceolatum	species	Miq.	WCSP	37449	urn:lsid:ipni.org:names:86558-1		
+kew-37450	kew-100004	synonym	Araceae	Chamaecladon	metallicum		Chamaecladon metallicum	species	N.E.Br.	WCSP	37450	urn:lsid:ipni.org:names:86559-1		
+kew-37451	kew-100016	synonym	Araceae	Chamaecladon	nigrescens		Chamaecladon nigrescens	species	Schott	WCSP	37451	urn:lsid:ipni.org:names:86560-1		
+kew-37452	kew-99949	synonym	Araceae	Chamaecladon	obliquatum		Chamaecladon obliquatum	species	Schott	WCSP	37452	urn:lsid:ipni.org:names:86561-1		
+kew-37453	kew-100024	synonym	Araceae	Chamaecladon	ovalifolium		Chamaecladon ovalifolium	species	Schott	WCSP	37453	urn:lsid:ipni.org:names:86562-1		
+kew-37454	kew-99949	synonym	Araceae	Chamaecladon	ovatum		Chamaecladon ovatum	species	Schott	WCSP	37454	urn:lsid:ipni.org:names:86563-1		
+kew-37455	kew-99969	synonym	Araceae	Chamaecladon	purpurascens		Chamaecladon purpurascens	species	Schott	WCSP	37455	urn:lsid:ipni.org:names:86564-1		
+kew-37456	kew-99967	synonym	Araceae	Chamaecladon	pygmaeum		Chamaecladon pygmaeum	species	(Hassk.) Engl.	WCSP	37456	urn:lsid:ipni.org:names:86565-1		
+kew-37457	kew-100064	synonym	Araceae	Chamaecladon	rubescens		Chamaecladon rubescens	species	(Roxb.) Schott	WCSP	37457	urn:lsid:ipni.org:names:86566-1		
+kew-37458	kew-100063	synonym	Araceae	Chamaecladon	sanguinolentum		Chamaecladon sanguinolentum	species	(Griff.) Schott	WCSP	37458	urn:lsid:ipni.org:names:86567-1		
+kew-37459	kew-100073	synonym	Araceae	Chamaecladon	saxorum		Chamaecladon saxorum	species	Schott	WCSP	37459	urn:lsid:ipni.org:names:86568-1		
+kew-37460	kew-99988	synonym	Araceae	Chamaecladon	subcordatum		Chamaecladon subcordatum	species	Schott	WCSP	37460	urn:lsid:ipni.org:names:86569-1		
+kew-37461	kew-100097	synonym	Araceae	Chamaecladon	truncatum		Chamaecladon truncatum	species	Schott	WCSP	37461	urn:lsid:ipni.org:names:86570-1		
+kew-37463	kew-90109	synonym	Lamiaceae	Chamaeclema	hederacea		Chamaeclema hederacea	species	(L.) Moench	WCSP	37463	urn:lsid:ipni.org:names:445633-1		
+kew-2714613	kew-2546452	synonym	Urticaceae	Chamaecnide	microphylla		Chamaecnide microphylla	species	Nees ex Miq.	WCSP (in review)		urn:lsid:ipni.org:names:851218-1		
+kew-404350	kew-388026	synonym	Poaceae	Chamaedactylis	maritima		Chamaedactylis maritima	species	T.Nees	WCSP	404350	urn:lsid:ipni.org:names:395597-1		
+kew-37694	kew-202698	synonym	Lamiaceae	Chamaedrys	betonicifolia		Chamaedrys betonicifolia	species	(Jacq.) Raf.	WCSP	37694		Fl. Tellur., 3: 85, 1837	
+kew-37695	kew-202705	synonym	Lamiaceae	Chamaedrys	botrys		Chamaedrys botrys	species	(L.) Moench	WCSP	37695	urn:lsid:ipni.org:names:445634-1		
+kew-37696	kew-202749	synonym	Lamiaceae	Chamaedrys	capitata		Chamaedrys capitata	species	(L.) Raf.	WCSP	37696	urn:lsid:ipni.org:names:445635-1		
+kew-37697	kew-202916	synonym	Lamiaceae	Chamaedrys	cinerascens		Chamaedrys cinerascens	species	Jord. & Fourr.	WCSP	37697	urn:lsid:ipni.org:names:445636-1		
+kew-37698	kew-202838	synonym	Lamiaceae	Chamaedrys	cretica		Chamaedrys cretica	species	(L.) Raf.	WCSP	37698	urn:lsid:ipni.org:names:445637-1		
+kew-37699	kew-202916	synonym	Lamiaceae	Chamaedrys	flava		Chamaedrys flava	species	(L.) Moench	WCSP	37699	urn:lsid:ipni.org:names:445638-1		
+kew-37700	kew-202918	synonym	Lamiaceae	Chamaedrys	glauca		Chamaedrys glauca	species	Jord. & Fourr.	WCSP	37700	urn:lsid:ipni.org:names:445639-1		
+kew-37701	kew-202705	synonym	Lamiaceae	Chamaedrys	laciniata		Chamaedrys laciniata	species	Gray	WCSP	37701	urn:lsid:ipni.org:names:445640-1		
+kew-37702	kew-202931	synonym	Lamiaceae	Chamaedrys	latifolia		Chamaedrys latifolia	species	(L.) Raf.	WCSP	37702	urn:lsid:ipni.org:names:445641-1		
+kew-37703	kew-203054	synonym	Lamiaceae	Chamaedrys	lucida		Chamaedrys lucida	species	(L.) Moench	WCSP	37703	urn:lsid:ipni.org:names:445642-1		
+kew-37704	kew-203094	synonym	Lamiaceae	Chamaedrys	marum		Chamaedrys marum	species	(L.) Moench	WCSP	37704	urn:lsid:ipni.org:names:445643-1		
+kew-37705	kew-203119	synonym	Lamiaceae	Chamaedrys	montana		Chamaedrys montana	species	(L.) Raf.	WCSP	37705	urn:lsid:ipni.org:names:445644-1		
+kew-37706	kew-203297	synonym	Lamiaceae	Chamaedrys	nissoliana		Chamaedrys nissoliana	species	(L.) Raf.	WCSP	37706	urn:lsid:ipni.org:names:445645-1		
+kew-37707	kew-202772	synonym	Lamiaceae	Chamaedrys	officinalis		Chamaedrys officinalis	species	(Lam.) Moench	WCSP	37707	urn:lsid:ipni.org:names:445646-1		
+kew-37708	kew-202916	synonym	Lamiaceae	Chamaedrys	ovalifolia		Chamaedrys ovalifolia	species	Jord. & Fourr.	WCSP	37708	urn:lsid:ipni.org:names:445647-1		
+kew-37709	kew-203381	synonym	Lamiaceae	Chamaedrys	palustris		Chamaedrys palustris	species	(Lam.) Gray	WCSP	37709	urn:lsid:ipni.org:names:445648-1		
+kew-37710	kew-203217	synonym	Lamiaceae	Chamaedrys	polium		Chamaedrys polium	species	(L.) Raf.	WCSP	37710	urn:lsid:ipni.org:names:445649-1		
+kew-37711	kew-202916	synonym	Lamiaceae	Chamaedrys	pulverulenta		Chamaedrys pulverulenta	species	Jord. & Fourr.	WCSP	37711	urn:lsid:ipni.org:names:445650-1		
+kew-37712	kew-203307	synonym	Lamiaceae	Chamaedrys	pumila		Chamaedrys pumila	species	(Loefl. ex L.) Raf.	WCSP	37712	urn:lsid:ipni.org:names:445651-1		
+kew-37713	kew-203094	synonym	Lamiaceae	Chamaedrys	quadratula		Chamaedrys quadratula	species	(Schreb.) Raf.	WCSP	37713		Fl. Tellur., 3: 85, 1837	
+kew-37714	kew-203381	synonym	Lamiaceae	Chamaedrys	scordium		Chamaedrys scordium	species	(L.) Moench	WCSP	37714	urn:lsid:ipni.org:names:445653-1		
+kew-37715	kew-202916	synonym	Lamiaceae	Chamaedrys	virescens		Chamaedrys virescens	species	Jord. & Fourr.	WCSP	37715	urn:lsid:ipni.org:names:445655-1		
+kew-2715566	kew-2498757	synonym	Linderniaceae	Chamaegigas	intrepidus		Chamaegigas intrepidus	species	Dinter ex Heil	WCSP (in review)		urn:lsid:ipni.org:names:801505-1		
+kew-232989	kew-242392	synonym	Cyperaceae	Chamaegyne	pygmaea		Chamaegyne pygmaea	species	Suess.	WCSP	232989	urn:lsid:ipni.org:names:303273-1		
+kew-321108	kew-322079	synonym	Iridaceae	Chamaeiris	angustifolia		Chamaeiris angustifolia	species	Medik.	iPlants	321108	urn:lsid:ipni.org:names:436362-1		
+kew-468855	kew-321912	synonym	Iridaceae	Chamaeiris	aurea		Chamaeiris aurea	species	(Link) M.B.Crespo	iPlants	468855	urn:lsid:ipni.org:names:77115836-1		
+kew-468856	kew-322414	synonym	Iridaceae	Chamaeiris	carthaliniae		Chamaeiris carthaliniae	species	(Fomin) M.B.Crespo	iPlants	468856	urn:lsid:ipni.org:names:77115837-1		
+kew-321109	kew-321912	synonym	Iridaceae	Chamaeiris	desertorum		Chamaeiris desertorum	species	(Gueldenst.) Medik.	iPlants	321109	urn:lsid:ipni.org:names:436363-1		
+kew-321110	kew-321835	synonym	Iridaceae	Chamaeiris	foetida		Chamaeiris foetida	species	Medik.	iPlants	321110	urn:lsid:ipni.org:names:436364-1		
+kew-321111	kew-321895	synonym	Iridaceae	Chamaeiris	graminea		Chamaeiris graminea	species	(L.) Medik.	iPlants	321111	urn:lsid:ipni.org:names:436365-1		
+kew-468849	kew-321895	synonym	Iridaceae	Chamaeiris	graminea	pseudocyperus	Chamaeiris graminea subsp. pseudocyperus	subspecies	(Schur) M.B.Crespo	iPlants	468849	urn:lsid:ipni.org:names:77115828-1		
+kew-468857	kew-321912	synonym	Iridaceae	Chamaeiris	halophila		Chamaeiris halophila	species	(Pall.) M.B.Crespo	iPlants	468857	urn:lsid:ipni.org:names:77115838-1		
+kew-468858	kew-322006	synonym	Iridaceae	Chamaeiris	haussknechtii		Chamaeiris haussknechtii	species	(Bornm. ex Baker) M.B.Crespo	iPlants	468858	urn:lsid:ipni.org:names:77115839-1		
+kew-468874	kew-321912	synonym	Iridaceae	Chamaeiris	lilacina		Chamaeiris lilacina	species	(Borbás) M.B.Crespo	iPlants	468874	urn:lsid:ipni.org:names:77115841-1		
+kew-468895	kew-322196	synonym	Iridaceae	Chamaeiris	longipedicellata		Chamaeiris longipedicellata	species	(Czeczott) M.B.Crespo	iPlants	468895	urn:lsid:ipni.org:names:77115842-1		
+kew-468898	kew-322070	synonym	Iridaceae	Chamaeiris	ludwigii		Chamaeiris ludwigii	species	(Maxim.) M.B.Crespo	iPlants	468898	urn:lsid:ipni.org:names:77115857-1		
+kew-468871	kew-322196	synonym	Iridaceae	Chamaeiris	monnieri		Chamaeiris monnieri	species	(DC.) M.B.Crespo	iPlants	468871	urn:lsid:ipni.org:names:77115843-1		
+kew-468888	kew-322178	synonym	Iridaceae	Chamaeiris	notha		Chamaeiris notha	species	(M.Bieb.) M.B.Crespo	iPlants	468888	urn:lsid:ipni.org:names:77115844-1		
+kew-468889	kew-322196	synonym	Iridaceae	Chamaeiris	orientalis		Chamaeiris orientalis	species	(Mill.) M.B.Crespo	iPlants	468889	urn:lsid:ipni.org:names:77115845-1		
+kew-468850	kew-322246	synonym	Iridaceae	Chamaeiris	pontica		Chamaeiris pontica	species	(Zapal.) M.B.Crespo	iPlants	468850	urn:lsid:ipni.org:names:77115829-1		
+kew-468890	kew-322415	synonym	Iridaceae	Chamaeiris	prilipkoana		Chamaeiris prilipkoana	species	(Kem.-Nath.) M.B.Crespo	iPlants	468890	urn:lsid:ipni.org:names:77115846-1		
+kew-468891	kew-322266	synonym	Iridaceae	Chamaeiris	pseudonotha		Chamaeiris pseudonotha	species	(Galushko) M.B.Crespo	iPlants	468891	urn:lsid:ipni.org:names:77115847-1		
+kew-468892	kew-322411	synonym	Iridaceae	Chamaeiris	reichenbachiana		Chamaeiris reichenbachiana	species	(Klatt) M.B.Crespo	iPlants	468892	urn:lsid:ipni.org:names:77115848-1		
+kew-468902	kew-329117	synonym	Iridaceae	Chamaeiris	reichenbachiana	hispanica	Chamaeiris reichenbachiana var. hispanica	variety	(Bernátsky) M.B.Crespo	iPlants	468902	urn:lsid:ipni.org:names:77115850-1		
+kew-468935	kew-322385	synonym	Iridaceae	Chamaeiris	sintenisii		Chamaeiris sintenisii	species	(Janka) M.B.Crespo	iPlants	468935	urn:lsid:ipni.org:names:77115830-1		
+kew-468851	kew-322385	synonym	Iridaceae	Chamaeiris	sintenisii	lorea	Chamaeiris sintenisii subsp. lorea	subspecies	(Janka) M.B.Crespo	iPlants	468851	urn:lsid:ipni.org:names:77115831-1		
+kew-468894	kew-326135	synonym	Iridaceae	Chamaeiris	sogdiana		Chamaeiris sogdiana	species	(Bunge) M.B.Crespo	iPlants	468894	urn:lsid:ipni.org:names:77115851-1		
+kew-321112	kew-322411	synonym	Iridaceae	Chamaeiris	spuria		Chamaeiris spuria	species	(L.) Medik.	iPlants	321112	urn:lsid:ipni.org:names:436366-1		
+kew-468887	kew-322411	synonym	Iridaceae	Chamaeiris	spuria	danica	Chamaeiris spuria var. danica	variety	(Dykes) M.B.Crespo	iPlants	468887	urn:lsid:ipni.org:names:77115853-1		
+kew-468853	kew-322385	synonym	Iridaceae	Chamaeiris	urumovii		Chamaeiris urumovii	species	(Velen.) M.B.Crespo	iPlants	468853	urn:lsid:ipni.org:names:77115832-1		
+kew-468854	kew-322386	synonym	Iridaceae	Chamaeiris	urumovii	brandzae	Chamaeiris urumovii subsp. brandzae	subspecies	(Prodán) M.B.Crespo	iPlants	468854	urn:lsid:ipni.org:names:77115833-1		
+kew-468896	kew-322414	synonym	Iridaceae	Chamaeiris	violacea		Chamaeiris violacea	species	(Klatt) M.B.Crespo	iPlants	468896	urn:lsid:ipni.org:names:77115854-1		
+kew-468897	kew-322595	synonym	Iridaceae	Chamaeiris	xanthospuria		Chamaeiris xanthospuria	species	(B.Mathew & T.Baytop) M.B.Crespo	iPlants	468897	urn:lsid:ipni.org:names:77115855-1		
+kew-37724	kew-44136	synonym	Rutaceae	Chamaelea	pulverulenta		Chamaelea pulverulenta	species	(Vent.) Tiegh.	WCSP	37724	urn:lsid:ipni.org:names:813686-1		
+kew-37725	kew-44137	synonym	Rutaceae	Chamaelea	tricoccos		Chamaelea tricoccos	species	(L.) Lam.	WCSP	37725	urn:lsid:ipni.org:names:813687-1		
+kew-2715585	kew-2337993	synonym	Ericaceae	Chamaeledon	procumbens		Chamaeledon procumbens	species	(L.) Link	WCSP (in review)		urn:lsid:ipni.org:names:327549-1		
+kew-2715587	kew-2417262	synonym	Brassicaceae	Chamaelinum	austriacum		Chamaelinum austriacum	species	(Crantz) Host	WCSP (in review)		urn:lsid:ipni.org:names:280871-1		
+kew-2715588	kew-2381087	synonym	Brassicaceae	Chamaelinum	paniculatum		Chamaelinum paniculatum	species	(L.) Host	WCSP (in review)		urn:lsid:ipni.org:names:280872-1		
+kew-2715589	kew-2694405	synonym	Brassicaceae	Chamaelinum	sativum		Chamaelinum sativum	species	Host	WCSP (in review)		urn:lsid:ipni.org:names:280873-1		
+rjp-20607	rjp-6	synonym	Rosaceae	Chamaemorus	anglica		Chamaemorus anglica	species	Clus. ex Greene	RJP	20607	urn:lsid:ipni.org:names:722147-1		
+rjp-62140	rjp-6	synonym	Rosaceae	Chamaemorus	anglicus		Chamaemorus anglicus	species	Greene	RJP	62140	urn:lsid:ipni.org:names:722147-1		
+rjp-14270	rjp-6	synonym	Rosaceae	Chamaemorus	chamaemorus		Chamaemorus chamaemorus	species	(L.) House	RJP	14270	urn:lsid:ipni.org:names:55100-2		
+rjp-62141	rjp-6	synonym	Rosaceae	Chamaemorus	norvegicus		Chamaemorus norvegicus	species	Greene	RJP	62141	urn:lsid:ipni.org:names:722149-1		
+rjp-20608	rjp-6	synonym	Rosaceae	Chamaemorus	norwegica		Chamaemorus norwegica	species	Clus. ex Greene	RJP	20608	urn:lsid:ipni.org:names:722149-1		
+kew-37737	kew-166480	synonym	Arecaceae	Chamaephoenix	sargentii		Chamaephoenix sargentii	species	(H.Wendl. ex Sarg.) Curtiss	WCSP	37737	urn:lsid:ipni.org:names:665881-1		
+rjp-24263	rjp-2038	synonym	Rosaceae	Chamaephyton	supinum		Chamaephyton supinum	species	(L.) Fourr.	RJP	24263	urn:lsid:ipni.org:names:722150-1		
+kew-37739	kew-5197	synonym	Lamiaceae	Chamaepitys	arvensis		Chamaepitys arvensis	species	Schur	WCSP	37739	urn:lsid:ipni.org:names:445657-1		
+kew-37740	kew-5173	synonym	Lamiaceae	Chamaepitys	bombycina		Chamaepitys bombycina	species	(Boiss.) Holub	WCSP	37740	urn:lsid:ipni.org:names:445658-1	Holub J (1974) New names inPhanerogamae 3. Folia Geobotanica et Phytotaxonomica 9(3): 261-275. doi: 10.1007/bf02853148.	http://doi.org/10.1007/bf02853148
+kew-37741	kew-5218	synonym	Lamiaceae	Chamaepitys	chasmophila		Chamaepitys chasmophila	species	(P.H.Davis) Holub	WCSP	37741	urn:lsid:ipni.org:names:445659-1	Holub J (1974) New names inPhanerogamae 3. Folia Geobotanica et Phytotaxonomica 9(3): 261-275. doi: 10.1007/bf02853148.	http://doi.org/10.1007/bf02853148
+kew-5001036		accepted	Salicaceae	Salix	lanata		Salix lanata	species	L.	WCSP (in review)		urn:lsid:ipni.org:names:304306-2		
+kew-5001061	kew-5001859	synonym	Salicaceae	Salix	lanata		Salix lanata	species	Vill.	WCSP (in review)		urn:lsid:ipni.org:names:777983-1		
+kew-5004155	kew-5001853	synonym	Salicaceae	Salix	lanata	calcicola	Salix lanata subsp. calcicola	subspecies	(Fernald & Wiegand) Hultén	WCSP (in review)		urn:lsid:ipni.org:names:225928-2		
+tro-28300759	kew-5001036	synonym	Salicaceae	Salix	lanata	glandulifera	Salix lanata subsp. glandulifera	subspecies	(Flod.) Hiitonen	TRO	28300759		Suomen Kasvio, 264, 264, 1933	
+kew-5004907		accepted	Salicaceae	Salix	lanata	richardsonii	Salix lanata subsp. richardsonii	subspecies	(Hook.) A.K.Skvortsov	WCSP (in review)			Fl. Arct. URSS, 103, 1966	
+tro-50333302	kew-5004907	synonym	Salicaceae	Salix	lanata	richardsonii	Salix lanata f. richardsonii	f.	(Hook.) Andersson	TRO	50333302			
+kew-5001034		doubtful	Salicaceae	Salix	lanatella		Salix × lanatella	species	Rouy	WCSP (in review)		urn:lsid:ipni.org:names:777986-1		
+kew-5001028	kew-5003357	doubtful	Salicaceae	Salix	lanceolata		Salix lanceolata	species	Ser.	WCSP (in review)		urn:lsid:ipni.org:names:777988-1		
+kew-5001029	kew-5004443	doubtful	Salicaceae	Salix	lanceolata		Salix lanceolata	species	Fr.	WCSP (in review)		urn:lsid:ipni.org:names:777989-1		
+kew-5001053	kew-5002239	doubtful	Salicaceae	Salix	lanceolata		Salix × lanceolata	species	Sm.	WCSP (in review)		urn:lsid:ipni.org:names:777987-1		
+kew-5001030		doubtful	Salicaceae	Salix	lancifera		Salix lancifera	species	Gand.	WCSP (in review)		urn:lsid:ipni.org:names:777990-1		
+kew-5001031	kew-5001040	doubtful	Salicaceae	Salix	lancifolia		Salix lancifolia	species	Andersson	WCSP (in review)		urn:lsid:ipni.org:names:777991-1		
+kew-5001032	kew-5004443	doubtful	Salicaceae	Salix	lancifolia		Salix lancifolia	species	Döll	WCSP (in review)		urn:lsid:ipni.org:names:777992-1		
+kew-5001033		doubtful	Salicaceae	Salix	langeana		Salix × langeana	species	Rouy	WCSP (in review)		urn:lsid:ipni.org:names:777993-1		
+tro-28301461		accepted	Salicaceae	Salix	lanifera		Salix lanifera	species	C.F. Fang & S.D. Zhao	TRO	28301461	urn:lsid:ipni.org:names:896716-1		
+kew-5001044		doubtful	Salicaceae	Salix	lantana		Salix lantana	species	Hartig	WCSP (in review)			Vollst. Naturgesch. Culturpfl. Deutschl., 410, 1842	
+kew-5001035	kew-5001036	synonym	Salicaceae	Salix	lanuginosa		Salix lanuginosa	species	Pall.	WCSP (in review)		urn:lsid:ipni.org:names:777995-1		
+kew-5001026		doubtful	Salicaceae	Salix	lapczynskii		Salix × lapczynskii	species	Zalewski	WCSP (in review)		urn:lsid:ipni.org:names:777996-1		
+kew-5001037	kew-5001038	doubtful	Salicaceae	Salix	lapponica		Salix lapponica	species	St.-Leg.	WCSP (in review)			Ann. Soc. Bot. Lyon, 7: 134, 1880	
+kew-5001038		accepted	Salicaceae	Salix	lapponum		Salix lapponum	species	L.	WCSP (in review)		urn:lsid:ipni.org:names:777998-1		
+kew-5004631	kew-5001523	synonym	Salicaceae	Salix	lapponum		Salix lapponum	species	Regel & Tiling	WCSP (in review)			Fl. Ajan., 118, 1858	
+kew-5004632	kew-5001523	synonym	Salicaceae	Salix	lapponum	ajanensis	Salix lapponum var. ajanensis	variety	Trautv.	WCSP (in review)			Trudy Imp. S.-Peterburgsk. Bot. Sada, 5: 106, 1877	
+kew-5004839	kew-5001038	synonym	Salicaceae	Salix	lapponum	daphneola	Salix lapponum var. daphneola	variety	(Tausch) Wimm.	WCSP (in review)			Salic. Eur., 42, 1866	
+kew-5004838	kew-5001038	synonym	Salicaceae	Salix	lapponum	marrubiifolia	Salix lapponum var. marrubiifolia	variety	(Tausch) Wimm.	WCSP (in review)			Salic. Eur., 41, 1866	
+kew-5004634	kew-5000964	synonym	Salicaceae	Salix	lapponum	trautvetteriana	Salix lapponum var. trautvetteriana	variety	(Anderson) Glehn	WCSP (in review)			Unknown	
+kew-5001040		accepted	Salicaceae	Salix	lasiandra		Salix lasiandra	species	Benth.	WCSP (in review)		urn:lsid:ipni.org:names:284532-2		
+tro-28300378	kew-5001040	synonym	Salicaceae	Salix	lasiandra	abramsii	Salix lasiandra var. abramsii	variety	C.R. Ball	TRO	28300378	urn:lsid:ipni.org:names:225932-2	Ball CR (1921) Notes on Willows of Sections Pentandrae and Nigrae. Botanical Gazette 72(4): 220-236. doi: 10.1086/332919.	http://doi.org/10.1086/332919
+tro-8200110		doubtful	Combretaceae	Terminalia	ulei		Terminalia ulei	species	Engl.	TRO	8200110			
+tro-8200170		accepted	Combretaceae	Terminalia	ulexoides		Terminalia ulexoides	species	H. Perrier	TRO	8200170	urn:lsid:ipni.org:names:171449-1		
+tro-8200171	tro-8200170	synonym	Combretaceae	Terminalia	ulexoides	aculeata	Terminalia ulexoides var. aculeata	variety	H. Perrier	TRO	8200171		Ann. Inst. Bot.-Géol. Colon. Marseille, 1: 29, t. 7, 29, 1953	
+kew-2434181	kew-2733141	doubtful	Combretaceae	Terminalia	undulata		Terminalia undulata	species	Steud.	WCSP (in review)		urn:lsid:ipni.org:names:171450-1		
+kew-2434191		doubtful	Combretaceae	Terminalia	urjan		Terminalia urjan	species	Royle	WCSP (in review)		urn:lsid:ipni.org:names:171451-1		
+tro-8200158		accepted	Combretaceae	Terminalia	urschii		Terminalia urschii	species	H. Perrier	TRO	8200158		Ann. Inst. Bot.-Géol. Colon. Marseille, 1: 24, 24, 1953	
+tro-8200740		accepted	Combretaceae	Terminalia	valverdeae		Terminalia valverdeae	species	A.H. Gentry	TRO	8200740	urn:lsid:ipni.org:names:250588-2		
+kew-2434185		doubtful	Combretaceae	Terminalia	vasivae		Terminalia vasivae	species	Spruce ex Eichler	WCSP (in review)		urn:lsid:ipni.org:names:171453-1		
+kew-2434186		doubtful	Combretaceae	Terminalia	velutina		Terminalia velutina	species	Rolfe	WCSP (in review)		urn:lsid:ipni.org:names:171454-1	Stapf O, Sprague TA, Rolfe RA, Clarke CB, Dawe MT, Wright CH (1906) Plantae Novae Daweanae in Uganda lectae. Journal of the Linnean Society of London, Botany 37(262): 495-544. doi: 10.1111/j.1095-8339.1906.tb00847.x.	http://doi.org/10.1111/j.1095-8339.1906.tb00847.x
+kew-2434187		doubtful	Combretaceae	Terminalia	venosa		Terminalia venosa	species	Wall.	WCSP (in review)		urn:lsid:ipni.org:names:171455-1		
+kew-2434188		doubtful	Combretaceae	Terminalia	verdickii		Terminalia verdickii	species	De Wild. & Ledoux	WCSP (in review)		urn:lsid:ipni.org:names:171456-1		
+kew-2434189		accepted	Combretaceae	Terminalia	vermae		Terminalia vermae	species	M.Gangop. & Chakrab.	WCSP (in review)		urn:lsid:ipni.org:names:961374-1		
+kew-2434167		doubtful	Combretaceae	Terminalia	vernix		Terminalia vernix	species	Lam.	WCSP (in review)		urn:lsid:ipni.org:names:171457-1		
+kew-2434184		doubtful	Combretaceae	Terminalia	villosa		Terminalia villosa	species	Spreng.	WCSP (in review)		urn:lsid:ipni.org:names:171458-1		
+kew-2434182		accepted	Combretaceae	Terminalia	virens		Terminalia virens	species	(Spruce ex Eichler) Alwan & Stace	WCSP (in review)		urn:lsid:ipni.org:names:285919-2	Al-Mayah ARAA, Stace CA (1989) New Species, Names, and Combinations in American Combretaceae. Annals of the Missouri Botanical Garden 76(4): 1125. doi: 10.2307/2399697.	http://doi.org/10.2307/2399697
+kew-2434160	kew-2434251	synonym	Combretaceae	Terminalia	virgata		Terminalia virgata	species	Maguire & Exell	WCSP (in review)		urn:lsid:ipni.org:names:250589-2		
+kew-2434161		doubtful	Combretaceae	Terminalia	vitiensis		Terminalia vitiensis	species	A.C.Sm.	WCSP (in review)		urn:lsid:ipni.org:names:171460-1		
+kew-2434162		doubtful	Combretaceae	Terminalia	volucris		Terminalia volucris	species	R.Br. ex Benth.	WCSP (in review)		urn:lsid:ipni.org:names:171461-1		
+kew-2434163		doubtful	Combretaceae	Terminalia	whitmorei		Terminalia whitmorei	species	Coode	WCSP (in review)		urn:lsid:ipni.org:names:171462-1	Goode MJE (1969) Four New Species of Terminalia L. (Combretaceae) from Melanesia. Kew Bulletin 23(2): 299-310. doi: 10.2307/4108979.	http://doi.org/10.2307/4108979
+kew-2434164		accepted	Combretaceae	Terminalia	yapacana		Terminalia yapacana	species	Maguire	WCSP (in review)		urn:lsid:ipni.org:names:250590-2		
+tro-50309106	kew-2431324	synonym	Combretaceae	Terminalia	zeylanica		Terminalia zeylanica	species	Van Heurck & Müll. Arg.	TRO	50309106			
+kew-2434166		doubtful	Combretaceae	Terminalia	zollingeri		Terminalia zollingeri	species	Exell	WCSP (in review)		urn:lsid:ipni.org:names:171465-1		
+tro-1301221		accepted	Anacardiaceae	Terminthia	paniculata		Terminthia paniculata	species	(Wall. ex G. Don) C.Y. Wu & T.L. Ming	TRO	1301221	urn:lsid:ipni.org:names:71644-1		
+kew-2514851		doubtful	Rutaceae	Terminthodia	lanceolata		Terminthodia lanceolata	species	Lauterb.	WCSP (in review)		urn:lsid:ipni.org:names:775342-1		
+kew-2514850		doubtful	Rutaceae	Terminthodia	obovata		Terminthodia obovata	species	Lauterb.	WCSP (in review)		urn:lsid:ipni.org:names:775343-1		
+kew-2514849		doubtful	Rutaceae	Terminthodia	oppositifolia		Terminthodia oppositifolia	species	Ridl.	WCSP (in review)		urn:lsid:ipni.org:names:775344-1	Ridley HN (1916) I. Report on the Botany of the Wollaston Expedition to Dutch New Guinea, 1912-13. Transactions of the Linnean Society of London. 2nd Series: Botany 9(1): 1-269. doi: 10.1111/j.1095-8339.1916.tb00009.x.	http://doi.org/10.1111/j.1095-8339.1916.tb00009.x
+kew-2514848		doubtful	Rutaceae	Terminthodia	orbiculata		Terminthodia orbiculata	species	Markgr.	WCSP (in review)		urn:lsid:ipni.org:names:775345-1		
+kew-2514847		doubtful	Rutaceae	Terminthodia	rotundifolia		Terminthodia rotundifolia	species	Ridl.	WCSP (in review)		urn:lsid:ipni.org:names:775346-1		
+kew-2514846		doubtful	Rutaceae	Terminthodia	schultzei-leonhardii		Terminthodia schultzei-leonhardii	species	Lauterb.	WCSP (in review)		urn:lsid:ipni.org:names:775347-1		
+kew-2514834		doubtful	Rutaceae	Terminthodia	treubiana		Terminthodia treubiana	species	Lauterb.	WCSP (in review)		urn:lsid:ipni.org:names:775348-1		
+kew-2514844		doubtful	Rutaceae	Terminthodia	viridiflora		Terminthodia viridiflora	species	Ridl.	WCSP (in review)		urn:lsid:ipni.org:names:775349-1		
+kew-2520746	kew-2497990	synonym	Plantaginaceae	Termontis	chalepensis		Termontis chalepensis	species	(L.) Raf.	WCSP (in review)		urn:lsid:ipni.org:names:810278-1		
+kew-2520745		doubtful	Scrophulariaceae	Termontis	cordata		Termontis cordata	species	Raf.	WCSP (in review)		urn:lsid:ipni.org:names:810279-1		
+kew-2520744	kew-2499859	synonym	Plantaginaceae	Termontis	purpurea		Termontis purpurea	species	(L.) Raf.	WCSP (in review)		urn:lsid:ipni.org:names:810280-1		
+kew-2520743	kew-2642724	doubtful	Plantaginaceae	Termontis	racemosa		Termontis racemosa	species	Raf.	WCSP (in review)			Autik. Bot., 158, 1840	
+kew-2520711	kew-2642939	doubtful	Plantaginaceae	Termontis	sicula		Termontis sicula	species	(Mill.) Raf.	WCSP (in review)		urn:lsid:ipni.org:names:810282-1		
+kew-2520761		doubtful	Scrophulariaceae	Termontis	tricolor		Termontis tricolor	species	Raf.	WCSP (in review)		urn:lsid:ipni.org:names:810283-1		
+kew-2520729	kew-2499681	doubtful	Plantaginaceae	Termontis	villosa		Termontis villosa	species	Raf.	WCSP (in review)		urn:lsid:ipni.org:names:810284-1		
+ild-39114	ild-12017	synonym	Leguminosae	Ternatea	amazonum		Ternatea amazonum	species	(Benth.) Kuntze	ILDIS	39114			
+ild-39118	ild-12018	synonym	Leguminosae	Ternatea	arborea		Ternatea arborea	species	(Benth.) Kuntze	ILDIS	39118			
+ild-39123	ild-12019	synonym	Leguminosae	Ternatea	arborescens		Ternatea arborescens	species	(R.Br.) Kuntze	ILDIS	39123			
+kew-2443767		doubtful	Leguminosae	Ternatea	australis		Ternatea australis	species	Kuntze	WCSP (in review)		urn:lsid:ipni.org:names:521052-1		
+ild-39117	ild-39115	synonym	Leguminosae	Ternatea	biflora		Ternatea biflora	species	(Dalzell) Kuntze	ILDIS	39117			
+ild-39301	ild-12021	synonym	Leguminosae	Ternatea	brachystegia		Ternatea brachystegia	species	(Benth.) Kuntze	ILDIS	39301			
+ild-39277	ild-39278	synonym	Leguminosae	Ternatea	bracteata		Ternatea bracteata	species	(Benth.) Kuntze	ILDIS	39277			
+ild-39154	ild-12026	synonym	Leguminosae	Ternatea	densiflora		Ternatea densiflora	species	(Benth.) Kuntze	ILDIS	39154			
+tro-13003529		accepted	Leguminosae	Ternatea	flagellaris		Ternatea flagellaris	species	(Benth.) Kuntze	TRO	13003529	urn:lsid:ipni.org:names:250597-2		
+ild-39172	ild-2534	synonym	Leguminosae	Ternatea	glycinoides		Ternatea glycinoides	species	(DC.) Kuntze	ILDIS	39172			
+tro-13003530		accepted	Leguminosae	Ternatea	grandiflora		Ternatea grandiflora	species	(M. Martens & Galeotti) Kuntze	TRO	13003530	urn:lsid:ipni.org:names:250598-2		
+ild-39198	ild-20162	synonym	Leguminosae	Ternatea	guianensis		Ternatea guianensis	species	(Aubl.) Kuntze	ILDIS	39198			
+kew-2443744		doubtful	Leguminosae	Ternatea	hanceana		Ternatea hanceana	species	Kuntze	WCSP (in review)		urn:lsid:ipni.org:names:521060-1		
+ild-39215	ild-43129	synonym	Leguminosae	Ternatea	heterophylla		Ternatea heterophylla	species	(Lam.) Kuntze	ILDIS	39215			
+ild-39221	ild-30249	synonym	Leguminosae	Ternatea	javitensis		Ternatea javitensis	species	(Kunth) Kuntze	ILDIS	39221			
+ild-41710	ild-39225	synonym	Leguminosae	Ternatea	lasciva		Ternatea lasciva	species	(Benth.) Kuntze	ILDIS	41710			
+ild-39237	ild-2537	synonym	Leguminosae	Ternatea	laurifolia		Ternatea laurifolia	species	(Poir.) Kuntze	ILDIS	39237	urn:lsid:ipni.org:names:1182786-2		
+tro-13003533		accepted	Leguminosae	Ternatea	leptostachya		Ternatea leptostachya	species	(Benth.) Kuntze	TRO	13003533	urn:lsid:ipni.org:names:250601-2		
+kew-2443740		doubtful	Leguminosae	Ternatea	macrophylla		Ternatea macrophylla	species	Kuntze	WCSP (in review)		urn:lsid:ipni.org:names:521066-1		
+ild-39249	ild-12034	synonym	Leguminosae	Ternatea	mariana		Ternatea mariana	species	(L.) Kuntze	ILDIS	39249	urn:lsid:ipni.org:names:1115368-2		
+ild-39258	ild-12040	synonym	Leguminosae	Ternatea	multiflora		Ternatea multiflora	species	M.Martens & Galeotti	ILDIS	39258			
+tro-13003535	ild-15764	synonym	Leguminosae	Ternatea	multiflora		Ternatea multiflora	species	(Sw.) Kuntze	TRO	13003535	urn:lsid:ipni.org:names:250603-2		
+tro-13003536	ild-12036	synonym	Leguminosae	Ternatea	nana		Ternatea nana	species	(Benth.) Kuntze	TRO	13003536	urn:lsid:ipni.org:names:250604-2		
+ild-39216	ild-39218	synonym	Leguminosae	Ternatea	pedunculata		Ternatea pedunculata	species	(Benth.) Kuntze	ILDIS	39216			
+ild-39257	ild-12040	synonym	Leguminosae	Ternatea	polystachya		Ternatea polystachya	species	(Benth.) Kuntze	ILDIS	39257			
+tro-13003538	ild-24526	synonym	Leguminosae	Ternatea	portobellensis		Ternatea portobellensis	species	(Beurl.) Kuntze	TRO	13003538	urn:lsid:ipni.org:names:250606-2		
+ild-41711	ild-10748	synonym	Leguminosae	Ternatea	racemosa		Ternatea racemosa	species	(Benth.) Kuntze	ILDIS	41711			
+ild-39171	ild-2534	synonym	Leguminosae	Ternatea	rubiginosa		Ternatea rubiginosa	species	(Pers.) Kuntze	ILDIS	39171			
+tro-13003541		accepted	Leguminosae	Ternatea	rufescens		Ternatea rufescens	species	(Benth.) Kuntze	TRO	13003541	urn:lsid:ipni.org:names:250609-2		
+tro-13003542	ild-2532	synonym	Leguminosae	Ternatea	schiedeana		Ternatea schiedeana	species	(Schltdl.) Kuntze	TRO	13003542	urn:lsid:ipni.org:names:250610-2		
+ild-39272	ild-12043	synonym	Leguminosae	Ternatea	selloi		Ternatea selloi	species	(Benth.) Kuntze	ILDIS	39272			
+ild-39274	ild-20164	synonym	Leguminosae	Ternatea	simplicifolia		Ternatea simplicifolia	species	(Kunth) Kuntze	ILDIS	39274			
+ild-33034	ild-2539	synonym	Leguminosae	Ternatea	ternatea		Ternatea ternatea	species	(L.) Kuntze	ILDIS	33034			
+ild-21857	ild-2539	synonym	Leguminosae	Ternatea	vulgaris		Ternatea vulgaris	species	Kunth	ILDIS	21857			
+ild-39292	ild-2539	synonym	Leguminosae	Ternatea	vulgaris		Ternatea vulgaris	species	Kuntze	ILDIS	39292			
+kew-2513239		doubtful	Podostemaceae	Terniola	carinata		Terniola carinata	species	Lecomte	WCSP (in review)		urn:lsid:ipni.org:names:688602-1		
+kew-2513207		doubtful	Podostemaceae	Terniola	diversifolia		Terniola diversifolia	species	Lecomte	WCSP (in review)		urn:lsid:ipni.org:names:688603-1		
+kew-2513257		doubtful	Podostemaceae	Terniola	foliosa		Terniola foliosa	species	Wedd.	WCSP (in review)		urn:lsid:ipni.org:names:688604-1		
+kew-2513225		doubtful	Podostemaceae	Terniola	lawii		Terniola lawii	species	Wedd.	WCSP (in review)		urn:lsid:ipni.org:names:688605-1		
+kew-2513194		doubtful	Podostemaceae	Terniola	longipes		Terniola longipes	species	Tul.	WCSP (in review)		urn:lsid:ipni.org:names:688606-1		
+kew-2513193		doubtful	Podostemaceae	Terniola	pedunculosa		Terniola pedunculosa	species	Wedd.	WCSP (in review)		urn:lsid:ipni.org:names:688607-1		
+kew-2513192		doubtful	Podostemaceae	Terniola	pulchella		Terniola pulchella	species	Tul.	WCSP (in review)		urn:lsid:ipni.org:names:688608-1		
+kew-2513191		doubtful	Podostemaceae	Terniola	ramosissima		Terniola ramosissima	species	Wedd.	WCSP (in review)		urn:lsid:ipni.org:names:688609-1		
+kew-2513190		doubtful	Podostemaceae	Terniola	zeylanica		Terniola zeylanica	species	Tul.	WCSP (in review)		urn:lsid:ipni.org:names:688610-1		
+kew-2605687		doubtful	Podostemaceae	Terniopsis	australis		Terniopsis australis	species	(C.Cusset & G.Cusset) M.Kato	WCSP (in review)		urn:lsid:ipni.org:names:77074757-1		
+kew-2513175		doubtful	Podostemaceae	Terniopsis	brevis		Terniopsis brevis	species	M.Kato	WCSP (in review)			Acta Phytotax. Geobot., 57: 22, 2006	
+kew-2897632		doubtful	Podostemaceae	Terniopsis	chanthaburiensis		Terniopsis chanthaburiensis	species	M.Kato & Koi	WCSP (in review)		urn:lsid:ipni.org:names:77102814-1		
+kew-2513185		accepted	Podostemaceae	Terniopsis	malayana		Terniopsis malayana	species	(J.Dransf. & Whitmore) M.Kato	WCSP (in review)		urn:lsid:ipni.org:names:77074753-1		
+kew-2897633		doubtful	Podostemaceae	Terniopsis	minor		Terniopsis minor	species	M.Kato & Koi	WCSP (in review)		urn:lsid:ipni.org:names:77102815-1		
+kew-2513195		doubtful	Podostemaceae	Terniopsis	ramosa		Terniopsis ramosa	species	M.Kato	WCSP (in review)			Acta Phytotax. Geobot., 57: 24, 2006	
+tro-25700134	kew-2756559	synonym	Podostemaceae	Terniopsis	sessilis		Terniopsis sessilis	species	Hsiu C. Chao	TRO	25700134	urn:lsid:ipni.org:names:928305-1		
+kew-2685796		accepted	Boraginaceae	Buglossoides	gastonii		Buglossoides gastonii	species	(Benth.) I.M.Johnst.	WCSP (in review)		urn:lsid:ipni.org:names:113727-1		
+kew-2685797		accepted	Boraginaceae	Buglossoides	glandulosa		Buglossoides glandulosa	species	(Velen.) R.Fern.	WCSP (in review)			Bot. J. Linn. Soc., 64: 379, 1971	
+kew-2685798		accepted	Boraginaceae	Buglossoides	goulandriorum		Buglossoides goulandriorum	species	(Rech.f.) Govaerts	WCSP (in review)		urn:lsid:ipni.org:names:993577-1		
+kew-2685799		accepted	Boraginaceae	Buglossoides	goulandriorum	thessalica	Buglossoides goulandriorum subsp. thessalica	subspecies	(Aldén) Govaerts	WCSP (in review)		urn:lsid:ipni.org:names:993578-1		
+kew-2685800		accepted	Boraginaceae	Buglossoides	incrassata		Buglossoides incrassata	species	(Guss.) I.M.Johnst.	WCSP (in review)		urn:lsid:ipni.org:names:113729-1		
+kew-2895661		accepted	Boraginaceae	Buglossoides	incrassata	splitgerberi	Buglossoides incrassata subsp. splitgerberi	subspecies	(Guss.) E.Zippel & Selvi	WCSP (in review)		urn:lsid:ipni.org:names:77099687-1	Selvi F, Cecchi L (2009) Typification of Names of Euro-Mediterranean Taxa of Boraginaceae Described by Italian Botanists. Taxon 58(2): 621-626. Retrieved from http://www.jstor.org/stable/27756898	http://www.jstor.org/stable/27756898
+kew-2685801	kew-2679694	synonym	Boraginaceae	Buglossoides	laxiflora	parviflora	Buglossoides laxiflora var. parviflora	variety	Moris	WCSP (in review)			Fl. Sardoa, 3: 137, 1859	
+kew-2685802		accepted	Boraginaceae	Buglossoides	minima		Buglossoides minima	species	(Moris) R.Fern.	WCSP (in review)			Bot. J. Linn. Soc., 64: 379, 1971	
+kew-2685803	kew-2685790	synonym	Boraginaceae	Buglossoides	permixta		Buglossoides permixta	species	(Jord.) Holub	WCSP (in review)		urn:lsid:ipni.org:names:943162-1		
+kew-2685804		accepted	Boraginaceae	Buglossoides	purpurocaerulea		Buglossoides purpurocaerulea	species	(L.) I.M.Johnst.	WCSP (in review)		urn:lsid:ipni.org:names:113731-1		
+kew-2685805	kew-2685808	synonym	Boraginaceae	Buglossoides	ramosissima		Buglossoides ramosissima	species	Moench	WCSP (in review)		urn:lsid:ipni.org:names:113732-1		
+kew-2685806	kew-2685791	synonym	Boraginaceae	Buglossoides	sibthorpiana		Buglossoides sibthorpiana	species	(Griseb.) Czerep.	WCSP (in review)		urn:lsid:ipni.org:names:984680-1		
+kew-2685807	kew-2895661	synonym	Boraginaceae	Buglossoides	splitgerberi		Buglossoides splitgerberi	species	(Guss.) Brullo	WCSP (in review)		urn:lsid:ipni.org:names:942086-1		
+kew-2685808		accepted	Boraginaceae	Buglossoides	tenuiflora		Buglossoides tenuiflora	species	(L.f.) I.M.Johnst.	WCSP (in review)		urn:lsid:ipni.org:names:113733-1		
+kew-2685809		accepted	Boraginaceae	Buglossoides	zollingeri		Buglossoides zollingeri	species	(A.DC.) I.M.Johnst.	WCSP (in review)		urn:lsid:ipni.org:names:113734-1		
+tro-50318148		accepted	Melastomataceae	Acinodendron	microcarpum		Acinodendron microcarpum	species	(DC.) Kuntze	TRO	50318148	urn:lsid:ipni.org:names:2952-2		
+tro-50318149		accepted	Melastomataceae	Acinodendron	micropetalum		Acinodendron micropetalum	species	(Cogn.) Kuntze	TRO	50318149	urn:lsid:ipni.org:names:2953-2		
+tro-50317765		accepted	Melastomataceae	Acinodendron	minutiflorum		Acinodendron minutiflorum	species	(Bonpl.) Kuntze	TRO	50317765	urn:lsid:ipni.org:names:2954-2		
+tro-50318150		accepted	Melastomataceae	Acinodendron	miocarpum		Acinodendron miocarpum	species	(Naudin) Kuntze	TRO	50318150	urn:lsid:ipni.org:names:2955-2		
+tro-50318151		accepted	Melastomataceae	Acinodendron	molestum		Acinodendron molestum	species	(Cogn.) Kuntze	TRO	50318151	urn:lsid:ipni.org:names:2956-2		
+kew-2725650	kew-2725651	synonym	Ranunculaceae	Clematis	armandii	farquhariana	Clematis armandii f. farquhariana	f.	Rehder & E.H.Wilson	WCSP (in review)			Pl. Wilson., 1: 327, 1913	
+kew-2725651		accepted	Ranunculaceae	Clematis	armandii	farquhariana	Clematis armandii var. farquhariana	variety	(Rehder & E.H.Wilson) W.T.Wang	WCSP (in review)		urn:lsid:ipni.org:names:1001204-1		
+kew-2725652		accepted	Ranunculaceae	Clematis	armandii	hefengensis	Clematis armandii var. hefengensis	variety	(G.F.Tao) W.T.Wang	WCSP (in review)		urn:lsid:ipni.org:names:967010-1		
+kew-2725653	kew-2726889	synonym	Ranunculaceae	Clematis	armandii	pinfaensis	Clematis armandii var. pinfaensis	variety	Finet & Gagnep.	WCSP (in review)			J. Bot. (Morot), 21: 16, 1908	
+kew-2725654		accepted	Ranunculaceae	Clematis	armandii	retusifolia	Clematis armandii var. retusifolia	variety	(J.Q.Fu & S.B.Ho) W.T.Wang	WCSP (in review)		urn:lsid:ipni.org:names:70028394-1		
+tro-50041987		accepted	Dryopteridaceae	Elaphoglossum	ramosissimum		Elaphoglossum ramosissimum	species	(Fée) T. Moore	TRO	50041987	urn:lsid:ipni.org:names:17105090-1		
+tro-26607884	tro-26607208	synonym	Dryopteridaceae	Elaphoglossum	rampans		Elaphoglossum rampans	species	(Baker) Christ	TRO	26607884	urn:lsid:ipni.org:names:89295-2		
+ifn-34173		doubtful	Dryopteridaceae	Elaphoglossum	randii		Elaphoglossum randii	species	Alston & Schelpe	IPNI	17393740-1	urn:lsid:ipni.org:names:17393740-1		
+tro-50166755		doubtful	Dryopteridaceae	Elaphoglossum	rapense		Elaphoglossum rapense	species	Copel.	TRO	50166755	urn:lsid:ipni.org:names:17393750-1		

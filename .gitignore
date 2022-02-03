@@ -209,5 +209,12 @@ $RECYCLE.BIN/
 *.msm
 *.msp
 
-appsettings.json
-appsettings.Development.json
+.vscode
+.ionide
+.fake
+.idea
+
+.env
+.env**
+
+tempkey.rsa
