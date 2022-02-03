@@ -69,9 +69,9 @@ module ``When importing a taxon`` =
                               Reference = None }]
 
 
-    module ``When revising a taxon's status`` =
+    // module ``When revising a taxon's status`` =
         
-        [<Fact>]
-        let ``It is moved between higher ranks`` () =
-            invalidOp "Not implemented"
+    //     [<Fact>]
+    //     let ``It is moved between higher ranks`` () =
+    //         invalidOp "Not implemented"
             
