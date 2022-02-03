@@ -32,11 +32,12 @@ export class BotanicalLookupToolViewModel {
         this.newSlideTaxonStatus = ko.observable(null);
         this.currentTaxon = ko.observable("");
         this.rank.subscribe((rank) => this.switchRank(rank));
-        this.isValidSearch = ko.computed(this.searchIsValid, this);
+        // TODO Fix this knockout binding (error in typescript compile)
+        //this.isValidSearch = ko.computed(this.searchIsValid, this);
         this.doneTypingInterval = 100;
     }
     
-    switchRank = (rank) => {
+    switchRank = (rank: string) => {
         if (rank == "Family") {
             this.genus("");
             this.species("");

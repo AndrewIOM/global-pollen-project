@@ -28,7 +28,7 @@
     padding: 160px 0 75px;
     color: rgba(255, 255, 255, .8);
     background-color: $primary-color;
-    background-image: url(/images/pollen-tiles-white.png);
+    background-image: url(./Images/pollen-tiles-white.png);
     font-size: 20px;
     //animation: 300s scroll linear infinite;
     //animation-fill-mode: forwards;
@@ -301,7 +301,7 @@ header {
 }
 
 .pollen-background {
-    background:url('/images/pollen-tiles.png');
+    background:url('./Images/pollen-tiles.png');
 }
 
 // User profile page
