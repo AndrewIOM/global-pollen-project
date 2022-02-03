@@ -1,6 +1,8 @@
 # [GlobalPollenProject](https://globalpollenproject.org)
 *Key Words: Pollen; Palynology; Reference-Collection; Digitisation; Dissemination; Crowdsourcing*
 
+[![build + test](https://github.com/AndrewIOM/gpp-cqrs/actions/workflows/push.yml/badge.svg)](https://github.com/AndrewIOM/gpp-cqrs/actions/workflows/push.yml)
+
 The Global Pollen Project is a web-based tool to enable:
 
 1. **crowdsourcing** of pollen identification using images; and
