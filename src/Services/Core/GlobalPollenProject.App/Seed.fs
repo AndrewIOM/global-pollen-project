@@ -33,7 +33,7 @@ let seedTestData () =
                 LastName = "User"
                 Organisation = "Global Pollen Project"
             } |> ignore
-            match U.User.grantCuration (seedUser().ToString()) with
+            match U.User.grantCuration () (seedUser().ToString()) with
             | Ok _ -> ()
             | Error e -> failwithf "Could not grant curation rights: %A" e
             

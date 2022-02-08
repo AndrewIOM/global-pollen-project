@@ -208,10 +208,18 @@ module Actions =
 
         let userAdmin next ctx =
             accessDenied next ctx
-            // TODO Hook up admin function
-            //Admin.listUsers()
-            //|> renderViewResult HtmlViews.Admin.users next ctx
+            // TODO Admin.listUsers() >> HtmlViews.Admin.users
     
+        let curate = coreAction (CoreActions.Curate.listPending()) HtmlViews.Admin.curate
+
+        let curateDecision : HttpHandler = 
+             fun next ctx ->
+                tryBindJson<CurateCollectionRequest> ctx
+                |> Result.map(CoreActions.Curate.decide)
+                |> Result.map(fun r -> Core.coreAction' r ctx |> Async.AwaitTask |> Async.RunSynchronously)
+                |> toApiResult next ctx
+
+
     module Stats =
 
         let systemStats = coreAction(CoreActions.Statistics.system()) HtmlViews.Statistics.view
@@ -236,14 +244,14 @@ let webApp : HttpHandler =
         choose [
             GET  >=> routef  "/collection/%O"            (fun id -> coreApiAction (CoreActions.Digitise.getCollection id))
             GET  >=> route   "/collection/list"          >=> coreApiAction (CoreActions.Digitise.myCollections())
-            POST >=> route   "/collection/start"         >=> apiResultFromQuery CoreActions.Digitise.startCollection
+            POST >=> route   "/collection/start"         >=> apiResultFromBody CoreActions.Digitise.startCollection
             GET  >=> routef  "/collection/publish/%O"    (fun id -> coreApiAction (CoreActions.Digitise.publishCollection id))
-            POST >=> route   "/collection/slide/add"     >=> apiResultFromQuery CoreActions.Digitise.recordSlide
-            POST >=> route   "/collection/slide/void"    >=> apiResultFromQuery CoreActions.Digitise.voidSlide
-            POST >=> route   "/collection/slide/addimage">=> apiResultFromQuery CoreActions.Digitise.uploadImage
+            POST >=> route   "/collection/slide/add"     >=> apiResultFromBody CoreActions.Digitise.recordSlide
+            POST >=> route   "/collection/slide/void"    >=> apiResultFromBody CoreActions.Digitise.voidSlide
+            POST >=> route   "/collection/slide/addimage">=> apiResultFromBody CoreActions.Digitise.uploadImage
             GET  >=> route   "/calibration/list"         >=> coreApiAction (CoreActions.User.myCalibrations())
-            POST >=> route   "/calibration/use"          >=> apiResultFromQuery CoreActions.User.setupMicroscope
-            POST >=> route   "/calibration/use/mag"      >=> apiResultFromQuery CoreActions.User.calibrateMicroscope
+            POST >=> route   "/calibration/use"          >=> apiResultFromBody CoreActions.User.setupMicroscope
+            POST >=> route   "/calibration/use/mag"      >=> apiResultFromBody CoreActions.User.calibrateMicroscope
         ]
 
     let api =
@@ -288,8 +296,10 @@ let webApp : HttpHandler =
 
     let admin =
         choose [
+            POST >=> route Urls.Admin.curate               >=> mustBeAdmin >=> Actions.Admin.curateDecision
             GET  >=> route Urls.Admin.users                >=> mustBeAdmin >=> Actions.Admin.userAdmin
             GET  >=> route Urls.Admin.rebuildReadModel     >=> mustBeAdmin >=> Actions.Admin.rebuildReadModel
+            GET  >=> route Urls.Admin.curate               >=> mustBeAdmin >=> Actions.Admin.curate
         ]
 
     choose [
@@ -308,7 +318,7 @@ let webApp : HttpHandler =
             route   Urls.tools                  >=> htmlView HtmlViews.Tools.main
             route   Urls.cite                   >=> Actions.Docs.docSection "Cite"
             route   Urls.terms                  >=> Actions.Docs.docSection "Terms"
-            route   Urls.digitise               >=> htmlView DigitiseDashboard.appView
+            route   Urls.digitise               >=> mustBeLoggedIn >=> htmlView DigitiseDashboard.appView
         ]
         setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound
     ]

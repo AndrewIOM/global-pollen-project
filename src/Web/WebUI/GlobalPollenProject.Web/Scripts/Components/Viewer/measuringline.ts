@@ -75,7 +75,7 @@ export class MeasuringLine {
         $(this.id).css("position", "absolute");
         $(this.id).css("cursor", "crosshair");
 
-        $(self).on(ViewerEvent.EVENT_ZOOMED, () => {
+        $(this.viewer.containerId).on(ViewerEvent.EVENT_ZOOMED, () => {
             if(this.state == MeasuringLineState.STATE_DRAWN) {
                 this.redrawLine();
             }
@@ -107,7 +107,7 @@ export class MeasuringLine {
         this.endX = x;
         this.endY = y;
         this.redrawLine();
-        $(self).trigger(MeasuringLineEvent.EVENT_DRAWING);
+        $(this.id).trigger(MeasuringLineEvent.EVENT_DRAWING);
     }
 
     endLine(x, y) {
@@ -120,7 +120,7 @@ export class MeasuringLine {
         this.savedTransformY = this.viewer.getTransformY();
 
         $(this.id).css("pointer-events", "none");
-        $(self).trigger(MeasuringLineEvent.EVENT_DRAWN);
+        $(this.id).trigger(MeasuringLineEvent.EVENT_DRAWN);
     }
 
     getPixelPoints() {

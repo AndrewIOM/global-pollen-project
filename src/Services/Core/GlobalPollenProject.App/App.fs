@@ -162,8 +162,8 @@ let routes : HttpHandler =
                 POST >=> route  "/User/Register"        >=> postAuthApi U.User.register
 
                 // Curation
-                GET  >=> route  "/Curate/Pending"       >=> api U.Curation.listPending
-                POST >=> route  "/Cutrate/Assign"       >=> postApi U.User.grantCuration
+                GET  >=> route  "/Curate/Pending"       >=> apiAuth U.Curation.listPending
+                POST >=> route  "/Cutrate/Assign"       >=> postAuthApi U.User.grantCuration
                 POST >=> route  "/Curate/Decide"        >=> postAuthApi U.Curation.issueDecision
 
                 // Unknown Material
@@ -174,18 +174,20 @@ let routes : HttpHandler =
                 POST >=> route  "/Unknown/Identify"     >=> postAuthApi U.UnknownGrains.identifyUnknownGrain
 
                 // User's equipment
-                GET >=> route   "/User/Microscope"      >=> apif U.Calibrations.getMyCalibrations
+                GET >=> route   "/User/Microscope"              >=> apiAuth U.Calibrations.getMyCalibrations
                 POST >=> route  "/User/Microscope/Setup"        >=> postAuthApi U.Calibrations.setupMicroscope
-                POST >=> route  "/User/Microscope/Calibrate"    >=> postApi U.Calibrations.calibrateMagnification
+                POST >=> route  "/User/Microscope/Calibrate"    >=> postAuthApi U.Calibrations.calibrateMagnification
 
                 // Digitise
-                GET >=> route   "/Digitise/Collection"          >=> apiAuth U.Digitise.myCollections
-                GET >=> routef  "/Digitise/Collection/%s"       (fun col n c -> col |> U.Digitise.getCollection |> apiResult n c)
-                POST >=> route  "/Digitise/Collection/Start"    >=> postAuthApi U.Digitise.startNewCollection
-                POST >=> routef "/Digitise/Collection/%s/Publish"   (fun col n c -> U.Digitise.publish (Auth.getCurrentUser c) col |> apiResult n c)
-                POST >=> route  "/Digitise/Slide/Add"       >=> postApi U.Digitise.addSlideRecord
-                POST >=> route  "/Digitise/Slide/Void"      >=> postApi U.Digitise.voidSlide
-                POST >=> route  "/Digitise/Slide/AddImage"  >=> postApi U.Digitise.uploadSlideImage
+                subRoute "/Digitise" (Auth.checkUserIsLoggedIn >=> choose [
+                    GET >=> route   "/Collection"           >=> apiAuth U.Digitise.myCollections
+                    GET >=> routef  "/Collection/%s"        (fun col n c -> col |> U.Digitise.getCollection |> apiResult n c)
+                    POST >=> route  "/Collection/Start"     >=> postAuthApi U.Digitise.startNewCollection
+                    POST >=> routef "/Collection/%s/Publish" (fun col n c -> U.Digitise.publish (Auth.getCurrentUser c) col |> apiResult n c)
+                    POST >=> route  "/Slide/Add"            >=> postApi U.Digitise.addSlideRecord
+                    POST >=> route  "/Slide/Void"           >=> postApi U.Digitise.voidSlide
+                    POST >=> route  "/Slide/AddImage"       >=> postApi U.Digitise.uploadSlideImage
+                ])
 
                 // Caches
                 GET >=> routef  "/Cache/Neotoma/%i"     (fun i n c -> U.Cache.neotoma i |> apiResult n c)

@@ -295,7 +295,7 @@ module Layout =
         ]
 
     let baseScripts = [
-        "https://code.jquery.com/jquery-3.2.1.min.js"
+        "https://code.jquery.com/jquery-3.6.0.min.js"
         jsBundle ]
 
     let master (scripts: Script list) title content profile =
@@ -1609,9 +1609,30 @@ module Admin =
             
         ] |> Layout.standard [] "Users" "Admin"
 
-    let curate vm =
+    let curate (vm:EditableRefCollection list) =
         [
-            
+            table [ _class "table table-responsive" ] [
+                thead [] [
+                    tr [] [
+                        th [] [ str "Name" ]
+                        th [] [ str "Description" ]
+                        th [] [ str "Actions" ]
+                    ]
+                ]
+                tbody [] (vm |> List.map(fun i ->
+                    tr [] [
+                        td [] [ str i.Name ]
+                        td [] [ str i.Description ]
+                        td [] [
+                            form [ _method "POST"; _action "/Admin/Curate" ] [
+                                input [ _hidden; _name "Collection"; _value (i.Id.ToString()) ]
+                                input [ _hidden; _name "Comment"; _value "" ]
+                                input [ _hidden; _name "Approved"; _value "true" ]
+                                button [ _type "submit"; _class "btn btn-secondary" ] [ str "Approve" ]
+                            ]
+                        ]
+                    ]))
+            ]
         ] |> Layout.standard [] "Curate" "Curate"
        
         

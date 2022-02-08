@@ -85,7 +85,7 @@ export class Viewer {
                             this.imgWidth + "x" + this.imgHeight);
                         if(!error) {
                             error = true;
-                            $(this.id).trigger(ViewerEvent.EVENT_IMAGES_MISMATCHED_SIZE);
+                            $(this.containerId).trigger(ViewerEvent.EVENT_IMAGES_MISMATCHED_SIZE);
                         }
                         return;
                     }
@@ -107,7 +107,7 @@ export class Viewer {
 
                     // proceed if all images have been loaded - trigger a jQuery function too
                     callback();
-                    $(this.id).trigger(ViewerEvent.EVENT_LOADED_IMAGES);
+                    $(this.containerId).trigger(ViewerEvent.EVENT_LOADED_IMAGES);
                 }
             }
             img.src = this.imagePaths[i];
@@ -115,37 +115,40 @@ export class Viewer {
         }
     }
 
+    // gets called when canvas is zoomed
+    public zoomed () {
+        if (this.transform.k > d3.event.transform.k) {
+            $(this.id).css("cursor", "zoom-out");
+        } else if (this.transform.k < d3.event.transform.k) {
+            $(this.id).css("cursor", "zoom-in");
+        } else {
+            $(this.id).css("cursor", "move");
+        }
+
+        if (d3.event.transform.x > this.width / 2) 
+            d3.event.transform.x = this.width / 2;
+        if (d3.event.transform.y > this.height / 2) 
+            d3.event.transform.y = this.height / 2;
+
+        if (d3.event.transform.x < this.width / 2 - this.imgWidth * d3.event.transform.k) 
+            d3.event.transform.x = this.width / 2 - this.imgWidth * d3.event.transform.k;
+        if (d3.event.transform.y < this.height / 2 - this.imgHeight * d3.event.transform.k) 
+            d3.event.transform.y = this.height / 2 - this.imgHeight * d3.event.transform.k;
+
+        this.transform = d3.event.transform;
+
+        // trigger a zoom event
+        $(this.containerId).trigger(ViewerEvent.EVENT_ZOOMED);
+    }
+
+
     /**
      * Creates the <canvas> element, and initialises panning + zooming through d3
      */
     public createCanvas(callback) {
-        // sub-function - zoom callback - gets called when canvas is zoomed
-        const zoomed = () => {
-            if (this.transform.k > d3.event.transform.k) {
-                $(this.id).css("cursor", "zoom-out");
-            } else if (this.transform.k < d3.event.transform.k) {
-                $(this.id).css("cursor", "zoom-in");
-            } else {
-                $(this.id).css("cursor", "move");
-            }
-
-            if (d3.event.transform.x > this.width / 2) 
-                d3.event.transform.x = this.width / 2;
-            if (d3.event.transform.y > this.height / 2) 
-                d3.event.transform.y = this.height / 2;
-
-            if (d3.event.transform.x < this.width / 2 - this.imgWidth * d3.event.transform.k) 
-                d3.event.transform.x = this.width / 2 - this.imgWidth * d3.event.transform.k;
-            if (d3.event.transform.y < this.height / 2 - this.imgHeight * d3.event.transform.k) 
-                d3.event.transform.y = this.height / 2 - this.imgHeight * d3.event.transform.k;
-
-            this.transform = d3.event.transform;
-
-            // trigger a zoom event
-            $(this.id).trigger(ViewerEvent.EVENT_ZOOMED);
-        }
 
         const defaultZoom = Math.min(this.width / this.imgWidth, this.height / this.imgHeight);
+        console.log("Default zoom is " + defaultZoom);
 
         // create the canvas element
         this.base = d3.select(this.containerId);
@@ -160,16 +163,17 @@ export class Viewer {
                 ])
                 .scaleExtent([defaultZoom * 0.4, defaultZoom * 10])
                 .on("zoom", () => {
-                    zoomed();
+                    this.zoomed();
                     this.render();
                 })
                 .on("end", () => {
                     $(this.id).css("cursor", "grab");
                 }));
         this.transform = d3.zoomIdentity;
-        this.transform.scale(defaultZoom - 0.1);
-        this.transform.translate(this.width / 2 - this.imgWidth / 2 * this.transform.k,
+        this.transform = this.transform.scale(defaultZoom - 0.1);
+        this.transform = this.transform.translate(this.width / 2 - this.imgWidth / 2 * this.transform.k,
             this.height / 2 - this.imgHeight / 2 * this.transform.k);
+        console.log(this.transform);
 
         this.context = this.canvas.node().getContext("2d");
         
