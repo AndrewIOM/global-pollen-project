@@ -163,7 +163,7 @@ let routes : HttpHandler =
 
                 // Curation
                 GET  >=> route  "/Curate/Pending"       >=> apiAuth U.Curation.listPending
-                POST >=> route  "/Cutrate/Assign"       >=> postAuthApi U.User.grantCuration
+                POST >=> route  "/Curate/Assign"       >=> postAuthApi U.User.grantCuration
                 POST >=> route  "/Curate/Decide"        >=> postAuthApi U.Curation.issueDecision
 
                 // Unknown Material
@@ -193,8 +193,8 @@ let routes : HttpHandler =
                 GET >=> routef  "/Cache/Neotoma/%i"     (fun i n c -> U.Cache.neotoma i |> apiResult n c)
                 
                 // Administration
-                POST >=> route "/Admin/RebuildReadModel"    >=> postApi U.Admin.rebuildReadModel
-                POST >=> route "/Admin/Users"               >=> postApi U.Admin.listUsers
+                POST >=> route "/Admin/RebuildReadModel"    >=> postAuthApi U.Admin.rebuildReadModel
+                GET  >=> route "/Admin/Users"               >=> apiAuth U.Admin.listUsers
             ])
         ]
 
@@ -226,7 +226,7 @@ type Startup () =
     member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
         if (env.IsDevelopment()) then
             app.UseDeveloperExceptionPage() |> ignore
-            U.Admin.rebuildReadModel() |> ignore
+            U.Admin.rebuildReadModel () () |> ignore
             Seed.seedTestData()
         app.UseStaticFiles() |> ignore
         app.UseAuthentication() |> ignore

@@ -222,6 +222,22 @@ let coreAction action view next (ctx:HttpContext) =
         return! renderViewResult view next ctx result
     }
 
+let formAction<'req,'result> (action:'req -> CoreFunction<'result>) error success : HttpHandler =
+    fun next ctx ->
+        task {
+            let core = ctx.GetService<CoreMicroservice>()
+            let! model = ctx.TryBindFormAsync()
+            let validated = 
+                match model with
+                | Ok m -> Validation.validateModel m
+                | Error _ -> Error InvalidRequestFormat
+            let result = validated |> Result.bind (fun m -> action m |> core.Apply |> Async.RunSynchronously)
+            return! 
+                match result with
+                | Ok r -> success r next ctx
+                | Error e -> error e next ctx
+        }
+
 let coreApiAction action : HttpHandler =
     fun next ctx ->
         task {

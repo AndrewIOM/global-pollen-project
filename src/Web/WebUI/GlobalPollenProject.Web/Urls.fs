@@ -53,4 +53,5 @@ module Admin =
     let root = "/Admin"
     let rebuildReadModel = "/RebuildReadModel"
     let users = "/Users"    
-    let curate = "/Curate"
+    let curate = "/Curate"    
+    let grantCuration = "/GrantCuration"

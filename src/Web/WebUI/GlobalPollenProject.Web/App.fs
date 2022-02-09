@@ -206,18 +206,10 @@ module Actions =
             |> Async.RunSynchronously
             |> toApiResult next ctx
 
-        let userAdmin next ctx =
-            accessDenied next ctx
-            // TODO Admin.listUsers() >> HtmlViews.Admin.users
-    
+        let userAdmin = coreAction (CoreActions.System.listUsers()) HtmlViews.Admin.users
         let curate = coreAction (CoreActions.Curate.listPending()) HtmlViews.Admin.curate
-
-        let curateDecision : HttpHandler = 
-             fun next ctx ->
-                tryBindJson<CurateCollectionRequest> ctx
-                |> Result.map(CoreActions.Curate.decide)
-                |> Result.map(fun r -> Core.coreAction' r ctx |> Async.AwaitTask |> Async.RunSynchronously)
-                |> toApiResult next ctx
+        let grantCuration = formAction CoreActions.Curate.grantCurationRights (fun e -> text (e.ToString())) (fun _ -> userAdmin)
+        let curateDecision : HttpHandler = formAction CoreActions.Curate.decide (fun e -> text (e.ToString())) (fun _ -> curate)
 
 
     module Stats =
@@ -295,11 +287,13 @@ let webApp : HttpHandler =
         ]
 
     let admin =
+        // mustBeAdmin >=>
         choose [
-            POST >=> route Urls.Admin.curate               >=> mustBeAdmin >=> Actions.Admin.curateDecision
-            GET  >=> route Urls.Admin.users                >=> mustBeAdmin >=> Actions.Admin.userAdmin
-            GET  >=> route Urls.Admin.rebuildReadModel     >=> mustBeAdmin >=> Actions.Admin.rebuildReadModel
-            GET  >=> route Urls.Admin.curate               >=> mustBeAdmin >=> Actions.Admin.curate
+            POST >=> route Urls.Admin.curate               >=> Actions.Admin.curateDecision
+            POST >=> route Urls.Admin.grantCuration        >=> Actions.Admin.grantCuration
+            GET  >=> route Urls.Admin.users                >=> Actions.Admin.userAdmin
+            GET  >=> route Urls.Admin.rebuildReadModel     >=> Actions.Admin.rebuildReadModel
+            GET  >=> route Urls.Admin.curate               >=> Actions.Admin.curate
         ]
 
     choose [

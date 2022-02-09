@@ -1604,9 +1604,31 @@ module Tools =
 
 module Admin =
 
-    let users vm =
+    let users (vm:PublicProfile list) =
         [
-            
+            table [ _class "table table-responsive" ] [
+                thead [] [
+                    tr [] [
+                        th [] [ str "Name" ]
+                        th [] [ str "Description" ]
+                        th [] [ str "Actions" ]
+                    ]
+                ]
+                tbody [] (vm |> List.map(fun p ->
+                    tr [] [
+                        td [] [ strf "%s %s %s" p.Title p.FirstName p.LastName ]
+                        td [] [ strf "%b" p.IsPublic ]
+                        td [] [ strf "%f" p.Score ]
+                        td [] [ strf "%b" p.Curator ]
+                        td [] [
+                            if not p.Curator then
+                                form [ _method "POST"; _action "/Admin/GrantCuration" ] [
+                                    input [ _hidden; _id "UserId"; _name "UserId"; _value (p.UserId.ToString()) ]
+                                    button [ _type "submit"; _class "btn btn-secondary" ] [ str "Grant curation rights" ]
+                                ]
+                        ]
+                    ]))
+            ]
         ] |> Layout.standard [] "Users" "Admin"
 
     let curate (vm:EditableRefCollection list) =

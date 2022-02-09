@@ -595,7 +595,8 @@ module Statistic =
 
 module Admin =
 
-    let rebuildReadModel() =
+    let rebuildReadModel _ () =
+        printfn "Rebuilding read model..."
         inMaintenanceMode <- true
         redisReset() |> ignore
         ProjectionHandler.init redisSet () |> ignore
@@ -603,7 +604,7 @@ module Admin =
         inMaintenanceMode <- false
         Ok "Read model has been rebuilt."
 
-    let listUsers() =
+    let listUsers _ () =
         let get (id:Guid) = 
             ReadStore.RepositoryBase.getSingle<PublicProfile> id readStoreGet deserialise
         RepositoryBase.getListKey<Guid> All K.Profiles.index readStoreGetList deserialiseGuid

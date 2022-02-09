@@ -146,9 +146,14 @@ type TaxonAutocompleteRequest = {
 
 [<CLIMutable>]
 type CurateCollectionRequest = {
-    Approved: bool
+    [<Required>] Approved: bool
     Comment: string
-    Collection: Guid
+    [<Required>] Collection: Guid
+}
+
+[<CLIMutable>]
+type UserRoleRequest = {
+    UserId: Guid
 }
 
 [<CLIMutable>]

@@ -112,13 +112,14 @@ module CoreActions =
     module Curate =
         let listPending () = CGET None "/api/v1/Curate/Pending"
         let decide req = CPOST<CurateCollectionRequest,unit> req "/api/v1/Curate/Decide"
+        let grantCurationRights (req:UserRoleRequest) = CPOST<Guid,unit> req.UserId "/api/v1/Curate/Assign"
 
     module UnknownMaterial =
         let itemDetail (itemId:string) = CGET None (sprintf "/api/v1/anon/Unknown/%s" itemId)
         let list () = CGET None "/api/v1/anon/Unknown"
         let mostWanted () = CGET None "/api/v1/anon/Unknown/MostWanted"
         let submit req = CPOST<AddUnknownGrainRequest,unit> req "/api/v1/Unknown/Submit"
-        let identify (req:IdentifyGrainRequest) = CPOST req "/api/v1/Unknown/Identify"
+        let identify req = CPOST<IdentifyGrainRequest,unit> req "/api/v1/Unknown/Identify"
     
     module Digitise =
         let myCollections () : CoreFunction<EditableRefCollection list> = CGET None "/api/v1/Digitise/Collection"
@@ -128,9 +129,10 @@ module CoreActions =
         let recordSlide (req:SlideRecordRequest) : CoreFunction<unit> = CPOST req "/api/v1/Digitise/Slide/Add"
         let voidSlide (req:VoidSlideRequest) : CoreFunction<unit> = CPOST req "/api/v1/Digitise/Slide/Void"
         let uploadImage (req:SlideImageRequest) : CoreFunction<unit> = CPOST req "/api/v1/Digitise/Slide/AddImage"
-   
+
     module Cache =
         let neotoma (neotomaId:int) : CoreFunction<NeotomaCache> = CGET None (sprintf "/api/v1/anon/Cache/Neotoma/%i" neotomaId)
      
     module System =
         let rebuildReadModel () : CoreFunction<string> = CPOST () "/api/v1/Admin/RebuildReadModel"
+        let listUsers () : CoreFunction<PublicProfile list> = CGET None "/api/v1/Admin/Users"        
