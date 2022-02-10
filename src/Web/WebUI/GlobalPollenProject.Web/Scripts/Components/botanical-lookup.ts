@@ -16,7 +16,7 @@ export class BotanicalLookupToolViewModel {
     genus: KnockoutObservable<string>
     species: KnockoutObservable<string>
     author: KnockoutObservable<string>
-    isValidSearch: KnockoutComputed<boolean>
+    isValidSearch: any
     currentTaxon: KnockoutObservable<string> // Valid taxon ID (GUID)
     newSlideTaxonStatus: KnockoutObservable<any> // Contains array of API results
     
@@ -32,8 +32,7 @@ export class BotanicalLookupToolViewModel {
         this.newSlideTaxonStatus = ko.observable(null);
         this.currentTaxon = ko.observable("");
         this.rank.subscribe((rank) => this.switchRank(rank));
-        // TODO Fix this knockout binding (error in typescript compile)
-        //this.isValidSearch = ko.computed(this.searchIsValid, this);
+        this.isValidSearch = ko.computed(this.searchIsValid, this);
         this.doneTypingInterval = 100;
     }
     
@@ -69,7 +68,7 @@ export class BotanicalLookupToolViewModel {
             url: traceEndpoint + queryString,
             type: "GET"
         }).done(data => {
-                if (data.length == 1 && data[0].TaxonomicStatus == "accepted") this.currentTaxon(data[0].Id);
+                if (data.length == 1 && data[0].taxonomicStatus == "accepted") this.currentTaxon(data[0].id);
                 this.newSlideTaxonStatus(data);
             })
     }
