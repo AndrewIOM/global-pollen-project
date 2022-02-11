@@ -234,7 +234,7 @@ module Layout =
                         h4 [] [ encodedText "Information" ]
                         ul [] [
                             li [] [ a [ _href Urls.guide ] [ encodedText "About"] ]
-                            li [] [ a [ _href Urls.api ] [ encodedText "Public API"] ]
+                            li [] [ a [ _href Urls.api ] [ encodedText "Public API"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Beta" ] ] ]
                             li [] [ a [ _href Urls.terms ] [ encodedText "Terms and Licensing"] ]
                             li [] [ a [ _href Urls.cite ] [ encodedText "How to Cite"] ]
                         ]
@@ -248,7 +248,7 @@ module Layout =
                         ]
                         h4 [] [ encodedText "Tools" ]
                         ul [] [
-                            li [] [ a [ (*_href Urls.digitise*) ] [ encodedText "Online Digitisation Tools"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Under Maintenance" ] ] ]
+                            li [] [ a [ _href Urls.digitise ] [ encodedText "Online Digitisation Tools" ] ]
                             li [] [ a [ _href Urls.tools ] [ encodedText "Botanical Name Tracer"] ]
                         ]
                     ]
@@ -286,16 +286,18 @@ module Layout =
     let toScriptTags (scripts:Script list) =
         scripts |> List.distinct |> List.map toScriptTag
 
-    let headerBar title subtitle =
+    let headerBar title subtitle icon =
         header [] [
             Grid.container [
-                h1 [] [ encodedText title ]
+                h1 [] [  
+                    if Option.isSome icon then Icons.fontawesome icon.Value
+                    encodedText title ]
                 p [] [ encodedText subtitle ]
             ]
         ]
 
     let baseScripts = [
-        "https://code.jquery.com/jquery-3.2.1.min.js"
+        "https://code.jquery.com/jquery-3.6.0.min.js"
         jsBundle ]
 
     let master (scripts: Script list) title content profile =
@@ -309,8 +311,11 @@ module Layout =
                     ((List.concat [baseScripts; scripts]) |> toScriptTags) ] )
         ]
 
+    let standardWithHeaderIcon scripts title subtitle titleIcon content =
+        master scripts title ( headerBar title subtitle (Some titleIcon) :: [ Grid.container content ])
+
     let standard scripts title subtitle content =
-        master scripts title ( headerBar title subtitle :: [ Grid.container content ])
+        master scripts title ( headerBar title subtitle None :: [ Grid.container content ])
 
 
 module Components =
@@ -379,14 +384,7 @@ module Components =
     
     let galleryViewWindow =
         div [ _id "viewer-container" ] []
-    
-    let testGalleryItem =
-       div [ _class "slide-gallery-item col-md-3 active"
-             _data "frames" "[&quot;https://pollen.blob.core.windows.net/live-cache/76084935-8f48-4d7f-999b-85a125870cd2_0_web.jpg&quot;,&quot;https://pollen.blob.core.windows.net/live-cache/f75986fb-ddd5-4d73-918c-2e069d22e23d_1_web.jpg&quot;,&quot;https://pollen.blob.core.windows.net/live-cache/63d4d0aa-c59e-4298-973e-5b29550eb775_2_web.jpg&quot;,&quot;https://pollen.blob.core.windows.net/live-cache/711a4872-5ed1-4508-9247-c7096cae9f66_3_web.jpg&quot;,&quot;https://pollen.blob.core.windows.net/live-cache/322d9bd1-7845-4233-b5b0-ff7917361f9d_4_web.jpg&quot;]"
-             _data "pixelwidth" "0.0734194601726228" ] [
-           img [ _src "https://pollen.blob.core.windows.net/live-cache/76084935-8f48-4d7f-999b-85a125870cd2_0_web.jpg" ]
-       ]
-    
+        
     let galleryViewImageList images =
         div [ _class "card" ] [
             div [ _class "card-header" ] [ str "Select image:" ]
@@ -396,8 +394,7 @@ module Components =
                           attr "data-frames" (JsonSerializer.Serialize(i.Frames))
                           attr "data-pixelwidth" (i.PixelWidth.ToString()) ] [
                         img [ _src i.Frames.Head; _alt "Image preview" ]
-                    ]
-                 ) |> List.append [ testGalleryItem ] )
+                    ]) )
             ]
         ]
 
@@ -438,6 +435,7 @@ module Home =
                 a [ _href link ] [ encodedText title ] ]
             p [] [ 
                 encodedText summary
+                str " "
                 a [ _href link ] [ encodedText "Learn more" ]
             ]
         ]
@@ -502,13 +500,24 @@ module Home =
 module Slide =
     
     let citation vm latinName =
-        let compiledCitation = sprintf "%s, %s (%i). %s (%s). Digitised palynological slide. In: %s. Retrieved from globalpollenproject.org on %s"
-                                   vm.Slide.CollectorName vm.Slide.CollectorName vm.Collection.Published.Year
-                                   latinName vm.Slide.CollectionSlideId vm.Collection.Name (DateTime.Now.ToString("d"))
+        let authors = 
+            [ vm.Slide.CollectorName; vm.Slide.PreppedBy
+              sprintf "%s, %s" vm.Collection.CuratorSurname vm.Collection.CuratorFirstNames ]
+            |> List.filter (fun s -> not (String.IsNullOrEmpty s) && s <> "Unknown")
         div [ _class "card card-inverse card-primary crop-panel mb-3" ] [
             div [ _class "card-block" ] [
                 h4 [ _class "card-title" ] [ encodedText "Citation" ]
-                p [] [ encodedText compiledCitation ]
+                p [] [ 
+                    if authors.Length = 1 then strf "%s (%i)" authors.Head vm.Collection.Published.Year
+                    else strf "%s (%i)" (authors |> String.concat ";") vm.Collection.Published.Year
+                    strf "%s (Slide #%s). " latinName vm.Slide.CollectionSlideId
+                    str "Digitised palynological slide. In: "
+                    em [] [ str vm.Collection.Name ]
+                    strf " (version %i, published online %s). " vm.Collection.Version (vm.Collection.Published.ToString("d"))
+                    if String.IsNullOrEmpty(vm.Collection.Institution) |> not then strf "Original material located at %s. " vm.Collection.Institution
+                    str "Retrieved from globalpollenproject.org on "
+                    strf "%s."(DateTime.Now.ToString("d"))
+                ]
             ]
         ]
 
@@ -524,7 +533,8 @@ module Slide =
                   { Name = model.Slide.CurrentGenus; Url = Urls.MasterReference.genus model.Slide.CurrentFamily model.Slide.CurrentGenus } ]
             | _ ->
                 [ mrc; { Name = model.Slide.CurrentFamily; Url = Urls.MasterReference.family model.Slide.CurrentFamily }
-                  { Name = model.Slide.CurrentGenus; Url = Urls.MasterReference.genus model.Slide.CurrentFamily model.Slide.CurrentGenus } ]
+                  { Name = model.Slide.CurrentGenus; Url = Urls.MasterReference.genus model.Slide.CurrentFamily model.Slide.CurrentGenus }
+                  { Name = sprintf "%s (%s)" model.Slide.CurrentSpecies model.Slide.CurrentSpAuth; Url = Urls.MasterReference.species model.Slide.CurrentFamily model.Slide.CurrentGenus model.Slide.CurrentSpecies } ]
         else
             [ { Name = "Individual Reference Collections"; Url = Urls.Collections.root }
               { Name = model.Collection.Name; Url = Urls.Collections.byId model.Collection.Id } ]
@@ -535,7 +545,9 @@ module Slide =
                 span [] [ str "Help us identify individual pollen grains and spores within this slide." ]
                 match isSignedIn with
                 | true -> button [ _id "cropping-button"; _class "btn btn-primary btn-block" ] [ str "Start" ]
-                | false -> span [] [ a [ _href Urls.Account.login ] [ str "Log in to get started." ] ]
+                | false -> span [] [ 
+                    a [ _href Urls.Account.login ] [ str "Log in" ]
+                    str " to get started." ]
             ]
         ]
     
@@ -603,7 +615,7 @@ module Slide =
         let title = sprintf "%s: %s" model.Slide.CollectionSlideId latinName
         let subtitle = sprintf "%s - digitised reference slide" model.Collection.Name
         [ 
-            Components.breadcrumb (breadcrumbLinks model) model.Slide.CollectionSlideId
+            Components.breadcrumb (breadcrumbLinks model) (sprintf "Slide %s" model.Slide.CollectionSlideId)
             Grid.row [
                 Grid.column Medium 8 [
                     Components.galleryViewWindow
@@ -712,11 +724,12 @@ module Taxon =
 
     let descriptionCard latinName eolId (eolCache:EncyclopediaOfLifeCache) =
         div [ _class "card" ] [
-            div [ _class "card-fixed-height-image" ] [
-                img [ _src eolCache.PhotoUrl; _alt <| sprintf "%s (rights holder: %s)"latinName eolCache.PhotoAttribution ]
-                if not <| String.IsNullOrEmpty eolCache.PhotoAttribution then
-                    span [ _class "image-attribution" ] [ str <| "&copy " + eolCache.PhotoAttribution ]
-            ]
+            if String.IsNullOrEmpty(eolCache.PhotoUrl) |> not then
+                div [ _class "card-fixed-height-image" ] [
+                    img [ _src eolCache.PhotoUrl; _alt <| sprintf "%s (rights holder: %s)"latinName eolCache.PhotoAttribution ]
+                    if not <| String.IsNullOrEmpty eolCache.PhotoAttribution then
+                        span [ _class "image-attribution" ] [ str <| "&copy " + eolCache.PhotoAttribution ]
+                ]
             div [ _class "card-block" ] [
                 if String.IsNullOrEmpty eolCache.CommonEnglishName
                 then h4 [ _class "card-title" ] [ str latinName ]
@@ -778,7 +791,10 @@ module Taxon =
                             then a [ _href vm.ReferenceUrl; _target "blank" ] [ str vm.ReferenceName ]
                             else str vm.ReferenceName
                         ]
-                    else span [] [ str "None available." ]
+                    else span [] [ 
+                        str "None available. You can check "
+                        a [ _href (sprintf "http://www.theplantlist.org/tpl1.1/search?q=%s" vm.LatinName) ] [ str "The Plant List" ]
+                        str " for further information." ]
                 ]
             ]
         ]
@@ -789,7 +805,7 @@ module Taxon =
             str " Connected data sources"
         ] [
             p [] [ str "This taxon is currently linked to the following locations." ]
-            a [ _class "btn btn-primary"; _target "blank"
+            a [ _class "btn btn-primary mr-1"; _target "blank"
                 _href <| sprintf "http://www.theplantlist.org/tpl1.1/search?q=%s" latinName ] [ str "The Plant List" ]
             a [ _class "btn btn-primary"; _target "blank"
                 _href <| sprintf "http://gbif.org/species/%i" gbifId ] [ str "Global Biodiversity Information Facility" ]
@@ -800,7 +816,7 @@ module Taxon =
             Icons.fontawesome "film"
             encodedText "Digitised Reference Slides"
         ] [
-            encodedText (sprintf "We currently hold %i digitised slides." (slides |> List.length))
+            encodedText (sprintf "We currently hold %i digitised slide(s)." (slides |> List.length))
             ul [ _class "grain-grid columns-8" ] (slides |> List.map (fun s -> 
                 li [] [
                     a [ _href (sprintf "/Reference/%A/%s" s.ColId s.SlideId) ] [ 
@@ -822,6 +838,7 @@ module Taxon =
         ]
     
     let view (vm:TaxonDetail) =
+        let title = if vm.Rank = "Species" then sprintf "%s %s" vm.LatinName vm.Authorship else vm.LatinName
         let subtitle = sprintf "%s in the Global Pollen Project's Master Reference Collection" vm.Rank
         let distributionMap = distributionMap vm.GbifId vm.NeotomaId
         let breadcrumbs =
@@ -845,7 +862,7 @@ module Taxon =
                     connectedDataCard vm.LatinName vm.GbifId
                 ]
             ]
-        ] |> Layout.standard distributionMap.Scripts vm.LatinName subtitle
+        ] |> Layout.standard distributionMap.Scripts title subtitle
 
 
 module Guide =
@@ -1239,11 +1256,11 @@ module Identify =
                                 Grid.column Medium 8 [
                                     match vm.AgeType with
                                     | "Calendar" -> span [] [
-                                        strong [] [ str "Environmental." ]
+                                        strong [] [ str "Environmental. " ]
                                         str "This grain or spore was from the environment, for example from a pollen trap, bee, honey, or soil."
                                         ]
                                     | _ -> span [] [
-                                        strong [] [ str "Fossil." ]
+                                        strong [] [ str "Fossil. " ]
                                         str "This grain or spore was taken from a sediment core or other environmental archive."
                                     ]
                                 ]
@@ -1269,6 +1286,7 @@ module Identify =
                                           _src <| sprintf "https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/pin-s-a+9ed4bd(%f,%f)/%f,%f,3/560x200@2x?access_token=%s" vm.Longitude vm.Latitude vm.Longitude vm.Latitude Settings.mapboxToken ]
                                 ]
                             ]
+                            hr []
                             Grid.row [
                                 Grid.column Medium 4 [ label [] [ str "Share" ] ]
                                 Grid.column Medium 8 [
@@ -1321,9 +1339,10 @@ module Identify =
                     ] // end identification pane
                 ]
             ]
-        ] |> Layout.standard []
+        ] |> Layout.standardWithHeaderIcon []
                  "Unidentified Specimen"
                  "This individual pollen grain or spore does not have a taxonomic identification. Can you help?"
+                 "question-circle"
 
     let add vm = 
         [
@@ -1604,14 +1623,57 @@ module Tools =
 
 module Admin =
 
-    let users vm =
+    let users (vm:PublicProfile list) =
         [
-            
+            table [ _class "table table-responsive" ] [
+                thead [] [
+                    tr [] [
+                        th [] [ str "Name" ]
+                        th [] [ str "Description" ]
+                        th [] [ str "Actions" ]
+                    ]
+                ]
+                tbody [] (vm |> List.map(fun p ->
+                    tr [] [
+                        td [] [ strf "%s %s %s" p.Title p.FirstName p.LastName ]
+                        td [] [ strf "%b" p.IsPublic ]
+                        td [] [ strf "%f" p.Score ]
+                        td [] [ strf "%b" p.Curator ]
+                        td [] [
+                            if not p.Curator then
+                                form [ _method "POST"; _action "/Admin/GrantCuration" ] [
+                                    input [ _hidden; _id "UserId"; _name "UserId"; _value (p.UserId.ToString()) ]
+                                    button [ _type "submit"; _class "btn btn-secondary" ] [ str "Grant curation rights" ]
+                                ]
+                        ]
+                    ]))
+            ]
         ] |> Layout.standard [] "Users" "Admin"
 
-    let curate vm =
+    let curate (vm:EditableRefCollection list) =
         [
-            
+            table [ _class "table table-responsive" ] [
+                thead [] [
+                    tr [] [
+                        th [] [ str "Name" ]
+                        th [] [ str "Description" ]
+                        th [] [ str "Actions" ]
+                    ]
+                ]
+                tbody [] (vm |> List.map(fun i ->
+                    tr [] [
+                        td [] [ str i.Name ]
+                        td [] [ str i.Description ]
+                        td [] [
+                            form [ _method "POST"; _action "/Admin/Curate" ] [
+                                input [ _hidden; _name "Collection"; _value (i.Id.ToString()) ]
+                                input [ _hidden; _name "Comment"; _value "" ]
+                                input [ _hidden; _name "Approved"; _value "true" ]
+                                button [ _type "submit"; _class "btn btn-secondary" ] [ str "Approve" ]
+                            ]
+                        ]
+                    ]))
+            ]
         ] |> Layout.standard [] "Curate" "Curate"
        
         

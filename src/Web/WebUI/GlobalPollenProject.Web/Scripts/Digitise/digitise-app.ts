@@ -1,9 +1,9 @@
 import * as ko from 'knockout'
+import 'bootstrap-datepicker';
 import {Viewer, ViewerEvent} from "../Components/Viewer/viewer";
 import {FocusSlider} from "../Components/Viewer/focusslider";
 import {MeasuringLine, MeasuringLineEvent, MeasuringLineState} from "../Components/Viewer/measuringline";
 import {ScaleBar} from "../Components/Viewer/scalebar";
-
 
 ////////////////////////
 /// Setup - KO Bindings
@@ -28,10 +28,11 @@ ko.bindingHandlers.BSModal = {
 ////////////////////////
 
 export function activate(container: HTMLElement) {
-    $(document).ready(function() {
+    jQuery(function() {
+        $('#tutorialModal').modal('show');
         var vm = new DigitiseViewModel();
         vm.switchView(CurrentView.MASTER);
-        ko.applyBindings(vm);    
+        ko.applyBindings(vm);
     });
 }
 
@@ -88,7 +89,7 @@ function DigitiseViewModel() {
                 break;
             case CurrentView.DETAIL:
                 $.ajax({
-                        url: apiPrefix + "collection?id=" + data.id,
+                        url: apiPrefix + "collection/" + data.id,
                         type: "GET"
                     })
                     .done(function (col) {
@@ -105,7 +106,6 @@ function DigitiseViewModel() {
                 self.currentView(view);
                 break;
             case CurrentView.SLIDE_DETAIL:
-
                 self.slideDetailVM(new SlideDetailViewModel(data));
                 self.slideDetailVM().loadCalibrations();
                 self.currentView(view);
@@ -124,7 +124,7 @@ function DigitiseViewModel() {
     };
 
     self.publish = function () {
-        let requestUrl = "/api/v1/digitise/collection/publish?id=" + self.activeCollection().id;
+        let requestUrl = "/api/v1/digitise/collection/publish/" + self.activeCollection().id;
         $.ajax({
                 url: requestUrl,
                 type: "GET"
@@ -157,14 +157,14 @@ function AddCollectionViewModel() {
     self.submit = function (rootVM) {
         self.isProcessing(true);
         let req = {
-            Name: self.name(),
-            Description: self.description(),
-            CuratorFirstNames: self.curatorFirstNames(),
-            CuratorSurname: self.curatorSurname(),
-            CuratorEmail: self.email(),
-            AccessMethod: self.accessMethod(),
-            Institution: self.institutionName(),
-            InstitutionUrl: self.institutionUrl()
+            name: self.name(),
+            description: self.description(),
+            curatorFirstNames: self.curatorFirstNames(),
+            curatorSurname: self.curatorSurname(),
+            curatorEmail: self.email(),
+            accessMethod: self.accessMethod(),
+            institution: self.institutionName(),
+            institutionUrl: self.institutionUrl()
         };
         $.ajax({
             url: "/api/v1/digitise/collection/start",
@@ -177,7 +177,7 @@ function AddCollectionViewModel() {
             },
             statusCode: {
                 400: function (err) {
-                    self.validationErrors(err.responseJSON.Errors);
+                    self.validationErrors(err.responseJSON.errors);
                     self.isProcessing(false);
                     $(".modal").scrollTop();
                 },
@@ -264,9 +264,86 @@ function RecordSlideViewModel(currentCollection) {
     self.isProcessing = ko.observable(false);
     self.validationErrors = ko.observableArray([]);
 
+    self.typingTimer;
+    const doneTypingInterval = 100;
+    
+    self.suggest = (entryBox, rank) => {
+        console.log(entryBox);
+        clearTimeout(self.typingTimer);
+        if (entryBox.value) {
+            self.typingTimer = setTimeout(function () {
+                self.updateList(entryBox, rank);
+            }, doneTypingInterval);
+        }
+    };
+    
+    //Update suggestion list when timeout complete
+    self.updateList = (entryBox:HTMLInputElement, rank:string) => {
+        let query = '';
+        let value = entryBox.value;
+        if (rank == "Family" || rank == "Genus") {
+            value = this.capitaliseString(value);
+        }
+        //Combine genus and species for canonical name
+        if (rank == 'Species') {
+            const genus = (<HTMLInputElement>document.getElementById('original-Genus')).value;
+            query += genus + " ";
+        }
+        query += value;
+        if (value != "") {
+            const request = "/api/v1/backbone/search?rank=" + rank + "&latinName=" + query;
+            $.ajax({
+                url: request,
+                type: "GET"
+            }).done(data => {
+                const list = document.getElementById(rank + 'List');
+                $('#' + rank + 'List').css('display', 'block');
+                list.innerHTML = "";
+                for (let i = 0; i < data.length; i++) {
+                    if (i > 10) continue;
+                    const option = document.createElement('li');
+                    const link = document.createElement('a');
+                    option.appendChild(link);
+                    link.innerHTML = data[i];
+
+                    let matchCount = 0;
+                    for (let j = 0; j < data.length; j++) {
+                        if (data[j].latinName == data[i]) {
+                            matchCount++;
+                        }
+                    }
+                    link.addEventListener('click', e => {
+                        const name = link.innerHTML;
+                        if (rank == 'Species') {
+                            $('#original-Species').val(name.split(' ')[1]).change();
+                            $('#original-Genus').val(name.split(' ')[0]).change();
+                        } else if (rank == 'Genus') {
+                            $('#original-Genus').val(name).change();
+                        } else if (rank == 'Family') {
+                            $('#original-Family').val(name).change();
+                        }
+                        $('#' + rank + 'List').fadeOut();
+                    });
+                    list.appendChild(option);
+                }
+            });
+        }
+    }
+    
+    self.disable = (rank) => {
+        let element;
+        if (rank == 'Family') element = 'FamilyList';
+        if (rank == 'Genus') element = 'GenusList';
+        if (rank == 'Species') element = 'SpeciesList';
+        setTimeout(func, 100);
+        function func() {
+            $('#' + element).fadeOut();
+        }
+    }
+
     self.validateTaxon = function () {
         self.isProcessing(true);
-        var query;
+        var query: string;
         if (self.rank() == "Family") {
             query = "rank=Family&family=" + self.family() + "&latinname=" + self.family();
         } else if (self.rank() == 'Genus') {
@@ -279,7 +356,7 @@ function RecordSlideViewModel(currentCollection) {
                 type: "GET"
             })
             .done(function (data) {
-                if (data.length == 1 && data[0].TaxonomicStatus == "accepted" || data[0].TaxonomicStatus == "doubtful") self.currentTaxon(data[0].Id);
+                if (data.length == 1 && data[0].taxonomicStatus == "accepted" || data[0].taxonomicStatus == "doubtful") self.currentTaxon(data[0].id);
                 self.newSlideTaxonStatus(data);
                 self.isProcessing(false);
             });
@@ -290,7 +367,7 @@ function RecordSlideViewModel(currentCollection) {
         let preparedByFirstNames = isEmpty(self.preparedByFirstNames()) ? [] : self.preparedByFirstNames().split(' ');
         let collectedByFirstNames = isEmpty(self.collectedByFirstNames()) ? [] : self.collectedByFirstNames().split(' ');
         let request = {
-            Collection: self.collection().Id,
+            Collection: self.collection().id,
             ExistingId: self.existingId(),
             OriginalFamily: self.family(),
             OriginalGenus: self.genus(),
@@ -324,8 +401,15 @@ function RecordSlideViewModel(currentCollection) {
     };
 
     self.capitaliseFirstLetter = function (element) {
-        $(element).val($(element).val().toString().charAt(0).toUpperCase() + $(element).val().toString().slice(1));
+        const currentValue = $(element).val();
+        if (typeof(currentValue) == "string") {
+            $(element).val(this.capitaliseString(currentValue));
+        }
     };
+
+    self.capitaliseString = (string:string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
 
     self.submit = function (rootVM) {
         self.isProcessing(true);
@@ -342,7 +426,7 @@ function RecordSlideViewModel(currentCollection) {
                 statusCode: {
                     400: function (err) {
                         console.log(err.responseJSON);
-                        self.validationErrors(err.responseJSON.Errors);
+                        self.validationErrors(err.responseJSON.errors);
                         self.isProcessing(false);
                     },
                     500: function (data) {
@@ -352,14 +436,6 @@ function RecordSlideViewModel(currentCollection) {
                 }
             });
     };
-
-    console.log('registering event handlers...');
-    $('#original-Family').keyup(() => suggest(this, 'Family'));
-    $('#original-Genus').keyup(() => suggest(this, 'Genus'));
-    $('#original-Species').keyup(() => suggest(this, 'Species'));
-    $('#original-Family').blur(() => disable('Family'));
-    $('#original-Genus').blur(() => disable('Genus'));
-    $('#original-Species').blur(() => disable('Species'));
 }
 
 ////////////////////////
@@ -391,7 +467,7 @@ function SlideDetailViewModel(detail) {
     self.measuredDistance = ko.observable();
     self.digitisedYear = ko.observable(null);
 
-    self.isValidStaticRequest = ko.computed(function () {
+    self.isValidStaticRequest = ko.computed(() => {
         if (self.isProcessing()) return false;
         if (self.floatingCal() == null) return false;
         if (self.measuredDistance() == null) return false;
@@ -409,8 +485,8 @@ function SlideDetailViewModel(detail) {
     }, self);
 
     self.voidSlide = function(rootVM) {
-        let request = { SlideId: self.slideDetail().CollectionSlideId, CollectionId: self.slideDetail().CollectionId };
-        if (window.confirm("Are you sure? You cannot recover a deleted slide. " + self.slideDetail().CollectionSlideId + " will be lost. Continue?")) {
+        let request = { slideId: self.slideDetail().collectionSlideId, collectionId: self.slideDetail().collectionId };
+        if (window.confirm("Are you sure? You cannot recover a voided slide. " + self.slideDetail().collectionSlideId + " will be lost. Continue?")) {
             $.ajax({
                 url: "/api/v1/digitise/collection/slide/void",
                 type: "POST",
@@ -492,21 +568,21 @@ function SlideDetailViewModel(detail) {
     self.submit = function (rootVM, base64Array) {
         self.isProcessing(true);
         let request = {
-            CollectionId: self.slideDetail().CollectionId,
-            SlideId: self.slideDetail().CollectionSlideId,
-            IsFocusImage: base64Array.length > 1,
-            FramesBase64: base64Array,
-            DigitisedYear: parseInt(self.digitisedYear())
+            collectionId: self.slideDetail().collectionId,
+            slideId: self.slideDetail().collectionSlideId,
+            isFocusImage: base64Array.length > 1,
+            framesBase64: base64Array,
+            digitisedYear: parseInt(self.digitisedYear())
         }
         if(base64Array.length == 1) {
-            request["FloatingCalPointOneX"] = Math.round(self.floatingCal()[0][0]);
-            request["FloatingCalPointOneY"] = Math.round(self.floatingCal()[0][1]);
-            request["FloatingCalPointTwoX"] = Math.round(self.floatingCal()[1][0]);
-            request["FloatingCalPointTwoY"] = Math.round(self.floatingCal()[1][1]);
-            request["MeasuredDistance"] = parseFloat(self.measuredDistance());
+            request["floatingCalPointOneX"] = Math.round(self.floatingCal()[0][0]);
+            request["floatingCalPointOneY"] = Math.round(self.floatingCal()[0][1]);
+            request["floatingCalPointTwoX"] = Math.round(self.floatingCal()[1][0]);
+            request["floatingCalPointTwoY"] = Math.round(self.floatingCal()[1][1]);
+            request["measuredDistance"] = parseFloat(self.measuredDistance());
         } else if (base64Array.length > 1) {
-            request["CalibrationId"] = self.selectedMicroscope().Id;
-            request["Magnification"] = self.selectedMagnification().Level;
+            request["calibrationId"] = self.selectedMicroscope().id;
+            request["magnification"] = self.selectedMagnification().level;
         } else {
             return;
         }
@@ -529,14 +605,14 @@ function SlideDetailViewModel(detail) {
             },
             success: function (data) {
                 rootVM.switchView(CurrentView.DETAIL, {
-                    Id: self.slideDetail().CollectionId
+                    id: self.slideDetail().collectionId
                 });
             },
             statusCode: {
                 400: function (err) {
                     self.validationErrors([]);
-                    err.responseJSON.Errors.forEach(function (e) {
-                        self.validationErrors().push(e.Errors[0]);
+                    err.responseJSON.errors.forEach(function (e) {
+                        self.validationErrors().push(e.errors[0]);
                         self.isProcessing(false);
                     });
                 },
@@ -750,9 +826,9 @@ function SlideDetailViewModel(detail) {
         self.measuringLine.activate();
         $("#slidedetail-draw-line-button").prop("disabled", true);
 
-        $(self.measuringLine).on(MeasuringLineEvent.EVENT_DRAWN, function () {
+        $(self.measuringLine.id).on(MeasuringLineEvent.EVENT_DRAWN, () => {
+            console.log("Line drawn.");
             $("#slidedetail-draw-line-button").prop("disabled", false);
-
             self.floatingCal(self.measuringLine.getPixelPoints());
         });
     }
@@ -833,11 +909,11 @@ function MicroscopeViewModel() {
 
     self.submit = function (parentVM) {
         let request = {
-            Name: self.friendlyName(),
-            Type: self.microscopeType(),
-            Model: self.microscopeModel(),
-            Ocular: self.ocular(),
-            Objectives: self.magnifications()
+            name: self.friendlyName(),
+            type: self.microscopeType(),
+            model: self.microscopeModel(),
+            ocular: self.ocular(),
+            objectives: self.magnifications()
         };
         $.ajax({
                 url: "/api/v1/digitise/calibration/use",
@@ -873,7 +949,7 @@ function ImageCalibrationViewModel(currentMicroscope) {
     }
 
     self.magName = function(data) {
-        return data.Level + 'x';
+        return data.level + 'x';
     }
 
     self.submit = function (parent) {
@@ -881,14 +957,14 @@ function ImageCalibrationViewModel(currentMicroscope) {
 
         convertToDataURLviaCanvas(self.viewer.imagePaths[0], function (d) {
             let request = {
-                CalibrationId: self.microscope().Id,
-                Magnification: self.magnification(),
-                X1: Math.round(self.floatingCal()[0][0]),
-                X2: Math.round(self.floatingCal()[1][0]),
-                Y1: Math.round(self.floatingCal()[0][1]),
-                Y2: Math.round(self.floatingCal()[1][1]),
-                MeasuredLength: parseFloat(self.measuredDistance()),
-                ImageBase64: d
+                calibrationId: self.microscope().Id,
+                magnification: self.magnification(),
+                x1: Math.round(self.floatingCal()[0][0]),
+                x2: Math.round(self.floatingCal()[1][0]),
+                y1: Math.round(self.floatingCal()[0][1]),
+                y2: Math.round(self.floatingCal()[1][1]),
+                measuredLength: parseFloat(self.measuredDistance()),
+                imageBase64: d
             }
             $.ajax({
                     url: "/api/v1/digitise/calibration/use/mag",
@@ -951,95 +1027,6 @@ function ImageCalibrationViewModel(currentMicroscope) {
     }
 }
 
-// Helpers - Dropdown autocomplete
-var typingTimer;
-var doneTypingInterval = 100;
-
-function capitaliseFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-function suggest(entryBox, rank) {
-    console.log(entryBox);
-    clearTimeout(typingTimer);
-    if (entryBox.value) {
-        typingTimer = setTimeout(function () {
-            updateList(entryBox, rank);
-        }, doneTypingInterval);
-    }
-};
-
-//Update suggestion list when timeout complete
-function updateList(entryBox, rank) {
-    var query = '';
-    var value = entryBox.value;
-    if (rank == "Family" || rank == "Genus") {
-        value = capitaliseFirstLetter(value);
-    }
-
-    if (rank == 'Species') {
-        //Combine genus and species for canonical name
-        var genus = (<HTMLInputElement>document.getElementById('original-Genus')).value;
-        query += genus + " ";
-    }
-    query += value;
-
-    if (value == "") {
-
-    } else {
-        var request = "/api/v1/backbone/search?rank=" + rank + "&latinName=" + query;
-        $.ajax({
-            url: request,
-            type: "GET"
-        }).done(function (data) {
-            var list = document.getElementById(rank + 'List');
-            $('#' + rank + 'List').css('display', 'block');
-            list.innerHTML = "";
-            for (var i = 0; i < data.length; i++) {
-                if (i > 10) continue;
-                var option = document.createElement('li');
-                var link = document.createElement('a');
-                option.appendChild(link);
-                link.innerHTML = data[i];
-
-                var matchCount = 0;
-                for (var j = 0; j < data.length; j++) {
-                    if (data[j].latinName == data[i]) {
-                        matchCount++;
-                    }
-                };
-                link.addEventListener('click', function (e) {
-                    var name = this.innerHTML;
-                    if (rank == 'Species') {
-                        $('#original-Species').val(name.split(' ')[1]).change();
-                        $('#original-Genus').val(name.split(' ')[0]).change();
-                    } else if (rank == 'Genus') {
-                        $('#original-Genus').val(name).change();
-                    } else if (rank == 'Family') {
-                        $('#original-Family').val(name).change();
-                    }
-                    $('#' + rank + 'List').fadeOut();
-                });
-                list.appendChild(option);
-            }
-        });
-    }
-}
-
-
-function disable(rank) {
-    var element;
-    if (rank == 'Family') element = 'FamilyList';
-    if (rank == 'Genus') element = 'GenusList';
-    if (rank == 'Species') element = 'SpeciesList';
-
-    setTimeout(func, 100);
-
-    function func() {
-        $('#' + element).fadeOut();
-    }
-}
-
 //Base Functions
 function isEmpty(str) {
     return (!str || 0 === str.length);
@@ -1052,9 +1039,9 @@ function convertToDataURLviaCanvas(url, callback) {
         var canvas = <HTMLCanvasElement>document.createElement('CANVAS');
         var ctx = canvas.getContext('2d');
         var dataURL;
-        canvas.height = this.height;
-        canvas.width = this.width;
-        ctx.drawImage(this, 0, 0);
+        canvas.height = img.height;
+        canvas.width = img.width;
+        ctx.drawImage(img, 0, 0);
         dataURL = canvas.toDataURL("image/png");
         callback(dataURL);
         canvas = null;

@@ -68,16 +68,17 @@ let inline bindJson< ^T> (ctx:HttpContext) =
     | Ok o -> Ok o
     | Error e -> Error InvalidRequestFormat
 
-let apiResult next ctx result =
+let apiResult next ctx (result:Result<'a,ServiceError>) =
     match result with
     | Ok list -> json (Ok list) next ctx
-    | Error e -> (setStatusCode 400 >=> json (Error e)) next ctx
-        //(setStatusCode 400 >=>
-            //match e with
-            //| Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
-            //| InvalidRequestFormat -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
-            //| InMaintenanceMode -> json <| { Message = "Maintenance in progress"; Errors = [] }
-            //| _ -> json <| { Message = "Internal error"; Errors = [] } ) next ctx
+    | Error e ->
+        match e with
+        | InMaintenanceMode -> (setStatusCode 503 >=> json (Error InMaintenanceMode)) next ctx
+        | Validation _
+        | InvalidRequestFormat -> (setStatusCode 400 >=> json (Error e)) next ctx
+        | Core
+        | Persistence -> (setStatusCode 500 >=> json (Error e)) next ctx
+        | NotFound -> (setStatusCode 404 >=> json (Error e)) next ctx
 
 let inline postApi< ^T, ^R> (action:^T->Result< ^R,ServiceError>) : HttpHandler =
     fun next ctx ->
@@ -138,11 +139,11 @@ let routes : HttpHandler =
             (choose [
                 // Master Reference Collection
                 GET >=> route   "/MRC/Taxon/Autocomplete"   >=> apif<TaxonAutocompleteRequest,TaxonAutocompleteItem list> U.Taxonomy.autocomplete
+                GET >=> routef  "/MRC/Taxon/Id/%O"      (fun i n c -> U.Taxonomy.getById i |> apiResult n c)
                 GET >=> route   "/MRC/Taxon"            >=> apif<TaxonPageRequest, PagedResult<TaxonSummary>> U.Taxonomy.list
                 GET >=> routef  "/MRC/Taxon/%s/%s/%s"   (fun (f,g,s) n c -> U.Taxonomy.getByName f (opt g) (opt s) |> apiResult n c)
                 GET >=> routef  "/MRC/Taxon/%s/%s"      (fun (f,g) n c -> U.Taxonomy.getByName f (opt g) None |> apiResult n c)
                 GET >=> routef  "/MRC/Taxon/%s"         (fun f n c -> U.Taxonomy.getByName f None None |> apiResult n c)
-                GET >=> routef  "/MRC/Taxon/Id/%s"      (fun i n c -> U.Taxonomy.getById (Guid(i)) |> apiResult n c)
                 GET >=> route   "/MRC/Collection"       >=> apif U.IndividualReference.list
                 GET >=> routef  "/MRC/Collection/%s/%i" (fun (col,i) n c -> U.IndividualReference.getDetail col (Some i) |> apiResult n c)
                 GET >=> routef  "/MRC/Collection/%s"    (fun s n c -> U.IndividualReference.getDetail s None |> apiResult n c)
@@ -162,8 +163,8 @@ let routes : HttpHandler =
                 POST >=> route  "/User/Register"        >=> postAuthApi U.User.register
 
                 // Curation
-                GET  >=> route  "/Curate/Pending"       >=> api U.Curation.listPending
-                POST >=> route  "/Cutrate/Assign"       >=> postApi U.User.grantCuration
+                GET  >=> route  "/Curate/Pending"       >=> apiAuth U.Curation.listPending
+                POST >=> route  "/Curate/Assign"       >=> postAuthApi U.User.grantCuration
                 POST >=> route  "/Curate/Decide"        >=> postAuthApi U.Curation.issueDecision
 
                 // Unknown Material
@@ -174,25 +175,27 @@ let routes : HttpHandler =
                 POST >=> route  "/Unknown/Identify"     >=> postAuthApi U.UnknownGrains.identifyUnknownGrain
 
                 // User's equipment
-                GET >=> route   "/User/Microscope"      >=> apif U.Calibrations.getMyCalibrations
+                GET >=> route   "/User/Microscope"              >=> apiAuth U.Calibrations.getMyCalibrations
                 POST >=> route  "/User/Microscope/Setup"        >=> postAuthApi U.Calibrations.setupMicroscope
-                POST >=> route  "/User/Microscope/Calibrate"    >=> postApi U.Calibrations.calibrateMagnification
+                POST >=> route  "/User/Microscope/Calibrate"    >=> postAuthApi U.Calibrations.calibrateMagnification
 
                 // Digitise
-                GET >=> route   "/Digitise/Collection"          >=> apiAuth U.Digitise.myCollections
-                GET >=> routef  "/Digitise/Collection/%s"       (fun col n c -> col |> U.Digitise.getCollection |> apiResult n c)
-                POST >=> route  "/Digitise/Collection/Start"    >=> postAuthApi U.Digitise.startNewCollection
-                POST >=> routef "/Digitise/Collection/%s/Publish"   (fun col n c -> U.Digitise.publish (Auth.getCurrentUser c) col |> apiResult n c)
-                POST >=> route  "/Digitise/Slide/Add"       >=> postApi U.Digitise.addSlideRecord
-                POST >=> route  "/Digitise/Slide/Void"      >=> postApi U.Digitise.voidSlide
-                POST >=> route  "/Digitise/Slide/AddImage"  >=> postApi U.Digitise.uploadSlideImage
+                subRoute "/Digitise" (Auth.checkUserIsLoggedIn >=> choose [
+                    GET >=> route   "/Collection"           >=> apiAuth U.Digitise.myCollections
+                    GET >=> routef  "/Collection/%s"        (fun col n c -> col |> U.Digitise.getCollection |> apiResult n c)
+                    POST >=> route  "/Collection/Start"     >=> postAuthApi U.Digitise.startNewCollection
+                    POST >=> routef "/Collection/%s/Publish" (fun col n c -> U.Digitise.publish (Auth.getCurrentUser c) col |> apiResult n c)
+                    POST >=> route  "/Slide/Add"            >=> postApi U.Digitise.addSlideRecord
+                    POST >=> route  "/Slide/Void"           >=> postApi U.Digitise.voidSlide
+                    POST >=> route  "/Slide/AddImage"       >=> postApi U.Digitise.uploadSlideImage
+                ])
 
                 // Caches
                 GET >=> routef  "/Cache/Neotoma/%i"     (fun i n c -> U.Cache.neotoma i |> apiResult n c)
                 
                 // Administration
-                POST >=> route "/Admin/RebuildReadModel"    >=> postApi U.Admin.rebuildReadModel
-                POST >=> route "/Admin/Users"               >=> postApi U.Admin.listUsers
+                POST >=> route "/Admin/RebuildReadModel"    >=> postAuthApi U.Admin.rebuildReadModel
+                GET  >=> route "/Admin/Users"               >=> apiAuth U.Admin.listUsers
             ])
         ]
 
@@ -224,7 +227,7 @@ type Startup () =
     member __.Configure(app: IApplicationBuilder, env: IWebHostEnvironment) =
         if (env.IsDevelopment()) then
             app.UseDeveloperExceptionPage() |> ignore
-            U.Admin.rebuildReadModel() |> ignore
+            U.Admin.rebuildReadModel () () |> ignore
             Seed.seedTestData()
         app.UseStaticFiles() |> ignore
         app.UseAuthentication() |> ignore

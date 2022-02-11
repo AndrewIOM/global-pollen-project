@@ -470,7 +470,10 @@ module Program =
             then
                 let create = userManager.CreateAsync(powerUser, powerPassword) |> Async.AwaitTask |> Async.RunSynchronously
                 if create.Succeeded 
-                    then userManager.AddToRoleAsync(powerUser, "Admin") |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+                    then 
+                        userManager.AddToRoleAsync(powerUser, "Admin") |> Async.AwaitTask |> Async.RunSynchronously |> ignore
+                        let token = userManager.GenerateEmailConfirmationTokenAsync(powerUser) |> Async.AwaitTask |> Async.RunSynchronously
+                        userManager.ConfirmEmailAsync(powerUser, token) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
                     else failwithf "Could not create default user account: %A" create.Errors
             else ()
 

@@ -25,7 +25,7 @@ module Actions =
         fun next ctx ->
             let token = ctx.GetTokenAsync("access_token") |> Async.AwaitTask |> Async.RunSynchronously
             ctx.Items.Add("access_token",token)
-            redirectTo true Urls.Account.profile next ctx
+            redirectTo true Urls.home next ctx
 
     let logout = signOut "Cookies" >=> redirectTo false "/"
            
@@ -206,12 +206,12 @@ module Actions =
             |> Async.RunSynchronously
             |> toApiResult next ctx
 
-        let userAdmin next ctx =
-            accessDenied next ctx
-            // TODO Hook up admin function
-            //Admin.listUsers()
-            //|> renderViewResult HtmlViews.Admin.users next ctx
-    
+        let userAdmin = coreAction (CoreActions.System.listUsers()) HtmlViews.Admin.users
+        let curate = coreAction (CoreActions.Curate.listPending()) HtmlViews.Admin.curate
+        let grantCuration = formAction CoreActions.Curate.grantCurationRights (fun e -> text (e.ToString())) (fun _ -> userAdmin)
+        let curateDecision : HttpHandler = formAction CoreActions.Curate.decide (fun e -> text (e.ToString())) (fun _ -> curate)
+
+
     module Stats =
 
         let systemStats = coreAction(CoreActions.Statistics.system()) HtmlViews.Statistics.view
@@ -231,14 +231,30 @@ let webApp : HttpHandler =
             route  Urls.Account.profile              >=> mustBeLoggedIn >=> Actions.Account.profile
         ]
 
+    let digitiseApi =
+        mustBeLoggedIn >=>
+        choose [
+            GET  >=> routef  "/collection/%O"            (fun id -> coreApiAction (CoreActions.Digitise.getCollection id))
+            GET  >=> route   "/collection/list"          >=> coreApiAction (CoreActions.Digitise.myCollections())
+            POST >=> route   "/collection/start"         >=> apiResultFromBody CoreActions.Digitise.startCollection
+            GET  >=> routef  "/collection/publish/%O"    (fun id -> coreApiAction (CoreActions.Digitise.publishCollection id))
+            POST >=> route   "/collection/slide/add"     >=> apiResultFromBody CoreActions.Digitise.recordSlide
+            POST >=> route   "/collection/slide/void"    >=> apiResultFromBody CoreActions.Digitise.voidSlide
+            POST >=> route   "/collection/slide/addimage">=> apiResultFromBody CoreActions.Digitise.uploadImage
+            GET  >=> route   "/calibration/list"         >=> coreApiAction (CoreActions.User.myCalibrations())
+            POST >=> route   "/calibration/use"          >=> apiResultFromBody CoreActions.User.setupMicroscope
+            POST >=> route   "/calibration/use/mag"      >=> apiResultFromBody CoreActions.User.calibrateMicroscope
+        ]
+
     let api =
-        GET >=> choose [
-            route   "/backbone/match"           >=> apiResultFromQuery CoreActions.Backbone.tryMatch
-            route   "/backbone/trace"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> CoreActions.Backbone.tryTrace
-            route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> CoreActions.Backbone.search
-            route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> CoreActions.MRC.autocompleteTaxon
-            route   "/grain/location"           >=> Actions.Identify.topUnknownGrains
-            routef  "/neotoma-cache/%i"         (fun i -> coreApiAction (CoreActions.Cache.neotoma i) )
+        choose [
+            GET >=> route   "/backbone/match"           >=> apiResultFromQuery CoreActions.Backbone.tryMatch
+            GET >=> route   "/backbone/trace"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> CoreActions.Backbone.tryTrace
+            GET >=> route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> CoreActions.Backbone.search
+            GET >=> route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> CoreActions.MRC.autocompleteTaxon
+            GET >=> route   "/grain/location"           >=> Actions.Identify.topUnknownGrains
+            GET >=> routef  "/neotoma-cache/%i"         (fun i -> coreApiAction (CoreActions.Cache.neotoma i) )
+            subRoute        "/digitise"                 digitiseApi
         ]
 
     let masterReferenceCollection =
@@ -271,9 +287,13 @@ let webApp : HttpHandler =
         ]
 
     let admin =
+        // mustBeAdmin >=>
         choose [
-            GET  >=> route Urls.Admin.users                >=> mustBeAdmin >=> Actions.Admin.userAdmin
-            GET  >=> route Urls.Admin.rebuildReadModel     >=> mustBeAdmin >=> Actions.Admin.rebuildReadModel
+            POST >=> route Urls.Admin.curate               >=> Actions.Admin.curateDecision
+            POST >=> route Urls.Admin.grantCuration        >=> Actions.Admin.grantCuration
+            GET  >=> route Urls.Admin.users                >=> Actions.Admin.userAdmin
+            GET  >=> route Urls.Admin.rebuildReadModel     >=> Actions.Admin.rebuildReadModel
+            GET  >=> route Urls.Admin.curate               >=> Actions.Admin.curate
         ]
 
     choose [
@@ -292,7 +312,7 @@ let webApp : HttpHandler =
             route   Urls.tools                  >=> htmlView HtmlViews.Tools.main
             route   Urls.cite                   >=> Actions.Docs.docSection "Cite"
             route   Urls.terms                  >=> Actions.Docs.docSection "Terms"
-            route   Urls.digitise               >=> htmlView DigitiseDashboard.appView
+            route   Urls.digitise               >=> mustBeLoggedIn >=> htmlView DigitiseDashboard.appView
         ]
         setStatusCode 404 >=> htmlView HtmlViews.StatusPages.notFound
     ]

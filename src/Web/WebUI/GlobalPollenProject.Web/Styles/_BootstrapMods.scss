@@ -16,7 +16,7 @@ $font-family-base:      $hind;
 $headings-font-family:  $mottserrat;
 $body-color:            #636c72;
 $font-size-base:        0.875rem;
-$line-height-base:      1.8;
+$line-height-base:      1.75;
 $font-size-h3:          1.5rem;
 
 $border-radius:         0;
@@ -36,6 +36,10 @@ $btn-link-disabled-color:   $clr-button-disabled;
 
 .btn-primary.disabled:hover {
     cursor: not-allowed !important;
+}
+
+.btn {
+    font-family: Montserrat;
 }
 
 .col-centered {

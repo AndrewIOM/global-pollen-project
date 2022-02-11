@@ -57,7 +57,10 @@ module CoreActions =
                 match Serialisation.deserialise<Result<'a,ServiceError>> responseString with
                 | Ok m -> return m
                 | Error _ -> return Error InvalidRequestFormat
-            else return Error Core
+            else
+                match response.StatusCode with
+                | Net.HttpStatusCode.ServiceUnavailable -> return Error InMaintenanceMode
+                | _ -> return Error Core
         }
 
     let CPOST<'a, 'b> (data:'a) (route:string) (c:HttpClient) (u:UriBuilder) = 
@@ -94,9 +97,9 @@ module CoreActions =
         let list (req:PageRequest) = CGET (Some req) "/api/v1/anon/MRC/Collection"
 
     module Backbone =
-        let search (req:BackboneSearchRequest) = CGET (Some req) "/api/v1/anon/Taxonomy/Search"
-        let tryMatch (req:BackboneSearchRequest) = CGET (Some req) "/api/v1/anon/Taxonomy/Match"
-        let tryTrace (req:BackboneSearchRequest) = CGET (Some req) "/api/v1/anon/Taxonomy/Trace"
+        let search (req:BackboneSearchRequest) : CoreFunction<list<string>> = CGET (Some req) "/api/v1/anon/Taxonomy/Search"
+        let tryMatch (req:BackboneSearchRequest) : CoreFunction<list<BackboneTaxon>> = CGET (Some req) "/api/v1/anon/Taxonomy/Match"
+        let tryTrace (req:BackboneSearchRequest) : CoreFunction<list<BackboneTaxon>> = CGET (Some req) "/api/v1/anon/Taxonomy/Trace"
 
     module Statistics =
         let home () = CGET None "/api/v1/anon/Statistics/Home"
@@ -110,26 +113,29 @@ module CoreActions =
         let calibrateMicroscope (req:CalibrateRequest) = CPOST req "/api/v1/User/Microscope/Calibrate"
     
     module Curate =
-        let listPending () = CGET None "/api/v1/anon/Curate/Pending"
-    
+        let listPending () = CGET None "/api/v1/Curate/Pending"
+        let decide req = CPOST<CurateCollectionRequest,unit> req "/api/v1/Curate/Decide"
+        let grantCurationRights (req:UserRoleRequest) = CPOST<Guid,unit> req.UserId "/api/v1/Curate/Assign"
+
     module UnknownMaterial =
         let itemDetail (itemId:string) = CGET None (sprintf "/api/v1/anon/Unknown/%s" itemId)
         let list () = CGET None "/api/v1/anon/Unknown"
         let mostWanted () = CGET None "/api/v1/anon/Unknown/MostWanted"
         let submit req = CPOST<AddUnknownGrainRequest,unit> req "/api/v1/Unknown/Submit"
-        let identify (req:IdentifyGrainRequest) = CPOST req "/api/v1/Unknown/Identify"
+        let identify req = CPOST<IdentifyGrainRequest,unit> req "/api/v1/Unknown/Identify"
     
     module Digitise =
         let myCollections () : CoreFunction<EditableRefCollection list> = CGET None "/api/v1/Digitise/Collection"
-        let getCollection (req:string) = CGET None (sprintf "/api/v1/Digitise/Collection/%s" req)
-        let startCollection (req:StartCollectionRequest) = CPOST req "/api/v1/Digitise/Collection/Start"
-        let publishCollection (req:Guid) = CPOST req (sprintf "/api/v1/Digitise/Collection/%O/Publish" req)
-        let recordSlide (req:SlideRecordRequest) = CPOST req "/api/v1/Digitise/Slide/Add"
-        let voidSlide (req:VoidSlideRequest) = CPOST req "/api/v1/Digitise/Slide/Void"
-        let uploadImage (req:SlideImageRequest) = CPOST req "/api/v1/Digitise/Slide/AddImage"
-   
+        let getCollection (req:Guid) : CoreFunction<EditableRefCollection> = CGET None (sprintf "/api/v1/Digitise/Collection/%s" (req.ToString()))
+        let startCollection (req:StartCollectionRequest) : CoreFunction<Guid> = CPOST req "/api/v1/Digitise/Collection/Start"
+        let publishCollection (req:Guid) : CoreFunction<unit> = CPOST req (sprintf "/api/v1/Digitise/Collection/%O/Publish" req)
+        let recordSlide (req:SlideRecordRequest) : CoreFunction<unit> = CPOST req "/api/v1/Digitise/Slide/Add"
+        let voidSlide (req:VoidSlideRequest) : CoreFunction<unit> = CPOST req "/api/v1/Digitise/Slide/Void"
+        let uploadImage (req:SlideImageRequest) : CoreFunction<unit> = CPOST req "/api/v1/Digitise/Slide/AddImage"
+
     module Cache =
-        let neotoma (neotomaId:int) = CGET None (sprintf "/api/v1/anon/Cache/Neotoma/%i" neotomaId)
+        let neotoma (neotomaId:int) : CoreFunction<NeotomaCache> = CGET None (sprintf "/api/v1/anon/Cache/Neotoma/%i" neotomaId)
      
     module System =
-        let rebuildReadModel () = CPOST () "/api/v1/Admin/RebuildReadModel"
+        let rebuildReadModel () : CoreFunction<string> = CPOST () "/api/v1/Admin/RebuildReadModel"
+        let listUsers () : CoreFunction<PublicProfile list> = CGET None "/api/v1/Admin/Users"

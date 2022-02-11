@@ -41,8 +41,8 @@ type SlideRecordRequest = {
     OriginalAuthor: string
     ExistingId: string
     PlantIdMethod: PlantIdMethod
-    [<Range(1700,2017)>] YearCollected: Nullable<int>
-    [<Range(1950,2017)>] YearSlideMade: Nullable<int>
+    [<Range(1700,2022)>] YearCollected: Nullable<int>
+    [<Range(1950,2022)>] YearSlideMade: Nullable<int>
     [<Required>] LocationType: string
     LocationLocality: string
     LocationDistrict: string
@@ -146,9 +146,14 @@ type TaxonAutocompleteRequest = {
 
 [<CLIMutable>]
 type CurateCollectionRequest = {
-    Approved: bool
+    [<Required>] Approved: bool
     Comment: string
-    Collection: Guid
+    [<Required>] Collection: Guid
+}
+
+[<CLIMutable>]
+type UserRoleRequest = {
+    UserId: Guid
 }
 
 [<CLIMutable>]

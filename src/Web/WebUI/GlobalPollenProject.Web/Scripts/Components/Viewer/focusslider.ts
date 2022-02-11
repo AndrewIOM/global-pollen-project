@@ -15,10 +15,10 @@ export class FocusSlider {
     scale: d3.ScaleLinear<number, number>;
     handle: d3.Selection<d3.BaseType, {}, HTMLElement, any>;
     
-    constructor(viewer, sliderId) {
+    constructor(viewer: Viewer, sliderId: string) {
         this.id = sliderId;
         this.viewer = viewer;
-        $(self).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
+        $(this.viewer.containerId).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
             this.append();
         });
     }

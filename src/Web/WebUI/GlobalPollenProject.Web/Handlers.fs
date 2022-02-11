@@ -222,6 +222,22 @@ let coreAction action view next (ctx:HttpContext) =
         return! renderViewResult view next ctx result
     }
 
+let formAction<'req,'result> (action:'req -> CoreFunction<'result>) error success : HttpHandler =
+    fun next ctx ->
+        task {
+            let core = ctx.GetService<CoreMicroservice>()
+            let! model = ctx.TryBindFormAsync()
+            let validated = 
+                match model with
+                | Ok m -> Validation.validateModel m
+                | Error _ -> Error InvalidRequestFormat
+            let result = validated |> Result.bind (fun m -> action m |> core.Apply |> Async.RunSynchronously)
+            return! 
+                match result with
+                | Ok r -> success r next ctx
+                | Error e -> error e next ctx
+        }
+
 let coreApiAction action : HttpHandler =
     fun next ctx ->
         task {
@@ -231,12 +247,31 @@ let coreApiAction action : HttpHandler =
 
 /// Pass-through query string model to core action and return API result
 let apiResultFromQuery<'a,'b> (coreAction:'a->CoreFunction<'b>) : HttpHandler =
-    let error str = text str
-    let success model : HttpHandler =
-        fun next ctx ->
+    fun next ctx ->
+        let core = ctx.GetService<CoreMicroservice>()
+        task {
+            let result =
+                ctx
+                |> bindQueryString<'a>
+                |> Result.bind Validation.validateModel
+                |> Result.bind (fun m -> coreAction m |> core.Apply |> Async.RunSynchronously)
+            return! result |> toApiResult next ctx
+        }
+
+/// Deserialise JSON model (in request body), pass to core action, and return API result
+let inline apiResultFromBody< ^a, ^b> (coreAction: ^a->CoreFunction< ^b>) : HttpHandler =
+    fun next ctx ->
+        let model = 
+            tryBindJson< ^a> ctx
+            |> Result.bind Validation.validateModel
+        let core = ctx.GetService<CoreMicroservice>()
+        let result =
             task {
-                let core = ctx.GetService<CoreMicroservice>()
-                let! result = coreAction model |> core.Apply
-                return! toApiResult next ctx result
+                match model with
+                | Ok m -> return! coreAction m |> core.Apply
+                | Error e -> return Error e
             }
-    tryBindQuery<'a> error None success
+        task {
+            let! r = result
+            return! toApiResult next ctx r
+        }

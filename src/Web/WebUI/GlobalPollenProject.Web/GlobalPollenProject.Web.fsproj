@@ -16,8 +16,8 @@
     <Compile Include="Urls.fs" />
     <Compile Include="Docs.fs" />
     <Compile Include="View.fs" />
-    <Compile Include="Handlers.fs" />
     <Compile Include="Validation.fs" />
+    <Compile Include="Handlers.fs" />
     <Compile Include="Account.fs" />
     <Compile Include="LegacyTaxonomy.fs" />
     <Compile Include="LegacyDigitiseDashboard.fs" />

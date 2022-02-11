@@ -3,7 +3,7 @@
     margin-bottom: 1.5em;
     font-size: 1.5em;
     a {
-        margin-right: 0.25em;
+        margin-right: 0.50em;
     }
 }
 
@@ -30,11 +30,11 @@
         }
     }
     .taxon-details {
-        padding: 0.2em;
+        padding: 0.5em;
         display: inline-block;
         .taxon-name {
             @extend h3;
-            font-size: 1.25em;
+            font-size: 1.3em;
             margin-top: .2em;
         }
     }

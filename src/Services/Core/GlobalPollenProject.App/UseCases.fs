@@ -227,7 +227,7 @@ module Calibrations =
         | true,g -> Ok g
         | false,g -> Error <| "Guid was not in correct format"
 
-    let getMyCalibrations getCurrentUser =
+    let getMyCalibrations getCurrentUser () =
         let userId = getCurrentUser()
         let cols = ReadStore.RepositoryBase.getListKey<Guid> All ("Calibration:User:" + (userId.ToString())) readStoreGetList deserialiseGuid
         match cols with
@@ -249,7 +249,7 @@ module Calibrations =
         issueCommand cmd
         |> Ok
 
-    let calibrateMagnification (req:CalibrateRequest) =
+    let calibrateMagnification getCurrentUser (req:CalibrateRequest) =
         let getUrl img =
             match img with
             | SingleImage (u,cal) -> Ok u
@@ -546,7 +546,7 @@ module User =
         RepositoryBase.getSingle<PublicProfile> id readStoreGet deserialise
         |> toAppResult
 
-    let grantCuration (id:string) =
+    let grantCuration getCurrentUser (id:string) =
         let i = Guid.TryParse id
         match fst i with
         | true ->
@@ -595,7 +595,8 @@ module Statistic =
 
 module Admin =
 
-    let rebuildReadModel() =
+    let rebuildReadModel _ () =
+        printfn "Rebuilding read model..."
         inMaintenanceMode <- true
         redisReset() |> ignore
         ProjectionHandler.init redisSet () |> ignore
@@ -603,7 +604,7 @@ module Admin =
         inMaintenanceMode <- false
         Ok "Read model has been rebuilt."
 
-    let listUsers() =
+    let listUsers _ () =
         let get (id:Guid) = 
             ReadStore.RepositoryBase.getSingle<PublicProfile> id readStoreGet deserialise
         RepositoryBase.getListKey<Guid> All K.Profiles.index readStoreGetList deserialiseGuid
@@ -618,7 +619,7 @@ module Curation =
         let aggregate = { initial = State.Initial; evolve = State.Evolve; handle = handle; getId = getId }
         eventStore.Value.MakeCommandHandler "ReferenceCollection" aggregate domainDependencies
 
-    let listPending() =
+    let listPending getCurrentUser () =
         let get (id:Guid) = 
             ReadStore.RepositoryBase.getSingle<EditableRefCollection> id readStoreGet deserialise
         RepositoryBase.getListKey<Guid> All "Curation:InReview" readStoreGetList deserialiseGuid

@@ -40,9 +40,8 @@ export class Gallery {
         if(this.viewer != null) this.viewer.dispose();
         if(this.slider != null) this.slider.dispose();
         if(this.scaleBar != null) this.scaleBar.dispose();
-        const viewerContainer = $(containerId);
-        viewerContainer.html("");
-        this.viewer = new Viewer(containerId, canvasId, viewerContainer.width(), 500, frames);
+        $("#viewer-container").empty();
+        this.viewer = new Viewer(containerId, canvasId, $(containerId).width(), 500, frames);
         if(frames.length > 1) {
             this.slider = new FocusSlider(this.viewer, sliderId);
         }
