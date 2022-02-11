@@ -57,7 +57,10 @@ module CoreActions =
                 match Serialisation.deserialise<Result<'a,ServiceError>> responseString with
                 | Ok m -> return m
                 | Error _ -> return Error InvalidRequestFormat
-            else return Error Core
+            else
+                match response.StatusCode with
+                | Net.HttpStatusCode.ServiceUnavailable -> return Error InMaintenanceMode
+                | _ -> return Error Core
         }
 
     let CPOST<'a, 'b> (data:'a) (route:string) (c:HttpClient) (u:UriBuilder) = 
@@ -135,4 +138,4 @@ module CoreActions =
      
     module System =
         let rebuildReadModel () : CoreFunction<string> = CPOST () "/api/v1/Admin/RebuildReadModel"
-        let listUsers () : CoreFunction<PublicProfile list> = CGET None "/api/v1/Admin/Users"        
+        let listUsers () : CoreFunction<PublicProfile list> = CGET None "/api/v1/Admin/Users"
