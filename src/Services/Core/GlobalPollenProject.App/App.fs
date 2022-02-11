@@ -68,16 +68,17 @@ let inline bindJson< ^T> (ctx:HttpContext) =
     | Ok o -> Ok o
     | Error e -> Error InvalidRequestFormat
 
-let apiResult next ctx result =
+let apiResult next ctx (result:Result<'a,ServiceError>) =
     match result with
     | Ok list -> json (Ok list) next ctx
-    | Error e -> (setStatusCode 400 >=> json (Error e)) next ctx
-        //(setStatusCode 400 >=>
-            //match e with
-            //| Validation valErrors -> json <| { Message = "Invalid request"; Errors = valErrors }
-            //| InvalidRequestFormat -> json <| { Message = "Your request was not in a valid format"; Errors = [] }
-            //| InMaintenanceMode -> json <| { Message = "Maintenance in progress"; Errors = [] }
-            //| _ -> json <| { Message = "Internal error"; Errors = [] } ) next ctx
+    | Error e ->
+        match e with
+        | InMaintenanceMode -> (setStatusCode 503 >=> json (Error InMaintenanceMode)) next ctx
+        | Validation _
+        | InvalidRequestFormat -> (setStatusCode 400 >=> json (Error e)) next ctx
+        | Core
+        | Persistence -> (setStatusCode 500 >=> json (Error e)) next ctx
+        | NotFound -> (setStatusCode 404 >=> json (Error e)) next ctx
 
 let inline postApi< ^T, ^R> (action:^T->Result< ^R,ServiceError>) : HttpHandler =
     fun next ctx ->
