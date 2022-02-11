@@ -29,9 +29,10 @@ ko.bindingHandlers.BSModal = {
 
 export function activate(container: HTMLElement) {
     jQuery(function() {
+        $('#tutorialModal').modal('show');
         var vm = new DigitiseViewModel();
         vm.switchView(CurrentView.MASTER);
-        ko.applyBindings(vm);    
+        ko.applyBindings(vm);
     });
 }
 
@@ -103,10 +104,8 @@ function DigitiseViewModel() {
             case CurrentView.ADD_SLIDE_RECORD:
                 self.newSlideVM(new RecordSlideViewModel(self.activeCollection()));
                 self.currentView(view);
-                self.newSlideVM().registerHandlers();
                 break;
             case CurrentView.SLIDE_DETAIL:
-
                 self.slideDetailVM(new SlideDetailViewModel(data));
                 self.slideDetailVM().loadCalibrations();
                 self.currentView(view);
@@ -265,6 +264,83 @@ function RecordSlideViewModel(currentCollection) {
     self.isProcessing = ko.observable(false);
     self.validationErrors = ko.observableArray([]);
 
+    self.typingTimer;
+    const doneTypingInterval = 100;
+    
+    self.suggest = (entryBox, rank) => {
+        console.log(entryBox);
+        clearTimeout(self.typingTimer);
+        if (entryBox.value) {
+            self.typingTimer = setTimeout(function () {
+                self.updateList(entryBox, rank);
+            }, doneTypingInterval);
+        }
+    };
+    
+    //Update suggestion list when timeout complete
+    self.updateList = (entryBox:HTMLInputElement, rank:string) => {
+        let query = '';
+        let value = entryBox.value;
+        if (rank == "Family" || rank == "Genus") {
+            value = this.capitaliseString(value);
+        }
+        //Combine genus and species for canonical name
+        if (rank == 'Species') {
+            const genus = (<HTMLInputElement>document.getElementById('original-Genus')).value;
+            query += genus + " ";
+        }
+        query += value;
+        if (value != "") {
+            const request = "/api/v1/backbone/search?rank=" + rank + "&latinName=" + query;
+            $.ajax({
+                url: request,
+                type: "GET"
+            }).done(data => {
+                const list = document.getElementById(rank + 'List');
+                $('#' + rank + 'List').css('display', 'block');
+                list.innerHTML = "";
+                for (let i = 0; i < data.length; i++) {
+                    if (i > 10) continue;
+                    const option = document.createElement('li');
+                    const link = document.createElement('a');
+                    option.appendChild(link);
+                    link.innerHTML = data[i];
+
+                    let matchCount = 0;
+                    for (let j = 0; j < data.length; j++) {
+                        if (data[j].latinName == data[i]) {
+                            matchCount++;
+                        }
+                    }
+                    link.addEventListener('click', e => {
+                        const name = link.innerHTML;
+                        if (rank == 'Species') {
+                            $('#original-Species').val(name.split(' ')[1]).change();
+                            $('#original-Genus').val(name.split(' ')[0]).change();
+                        } else if (rank == 'Genus') {
+                            $('#original-Genus').val(name).change();
+                        } else if (rank == 'Family') {
+                            $('#original-Family').val(name).change();
+                        }
+                        $('#' + rank + 'List').fadeOut();
+                    });
+                    list.appendChild(option);
+                }
+            });
+        }
+    }
+    
+    self.disable = (rank) => {
+        let element;
+        if (rank == 'Family') element = 'FamilyList';
+        if (rank == 'Genus') element = 'GenusList';
+        if (rank == 'Species') element = 'SpeciesList';
+        setTimeout(func, 100);
+        function func() {
+            $('#' + element).fadeOut();
+        }
+    }
+
     self.validateTaxon = function () {
         self.isProcessing(true);
         var query: string;
@@ -291,7 +367,7 @@ function RecordSlideViewModel(currentCollection) {
         let preparedByFirstNames = isEmpty(self.preparedByFirstNames()) ? [] : self.preparedByFirstNames().split(' ');
         let collectedByFirstNames = isEmpty(self.collectedByFirstNames()) ? [] : self.collectedByFirstNames().split(' ');
         let request = {
-            Collection: self.collection().Id,
+            Collection: self.collection().id,
             ExistingId: self.existingId(),
             OriginalFamily: self.family(),
             OriginalGenus: self.genus(),
@@ -325,8 +401,15 @@ function RecordSlideViewModel(currentCollection) {
     };
 
     self.capitaliseFirstLetter = function (element) {
-        $(element).val($(element).val().toString().charAt(0).toUpperCase() + $(element).val().toString().slice(1));
+        const currentValue = $(element).val();
+        if (typeof(currentValue) == "string") {
+            $(element).val(this.capitaliseString(currentValue));
+        }
     };
+
+    self.capitaliseString = (string:string) => {
+        return string.charAt(0).toUpperCase() + string.slice(1);
+    }
 
     self.submit = function (rootVM) {
         self.isProcessing(true);
@@ -353,16 +436,6 @@ function RecordSlideViewModel(currentCollection) {
                 }
             });
     };
-
-    self.registerHandlers = () => {
-        $('#original-Family').on("keyup", () => suggest(document.getElementById("#original-Family") as HTMLInputElement, 'Family'));
-        $('#original-Genus').on("keyup", () => suggest(document.getElementById("#original-Genus") as HTMLInputElement, 'Genus'));
-        $('#original-Species').on("keyup", () => suggest(document.getElementById("#original-Species") as HTMLInputElement, 'Species'));
-        $('#original-Family').on("blur", () => disable('Family'));
-        $('#original-Genus').on("blur", () => disable('Genus'));
-        $('#original-Species').on("blur", () => disable('Species'));
-    }
-
 }
 
 ////////////////////////
@@ -951,95 +1024,6 @@ function ImageCalibrationViewModel(currentMicroscope) {
         if (file) {
             reader.readAsDataURL(file);
         }
-    }
-}
-
-// Helpers - Dropdown autocomplete
-var typingTimer;
-var doneTypingInterval = 100;
-
-function capitaliseFirstLetter(string) {
-    return string.charAt(0).toUpperCase() + string.slice(1);
-}
-
-function suggest(entryBox, rank) {
-    console.log(entryBox);
-    clearTimeout(typingTimer);
-    if (entryBox.value) {
-        typingTimer = setTimeout(function () {
-            updateList(entryBox, rank);
-        }, doneTypingInterval);
-    }
-};
-
-//Update suggestion list when timeout complete
-function updateList(entryBox, rank) {
-    var query = '';
-    var value = entryBox.value;
-    if (rank == "Family" || rank == "Genus") {
-        value = capitaliseFirstLetter(value);
-    }
-
-    if (rank == 'Species') {
-        //Combine genus and species for canonical name
-        var genus = (<HTMLInputElement>document.getElementById('original-Genus')).value;
-        query += genus + " ";
-    }
-    query += value;
-
-    if (value == "") {
-
-    } else {
-        var request = "/api/v1/backbone/search?rank=" + rank + "&latinName=" + query;
-        $.ajax({
-            url: request,
-            type: "GET"
-        }).done(function (data) {
-            var list = document.getElementById(rank + 'List');
-            $('#' + rank + 'List').css('display', 'block');
-            list.innerHTML = "";
-            for (var i = 0; i < data.length; i++) {
-                if (i > 10) continue;
-                var option = document.createElement('li');
-                var link = document.createElement('a');
-                option.appendChild(link);
-                link.innerHTML = data[i];
-
-                var matchCount = 0;
-                for (var j = 0; j < data.length; j++) {
-                    if (data[j].latinName == data[i]) {
-                        matchCount++;
-                    }
-                };
-                link.addEventListener('click', function (e) {
-                    var name = this.innerHTML;
-                    if (rank == 'Species') {
-                        $('#original-Species').val(name.split(' ')[1]).change();
-                        $('#original-Genus').val(name.split(' ')[0]).change();
-                    } else if (rank == 'Genus') {
-                        $('#original-Genus').val(name).change();
-                    } else if (rank == 'Family') {
-                        $('#original-Family').val(name).change();
-                    }
-                    $('#' + rank + 'List').fadeOut();
-                });
-                list.appendChild(option);
-            }
-        });
-    }
-}
-
-
-function disable(rank) {
-    var element;
-    if (rank == 'Family') element = 'FamilyList';
-    if (rank == 'Genus') element = 'GenusList';
-    if (rank == 'Species') element = 'SpeciesList';
-
-    setTimeout(func, 100);
-
-    function func() {
-        $('#' + element).fadeOut();
     }
 }
 
