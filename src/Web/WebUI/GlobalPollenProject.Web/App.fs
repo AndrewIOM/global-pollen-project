@@ -25,7 +25,7 @@ module Actions =
         fun next ctx ->
             let token = ctx.GetTokenAsync("access_token") |> Async.AwaitTask |> Async.RunSynchronously
             ctx.Items.Add("access_token",token)
-            redirectTo true Urls.Account.profile next ctx
+            redirectTo true Urls.home next ctx
 
     let logout = signOut "Cookies" >=> redirectTo false "/"
            

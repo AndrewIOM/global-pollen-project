@@ -234,7 +234,7 @@ module Layout =
                         h4 [] [ encodedText "Information" ]
                         ul [] [
                             li [] [ a [ _href Urls.guide ] [ encodedText "About"] ]
-                            li [] [ a [ _href Urls.api ] [ encodedText "Public API"] ]
+                            li [] [ a [ _href Urls.api ] [ encodedText "Public API"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Beta" ] ] ]
                             li [] [ a [ _href Urls.terms ] [ encodedText "Terms and Licensing"] ]
                             li [] [ a [ _href Urls.cite ] [ encodedText "How to Cite"] ]
                         ]
@@ -248,7 +248,7 @@ module Layout =
                         ]
                         h4 [] [ encodedText "Tools" ]
                         ul [] [
-                            li [] [ a [ (*_href Urls.digitise*) ] [ encodedText "Online Digitisation Tools"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Under Maintenance" ] ] ]
+                            li [] [ a [ _href Urls.digitise ] [ encodedText "Online Digitisation Tools" ] ]
                             li [] [ a [ _href Urls.tools ] [ encodedText "Botanical Name Tracer"] ]
                         ]
                     ]
@@ -286,10 +286,12 @@ module Layout =
     let toScriptTags (scripts:Script list) =
         scripts |> List.distinct |> List.map toScriptTag
 
-    let headerBar title subtitle =
+    let headerBar title subtitle icon =
         header [] [
             Grid.container [
-                h1 [] [ encodedText title ]
+                h1 [] [  
+                    if Option.isSome icon then Icons.fontawesome icon.Value
+                    encodedText title ]
                 p [] [ encodedText subtitle ]
             ]
         ]
@@ -309,8 +311,11 @@ module Layout =
                     ((List.concat [baseScripts; scripts]) |> toScriptTags) ] )
         ]
 
+    let standardWithHeaderIcon scripts title subtitle titleIcon content =
+        master scripts title ( headerBar title subtitle (Some titleIcon) :: [ Grid.container content ])
+
     let standard scripts title subtitle content =
-        master scripts title ( headerBar title subtitle :: [ Grid.container content ])
+        master scripts title ( headerBar title subtitle None :: [ Grid.container content ])
 
 
 module Components =
@@ -430,6 +435,7 @@ module Home =
                 a [ _href link ] [ encodedText title ] ]
             p [] [ 
                 encodedText summary
+                str " "
                 a [ _href link ] [ encodedText "Learn more" ]
             ]
         ]
@@ -494,11 +500,16 @@ module Home =
 module Slide =
     
     let citation vm latinName =
+        let authors = 
+            [ vm.Slide.CollectorName; vm.Slide.PreppedBy
+              sprintf "%s, %s" vm.Collection.CuratorSurname vm.Collection.CuratorFirstNames ]
+            |> List.filter (fun s -> not (String.IsNullOrEmpty s) && s <> "Unknown")
         div [ _class "card card-inverse card-primary crop-panel mb-3" ] [
             div [ _class "card-block" ] [
                 h4 [ _class "card-title" ] [ encodedText "Citation" ]
                 p [] [ 
-                    strf "%s ; and %s, %s (%i). " vm.Slide.CollectorName vm.Collection.CuratorSurname vm.Collection.CuratorFirstNames vm.Collection.Published.Year
+                    if authors.Length = 1 then strf "%s (%i)" authors.Head vm.Collection.Published.Year
+                    else strf "%s (%i)" (authors |> String.concat ";") vm.Collection.Published.Year
                     strf "%s (Slide #%s). " latinName vm.Slide.CollectionSlideId
                     str "Digitised palynological slide. In: "
                     em [] [ str vm.Collection.Name ]
@@ -713,11 +724,12 @@ module Taxon =
 
     let descriptionCard latinName eolId (eolCache:EncyclopediaOfLifeCache) =
         div [ _class "card" ] [
-            div [ _class "card-fixed-height-image" ] [
-                img [ _src eolCache.PhotoUrl; _alt <| sprintf "%s (rights holder: %s)"latinName eolCache.PhotoAttribution ]
-                if not <| String.IsNullOrEmpty eolCache.PhotoAttribution then
-                    span [ _class "image-attribution" ] [ str <| "&copy " + eolCache.PhotoAttribution ]
-            ]
+            if String.IsNullOrEmpty(eolCache.PhotoUrl) |> not then
+                div [ _class "card-fixed-height-image" ] [
+                    img [ _src eolCache.PhotoUrl; _alt <| sprintf "%s (rights holder: %s)"latinName eolCache.PhotoAttribution ]
+                    if not <| String.IsNullOrEmpty eolCache.PhotoAttribution then
+                        span [ _class "image-attribution" ] [ str <| "&copy " + eolCache.PhotoAttribution ]
+                ]
             div [ _class "card-block" ] [
                 if String.IsNullOrEmpty eolCache.CommonEnglishName
                 then h4 [ _class "card-title" ] [ str latinName ]
@@ -782,7 +794,7 @@ module Taxon =
                     else span [] [ 
                         str "None available. You can check "
                         a [ _href (sprintf "http://www.theplantlist.org/tpl1.1/search?q=%s" vm.LatinName) ] [ str "The Plant List" ]
-                        str "for further information." ]
+                        str " for further information." ]
                 ]
             ]
         ]
@@ -826,6 +838,7 @@ module Taxon =
         ]
     
     let view (vm:TaxonDetail) =
+        let title = if vm.Rank = "Species" then sprintf "%s %s" vm.LatinName vm.Authorship else vm.LatinName
         let subtitle = sprintf "%s in the Global Pollen Project's Master Reference Collection" vm.Rank
         let distributionMap = distributionMap vm.GbifId vm.NeotomaId
         let breadcrumbs =
@@ -849,7 +862,7 @@ module Taxon =
                     connectedDataCard vm.LatinName vm.GbifId
                 ]
             ]
-        ] |> Layout.standard distributionMap.Scripts vm.LatinName subtitle
+        ] |> Layout.standard distributionMap.Scripts title subtitle
 
 
 module Guide =
@@ -1243,11 +1256,11 @@ module Identify =
                                 Grid.column Medium 8 [
                                     match vm.AgeType with
                                     | "Calendar" -> span [] [
-                                        strong [] [ str "Environmental." ]
+                                        strong [] [ str "Environmental. " ]
                                         str "This grain or spore was from the environment, for example from a pollen trap, bee, honey, or soil."
                                         ]
                                     | _ -> span [] [
-                                        strong [] [ str "Fossil." ]
+                                        strong [] [ str "Fossil. " ]
                                         str "This grain or spore was taken from a sediment core or other environmental archive."
                                     ]
                                 ]
@@ -1273,6 +1286,7 @@ module Identify =
                                           _src <| sprintf "https://api.mapbox.com/styles/v1/mapbox/streets-v10/static/pin-s-a+9ed4bd(%f,%f)/%f,%f,3/560x200@2x?access_token=%s" vm.Longitude vm.Latitude vm.Longitude vm.Latitude Settings.mapboxToken ]
                                 ]
                             ]
+                            hr []
                             Grid.row [
                                 Grid.column Medium 4 [ label [] [ str "Share" ] ]
                                 Grid.column Medium 8 [
@@ -1325,9 +1339,10 @@ module Identify =
                     ] // end identification pane
                 ]
             ]
-        ] |> Layout.standard []
+        ] |> Layout.standardWithHeaderIcon []
                  "Unidentified Specimen"
                  "This individual pollen grain or spore does not have a taxonomic identification. Can you help?"
+                 "question-circle"
 
     let add vm = 
         [
