@@ -18,14 +18,13 @@ type GbifTaxonResult =
 
 [<CLIMutable>]
 type NeotomaTaxonResult = {
-    [<JsonProperty("TaxonName")>] TaxonName:string
-    [<JsonProperty("TaxonCode")>] TaxonCode:string
-    [<JsonProperty("TaxonID")>] TaxonId:int
+    [<JsonProperty("taxonname")>] TaxonName:string
+    [<JsonProperty("taxonid")>] TaxonId: int
 }
 
 [<CLIMutable>]
 type NeotomaResult = {
-    [<JsonProperty("success")>] Success:int
+    [<JsonProperty("status")>] Status: string
     [<JsonProperty("data")>] Result: NeotomaTaxonResult list }
 
 [<CLIMutable>]
@@ -49,7 +48,9 @@ let tryGetRequest baseUri (query:string) =
         try
             let! result = client.GetAsync(query) |> Async.AwaitTask
             match result.IsSuccessStatusCode with
-            | false -> return None
+            | false -> 
+                printfn "Problem getting request [%s]: %s" (result.StatusCode.ToString()) (result.Content.ReadAsStringAsync() |> Async.AwaitTask |> Async.RunSynchronously)
+                return None
             | true ->
                 use! responseStream = result.Content.ReadAsStreamAsync() |> Async.AwaitTask
                 let streamReader = new StreamReader(responseStream)
@@ -97,7 +98,7 @@ let getGbifId (req:LinkRequest) =
         | Genus g -> sprintf "%s&rank=genus&name=%s" q2 (unwrap g)
         | Species (s,_,_) -> sprintf "%s&rank=species&name=%s" q2 (unwrap s)
 
-    let json = tryGetRequest "http://api.gbif.org/v1/" query |> Async.RunSynchronously
+    let json = tryGetRequest "https://api.gbif.org/v1/" query |> Async.RunSynchronously
     match json with
     | None -> None
     | Some json ->
@@ -114,7 +115,7 @@ let getNeotomaId (req:LinkRequest) =
                 | Family f -> unwrap f
                 | Genus g -> unwrap g
                 | Species (_,s,_) -> unwrapS s
-    let response = tryGetRequest "http://api.neotomadb.org/v1/data/" ("taxa?taxonname=" + query) |> Async.RunSynchronously
+    let response = tryGetRequest "https://api.neotomadb.org/v2.0/" ("data/taxa?taxonname=" + query) |> Async.RunSynchronously
     match response with
     | None -> None
     | Some json ->
@@ -122,19 +123,19 @@ let getNeotomaId (req:LinkRequest) =
         match result with
         | None -> None
         | Some neoResult ->
-            match neoResult.Success with
-            | 0 -> None
-            | _ ->
+            match neoResult.Status with
+            | "success" ->
                 match neoResult.Result.Length with
                 | 1 -> Some neoResult.Result.Head.TaxonId
                 | _ -> None
+            | _ -> None
 
 let getEncyclopediaOfLifeId (req:LinkRequest) =
     let query = match req.Identity with
                 | Family f -> unwrap f
                 | Genus g -> unwrap g
                 | Species (_,s,auth) -> (unwrapS s) + " " + (unwrapAuth auth)
-    let response = tryGetRequest "http://eol.org/api/search/" ("1.0.json?q=" + query + "&page=1&exact=true") |> Async.RunSynchronously
+    let response = tryGetRequest "https://eol.org/api/search/" ("1.0.json?q=" + query + "&page=1&exact=true") |> Async.RunSynchronously
     match response with
     | None -> None
     | Some json ->
@@ -200,23 +201,27 @@ let getEncyclopediaOfLifeCacheData taxonId =
                 | Some name -> name.Name |> capitaliseFirstLetters
                 | None -> ""             
             let photoUrl,photoAttribution =
-                let r =
-                    result.Concept.DataObjects
-                    |> List.filter (fun o -> o.MimeType = "image/jpeg")
-                    |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
-                match r with
-                | Some i -> i.MediaUrl, i.RightsHolder
-                | None -> "",""
+                if result.Concept.DataObjects |> box |> isNull then "", ""
+                else
+                    let r =
+                        result.Concept.DataObjects
+                        |> List.filter (fun o -> o.MimeType = "image/jpeg")
+                        |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
+                    match r with
+                    | Some i -> i.MediaUrl, i.RightsHolder
+                    | None -> "",""
             let desc,descAttribution =
-                let r =
-                    result.Concept.DataObjects
-                    |> List.filter (fun o -> o.MimeType = "text/html" || o.MimeType = "text/plain")
-                    |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
-                match r with
-                | Some t -> 
-                    (if isNull t.Description then "" else t.Description |> stripTags), 
-                    (if isNull t.RightsHolder then "" else t.RightsHolder |> stripTags)
-                | None -> "",""            
+                if result.Concept.DataObjects |> box |> isNull then "", ""
+                else
+                    let r =
+                        result.Concept.DataObjects
+                        |> List.filter (fun o -> o.MimeType = "text/html" || o.MimeType = "text/plain")
+                        |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
+                    match r with
+                    | Some t -> 
+                        (if isNull t.Description then "" else t.Description |> stripTags), 
+                        (if isNull t.RightsHolder then "" else t.RightsHolder |> stripTags)
+                    | None -> "",""
             { CommonEnglishName         = commonEnglishName
               PhotoUrl                  = photoUrl
               PhotoAttribution          = photoAttribution
@@ -224,35 +229,56 @@ let getEncyclopediaOfLifeCacheData taxonId =
               DescriptionAttribution    = descAttribution
               Retrieved                 = DateTime.Now }
             |> Some
-        
+
 [<CLIMutable>]
 type NeotomaSite = {
-    LongitudeWest: float
-    LongitudeEast: float
-    LatitudeNorth: float
-    LatitudeSouth: float
-    SiteID: int
+    [<JsonProperty("location")>] Location: string
+    [<JsonProperty("siteid")>] SiteID: int
+    [<JsonProperty("datasettype")>] DatasetType: string
+}
+
+[<CLIMutable>]
+type NeotomaAge = {
+    [<JsonProperty("age")>] Age: Nullable<float>
+    [<JsonProperty("ageolder")>] AgeOlder: Nullable<float>
+    [<JsonProperty("ageyounger")>] AgeYounger: Nullable<float>
 }
 
 [<CLIMutable>]
 type NeotomaOccurrenceData = {
-    AgeOldest: Nullable<float>
-    AgeYoungest: Nullable<float>
-    DatasetType: string
-    DatasetID: int
-    Site: NeotomaSite
+    [<JsonProperty("occid")>] OccurrenceId: int
+    [<JsonProperty("site")>] Site: NeotomaSite
+    [<JsonProperty("age")>] Age: NeotomaAge
 }
-      
+
 [<CLIMutable>]
 type NeotomaOccurrenceApiResult = {
-    [<JsonProperty("success")>] Success: int
+    [<JsonProperty("status")>] Status: string
     [<JsonProperty("data")>] Data: NeotomaOccurrenceData list
 }
 
+let geoJsonToApproxCentrePoint (str:string) =
+    let regex = "{\"type\":\"(Point|Polygon)\",\"crs\":{\"type\":\"name\",\"properties\":{\"name\":\"(.*)\"}},\"coordinates\":(.*)}"
+    if Text.RegularExpressions.Regex.IsMatch(str, regex) |> not
+    then None
+    else
+        let m = Text.RegularExpressions.Regex.Match(str, regex)
+        if m.Groups.[2].Value <> "EPSG:4326" then None
+        else 
+            let points =
+                (m.Groups.[3].Value).Replace("[","").Replace("]","").Split(",")
+                |> Array.map float
+                |> Array.chunkBySize 2
+                |> Array.map(fun a -> a.[0], a.[1])
+            let lon = points |> Array.map fst |> Array.average
+            let lat = points |> Array.map snd |> Array.average
+            (lon, lat) |> Some
+
 /// Caches occurrences from 50kyBP for a neotoma taxon id.
 let getNeotomaCacheData neotomaId =
-    let neotomaUri = sprintf "https://api.neotomadb.org/v1/data/datasets?taxonids=%i&ageof=taxon&ageold=%i&ageyoung=%i" neotomaId 50000 1000
-    let response = tryGetRequest "https://eol.org/api/pages/" neotomaUri |> Async.RunSynchronously
+    printfn "Attempting to cache data from Neotoma for neotoma id: %i" neotomaId
+    let neotomaUri = sprintf "occurrences?taxonid=%i&ageold=%i&ageyoung=%i&limit=10000" neotomaId 50000 1000
+    let response = tryGetRequest "https://api.neotomadb.org/v2.0/data/" neotomaUri |> Async.RunSynchronously
     match response with
     | None ->
         printfn "Could not get neotoma cache data for %i" neotomaId
@@ -264,20 +290,27 @@ let getNeotomaCacheData neotomaId =
             printfn "Error: could not deserialise neotoma result. Has their API changed? %s" json
             None
         | Some result ->
-            if result.Success <> 1 then
+            if result.Status <> "success" then
                 printfn "Neotoma API reported an error"
                 None
             else
                 result.Data
-                |> List.where(fun ds -> ds.AgeOldest.HasValue && ds.AgeYoungest.HasValue)
-                |> List.map(fun ds -> {
-                    AgeOldest = int ds.AgeOldest.Value
-                    AgeYoungest = int ds.AgeYoungest.Value
-                    Latitude = ds.Site.LatitudeNorth
-                    Longitude = ds.Site.LongitudeEast
-                    Proxy = ds.DatasetType
-                    SiteId = ds.Site.SiteID
-                }) |> List.distinctBy(fun s -> s.SiteId)
+                |> List.choose(fun ds -> 
+                    match geoJsonToApproxCentrePoint ds.Site.Location with
+                    | None -> None
+                    | Some centroid ->
+                        let ageOld, ageYoung =
+                            if ds.Age.AgeYounger.HasValue && ds.Age.AgeOlder.HasValue
+                            then ds.Age.AgeOlder.Value, ds.Age.AgeYounger.Value
+                            else if ds.Age.Age.HasValue then ds.Age.Age.Value, ds.Age.Age.Value
+                            else 0, 0
+                        { AgeOldest = int ageOld
+                          AgeYoungest = int ageYoung
+                          Latitude = snd centroid
+                          Longitude = fst centroid
+                          Proxy = ds.Site.DatasetType
+                          SiteId = ds.Site.SiteID } |> Some ) 
+                |> List.filter(fun d -> d.AgeOldest <> 0 && d.AgeYoungest <> 0)
                 |> fun occ -> {
                     RefreshTime = DateTime.Now
                     Occurrences = occ

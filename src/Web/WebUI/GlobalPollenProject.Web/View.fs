@@ -712,7 +712,7 @@ module Taxon =
                         span [ _id "palaeo-range-low" ] []
                         str " to "
                         span [ _id "palaeo-range-high" ] []
-                        str " years before present."
+                        str " years before present. "
                         span [ _id "palaeo-refresh-time" ] []
                     ]
                     div [ _id "neotoma-map" ] []

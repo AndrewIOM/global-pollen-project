@@ -11,19 +11,6 @@ const mapBoxAccessToken = "pk.eyJ1IjoibWFyZWVwMjAwMCIsImEiOiJjaWppeGUxdm8wMDQ3dm
 
 export function activate(container: HTMLElement) {
     $(() => {
-        const gbifId = $('#GbifId').val();
-        if (gbifId != 0) {
-            gbifMap(gbifId);
-        } else {
-            console.warn("There was no GBIF ID present (in #GbifId")
-        }
-        const neotomaId = parseInt($('#NeotomaId').val() as string);
-        if (neotomaId) {
-            new PointDistributionMap(neotomaId);
-        } else {
-            console.warn("Neotoma ID was invalid")
-        }
-        
         // Toggle for palaeo versus modern map
         $("input[name=distribution]").on("change",e => {
             const selected = ($(e.currentTarget).val());
@@ -35,6 +22,21 @@ export function activate(container: HTMLElement) {
                 $('#modern').show();
             }
         });
+        const gbifId = $('#GbifId').val();
+        if (gbifId != 0) {
+            gbifMap(gbifId);
+        } else {
+            console.warn("There was no GBIF ID present (in #GbifId")
+        }
+        const neotomaId = parseInt($('#NeotomaId').val() as string);
+        if (neotomaId) {
+            new PointDistributionMap(neotomaId);
+            $("input[name=distribution][value='palaeo']").prop("checked",true);
+            $('#palaeo').show();
+            $('#modern').hide();
+        } else {
+            console.warn("Neotoma ID was invalid")
+        }
     })
 }
 
@@ -153,19 +155,19 @@ class PointDistributionMap {
             }
         }).done(data => { this.neotomaCallback(data); })
     }
-    
+
     neotomaCallback(result) {
         this.points = [];
-        for (let i = 0; i < result.Occurrences.length; i++) {
+        for (let i = 0; i < result.occurrences.length; i++) {
             const coordinate = {
-                east: result.Occurrences[i].Longitude,
-                north: result.Occurrences[i].Latitude,
-                youngest: result.Occurrences[i].AgeYoungest,
-                oldest: result.Occurrences[i].AgeOldest
+                east: result.occurrences[i].longitude,
+                north: result.occurrences[i].latitude,
+                youngest: result.occurrences[i].ageYoungest,
+                oldest: result.occurrences[i].ageOldest
             };
             this.points.push(coordinate);
         }
-        //$('#palaeo-refresh-time').text("Data refreshed at ...")
+        $('#palaeo-refresh-time').text("Last retrieved " + result.refreshTime.substring(0,10) + ".");
         this.domPoints = this.svg.selectAll("circle").data(this.points).enter().append("circle").attr("cx", d => {
             return this.projection([d.east, d.north])[0];
         }).attr("cy", d => {
