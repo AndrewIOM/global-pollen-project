@@ -44,7 +44,7 @@ module GrainLocation =
         // Add to redis list
         Ok()
 
-    let handle (e:EventMessage) =
+    let handle setList (e:EventMessage) =
         match e |> toEvent with
         | :? Grain.Event as e ->
             match e with
@@ -448,6 +448,23 @@ module MasterReferenceCollection =
                     |> mapResult (execute get set setSortedList)
                     |> lift ignore
 
+    /// Only update cache if it is older than n months
+    let updateStaleCache cacheName (existingCache:Result<'a,'b>) nMonths updateFn i (refreshed:'a->DateTime) =
+        match existingCache with
+        | Error _ -> updateFn i
+        | Ok c -> 
+            match refreshed c > DateTime.Today.AddMonths(-nMonths) && refreshed c < DateTime.Today with
+            | true ->
+                printfn "%s cache for %i is stale (over %i months old). Refreshing." cacheName nMonths i
+                match updateFn i with
+                | None -> 
+                    printfn "There was a problem retrieving a new %s cache. Using older cache from %s" cacheName ((refreshed c).ToShortDateString())
+                    Some c
+                | Some nc -> Some nc
+            | false -> 
+                printfn "%s cache for %i is less than %i months old. Skipping refresh." cacheName i nMonths
+                Some c
+
     let establishConnection get set id externalId =
         let getExisting (id:Guid) = RepositoryBase.getSingle<TaxonDetail> id get deserialise
         let save (taxon:TaxonDetail) = RepositoryBase.setSingle taxon.Id taxon set serialise
@@ -455,7 +472,8 @@ module MasterReferenceCollection =
         let updateId taxon =
             match externalId with
             | Taxonomy.ThirdPartyTaxonId.NeotomaId i ->
-                let cache = ExternalLink.getNeotomaCacheData i
+                let existingCache = RepositoryBase.getKey<NeotomaCache> (sprintf "NeotomaCache:%i" i) get deserialise
+                let cache = updateStaleCache "neotoma" existingCache 6 ExternalLink.getNeotomaCacheData i (fun c -> c.RefreshTime)
                 match cache with
                 | Some c ->
                     match RepositoryBase.setSingleCustom (i.ToString()) c set serialise with
@@ -465,8 +483,10 @@ module MasterReferenceCollection =
                 { taxon with NeotomaId = i }
             | Taxonomy.ThirdPartyTaxonId.GbifId i -> {taxon with GbifId = i}
             | Taxonomy.ThirdPartyTaxonId.EncyclopediaOfLifeId i -> 
-                let cache = ExternalLink.getEncyclopediaOfLifeCacheData i
-                printfn "Got cache for EoL"
+                let existingCache = 
+                    getExisting (Converters.DomainToDto.unwrapTaxonId id)
+                    |> Result.map(fun t -> t.EolCache)
+                let cache = updateStaleCache "encyclopedia of life" existingCache 6 ExternalLink.getEncyclopediaOfLifeCacheData i (fun c -> c.Retrieved)
                 match cache with
                 | Some c -> { taxon with EolId = i; EolCache = c }
                 | None -> { taxon with EolId = i }
@@ -1081,7 +1101,7 @@ module Digitisation =
         match col with
         | Error e -> Error e
         | Ok c -> 
-            RepositoryBase.setSingle colId { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time } setKey serialise
+            RepositoryBase.setSingle colId { c with PublishedVersion = ColVersion.unwrap version; LastEdited = time; AwaitingReview = false } setKey serialise
 
     let requestedPublication get set setList colId =
         let id = colId |> Converters.DomainToDto.unwrapRefId
