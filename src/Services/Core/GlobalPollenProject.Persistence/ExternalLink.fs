@@ -157,11 +157,13 @@ type EolVernacularName =
 type EolDataObject = 
     { [<JsonProperty("vettedStatus")>] VettedStatus:string
       [<JsonProperty("mimeType")>] MimeType:string
+      [<JsonProperty("dataType")>] DataType:string
       [<JsonProperty("rights")>] Rights: string
       [<JsonProperty("rightsHolder")>] RightsHolder: string
       [<JsonProperty("eolMediaURL")>] MediaUrl: string
       [<JsonProperty("description")>] Description: string
-      [<JsonProperty("license")>] License: string }
+      [<JsonProperty("license")>] License: string
+      [<JsonProperty("language")>] Language: string }
 
 [<CLIMutable>]
 type EolPageResult = 
@@ -178,7 +180,7 @@ let capitaliseFirstLetters s =
     System.Text.RegularExpressions.Regex.Replace(s, @"(^\w)|(\s\w)", fun (m:System.Text.RegularExpressions.Match) -> m.Value.ToUpper())
 
 let getEncyclopediaOfLifeCacheData taxonId =
-    let req = taxonId |> sprintf "1.0.json?batch=false&id=%i&images_per_page=1&images_page=1&videos_per_page=0&videos_page=0&sounds_per_page=0&sounds_page=0&maps_per_page=0&maps_page=0&texts_per_page=2&texts_page=1&subjects=overview&licenses=all&details=true&common_names=true&synonyms=false&references=true&taxonomy=false&vetted=0&cache_ttl=&language=en"
+    let req = taxonId |> sprintf "1.0.json?batch=false&id=%i&images_per_page=1&images_page=1&videos_per_page=0&videos_page=0&sounds_per_page=0&sounds_page=0&maps_per_page=0&maps_page=0&texts_per_page=75&texts_page=1&subjects=overview&licenses=all&details=true&common_names=true&synonyms=false&references=false&taxonomy=false&vetted=0&language=en"
     let response = tryGetRequest "https://eol.org/api/pages/" req |> Async.RunSynchronously
     match response with
     | None ->
@@ -200,33 +202,36 @@ let getEncyclopediaOfLifeCacheData taxonId =
                 match n with
                 | Some name -> name.Name |> capitaliseFirstLetters
                 | None -> ""             
-            let photoUrl,photoAttribution =
-                if result.Concept.DataObjects |> box |> isNull then "", ""
+            let photoUrl,photoAttribution,photoLicense =
+                if result.Concept.DataObjects |> box |> isNull then "", "", ""
                 else
                     let r =
                         result.Concept.DataObjects
                         |> List.filter (fun o -> o.MimeType = "image/jpeg")
                         |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
                     match r with
-                    | Some i -> i.MediaUrl, i.RightsHolder
-                    | None -> "",""
-            let desc,descAttribution =
-                if result.Concept.DataObjects |> box |> isNull then "", ""
+                    | Some i -> i.MediaUrl, i.RightsHolder, i.License
+                    | None -> "","",""
+            let desc,descAttribution,descLicence =
+                if result.Concept.DataObjects |> box |> isNull then "", "", ""
                 else
                     let r =
                         result.Concept.DataObjects
-                        |> List.filter (fun o -> o.MimeType = "text/html" || o.MimeType = "text/plain")
-                        |> List.tryFind (fun o -> o.VettedStatus = "Trusted")
+                        |> List.filter (fun o -> o.DataType = "http://purl.org/dc/dcmitype/Text")
+                        |> List.tryFind (fun o -> o.VettedStatus = "Trusted" && o.Language = "en")
                     match r with
                     | Some t -> 
                         (if isNull t.Description then "" else t.Description |> stripTags), 
-                        (if isNull t.RightsHolder then "" else t.RightsHolder |> stripTags)
-                    | None -> "",""
+                        (if isNull t.RightsHolder then "" else t.RightsHolder |> stripTags),
+                        t.License
+                    | None -> "","",""
             { CommonEnglishName         = commonEnglishName
               PhotoUrl                  = photoUrl
               PhotoAttribution          = photoAttribution
+              PhotoLicence              = photoLicense
               Description               = desc
               DescriptionAttribution    = descAttribution
+              DescriptionLicence        = descLicence
               Retrieved                 = DateTime.Now }
             |> Some
 

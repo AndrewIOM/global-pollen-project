@@ -148,8 +148,10 @@ module MasterReferenceCollection =
                     { CommonEnglishName =      ""
                       PhotoUrl =               ""
                       PhotoAttribution =       ""
+                      PhotoLicence =           ""
                       Description =            ""
                       DescriptionAttribution = ""
+                      DescriptionLicence =     ""
                       Retrieved =              DateTime()
             }
             BackboneChildren = backboneChildCount }
@@ -453,9 +455,9 @@ module MasterReferenceCollection =
         match existingCache with
         | Error _ -> updateFn i
         | Ok c -> 
-            match refreshed c > DateTime.Today.AddMonths(-nMonths) && refreshed c < DateTime.Today with
+            match refreshed c < DateTime.Today.AddMonths(-nMonths) with
             | true ->
-                printfn "%s cache for %i is stale (over %i months old). Refreshing." cacheName nMonths i
+                printfn "%s cache for %i is stale (over %i months old - %s). Refreshing." cacheName nMonths i ((refreshed c).ToShortDateString())
                 match updateFn i with
                 | None -> 
                     printfn "There was a problem retrieving a new %s cache. Using older cache from %s" cacheName ((refreshed c).ToShortDateString())
@@ -466,8 +468,10 @@ module MasterReferenceCollection =
                 Some c
 
     let establishConnection get set id externalId =
-        let getExisting (id:Guid) = RepositoryBase.getSingle<TaxonDetail> id get deserialise
-        let save (taxon:TaxonDetail) = RepositoryBase.setSingle taxon.Id taxon set serialise
+        let getExistingTaxon (id:Guid) = RepositoryBase.getSingle<TaxonDetail> id get deserialise
+        let saveTaxon (taxon:TaxonDetail) = 
+            printfn "Saving taxon after caching: %A" taxon            
+            RepositoryBase.setSingle taxon.Id taxon set serialise
         printfn "Establishing connection with %A" externalId
         let updateId taxon =
             match externalId with
@@ -483,18 +487,15 @@ module MasterReferenceCollection =
                 { taxon with NeotomaId = i }
             | Taxonomy.ThirdPartyTaxonId.GbifId i -> {taxon with GbifId = i}
             | Taxonomy.ThirdPartyTaxonId.EncyclopediaOfLifeId i -> 
-                let existingCache = 
-                    getExisting (Converters.DomainToDto.unwrapTaxonId id)
-                    |> Result.map(fun t -> t.EolCache)
-                let cache = updateStaleCache "encyclopedia of life" existingCache 6 ExternalLink.getEncyclopediaOfLifeCacheData i (fun c -> c.Retrieved)
+                let cache = updateStaleCache "encyclopedia of life" (Ok taxon.EolCache) 6 ExternalLink.getEncyclopediaOfLifeCacheData i (fun c -> c.Retrieved)
                 match cache with
                 | Some c -> { taxon with EolId = i; EolCache = c }
                 | None -> { taxon with EolId = i }
         id
         |> Converters.DomainToDto.unwrapTaxonId
-        |> getExisting
+        |> getExistingTaxon
         |> lift updateId
-        |> bind save
+        |> bind saveTaxon
 
     let addGrain' (grain:GrainSummary) (taxon:TaxonReadModel) =
         let summary = { taxon.Summary with GrainCount = taxon.Summary.GrainCount + 1; ThumbnailUrl = grain.Thumbnail }
@@ -529,7 +530,7 @@ module MasterReferenceCollection =
         Ok()
 
     let handle get getSortedList set setSortedList (e:EventMessage) =
-        printfn "E is %A" e
+        printfn "[Read Model] New event: %A" e
         match e |> toEvent with
         | :? ReferenceCollection.Event as e -> 
             match e with

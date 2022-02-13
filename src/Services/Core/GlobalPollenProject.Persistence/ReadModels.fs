@@ -57,8 +57,10 @@ type EncyclopediaOfLifeCache = {
     CommonEnglishName:      string
     PhotoUrl:               string
     PhotoAttribution:       string
+    PhotoLicence:           string
     Description:            string
     DescriptionAttribution: string
+    DescriptionLicence:     string
     Retrieved:              DateTime
 }
 
