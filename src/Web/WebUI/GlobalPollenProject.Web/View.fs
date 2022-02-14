@@ -509,9 +509,9 @@ module Slide =
                 h4 [ _class "card-title" ] [ encodedText "Citation" ]
                 p [] [ 
                     if authors.Length = 1 then strf "%s (%i)" authors.Head vm.Collection.Published.Year
-                    else strf "%s (%i)" (authors |> String.concat ";") vm.Collection.Published.Year
-                    strf "%s (Slide #%s). " latinName vm.Slide.CollectionSlideId
-                    str "Digitised palynological slide. In: "
+                    else strf "%s (%i). " (authors |> String.concat ";") vm.Collection.Published.Year
+                    strf "%s (Slide #%s) " latinName vm.Slide.CollectionSlideId
+                    str "- digitised palynological slide. In: "
                     em [] [ str vm.Collection.Name ]
                     strf " (version %i, published online %s). " vm.Collection.Version (vm.Collection.Published.ToString("d"))
                     if String.IsNullOrEmpty(vm.Collection.Institution) |> not then strf "Original material located at %s. " vm.Collection.Institution
@@ -534,7 +534,7 @@ module Slide =
             | _ ->
                 [ mrc; { Name = model.Slide.CurrentFamily; Url = Urls.MasterReference.family model.Slide.CurrentFamily }
                   { Name = model.Slide.CurrentGenus; Url = Urls.MasterReference.genus model.Slide.CurrentFamily model.Slide.CurrentGenus }
-                  { Name = sprintf "%s (%s)" model.Slide.CurrentSpecies model.Slide.CurrentSpAuth; Url = Urls.MasterReference.species model.Slide.CurrentFamily model.Slide.CurrentGenus model.Slide.CurrentSpecies } ]
+                  { Name = sprintf "%s (%s)" model.Slide.CurrentSpecies model.Slide.CurrentSpAuth; Url = Urls.MasterReference.species model.Slide.CurrentFamily model.Slide.CurrentGenus (model.Slide.CurrentSpecies.Split(" ").[1]) } ]
         else
             [ { Name = "Individual Reference Collections"; Url = Urls.Collections.root }
               { Name = model.Collection.Name; Url = Urls.Collections.byId model.Collection.Id } ]
