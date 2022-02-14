@@ -55,9 +55,7 @@ export class Viewer {
         $(this.containerId).css("width", this.width);
         $(this.containerId).css("height", this.height);
         this.loadImages(() => {
-            console.log(this);
             this.createCanvas(() => {
-                console.log(this);
                 this.render();
             });
         });
@@ -148,7 +146,27 @@ export class Viewer {
     public createCanvas(callback) {
 
         const defaultZoom = Math.min(this.width / this.imgWidth, this.height / this.imgHeight);
-        console.log("Default zoom is " + defaultZoom);
+
+        this.transform = 
+            d3.zoomIdentity
+            .translate(this.width / 2 - this.imgWidth / 2 * (defaultZoom - 0.1),
+                this.height / 2 - this.imgHeight / 2 * (defaultZoom - 0.1))
+            .scale(defaultZoom - 0.1);
+
+        let zoomBehaviour =
+            d3.zoom()
+            .extent([
+                [-this.imgWidth / 2, -this.imgHeight / 2],
+                [this.imgWidth + this.imgWidth / 2, this.imgHeight + this.imgHeight / 2]
+            ])
+            .scaleExtent([defaultZoom * 0.4, defaultZoom * 10])
+            .on("zoom", () => {
+                this.zoomed();
+                this.render();
+            })
+            .on("end", () => {
+                $(this.id).css("cursor", "grab");
+            });
 
         // create the canvas element
         this.base = d3.select(this.containerId);
@@ -156,24 +174,7 @@ export class Viewer {
             .attr("id", this.id.substr(1))
             .attr("width", this.width)
             .attr("height", this.height)
-            .call(d3.zoom()
-                .extent([
-                    [-this.imgWidth / 2, -this.imgHeight / 2],
-                    [this.imgWidth + this.imgWidth / 2, this.imgHeight + this.imgHeight / 2]
-                ])
-                .scaleExtent([defaultZoom * 0.4, defaultZoom * 10])
-                .on("zoom", () => {
-                    this.zoomed();
-                    this.render();
-                })
-                .on("end", () => {
-                    $(this.id).css("cursor", "grab");
-                }));
-        this.transform = d3.zoomIdentity;
-        this.transform = this.transform.scale(defaultZoom - 0.1);
-        this.transform = this.transform.translate(this.width / 2 - this.imgWidth / 2 * this.transform.k,
-            this.height / 2 - this.imgHeight / 2 * this.transform.k);
-        console.log(this.transform);
+            .call(zoomBehaviour);                
 
         this.context = this.canvas.node().getContext("2d");
         
@@ -186,6 +187,8 @@ export class Viewer {
         $(this.id).on("wheel mousewheel", (e) => {
             e.preventDefault()
         });
+
+        zoomBehaviour.transform(this.canvas, this.transform);
 
         // initialisation is complete - proceed through callback
         callback();
