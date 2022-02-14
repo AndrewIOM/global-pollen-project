@@ -168,9 +168,9 @@ let routes : HttpHandler =
                 POST >=> route  "/Curate/Decide"        >=> postAuthApi U.Curation.issueDecision
 
                 // Unknown Material
-                GET >=> routef  "/Unknown/%s"           (fun g n c -> U.UnknownGrains.getDetail g |> apiResult n c)
                 GET >=> route   "/Unknown"              >=> api U.UnknownGrains.listUnknownGrains
                 GET >=> route   "/Unknown/MostWanted"   >=> api U.UnknownGrains.getTopScoringUnknownGrains
+                GET >=> routef  "/Unknown/%s"           (fun g n c -> U.UnknownGrains.getDetail g |> apiResult n c)
                 POST >=> route  "/Unknown/Submit"       >=> postAuthApi U.UnknownGrains.submitUnknownGrain
                 POST >=> route  "/Unknown/Identify"     >=> postAuthApi U.UnknownGrains.identifyUnknownGrain
 
