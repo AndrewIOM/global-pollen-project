@@ -34,6 +34,7 @@ export class Gallery {
     constructor(frames:string[], pixelWidth:number) {
         this.changeImage(frames, pixelWidth);
         this.activateGalleryLinks();
+        $(".slide-gallery-item").first().addClass("active");
     }
     
     changeImage(frames: string[], pixelWidth: number) {
