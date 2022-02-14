@@ -145,8 +145,8 @@ module Actions =
                 task {
                     let! user = Profile.getAuthenticatedUser ctx
                     let userId = user |> Option.map(fun u -> u.Id)
-                    let absoluteUrl = sprintf "%s://%s%s" ctx.Request.Scheme ctx.Request.Host.Value ctx.Request.Path.Value
-                    return! (coreAction (CoreActions.UnknownMaterial.itemDetail id) (HtmlViews.Identify.view absoluteUrl userId)) next ctx
+                    let baseUrl = sprintf "%s://%s" ctx.Request.Scheme ctx.Request.Host.Value
+                    return! (coreAction (CoreActions.UnknownMaterial.itemDetail id) (HtmlViews.Identify.view userId baseUrl ctx.Request.Path.Value)) next ctx
                 }
 
         // TODO Remove RunSynchronously
