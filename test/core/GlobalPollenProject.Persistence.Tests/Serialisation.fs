@@ -91,8 +91,10 @@ module ``When serialising read models`` =
                     { CommonEnglishName =      "Daisies"
                       PhotoUrl =               "https://somecoolurl.cool/cool.png"
                       PhotoAttribution =       "Daisy McDaisy"
+                      PhotoLicence =           "http://creativecommons.org/licenses/by-sa/3.0/"
                       Description =            "Daisies are common throughout the world."
                       DescriptionAttribution = "Daisy McDaisy"
+                      DescriptionLicence =     "http://creativecommons.org/licenses/by-sa/3.0/"
                       Retrieved =              DateTime()
             }
             BackboneChildren = 2 }

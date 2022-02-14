@@ -712,7 +712,7 @@ module Taxon =
                         span [ _id "palaeo-range-low" ] []
                         str " to "
                         span [ _id "palaeo-range-high" ] []
-                        str " years before present."
+                        str " years before present. "
                         span [ _id "palaeo-refresh-time" ] []
                     ]
                     div [ _id "neotoma-map" ] []
@@ -728,16 +728,17 @@ module Taxon =
                 div [ _class "card-fixed-height-image" ] [
                     img [ _src eolCache.PhotoUrl; _alt <| sprintf "%s (rights holder: %s)"latinName eolCache.PhotoAttribution ]
                     if not <| String.IsNullOrEmpty eolCache.PhotoAttribution then
-                        span [ _class "image-attribution" ] [ str <| "&copy " + eolCache.PhotoAttribution ]
+                        span [ _class "image-attribution" ] [ rawText "© " ; str eolCache.PhotoAttribution; str " "; a [ _href eolCache.PhotoLicence; _target "blank" ] [ str "(licence)"] ]
                 ]
             div [ _class "card-block" ] [
                 if String.IsNullOrEmpty eolCache.CommonEnglishName
                 then h4 [ _class "card-title" ] [ str latinName ]
                 else h4 [ _class "card-title" ] [ str eolCache.CommonEnglishName ]
                 if String.IsNullOrEmpty eolCache.Description |> not
-                then p [ _class "card-text" ] [ rawText (if eolCache.Description.Length > 400
-                                                         then eolCache.Description.Substring(0,400)
-                                                         else eolCache.Description) ]
+                then p [ _class "card-text" ] [ encodedText (if eolCache.Description.Length > 400
+                                                             then eolCache.Description.Substring(0,400) + "... "
+                                                             else eolCache.Description + " ")
+                                                em [] [ rawText "© "; str eolCache.DescriptionAttribution; str " "; a [ _href eolCache.DescriptionLicence; _target "blank" ] [ str ("(licence)") ] ] ]
                 a [ _class "card-link"; _href <| sprintf "http://eol.org/pages/%i/overview" eolId; _target "blank" ]
                     [ str "See more in the Encyclopedia of Life..." ]
             ]
