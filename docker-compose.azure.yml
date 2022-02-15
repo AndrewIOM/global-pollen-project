@@ -52,6 +52,20 @@ services:
       - LETSENCRYPT_HOST=eventstore.${GPP_EXTERNAL_DNS_NAME_OR_IP}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - EVENTSTORE_DEV=false
+    volumes:
+      - type: volume
+        source: eventstore-volume-data
+        target: /data/eventstore-data
+      - type: volume
+        source: eventstore-volume-index
+        target: /data/eventstore-index
+      - type: volume
+        source: eventstore-volume-logs
+        target: /var/log/eventstore
+
+  core.readmodel:
+    volumes:
+      - redis_data:/data/redis
 
   nginx-proxy:
     image: nginxproxy/nginx-proxy
