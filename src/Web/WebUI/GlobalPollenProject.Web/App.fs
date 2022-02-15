@@ -129,15 +129,6 @@ module Actions =
 
     module Identify =
 
-         /// List the most sought identifications
-        let topUnknownGrains : HttpHandler =
-            fun next ctx ->
-                task {
-                    let core = ctx.GetService<CoreMicroservice>()
-                    let! r = core.Apply(CoreActions.UnknownMaterial.mostWanted()) 
-                    return! r |> toApiResult next ctx
-                }
-
         let listGrains = coreAction (CoreActions.UnknownMaterial.list()) HtmlViews.Identify.index
 
         let showGrainDetail id =
@@ -252,7 +243,7 @@ let webApp : HttpHandler =
             GET >=> route   "/backbone/trace"           >=> apiResultFromQuery<BackboneSearchRequest,BackboneTaxon list> CoreActions.Backbone.tryTrace
             GET >=> route   "/backbone/search"          >=> apiResultFromQuery<BackboneSearchRequest,string list> CoreActions.Backbone.search
             GET >=> route   "/taxon/search"             >=> apiResultFromQuery<TaxonAutocompleteRequest,TaxonAutocompleteItem list> CoreActions.MRC.autocompleteTaxon
-            GET >=> route   "/grain/location"           >=> Actions.Identify.topUnknownGrains
+            GET >=> route   "/grain/location"           >=> coreApiAction (CoreActions.UnknownMaterial.mostWanted())
             GET >=> routef  "/neotoma-cache/%i"         (fun i -> coreApiAction (CoreActions.Cache.neotoma i) )
             subRoute        "/digitise"                 digitiseApi
         ]
@@ -287,7 +278,7 @@ let webApp : HttpHandler =
         ]
 
     let admin =
-        // mustBeAdmin >=>
+        mustBeAdmin >=>
         choose [
             POST >=> route Urls.Admin.curate               >=> Actions.Admin.curateDecision
             POST >=> route Urls.Admin.grantCuration        >=> Actions.Admin.grantCuration
