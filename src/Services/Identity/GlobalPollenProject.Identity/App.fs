@@ -365,6 +365,7 @@ module Program =
     open Microsoft.Extensions.Configuration
     open Microsoft.EntityFrameworkCore
     open IdentityServer4.EntityFramework.Mappers
+    open Microsoft.AspNetCore.HttpOverrides
 
     let getAppSetting (appSettings:IConfiguration) name =
         match String.IsNullOrEmpty appSettings.[name] with
@@ -492,6 +493,7 @@ module Program =
         // use serviceScope = app.ApplicationServices.CreateScope()
         // let context = serviceScope.ServiceProvider.GetService<UserDbContext>()
         // context.Database.Migrate()
+        app.UseForwardedHeaders() |> ignore
         if env.IsDevelopment() 
             then app.UseDeveloperExceptionPage() |> ignore
             else app.UseGiraffeErrorHandler Routes.error |> ignore
@@ -503,6 +505,11 @@ module Program =
     let configureServices (services : IServiceCollection) =
 
         let appSettings = services.BuildServiceProvider().GetService<IConfiguration>()
+
+        services.Configure(fun (opt:ForwardedHeadersOptions) ->
+            opt.ForwardedHeaders <- ForwardedHeaders.XForwardedFor ||| ForwardedHeaders.XForwardedProto ||| ForwardedHeaders.XForwardedHost
+            opt.KnownNetworks.Clear()
+            opt.KnownProxies.Clear()) |> ignore
 
         services.AddCors()  |> ignore
         services.AddSingleton<UserDbContext>() |> ignore

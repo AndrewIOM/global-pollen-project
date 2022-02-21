@@ -75,7 +75,7 @@ type Startup (configuration: IConfiguration) =
                 opt.ResponseType <- "code id_token"
                 opt.SaveTokens <- true
                 opt.GetClaimsFromUserInfoEndpoint <- true
-                opt.RequireHttpsMetadata <- false
+                opt.RequireHttpsMetadata <- true // TODO turn off in development
                 opt.Scope.Add("openid")
                 opt.Scope.Add("profile")
                 opt.Scope.Add("webapigw")
@@ -100,7 +100,7 @@ type Startup (configuration: IConfiguration) =
             .ConfigureApplicationCookie(fun opt ->
                 opt.LoginPath <- PathString "/Account/Login" )
             .AddDataProtection() |> ignore
-        services.AddMvcCore().AddDataAnnotations() |> ignore // Adds IValidationContext
+        services.AddMvcCore().AddDataAnnotations() |> ignore
         services.AddGiraffe() |> ignore
         this.AddHttpClientServices(services) |> ignore
         this.AddCustomAuthentication(services) |> ignore
@@ -114,12 +114,14 @@ type Startup (configuration: IConfiguration) =
         JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear()
         app.UseHealthChecks(PathString "/health") |> ignore
         if (env.IsDevelopment()) 
-        then app.UseDeveloperExceptionPage() |> ignore
+        then 
+            app.UseDeveloperExceptionPage() |> ignore
+            app.UseForwardedHeaders(ForwardedHeadersOptions(ForwardedHeaders = ForwardedHeaders.XForwardedFor)) |> ignore
         else 
             app.UseGiraffeErrorHandler(Handlers.errorHandler) |> ignore
+            app.UseForwardedHeaders(ForwardedHeadersOptions(ForwardedHeaders = ForwardedHeaders.XForwardedFor)) |> ignore
             app.UseHsts() |> ignore
             app.UseHttpsRedirection() |> ignore
-        app.UseForwardedHeaders(ForwardedHeadersOptions(ForwardedHeaders = ForwardedHeaders.XForwardedFor)) |> ignore
         app.UseStaticFiles() |> ignore
         app.UseAuthentication() |> ignore
         app.UseGiraffe(GlobalPollenProject.Web.App.webApp)

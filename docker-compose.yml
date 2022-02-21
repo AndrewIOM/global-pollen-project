@@ -69,7 +69,7 @@ services:
     depends_on:
       - webapigw
     environment:
-      - IdentityUrl= http://identity.api
+      - IdentityUrl=http://identity.api
       - CoreUrl=http://webapigw
       - CallBackUrl=http://0.0.0.0:80
       - MapboxToken=${MAPBOX_TOKEN}
@@ -84,7 +84,7 @@ services:
     depends_on:
         - webapigw
     environment:
-      - IdentityUrl= http://identity.api
+      - IdentityUrl=http://identity.api
       - CoreUrl=http://webapigw
 
   # web.lab:

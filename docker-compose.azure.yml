@@ -14,8 +14,10 @@ services:
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - ASPNETCORE_ENVIRONMENT=${DOTNET_ENV}
       - ASPNETCORE_URLS=http://0.0.0.0:80
-      - IdentityUrl= http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:80
-      - CallBackUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:80
+      - IdentityUrl=https://identity.${GPP_EXTERNAL_DNS_NAME_OR_IP}:443
+      - CallBackUrl=https://${GPP_EXTERNAL_DNS_NAME_OR_IP}:443
+      - ASPNETCORE_FORWARDEDHEADERS_ENABLED=true
+    restart: always
 
   web.api:
     environment:
@@ -25,6 +27,7 @@ services:
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - ASPNETCORE_ENVIRONMENT=${DOTNET_ENV}
       - ASPNETCORE_URLS=http://0.0.0.0:80
+    restart: always
 
   identity.api:
     environment:
@@ -35,15 +38,18 @@ services:
       - ConnectionStrings__UserConnection=Server=tcp:${USER_SQL_HOST},1433;Initial Catalog=${USER_SQL_DB};Persist Security Info=False;User ID=${USER_SQL_USER};Password=${USER_SQL_PASSWORD};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;
       - ASPNETCORE_ENVIRONMENT=${DOTNET_ENV}
       - ASPNETCORE_URLS=http://0.0.0.0:80
-      - WebsiteUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:80
+      - WebsiteUrl=https://${GPP_EXTERNAL_DNS_NAME_OR_IP}
+    restart: on-failure:10
 
   webapigw:
     ports:
       - "5202:80"
+    restart: always
 
   core.api:
     environment:
       - ASPNETCORE_ENVIRONMENT=${DOTNET_ENV}
+    restart: always
 
   core.eventstore:
     environment:
@@ -52,20 +58,20 @@ services:
       - LETSENCRYPT_HOST=eventstore.${GPP_EXTERNAL_DNS_NAME_OR_IP}
       - LETSENCRYPT_EMAIL=${LETSENCRYPT_EMAIL}
       - EVENTSTORE_DEV=false
+      - EVENTSTORE_DB=/var/lib/eventstore-db
+      - EVENTSTORE_INDEX=/var/lib/eventstore-index
+      - EVENTSTORE_LOG=/var/log/eventstore
+    restart: always
     volumes:
-      - type: volume
-        source: eventstore-volume-data
-        target: /data/eventstore-data
-      - type: volume
-        source: eventstore-volume-index
-        target: /data/eventstore-index
-      - type: volume
-        source: eventstore-volume-logs
-        target: /var/log/eventstore
+      - /data/eventstore-db:/var/lib/eventstore-db
+      - /data/eventstore-index:/var/lib/eventstore-index
+      - /var/log/eventstore:/var/log/eventstore
 
   core.readmodel:
+    command: redis-server --appendonly yes
     volumes:
-      - redis_data:/data/redis
+      - /data/redis:/data
+    restart: always
 
   nginx-proxy:
     image: nginxproxy/nginx-proxy
@@ -84,10 +90,13 @@ services:
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
+    restart: always
 
   acme-companion:
     image: nginxproxy/acme-companion
     container_name: nginx-proxy-acme
+    depends_on:
+      - nginx-proxy
     volumes:
       - conf:/etc/nginx/conf.d
       - vhost:/etc/nginx/vhost.d
@@ -95,8 +104,11 @@ services:
       - certs:/etc/nginx/certs:rw
       - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Contains settings to increase header size allowed (i.e., from identity-server):
+      - ./proxy.conf:/etc/nginx/proxy.conf:ro 
     environment:
       - NGINX_PROXY_CONTAINER=nginx-proxy
+    restart: always
 
 volumes:
   conf:
