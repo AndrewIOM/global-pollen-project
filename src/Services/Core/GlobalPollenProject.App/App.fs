@@ -53,20 +53,20 @@ module Auth =
             if id.IsNone then invalidOp "Could not get user ID from claims"
             else id.Value
 
-let readAllBytes (s:System.IO.Stream) = 
-    let ms = new System.IO.MemoryStream()
-    s.CopyToAsync(ms) |> Async.AwaitTask |> Async.RunSynchronously // TODO Remove Await
-    ms.ToArray()
+let readAllBytes (s:IO.Stream) = 
+    task {
+        let ms = new IO.MemoryStream()
+        do! s.CopyToAsync(ms)
+        return ms.ToArray()
+    }
 
 let inline bindJson< ^T> (ctx:HttpContext) =
-    let json =
-        ctx.Request.Body
-        |> readAllBytes
-        |> System.Text.Encoding.UTF8.GetString
-    printfn "Request json was %s" json
-    match Serialisation.deserialise< ^T> json with
-    | Ok o -> Ok o
-    | Error e -> Error InvalidRequestFormat
+    task {
+        let! json = ctx.Request.Body |> readAllBytes
+        match json |> Text.Encoding.UTF8.GetString |> Serialisation.deserialise< ^T> with
+        | Ok o -> return Ok o
+        | Error e -> return Error InvalidRequestFormat
+    }
 
 let apiResult next ctx (result:Result<'a,ServiceError>) =
     match result with
@@ -82,17 +82,23 @@ let apiResult next ctx (result:Result<'a,ServiceError>) =
 
 let inline postApi< ^T, ^R> (action:^T->Result< ^R,ServiceError>) : HttpHandler =
     fun next ctx ->
-        bindJson< ^T> ctx
-        |> bind action
-        |> apiResult next ctx
+        task {
+            let! model = bindJson< ^T> ctx
+            return! model
+            |> bind action
+            |> apiResult next ctx
+        }
 
 let inline postAuthApi< ^T, ^R> (action:UseCases.GetCurrentUser-> ^T->Result< ^R,ServiceError>) : HttpHandler =
     Auth.checkUserIsLoggedIn >=>
     fun next ctx ->
         let getUser = Auth.getCurrentUser ctx
-        bindJson< ^T> ctx
-        |> bind (action getUser)
-        |> apiResult next ctx
+        task {
+            let! model = bindJson< ^T> ctx
+            return! model
+            |> bind (action getUser)
+            |> apiResult next ctx
+        }
 
 let errorHandler errors = json errors
 

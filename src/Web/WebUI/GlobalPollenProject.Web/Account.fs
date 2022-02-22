@@ -16,6 +16,7 @@ module PublicProfile =
 
     let profile : HttpHandler =
         fun _ ctx ->
-            ctx.BindFormAsync<ChangePublicProfileViewModel>() |> Async.AwaitTask |> Async.RunSynchronously
-            |> ignore
-            invalidOp "Not implemented"
+            task {
+                let! model = ctx.BindFormAsync<ChangePublicProfileViewModel>()
+                return invalidOp "Not implemented"
+            }

@@ -49,7 +49,8 @@ let tryGetRequest baseUri (query:string) =
             let! result = client.GetAsync(query) |> Async.AwaitTask
             match result.IsSuccessStatusCode with
             | false -> 
-                printfn "Problem getting request [%s]: %s" (result.StatusCode.ToString()) (result.Content.ReadAsStringAsync() |> Async.AwaitTask |> Async.RunSynchronously)
+                let! r = result.Content.ReadAsStringAsync() |> Async.AwaitTask
+                printfn "Problem getting request [%s]: %s" (result.StatusCode.ToString()) r
                 return None
             | true ->
                 use! responseStream = result.Content.ReadAsStreamAsync() |> Async.AwaitTask

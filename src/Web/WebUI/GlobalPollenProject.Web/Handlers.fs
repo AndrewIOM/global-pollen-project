@@ -131,12 +131,14 @@ let errorHandler (ex : Exception) (logger : ILogger) =
 /////////////////////
 
 let inline tryBindJson< ^T> (ctx:HttpContext) =
-    let body = ctx.Request.Body
-    use reader = new StreamReader(body, true)
-    let reqBytes = reader.ReadToEndAsync() |> Async.AwaitTask |> Async.RunSynchronously
-    match Serialisation.deserialise< ^T> reqBytes with
-    | Ok o -> Ok o
-    | Error e -> Error InvalidRequestFormat
+    task {
+        let body = ctx.Request.Body
+        use reader = new StreamReader(body, true)
+        let! reqBytes = reader.ReadToEndAsync()
+        match Serialisation.deserialise< ^T> reqBytes with
+        | Ok o -> return Ok o
+        | Error e -> return Error InvalidRequestFormat
+    }
 
 /////////////////////
 /// Query String Decode
@@ -261,17 +263,16 @@ let apiResultFromQuery<'a,'b> (coreAction:'a->CoreFunction<'b>) : HttpHandler =
 /// Deserialise JSON model (in request body), pass to core action, and return API result
 let inline apiResultFromBody< ^a, ^b> (coreAction: ^a->CoreFunction< ^b>) : HttpHandler =
     fun next ctx ->
-        let model = 
-            tryBindJson< ^a> ctx
-            |> Result.bind Validation.validateModel
-        let core = ctx.GetService<CoreMicroservice>()
-        let result =
-            task {
-                match model with
-                | Ok m -> return! coreAction m |> core.Apply
-                | Error e -> return Error e
-            }
         task {
+            let! json = tryBindJson< ^a> ctx
+            let model = json |> Result.bind Validation.validateModel
+            let core = ctx.GetService<CoreMicroservice>()
+            let result =
+                task {
+                    match model with
+                    | Ok m -> return! coreAction m |> core.Apply
+                    | Error e -> return Error e
+                }
             let! r = result
             return! toApiResult next ctx r
         }

@@ -129,13 +129,15 @@ module Manage =
 
     let linkLogin : HttpHandler =
         fun next ctx ->
-            let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-            let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
-            let provider = ctx.BindFormAsync<LinkLogin>() |> Async.AwaitTask |> Async.RunSynchronously
-            let user = userManager.GetUserAsync ctx.User |> Async.AwaitTask |> Async.RunSynchronously
-            let callbackUrl = sprintf "%s/Account/Manage/LinkLoginCallback" (Helpers.getBaseUrl ctx)
-            let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,callbackUrl, user.Id)
-            Helpers.challengeWithProperties provider.Provider properties next ctx
+            task {
+                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                let signInManager = ctx.GetService<SignInManager<ApplicationUser>>()
+                let! provider = ctx.BindFormAsync<LinkLogin>()
+                let! user = userManager.GetUserAsync ctx.User
+                let callbackUrl = sprintf "%s/Account/Manage/LinkLoginCallback" (Helpers.getBaseUrl ctx)
+                let properties = signInManager.ConfigureExternalAuthenticationProperties(provider.Provider,callbackUrl, user.Id)
+                return! Helpers.challengeWithProperties provider.Provider properties next ctx
+            }
 
     let linkLoginCallback : HttpHandler =
         fun next ctx ->

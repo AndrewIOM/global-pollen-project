@@ -23,9 +23,11 @@ module Actions =
     let login : HttpHandler =
         requiresAuthentication (challenge "OpenIdConnect") >=>
         fun next ctx ->
-            let token = ctx.GetTokenAsync("access_token") |> Async.AwaitTask |> Async.RunSynchronously
-            ctx.Items.Add("access_token",token)
-            redirectTo true Urls.home next ctx
+            task {
+                let! token = ctx.GetTokenAsync("access_token")
+                ctx.Items.Add("access_token",token)
+                return! redirectTo true Urls.home next ctx
+            }
 
     let logout = signOut "Cookies" >=> redirectTo false "/"
            
@@ -122,10 +124,12 @@ module Actions =
         /// Display the latest version of a specific reference collection
         let individualCollectionLatest (colId:Guid) next (ctx:HttpContext) =
             let core = ctx.GetService<CoreMicroservice>()
-            let latestVer = core.Apply(CoreActions.IndividualCollections.collectionDetailLatest (colId.ToString())) |> Async.RunSynchronously
-            match latestVer with
-            | Ok v -> redirectTo false (sprintf "/Reference/%s/%i" (colId.ToString()) v) next ctx
-            | Error _ -> notFound next ctx
+            task {
+                let! latestVer = core.Apply(CoreActions.IndividualCollections.collectionDetailLatest (colId.ToString()))
+                match latestVer with
+                | Ok v -> return! redirectTo false (sprintf "/Reference/%s/%i" (colId.ToString()) v) next ctx
+                | Error _ -> return! notFound next ctx
+            }
 
     module Identify =
 
@@ -140,13 +144,16 @@ module Actions =
                     return! (coreAction (CoreActions.UnknownMaterial.itemDetail id) (HtmlViews.Identify.view userId baseUrl ctx.Request.Path.Value)) next ctx
                 }
 
-        // TODO Remove RunSynchronously
         let submitGrain : HttpHandler =
              fun next ctx ->
-                tryBindJson<AddUnknownGrainRequest> ctx
-                |> Result.map(CoreActions.UnknownMaterial.submit)
-                |> Result.map(fun r -> Core.coreAction' r ctx |> Async.AwaitTask |> Async.RunSynchronously)
-                |> toApiResult next ctx
+                task {
+                    let! json = tryBindJson<AddUnknownGrainRequest> ctx
+                    match json with
+                    | Ok j -> 
+                        let! result = Core.coreAction' (CoreActions.UnknownMaterial.submit j) ctx
+                        return! result |> toApiResult next ctx
+                    | Error e -> return! Error e |> toApiResult next ctx  
+                }
 
         let submitIdentification : HttpHandler =
             fun next ctx ->
@@ -193,9 +200,10 @@ module Actions =
 
         let rebuildReadModel next (ctx:HttpContext) =
             let core = ctx.GetService<CoreMicroservice>()
-            core.Apply(CoreActions.System.rebuildReadModel ()) 
-            |> Async.RunSynchronously
-            |> toApiResult next ctx
+            task {
+                let! r = core.Apply(CoreActions.System.rebuildReadModel ()) 
+                return! r |> toApiResult next ctx
+            }
 
         let userAdmin = coreAction (CoreActions.System.listUsers()) HtmlViews.Admin.users
         let curate = coreAction (CoreActions.Curate.listPending()) HtmlViews.Admin.curate

@@ -142,7 +142,7 @@ module Handlers =
                     let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s&returnUrl=%s" baseUrl user.Id codeBase64 returnUrlBase64
                     let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
                     let sendEmail = ctx.GetService<Email.SendEmail>()
-                    sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html } |> Async.RunSynchronously |> ignore
+                    let! _ = sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html }
                     return! htmlView (Views.Pages.confirmCode model.Email) next ctx
                 | false -> return! (htmlView <| Views.Pages.register (result.Errors |> identityToValidationError) model) next ctx
             }
@@ -455,28 +455,31 @@ module Program =
     let ensureRoles appSettings (serviceProvider:IServiceProvider) =
         let roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>()
         let userManager = serviceProvider.GetRequiredService<UserManager<ApplicationUser>>()
-        [ "Admin"; "Curator" ]
-        |> List.iter (fun roleName ->
-            match roleManager.RoleExistsAsync(roleName) |> Async.AwaitTask |> Async.RunSynchronously with
-            | true -> ()
-            | false -> roleManager.CreateAsync(IdentityRole(roleName)) 
-                       |> Async.AwaitTask 
-                       |> Async.RunSynchronously 
-                       |> ignore )
-        let powerUser = ApplicationUser(UserName = getAppSetting appSettings "UserSettings:UserEmail",Email = getAppSetting appSettings "UserSettings:UserEmail",
-                                        GivenNames = "Pollen", FamilyName = "Admin", Organisation = "Global Pollen Project")
-        let powerPassword = getAppSetting appSettings "UserSettings:UserPassword"
-        let existing = userManager.FindByEmailAsync(getAppSetting appSettings "UserSettings:UserEmail") |> Async.AwaitTask |> Async.RunSynchronously
-        if existing |> isNull 
-            then
-                let create = userManager.CreateAsync(powerUser, powerPassword) |> Async.AwaitTask |> Async.RunSynchronously
-                if create.Succeeded 
-                    then 
-                        userManager.AddToRoleAsync(powerUser, "Admin") |> Async.AwaitTask |> Async.RunSynchronously |> ignore
-                        let token = userManager.GenerateEmailConfirmationTokenAsync(powerUser) |> Async.AwaitTask |> Async.RunSynchronously
-                        userManager.ConfirmEmailAsync(powerUser, token) |> Async.AwaitTask |> Async.RunSynchronously |> ignore
-                    else failwithf "Could not create default user account: %A" create.Errors
-            else ()
+        task {
+            [ "Admin"; "Curator" ]
+            |> List.iter (fun roleName ->
+                match roleManager.RoleExistsAsync(roleName) |> Async.AwaitTask |> Async.RunSynchronously with
+                | true -> ()
+                | false -> roleManager.CreateAsync(IdentityRole(roleName)) 
+                        |> Async.AwaitTask 
+                        |> Async.RunSynchronously 
+                        |> ignore )
+            let powerUser = ApplicationUser(UserName = getAppSetting appSettings "UserSettings:UserEmail",Email = getAppSetting appSettings "UserSettings:UserEmail",
+                                            GivenNames = "Pollen", FamilyName = "Admin", Organisation = "Global Pollen Project")
+            let powerPassword = getAppSetting appSettings "UserSettings:UserPassword"
+            let! existing = userManager.FindByEmailAsync(getAppSetting appSettings "UserSettings:UserEmail")
+            if existing |> isNull 
+                then
+                    let! create = userManager.CreateAsync(powerUser, powerPassword)
+                    if create.Succeeded 
+                        then 
+                            let! _ = userManager.AddToRoleAsync(powerUser, "Admin")
+                            let! token = userManager.GenerateEmailConfirmationTokenAsync(powerUser)
+                            let! _ = userManager.ConfirmEmailAsync(powerUser, token)
+                            return ()
+                        else failwithf "Could not create default user account: %A" create.Errors
+                else return ()
+        }
 
     let configureCors (builder : CorsPolicyBuilder) =
         builder//.WithOrigins("http://localhost:8080")
@@ -565,7 +568,7 @@ module Program =
         context.Database.Migrate()
         sp.GetService<ConfigurationDbContext>() |> seedConfigurationDbAsync appSettings |> ignore
 
-        services.BuildServiceProvider() |> ensureRoles appSettings
+        services.BuildServiceProvider() |> ensureRoles appSettings |> Async.AwaitTask |> Async.RunSynchronously
 
     let configureLogging (builder : ILoggingBuilder) =
         let filter (l: LogLevel) = l.Equals LogLevel.Error
