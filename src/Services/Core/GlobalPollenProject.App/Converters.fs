@@ -546,10 +546,11 @@ module DomainToDto =
         let toString : char seq -> string = Seq.map string >> String.concat ""
         match p with
         | Person (firstNames,surname) ->
+            let firstNames = firstNames |> List.where(fun s -> not <| String.IsNullOrEmpty(s))
             match firstNames.Length with
             | 0 -> surname
             | _ -> 
-                let initials = firstNames |> List.map (Seq.take 1 >> toString) |> String.concat ". "
+                let initials = firstNames |> List.map (Seq.truncate 1 >> toString) |> String.concat ". "
                 initials + ". " + surname
         | Person.Unknown -> "Unknown"
 
