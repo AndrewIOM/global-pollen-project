@@ -1138,7 +1138,7 @@ module Identify =
         ] |> Layout.standard [] title "Some specimens have been submitted, for which the botanical origin is not known. Can you help with a morphological identification?"
 
     let disqus baseUrl path =
-        script [] [ strf """
+        script [] [ rawText <| sprintf """
             var disqus_config = function () {
                 this.page.url = '%s' + '%s'
                 this.page.identifier = "%s";
