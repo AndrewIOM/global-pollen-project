@@ -548,7 +548,10 @@ module MasterReferenceCollection =
             | _ -> Ok()
         | :? Taxonomy.Event as e ->
             match e with
-            | Taxonomy.Event.EstablishedConnection (id,exId) -> establishConnection get set id exId
+            | Taxonomy.Event.EstablishedConnection (id,exId) -> 
+                match establishConnection get set id exId with
+                | Ok _ -> Ok ()
+                | Error e -> printfn "[Projection] Warning: problem establishing connection: %s" e; Ok()
             | _ -> Ok()
         | _ -> Ok()
 
