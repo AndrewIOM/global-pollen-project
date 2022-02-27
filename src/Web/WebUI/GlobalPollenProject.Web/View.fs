@@ -254,7 +254,7 @@ module Layout =
                     ]
                     div [ _class "col-md-4 footer-images"] [
                         h4 [] [ encodedText "Funding" ]
-                        p [] [ encodedText "The Global Pollen Project is funded via the Natural Environment Research Council of the United Kingdom, and the Oxford Long-Term Ecology Laboratory."]
+                        p [] [ encodedText "The Global Pollen Project has received funding from the Natural Environment Research Council of the United Kingdom, and the Oxford Long-Term Ecology Laboratory."]
                         img [ _src "/images/oxford-logo.png"; _alt "University of Oxford" ]
                     ]
                 ]
@@ -342,14 +342,14 @@ module Components =
             ]
         ]
 
-    let paginationLink link = 
+    let paginationLink link labelText = 
         li [ _class "page-item" ] [
-            a [ _class "page-link"; _href link ] []
+            a [ _class "page-link"; _href link ] [ str labelText ]
         ]
 
     let pagination (vm:PagedResult<'a>) linkBase =
-        let backLink = paginationLink <| sprintf "%s&page=%i" linkBase (vm.CurrentPage - 1)
-        let forwardLink = paginationLink  <| sprintf "%s&page=%i" linkBase (vm.CurrentPage + 1)
+        let backLink = paginationLink (sprintf "%s&page=%i" linkBase (vm.CurrentPage - 1)) "Previous"
+        let forwardLink = paginationLink (sprintf "%s&page=%i" linkBase (vm.CurrentPage + 1)) "Next"
         nav [ _aria "label" "pagination" ] [
             ul [ _class "pagination" ] (
                 [ 1 .. vm.TotalPages ] |> List.map (fun i ->
@@ -357,13 +357,13 @@ module Components =
                         a [ _class "page-link"; _href (sprintf "%s&page=%i" linkBase i) ] [encodedText (sprintf "%i" i) ]
                     ] )
                 |> fun l -> if vm.CurrentPage > 1 then backLink::l else l
-                |> fun l -> if vm.CurrentPage > 1 then List.concat[l; [forwardLink]] else l
+                |> fun l -> if vm.CurrentPage < vm.TotalPages then List.concat [l; [forwardLink]] else l
             )
         ]
 
     let percentCircle (percent:float) =
         div [ _class <| sprintf "c100 p%i" (int percent) ] [
-            span [] [ encodedText <| percent.ToString("0.00") ]
+            span [] [ encodedText <| percent.ToString("0.00") + "%" ]
             div [ _class "slice" ] [
                 div [ _class "bar" ] []
                 div [ _class "fill" ] []
@@ -436,7 +436,7 @@ module Home =
             p [] [ 
                 encodedText summary
                 str " "
-                a [ _href link ] [ encodedText "Learn more" ]
+                a [ _href link ] [ encodedText "Learn more..." ]
             ]
         ]
 
@@ -482,7 +482,7 @@ module Home =
                         span [ _class "big-number" ] [ encodedText <| vm.DigitisedSlides.ToString("#,##0") ]
                         encodedText "Digitised Reference Slides" ]
                     div [ _class "col-md-3 bottom-margin" ] [ 
-                        span [ _class "big-number" ] [ encodedText <| vm.Species.ToString("#,##0") ]
+                        span [ _class "big-number" ] [ encodedText <| vm.IndividualGrains.ToString("#,##0") ]
                         encodedText "Individual Grains and Spores" ]
                 ]
             ]
@@ -508,12 +508,12 @@ module Slide =
             div [ _class "card-block" ] [
                 h4 [ _class "card-title" ] [ encodedText "Citation" ]
                 p [] [ 
-                    if authors.Length = 1 then strf "%s (%i)" authors.Head vm.Collection.Published.Year
+                    if authors.Length = 1 then strf "%s (%i). " authors.Head vm.Collection.Published.Year
                     else strf "%s (%i). " (authors |> String.concat ";") vm.Collection.Published.Year
-                    strf "%s (Slide #%s) " latinName vm.Slide.CollectionSlideId
-                    str "- digitised palynological slide. In: "
+                    strf "%s (%s). " latinName vm.Slide.CollectionSlideId
+                    str "Digitised palynological slide. In: "
                     em [] [ str vm.Collection.Name ]
-                    strf " (version %i, published online %s). " vm.Collection.Version (vm.Collection.Published.ToString("d"))
+                    strf " (Version %i, published %s). " vm.Collection.Version (vm.Collection.Published.ToString("d"))
                     if String.IsNullOrEmpty(vm.Collection.Institution) |> not then strf "Original material located at %s. " vm.Collection.Institution
                     str "Retrieved from globalpollenproject.org on "
                     strf "%s."(DateTime.Now.ToString("d"))
@@ -542,7 +542,7 @@ module Slide =
     let cropPanel isSignedIn =
         div [ _class "card card-inverse card-primary mb-3 text-center crop-panel"; _id "cropping-panel" ] [
             div [ _class "card-block" ] [
-                span [] [ str "Help us identify individual pollen grains and spores within this slide." ]
+                span [] [ str "Help us identify individual pollen grains and spores within this slide. " ]
                 match isSignedIn with
                 | true -> button [ _id "cropping-button"; _class "btn btn-primary btn-block" ] [ str "Start" ]
                 | false -> span [] [ 
@@ -565,7 +565,7 @@ module Slide =
                 else
                     
                     div [] []
-            | _ -> span [] [ encodedText "Unknown location" ]
+            | _ -> span [] [ encodedText model.Slide.Location ]
         ]
     
     let time model =
@@ -596,7 +596,7 @@ module Slide =
                     (sprintf "The voucher barcode is <strong>%s</strong> in the
                      <strong>%s</strong> herbarium. You can lookup this herbarium
                      in the <a href=\"http://sweetgum.nybg.org/science/ih/\" target=\"_blank\">Index Herbariorum</a> for more information." model.Slide.PlantId.InternalId model.Slide.PlantId.InstitutionCode)
-                | _ -> "Unknown", "The method used to identify this specimen is not known."
+                | _ -> "Directly sampled from plant material", "The source plant and identification method is unknown. Please contact the curator of this reference collection for more information."
             | "Environmental" -> "Contextual", ""
             | "Morphological" -> "Morphological", ""
             | _ -> "", ""
@@ -635,11 +635,11 @@ module Slide =
                         if model.Slide.CurrentTaxonStatus = "accepted" then
                             Components.detailList [
                                 "Current Taxon", div [] [
-                                    a [ _href <| Urls.MasterReference.family model.Slide.CurrentFamily ] [ str model.Slide.CurrentFamily ]
+                                    a [ _href <| Urls.MasterReference.family model.Slide.CurrentFamily ] [ str <| "Family: " + model.Slide.CurrentFamily ]
                                     br []
-                                    a [ _href <| Urls.MasterReference.genus model.Slide.CurrentFamily model.Slide.CurrentGenus ] [ str model.Slide.CurrentGenus ]
+                                    a [ _href <| Urls.MasterReference.genus model.Slide.CurrentFamily model.Slide.CurrentGenus ] [ str <| "Genus: " + model.Slide.CurrentGenus ]
                                     br []
-                                    a [ _href <| Urls.MasterReference.species model.Slide.CurrentFamily model.Slide.CurrentGenus model.Slide.CurrentSpecies ] [ str model.Slide.CurrentSpecies ]
+                                    a [ _href <| Urls.MasterReference.species model.Slide.CurrentFamily model.Slide.CurrentGenus model.Slide.CurrentSpecies ] [ str <| "Species: " + model.Slide.CurrentSpecies ]
                                 ]
                             ]
                         Components.detailList [
@@ -817,7 +817,7 @@ module Taxon =
             Icons.fontawesome "film"
             encodedText "Digitised Reference Slides"
         ] [
-            encodedText (sprintf "We currently hold %i digitised slide(s)." (slides |> List.length))
+            encodedText (sprintf "We currently hold %i digitised slide(s). Each record may contain multiple individual grains and images." (slides |> List.length))
             ul [ _class "grain-grid columns-8" ] (slides |> List.map (fun s -> 
                 li [] [
                     a [ _href (sprintf "/Reference/%A/%s" s.ColId s.SlideId) ] [ 
@@ -858,7 +858,8 @@ module Taxon =
                 ]
                 Grid.column Medium 6 [
                     distributionMap.View
-                    descriptionCard vm.LatinName vm.EolId vm.EolCache
+                    if not (String.IsNullOrEmpty(vm.EolCache.Description) && String.IsNullOrEmpty(vm.EolCache.PhotoUrl))
+                    then descriptionCard vm.LatinName vm.EolId vm.EolCache
                     taxonomyDefinitionCard vm
                     connectedDataCard vm.LatinName vm.GbifId
                 ]
@@ -1523,6 +1524,7 @@ module Statistics =
                         ]
                     ]
                     h3 [ _id "contributions" ] [ str "Contributions" ]
+                    hr []
                     p [] [ str "Once a grain has been identified and transferred to the online reference collection all participating users will gain points
                                 both for themselves and their affiliated institutions. The number of points will be determined by the current score placed
                                 on an individual grain as as well as the level of taxonomic identification (i.e. more points will be awarded for a species

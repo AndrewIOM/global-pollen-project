@@ -3,9 +3,9 @@ import * as $ from 'jquery'
 import * as topojson from 'topojson-client'
 
 type Grain = {
-    id: string
-    latitude: number
-    longitude: number
+    Id: string
+    Latitude: number
+    Longitude: number
 };
 
 export function activate(container: HTMLElement) {
@@ -49,11 +49,11 @@ export function activate(container: HTMLElement) {
         let circles = svg.selectAll("circle")
             .data(data).enter()
             .append("svg:a")
-            .attr("xlink:href", (d) => { return '/Identify/' + d.id; })
+            .attr("xlink:href", (d) => { return '/Identify/' + d.Id; })
             .append("circle")
             .attr('opacity', 0)
-            .attr("cx", d => { return projection([d.longitude, d.latitude])[0]; })
-            .attr("cy", function (d) { return projection([d.longitude, d.latitude])[1]; })
+            .attr("cx", d => { return projection([d.Longitude, d.Latitude])[0]; })
+            .attr("cy", function (d) { return projection([d.Longitude, d.Latitude])[1]; })
             .attr("r", 4)
             .attr('stroke', '#83296F')
             .attr('stroke-width', 2)
