@@ -145,7 +145,11 @@ let getEncyclopediaOfLifeId (req:LinkRequest) =
         | Some eolResult ->
             match eolResult.TotalResults with
             | 0 -> None
-            | _ -> Some eolResult.Results.Head.Id
+            | _ -> 
+                // EoL seems to now ignore the strict option. Additional check here.
+                match eolResult.Results |> Seq.tryFind(fun r -> r.LatinName = query) with
+                | Some r -> Some r.Id
+                | None -> None
 
 [<CLIMutable>]
 type EolVernacularName = 
