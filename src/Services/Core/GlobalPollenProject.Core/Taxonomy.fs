@@ -77,7 +77,7 @@ let import (command:Import) validateInBackbone state =
                 Status = command.Status
                 Reference = command.Reference } ]
 
-let connect thirdParty (connector:TaxonId->Result<int option,string>) state =
+let connect thirdParty (connector:TaxonId->Result<int option,string>) (state:State) =
     match state with
     | InitialState -> invalidOp "Taxon does not exist"
     | ValidatedByBackbone t ->
@@ -88,9 +88,21 @@ let connect thirdParty (connector:TaxonId->Result<int option,string>) state =
             match externalId with
             | Some i ->
                 match thirdParty with
-                | Neotoma -> [ EstablishedConnection (t.Id, NeotomaId i) ]
-                | GlobalBiodiversityInformationFacility -> [ EstablishedConnection (t.Id, GbifId i) ]
-                | EncyclopediaOfLife -> [ EstablishedConnection (t.Id, EncyclopediaOfLifeId i) ]
+                | Neotoma ->
+                    let existing = t.Links |> Seq.tryPick(fun l -> match l with | NeotomaId i -> Some i  | _ -> None)
+                    match existing with
+                    | Some e -> if e = i then [] else [ EstablishedConnection (t.Id, NeotomaId i) ]
+                    | None -> [ EstablishedConnection (t.Id, NeotomaId i) ]
+                | GlobalBiodiversityInformationFacility -> 
+                    let existing = t.Links |> Seq.tryPick(fun l -> match l with | GbifId i -> Some i  | _ -> None)
+                    match existing with
+                    | Some e -> if e = i then [] else [ EstablishedConnection (t.Id, GbifId i) ]
+                    | None -> [ EstablishedConnection (t.Id, GbifId i) ]
+                | EncyclopediaOfLife -> 
+                    let existing = t.Links |> Seq.tryPick(fun l -> match l with | EncyclopediaOfLifeId i -> Some i  | _ -> None)
+                    match existing with
+                    | Some e -> if e = i then [] else [ EstablishedConnection (t.Id, EncyclopediaOfLifeId i) ]
+                    | None -> [ EstablishedConnection (t.Id, EncyclopediaOfLifeId i) ]
             | None -> []
 
 let handle deps = 
