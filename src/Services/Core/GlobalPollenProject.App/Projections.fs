@@ -487,7 +487,9 @@ module MasterReferenceCollection =
                 { taxon with NeotomaId = i }
             | Taxonomy.ThirdPartyTaxonId.GbifId i -> {taxon with GbifId = i}
             | Taxonomy.ThirdPartyTaxonId.EncyclopediaOfLifeId i -> 
-                let cache = updateStaleCache "encyclopedia of life" (Ok taxon.EolCache) 6 ExternalLink.getEncyclopediaOfLifeCacheData i (fun c -> c.Retrieved)
+                let cache = 
+                    if i <> taxon.EolId then ExternalLink.getEncyclopediaOfLifeCacheData i
+                    else updateStaleCache "encyclopedia of life" (Ok taxon.EolCache) 6 ExternalLink.getEncyclopediaOfLifeCacheData i (fun c -> c.Retrieved)
                 match cache with
                 | Some c -> { taxon with EolId = i; EolCache = c }
                 | None -> { taxon with EolId = i }
