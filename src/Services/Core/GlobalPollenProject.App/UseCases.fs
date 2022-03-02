@@ -91,7 +91,14 @@ let private deserialiseGuid json =
 // App Core Dependencies
 let domainDependencies = 
     let log = ignore
-    let calculateIdentity = calculateTaxonomicIdentity (TaxonomicBackbone.findMatches readStoreGetSortedList readStoreGet deserialise)
+    let getParent t =
+        TaxonomicBackbone.getById t readStoreGet deserialise 
+        |> Result.map(fun r ->
+            if r.Rank = "Species" && r.GenusId.HasValue then Some (TaxonId r.GenusId.Value)
+            else if r.Rank = "Genus" then Some (TaxonId r.FamilyId)
+            else None)
+
+    let calculateIdentity = calculateTaxonomicIdentity getParent
     let isValidTaxon query =
         match TaxonomicBackbone.validate query readStoreGet readStoreGetSortedList deserialise with
         | Ok t -> Some (TaxonId t.Id)

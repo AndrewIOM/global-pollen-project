@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="TaxonomicIdentity.fs" />
     <Compile Include="Specification.fs" />
     <Compile Include="User.fs" />
     <Compile Include="Taxonomy.fs" />
