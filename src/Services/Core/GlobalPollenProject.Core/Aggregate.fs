@@ -14,7 +14,8 @@ type Dependencies =  {
     GetNeotomaId:      TaxonId -> Result<int option,string>
     GetEolId:          TaxonId -> Result<int option,string>
     GetTime:           unit -> DateTime
-    CalculateIdentity: TaxonIdentification list -> TaxonId option }
+    CalculateIdentity: TaxonIdentification list -> Result<TaxonId option,string>
+    GetImageDimension: Image -> Result<Dimensions,string> }
 
 type RootAggregate<'TState, 'TCommand, 'TEvent> = {
     initial:    'TState

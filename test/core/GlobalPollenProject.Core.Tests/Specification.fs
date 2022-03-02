@@ -9,7 +9,7 @@ open GlobalPollenProject.Core.DomainTypes
 let domainDefaultDeps = 
     let generateGuid() = Guid.NewGuid()
     let logger message = printfn "Logged message"
-    let calcIdentity taxon = None
+    let calcIdentity taxon = Ok None
     let validate = fun unit -> Some (TaxonId (generateGuid()))
 
     {GenerateId          = generateGuid
@@ -19,6 +19,7 @@ let domainDefaultDeps =
      GetNeotomaId        = fun unit -> (None |> Ok)
      GetEolId            = fun unit -> (None |> Ok)
      GetTime             = (fun x -> DateTime(2017,1,1))
+     GetImageDimension   = (fun img -> Error "not implemented")
      CalculateIdentity   = calcIdentity }
 
 let Given aggregate dep (events: 'a list) = aggregate, events, dep

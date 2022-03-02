@@ -210,7 +210,7 @@ module Image =
         let getDimensions base64String =
             base64String
             |> Base64Image
-            |> AzureImageStore.getImageDimensions
+            |> AzureImageStore.getImageDimensionsFromBase64
 
         let isWithinBounds h w coordinate =
             match coordinate with
@@ -218,7 +218,8 @@ module Image =
             | _ -> false
 
         let createCoordinate coordinate h w =
-            let valid = coordinate |> isWithinBounds h w
+            let removeUnit (x:int<_>) = int x
+            let valid = coordinate |> isWithinBounds (removeUnit h) (removeUnit w)
             if valid
             then Ok coordinate 
             else Error <| Validation [{Property="Coordinates"; Errors = ["The coordinates are outwidth the image frame"]}]
@@ -231,10 +232,10 @@ module Image =
         let dimensions = getDimensions img.PngBase64
         match dimensions with
         | Error e -> Error <| Validation [{Property="PngBase64"; Errors = ["The image was not a valid base64 PNG format"]}]
-        | Ok (h,w) ->
+        | Ok dims ->
             createFloatingCalibration img.MeasuredLength
-            <!> createCoordinate (img.X1,img.Y1) h w
-            <*> createCoordinate (img.X2,img.Y2) h w
+            <!> createCoordinate (img.X1,img.Y1) dims.Height dims.Width
+            <*> createCoordinate (img.X2,img.Y2) dims.Height dims.Width
             |> lift (fun fc -> ImageForUpload.Single ((img.PngBase64 |> Base64Image),fc))
 
     let toFocusImage get (frames: string list) (calId:Guid) (magnification:int) =
@@ -300,8 +301,9 @@ module Taxonomy =
                 |> lift (fun l -> Botanical (taxonId, HerbariumVoucher l, collector))
                 |> toValidationResult
             | _ -> validationError "PlantIdMethod" "Not a valid plant id method"
-        | "environmental" -> Ok <| Environmental taxonId
-        | "morphological" -> Ok <| Morphological taxonId
+        // TODO Implement digitisation functions for env and morph types:
+        | "environmental"
+        | "morphological" -> validationError "SamplingMethod" "environmental and morphological not implemented"
         | _ -> validationError "SamplingMethod" ("Not a valid sampling method: " + samplingMethod)
 
 

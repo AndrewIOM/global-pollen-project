@@ -34,7 +34,7 @@ and IdentifyTrait = {
 and DeriveGrainFromSlide = {
     Id: GrainId
     Origin: SlideId * ColVersion
-    Taxon: TaxonId
+    Taxon: IdentificationStatus
     Image: Image
     ImageCroppedArea: CartesianBox option
 }
@@ -51,6 +51,7 @@ type Event =
     | GrainIdentityConfirmed of GrainIdentityConfirmed
     | GrainIdentityChanged of GrainIdentityChanged
     | GrainIdentityUnconfirmed of GrainIdentityUnconfirmed
+    | GrainIdentifiedExternally of GrainIdentifiedExternally
 
 and GrainSubmitted = {
     Id: GrainId
@@ -71,6 +72,11 @@ and GrainIdentified = {
     Id: GrainId
     Taxon: TaxonId
     IdentifiedBy: UserId
+}
+
+and GrainIdentifiedExternally = {
+    Id: GrainId
+    Identification: TaxonIdentification
 }
 
 and GrainIdentityConfirmed = {
@@ -112,15 +118,6 @@ and GrainState = {
     FromReferenceMaterial: bool
     TraitMeasurements: (UserId * CitizenScienceTrait) list // TODO should be map to prevent dual values?
 }
-and IdentificationState = {
-    By: UserId
-    Taxon: TaxonId
-}
-and IdentificationStatus =
-    | Unidentified
-    | Partial of IdentificationState list
-    | Confirmed of IdentificationState list * TaxonId
-
 
 // Decisions
 let submitGrain (command: SubmitUnknownGrain) state =
@@ -135,30 +132,65 @@ let submitGrain (command: SubmitUnknownGrain) state =
     | _ -> 
         invalidOp "This grain has already been submitted"
 
-let deriveGrainFromSlide (command:DeriveGrainFromSlide) state =
+let deriveGrainFromSlide getImageDimension (command:DeriveGrainFromSlide) state =
     match state with
     | InitialState ->
-        [ GrainDerived { Id = command.Id
-                         Origin = command.Origin
-                         Image = command.Image
-                         ImageCroppedArea = command.ImageCroppedArea }
-          GrainIdentified { Id = command.Id; Taxon = command.Taxon }]
+        let successEvents =
+            match command.Taxon with
+            | Unidentified
+            | Partial _ -> invalidOp "Cannot derive grains from partially identified material"
+            | Confirmed (ids,_) -> 
+                if ids.Length = 0 then invalidOp "Cannot derive grains from partially identified material" else [
+                    GrainDerived {  Id = command.Id
+                                    Origin = command.Origin
+                                    Image = command.Image
+                                    ImageCroppedArea = command.ImageCroppedArea } ]
+                    |> List.append(ids |> List.map(fun i -> GrainIdentifiedExternally { Id = command.Id; Identification = i }))
+        match command.ImageCroppedArea with
+        | None -> successEvents
+        | Some crop ->
+            match getImageDimension command.Image with
+            | Error _ -> invalidOp "Could not get image dimensions."
+            | Ok (dims:Dimensions) ->
+                if crop.BottomRight.X >= 0<pixels> && crop.BottomRight.X <= dims.Width
+                    && crop.TopLeft.X >= 0<pixels> && crop.TopLeft.X <= dims.Width
+                    && crop.BottomRight.Y >= 0<pixels> && crop.BottomRight.Y <= dims.Height
+                    && crop.TopLeft.Y >= 0<pixels> && crop.TopLeft.Y <= dims.Height
+                    && crop.BottomRight.X - crop.TopLeft.X > 0<pixels>
+                    && crop.BottomRight.Y - crop.TopLeft.Y > 0<pixels>
+                then successEvents
+                else []
     | _ -> invalidOp "This grain has already been submitted"
 
-let identifyGrain calc (command: IdentifyUnknownGrain) (state:State) =
+let tryFindIdentificationForUser ids userId =
+    ids |> List.tryFind(fun i ->
+        match i with
+        | Environmental (_,u)
+        | Morphological (_,u) ->
+            match u with
+            | PollenProjectUser u -> u = userId
+            | ExternalPerson _ -> false
+        | Botanical _ -> false
+    )
+
+let identifyGrain calculateIdentity (command: IdentifyUnknownGrain) state =
     match state with
     | InitialState -> invalidOp "This grain does not exist"
     | Submitted s -> 
-
+        let newId = Morphological (command.Taxon, PollenProjectUser command.IdentifiedBy)
+        
         let evaluate oldIds newId taxon =
             printfn "Old IDs: %i." (oldIds |> List.length)
             let result = GrainIdentified { Id = command.Id; Taxon = command.Taxon; IdentifiedBy = command.IdentifiedBy }
-            if oldIds |> List.exists (fun x -> x.By = command.IdentifiedBy) then invalidOp "Cannot submit a second ID"
+            if tryFindIdentificationForUser oldIds command.IdentifiedBy |> Option.isSome then invalidOp "Cannot submit a second ID"
             let ids = newId :: oldIds
             let confirmedId = 
                 printfn "Evaluating grain identity. It has %i IDs" (ids |> List.length)
                 if ids |> List.length < 3 then None
-                else calc (ids |> List.map (fun i -> i.Taxon |> Morphological))
+                else 
+                    match calculateIdentity ids with
+                    | Ok i -> i
+                    | Error _ -> invalidOp "Failure when calculating taxonomic identity"
             match confirmedId with
             | Some identity ->
                 let confirmed = GrainIdentityConfirmed { Id = command.Id; Taxon = identity }
@@ -169,14 +201,14 @@ let identifyGrain calc (command: IdentifyUnknownGrain) (state:State) =
                 | None -> [result;confirmed]
             | None ->
                 match taxon with
-                | Some existing -> [result; GrainIdentityUnconfirmed { Id = command.Id } ]
+                | Some _ -> [result; GrainIdentityUnconfirmed { Id = command.Id } ]
                 | None -> [result]
-
-        let newId = { By = command.IdentifiedBy; Taxon = command.Taxon }
+        
         match s.IdentificationStatus with
         | Unidentified -> evaluate [] newId None
         | Partial ids -> evaluate ids newId None
         | Confirmed (ids,t) -> evaluate ids newId (Some t)
+
 
 module Traits =
 
@@ -201,22 +233,21 @@ module Traits =
 
 
 let identifyTrait command state =
-    match state with
-    | InitialState -> invalidOp "This grain does not exist"
-    | Submitted s -> 
-        s
-    []
+    // match state with
+    // | InitialState -> invalidOp "This grain does not exist"
+    // | Submitted s -> 
+    //     s
+    failwith "not finished"
 
 let report grainId problem state =
-    []
-
+    failwith "not finished"
 
 // Handle Commands to make Decisions.
 let handle (deps:Aggregate.Dependencies) = 
     function
     | SubmitUnknownGrain command -> submitGrain command
     | IdentifyUnknownGrain command -> identifyGrain deps.CalculateIdentity command
-    | DeriveGrainFromSlide command -> deriveGrainFromSlide command
+    | DeriveGrainFromSlide command -> deriveGrainFromSlide deps.GetImageDimension command
     | ReportProblem(grainId, problem) -> report grainId problem
     | IdentifyTrait command -> identifyTrait command
 
@@ -229,12 +260,33 @@ let getId = function
     | IdentifyTrait c -> unwrap c.Id
 
 // Apply decisions already taken (rebuild)
+let identified state newId =
+    match state with
+    | InitialState -> invalidOp "Grain is not submitted"
+    | Submitted grainState ->
+        match grainState.IdentificationStatus with
+        | Unidentified ->
+            printfn "Grain is now partially identified"
+            Submitted {
+                grainState with
+                    IdentificationStatus = Partial ([newId]) }
+        | Partial ids ->
+            printfn "Partially ID'd grain gained new id. Current IDs: %i" ids.Length
+            Submitted {
+                grainState with
+                    IdentificationStatus = Partial (newId :: ids) }
+        | Confirmed (ids,t) ->
+            Submitted {
+                grainState with
+                    IdentificationStatus = Confirmed (newId :: ids,t) }
+
 type State with
     static member Evolve state = function
 
         | GrainSubmitted event -> 
             Submitted { 
               IdentificationStatus = Unidentified
+              TraitMeasurements = []
               FromReferenceMaterial = false
               Owner = Some event.Owner
               Images = event.Images |> List.map(fun i -> i, None) }
@@ -242,31 +294,14 @@ type State with
         | GrainDerived event ->
             Submitted {
                 IdentificationStatus = Unidentified
+                TraitMeasurements = []
                 FromReferenceMaterial = true
                 Owner = None
                 Images = [ event.Image, event.ImageCroppedArea ]
             }
 
-        | GrainIdentified event ->
-            match state with
-            | InitialState -> invalidOp "Grain is not submitted"
-            | Submitted grainState ->
-                let newId = {By = event.IdentifiedBy; Taxon = event.Taxon}
-                match grainState.IdentificationStatus with
-                | Unidentified ->
-                    printfn "Grain is now partially identified"
-                    Submitted {
-                        grainState with
-                            IdentificationStatus = Partial ([newId]) }
-                | Partial ids ->
-                    printfn "Partially ID'd grain gained new id. Current IDs: %i" ids.Length
-                    Submitted {
-                        grainState with
-                            IdentificationStatus = Partial (newId :: ids) }
-                | Confirmed (ids,t) ->
-                    Submitted {
-                        grainState with
-                            IdentificationStatus = Confirmed (newId :: ids,t) }
+        | GrainIdentified event -> identified state (Morphological (event.Taxon, PollenProjectUser event.IdentifiedBy))
+        | GrainIdentifiedExternally event -> identified state event.Identification
 
         | GrainIdentityConfirmed event ->
             match state with

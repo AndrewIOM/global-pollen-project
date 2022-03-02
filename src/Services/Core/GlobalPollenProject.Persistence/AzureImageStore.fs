@@ -65,10 +65,10 @@ let pngTojpg (stream:Stream) =
     memoryStream
 
 let getImageDimensions' (stream:Stream) =
-    use image = Image.Load<Rgba32>(stream)
-    image.Height,image.Width
+    use image = Image.Load<Rgb24>(stream)
+    { Height = image.Height * 1<pixels>; Width = image.Width * 1<pixels> }
 
-let getImageDimensions base64 =
+let getImageDimensionsFromBase64 base64 =
     base64
     |> base64ToByte
     |> lift (fun x -> new MemoryStream(x))
@@ -145,3 +145,31 @@ let generateCacheImage originalContainerName cacheContainerName connString maxDi
         |> uploadFromStream thumbBlob
         |> Async.RunSynchronously
         |> lift (fun r -> r,scaleFactor)
+
+/// Fetches an image from Azure and gets its dimensions.
+/// If an image consists of more than one focus level, only
+/// returns dimensions if the frames share the same dimensions.
+let getImageDimensions originalContainerName connString image =
+    let urls =
+        match image with
+        | SingleImage (url,_) -> [url] |> Ok
+        | FocusImage (urls,_,_) -> if urls.Length > 0 then Ok urls else Error "image has no images"
+    match urls with
+    | Error e -> Error e
+    | Ok urls ->
+        urls |> List.map(fun url ->
+            let originalContainer = getContainer connString originalContainerName
+            let fullSizeBlobRef = url |> Url.unwrapRelative |> toBlobName originalContainerName |> getBlob originalContainer
+            let exists = fullSizeBlobRef.ExistsAsync() |> Async.AwaitTask |> Async.RunSynchronously
+            match exists with
+            | false -> "The specified file does not exist in Azure: " + fullSizeBlobRef.Name |> Error
+            | true ->
+                use memoryStream = new MemoryStream()
+                fullSizeBlobRef.DownloadToStreamAsync(memoryStream) |> Async.AwaitTask |> Async.RunSynchronously
+                memoryStream.Position <- int64(0)
+                memoryStream |> getImageDimensions' |> Ok ) 
+        |> mapResult id
+        |> bind(fun dims ->
+            if (dims |> List.distinct).Length = 1
+            then Ok dims.Head
+            else Error "dimensions on multiple frames are different")

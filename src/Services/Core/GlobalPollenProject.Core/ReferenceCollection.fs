@@ -214,7 +214,10 @@ let addSlide (command:AddSlide) calcIdentity state =
                         |> List.map ( fun s -> match s.Id with | Prefix "GPP" rest -> int rest | _ -> 0 )
                         |> List.max
                 sprintf "GPP%i" (lastId + 1)
-        let identity = calcIdentity [command.Taxon]
+        let identity = 
+            match calcIdentity [command.Taxon] with
+            | Ok t -> t
+            | Error _ -> invalidOp "Could not calculate identity"
         let recordedEvent = SlideRecorded {
                 Id = SlideId (command.Collection,slideId)
                 Taxon = command.Taxon

@@ -14,8 +14,8 @@ let calculateTaxonomicIdentity (backbone:TaxonomicIdentity -> Result<list<'a>,st
                                         | LivingCollection _ -> b, 0.95
                                         | Field _ -> b, 0.70
                                         | Unknown -> b, 0.70
-                                  | Environmental e -> e, 0.25
-                                  | Morphological m -> m, 0.25 ) |> Seq.toList
+                                  | Environmental (e,_) -> e, 0.25
+                                  | Morphological (m,_) -> m, 0.25 ) |> Seq.toList
 
     let taxonWeights = 
         idWeights 
@@ -30,6 +30,7 @@ let calculateTaxonomicIdentity (backbone:TaxonomicIdentity -> Result<list<'a>,st
     match highestTaxonPercentage with
     | agreement when agreement >= 70.00 -> Some <| fst taxonWeights.Head
     | _ -> None
+    |> Ok
 
 let calculatePointsScore (currentTime:DateTime) (timeSubmitted:DateTime) =
     let t = float (currentTime - timeSubmitted).Days

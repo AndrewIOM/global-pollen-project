@@ -71,26 +71,51 @@ module ``When identifying an unknown grain`` =
         |> Expect [ GrainIdentified { Id = grainId; IdentifiedBy = currentUser; Taxon = taxon }
                     GrainIdentityConfirmed { Id = grainId; Taxon = taxon } ]
 
+
 module ``When a grain is derived from reference material`` =
 
-    // Take a grain from a slide, with no two-way connection going forward.
-    // Slides are immutable once published, so origin is immutable.
-    // - REQ: The origin must be published
-    // - REQ: Crop must be within image dimensions.
-
-    // Spec:
-    // - We make use of the existing slide image files, with a confirmed bounding box.
-    //      - If the slide image was very large, this may be impractical. Could then take a smaller image?
-    // - A grain can have any kind of image: focus or static image.
 
     [<Fact>]
-    let ``a grain should be submitted`` () =
-        Given []
-        |> When (DeriveGrainFromSlide { 
-            Id = grainId; Origin = slideId, ColVersion 1; 
-            Image = testImage; ImageCroppedArea = None; Spatial = None; Temporal = None })
-        |> Expect [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser; Temporal = None; Spatial = None } ]
+    let ``the grain will be both derived and identified`` () =
+        // Given []
+        // |> When (DeriveGrainFromSlide { 
+        //     Id = grainId; Origin = slideId, ColVersion 1; 
+        //     Image = testImage; ImageCroppedArea = None; Spatial = None; Temporal = None })
+        // |> Expect [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser; Temporal = None; Spatial = None } ]
         // TODO age and site characteristics?
+        failwith "not finished"
+
+    [<Fact>]
+    let ``the grain must have a previously confirmed identity`` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``a crop is not required`` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``a crop cannot be outside the image bounds`` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``a crop must be fully within the image bounds`` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``a crop can fall on the image boundary`` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``a crop must have a width greater than zero`` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``a crop must have a height greater than zero`` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``the grain carries the identification of the original slide`` () =
+        failwith "not finished"
 
     [<Fact>]
     let ``it should have a confirmed identity already`` () =

@@ -93,6 +93,7 @@ module EmailAddress =
 
 // Images
 [<Measure>] type um
+[<Measure>] type pixels
 
 type Base64Image = Base64Image of string
 
@@ -113,14 +114,16 @@ and FloatingCalibration = {
     MeasuredDistance: float<um>
 }
 
+type Dimensions = { Height: int<pixels>; Width: int<pixels> }
+type CartesianPoint = { X: int<pixels>; Y: int<pixels> }
+
 type CartesianBox = {
-    TopLeft: int * int
-    BottomRight: int * int
+    TopLeft: CartesianPoint
+    BottomRight: CartesianPoint
 }
 
 // Microscope
 [<Measure>] type timesMagnified
-[<Measure>] type pixels
 
 type Microscope =
 | Light of LightMicroscope
@@ -236,8 +239,12 @@ type PlantIdentificationMethod =
 
 type TaxonIdentification =
     | Botanical of TaxonId * PlantIdentificationMethod * PlantMaterialCollector
-    | Environmental of TaxonId
-    | Morphological of TaxonId
+    | Environmental of TaxonId * Identifier
+    | Morphological of TaxonId * Identifier // TODO source? e.g. pollen key used?
+
+and Identifier =
+    | PollenProjectUser of UserId
+    | ExternalPerson of Person
 
 type IdentificationStatus =
     | Unidentified

@@ -36,6 +36,7 @@ let getAppSetting name =
 // Image Store
 let saveImage = AzureImageStore.uploadToAzure (getAppSetting "imagestore:baseurl") (getAppSetting "imagestore:container") (getAppSetting "imagestore:azureconnectionstring") (fun x -> Guid.NewGuid().ToString())
 let generateCacheImage = AzureImageStore.generateCacheImage (getAppSetting "imagestore:container") (getAppSetting "imagestore:cachecontainer") (getAppSetting "imagestore:azureconnectionstring")
+let getDimensions = AzureImageStore.getImageDimensions (getAppSetting "imagestore:container") (getAppSetting "imagestore:azureconnectionstring")
 let toAbsoluteUrl = Url.relativeToAbsolute appSettings.["imagestore:baseurl"]
 
 // Write (Event) Store
@@ -116,7 +117,8 @@ let domainDependencies =
       GetEolId            = eolLink
       GetTime             = (fun _ -> DateTime.Now)
       ValidateTaxon       = isValidTaxon
-      CalculateIdentity   = calculateIdentity }
+      CalculateIdentity   = calculateIdentity
+      GetImageDimension   = getDimensions }
 
 
 let toAppResult domainResult =
