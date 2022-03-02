@@ -3,7 +3,8 @@ module GlobalPollenProject.Core.Dependencies
 open System
 open GlobalPollenProject.Core.DomainTypes
 
-let calculateTaxonomicIdentity backbone (ids:TaxonIdentification list) =
+// TODO use family, genus, species level by looking up parents in backbone.
+let calculateTaxonomicIdentity (backbone:TaxonomicIdentity -> Result<list<'a>,string>) (ids:TaxonIdentification list) =
 
     let idWeights = 
         ids |> Seq.map (fun id -> match id with

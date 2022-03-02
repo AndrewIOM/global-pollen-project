@@ -90,7 +90,7 @@ let private deserialiseGuid json =
 // App Core Dependencies
 let domainDependencies = 
     let log = ignore
-    let calculateIdentity = calculateTaxonomicIdentity ReadStore.TaxonomicBackbone.findMatches
+    let calculateIdentity = calculateTaxonomicIdentity (TaxonomicBackbone.findMatches readStoreGetSortedList readStoreGet deserialise)
     let isValidTaxon query =
         match TaxonomicBackbone.validate query readStoreGet readStoreGetSortedList deserialise with
         | Ok t -> Some (TaxonId t.Id)
@@ -508,7 +508,7 @@ module Backbone =
     let tryMatch' (request:BackboneSearchRequest) =
         request
         |> Converters.Taxonomy.backboneSearchToIdentity
-        |> Result.bind (fun s -> ReadStore.TaxonomicBackbone.findMatches s readStoreGetSortedList readStoreGet deserialise)
+        |> Result.bind (ReadStore.TaxonomicBackbone.findMatches readStoreGetSortedList readStoreGet deserialise)
 
     let tryMatch request =
         request |> tryMatch' |> toAppResult

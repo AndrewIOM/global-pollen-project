@@ -546,7 +546,7 @@ module MasterReferenceCollection =
             | _ -> Ok()
         | :? Taxonomy.Event as e ->
             match e with
-            | Taxonomy.Event.EstablishedConnection (id,exId) -> establishConnection get set id exId
+            | Taxonomy.Event.EstablishedConnection (id,exId) -> establishConnection get set id exId |> ignore; Ok()
             | _ -> Ok()
         | _ -> Ok()
 

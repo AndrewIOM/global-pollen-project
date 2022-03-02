@@ -347,7 +347,7 @@ module TaxonomicBackbone =
         |> bind tryFindReadModel
 
     // Search names to find possible matches, returning whole taxa
-    let findMatches identity getSortedList getSingle deserialise : Result<BackboneTaxon list,string> =
+    let findMatches getSortedList getSingle deserialise identity : Result<BackboneTaxon list,string> =
         let search key = KeyValueStore.getSortedList All key getSortedList deserialiseGuid
         let fetchAllById ids = 
             ids 
@@ -375,7 +375,7 @@ module TaxonomicBackbone =
         match query with
         | ValidateById id -> getById id get deserialise
         | Validate i -> 
-            let matches = findMatches i getList get deserialise
+            let matches = findMatches getList get deserialise i
             Error "Not implemented"
 
     // Traces a backbone taxon to its most recent name (e.g. synonym -> synonym -> accepted name)

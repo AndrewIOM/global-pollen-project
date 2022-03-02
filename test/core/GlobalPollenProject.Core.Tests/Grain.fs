@@ -16,6 +16,7 @@ let a = {
 let Given = Given a domainDefaultDeps
 
 let grainId = GrainId (Guid.NewGuid())
+let slideId = SlideId (CollectionId (Guid.NewGuid()), "GPP1")
 let currentUser = UserId (Guid.NewGuid())
 let testImage = SingleImage (RelativeUrl "https://sometest.com/someimage.png",{Point1 = 2,3; Point2 = 5,8; MeasuredDistance = 4.<um>})
 let latlon = Latitude 1.0<DD>, Longitude 1.0<DD>
@@ -69,3 +70,49 @@ module ``When identifying an unknown grain`` =
         |> When ( IdentifyUnknownGrain { Id = grainId; IdentifiedBy = currentUser; Taxon = taxon } )
         |> Expect [ GrainIdentified { Id = grainId; IdentifiedBy = currentUser; Taxon = taxon }
                     GrainIdentityConfirmed { Id = grainId; Taxon = taxon } ]
+
+module ``When a grain is derived from reference material`` =
+
+    // Take a grain from a slide, with no two-way connection going forward.
+    // Slides are immutable once published, so origin is immutable.
+    // - REQ: The origin must be published
+    // - REQ: Crop must be within image dimensions.
+
+    // Spec:
+    // - We make use of the existing slide image files, with a confirmed bounding box.
+    //      - If the slide image was very large, this may be impractical. Could then take a smaller image?
+    // - A grain can have any kind of image: focus or static image.
+
+    [<Fact>]
+    let ``a grain should be submitted`` () =
+        Given []
+        |> When (DeriveGrainFromSlide { 
+            Id = grainId; Origin = slideId, ColVersion 1; 
+            Image = testImage; ImageCroppedArea = None; Spatial = None; Temporal = None })
+        |> Expect [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser; Temporal = None; Spatial = None } ]
+        // TODO age and site characteristics?
+
+    [<Fact>]
+    let ``it should have a confirmed identity already`` () =
+        failwith "not finished"
+
+
+module ``When tagging morphological traits`` =
+
+    [<Fact>]
+    let ``A user can only tag each trait once`` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``Traits represented by continuous variables `` () =
+        failwith "not finished"
+
+    [<Fact>]
+    let ``Traits represented by discrete variables require agreement`` () =
+        failwith "not finished"
+
+module ``When questioning the validity of a grain`` =
+
+    [<Fact>]
+    let ``The grain becomes flagged as problematic for the reason given`` () =
+        failwith "not finished"

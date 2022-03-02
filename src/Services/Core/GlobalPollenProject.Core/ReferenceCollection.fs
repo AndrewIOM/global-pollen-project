@@ -247,6 +247,7 @@ let uploadImage (command:UploadSlideImage) state =
         | None -> invalidOp "Slide does not exist"
         | Some s ->
             let imageState = { Image = command.Image; YearTaken = command.YearTaken; Delineations = [] }
+            // TODO only issue slidefullydigitised when going from 0 to 1 images.
             match isFullyDigitised {s with Images = imageState :: s.Images } with
             | true -> [SlideImageUploaded (command.Id, command.Image, command.YearTaken); SlideFullyDigitised command.Id]
             | false -> [SlideImageUploaded (command.Id, command.Image, command.YearTaken)]
