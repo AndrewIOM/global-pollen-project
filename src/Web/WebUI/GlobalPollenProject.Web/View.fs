@@ -300,7 +300,7 @@ module Layout =
         "https://code.jquery.com/jquery-3.6.0.min.js"
         jsBundle ]
 
-    let master (scripts: Script list) title content profile =
+    let master (scripts: Script list) additionalScripts title content profile =
         html [] [
             headSection <| sprintf "%s - Global Pollen Project" title
             body [] (
@@ -308,15 +308,20 @@ module Layout =
                     [ navigationBar profile
                       div [ _class "main-content" ] content
                       footer ]
-                    ((List.concat [baseScripts; scripts]) |> toScriptTags) ] )
+                    ((List.concat [baseScripts; scripts]) |> toScriptTags)
+                    additionalScripts |> List.map (fun s -> script [ _type "text/javascript"] [ rawText s]) ] )
         ]
 
     let standardWithHeaderIcon scripts title subtitle titleIcon content =
-        master scripts title ( headerBar title subtitle (Some titleIcon) :: [ Grid.container content ])
+        master scripts [] title ( headerBar title subtitle (Some titleIcon) :: [ Grid.container content ])
 
     let standard scripts title subtitle content =
-        master scripts title ( headerBar title subtitle None :: [ Grid.container content ])
+        master scripts [] title ( headerBar title subtitle None :: [ Grid.container content ])
 
+    /// Append one or many raw javascript scripts to the end of the content after the
+    /// base scripts and any additional scripts have been loaded.
+    let standardWithScriptBlock scripts additionalScripts title subtitle content =
+        master scripts additionalScripts title ( headerBar title subtitle None :: [ Grid.container content ])
 
 module Components =
 
@@ -494,7 +499,7 @@ module Home =
             stats model
             tripleIcons
             unidentifiedGrainMap.View
-        ] |> Layout.master (List.append autocomplete.Scripts unidentifiedGrainMap.Scripts) "Home"
+        ] |> Layout.master (List.append autocomplete.Scripts unidentifiedGrainMap.Scripts) [] "Home"
 
 
 module Slide =
@@ -1026,16 +1031,15 @@ module ReferenceCollections =
     let tableView (vm:ReferenceCollectionDetail) =
         [
             link [ _rel "stylesheet"; _href "https://cdn.datatables.net/1.10.21/css/dataTables.bootstrap4.min.css" ]
-            script [ _type "text/javascript" ] [ str "$(document).ready(function() { $('#reference-table').DataTable({paging: false, order: [[ 2, 'asc' ]]});})" ]
             Components.breadcrumb [{Name = "Individual Reference Collections"; Url = Urls.individualCollections} ] vm.Name
             p [] [ encodedText vm.Description ]
             div [ _class "card-group mb-4" ] [
                 div [ _class "card" ] [
                     div [ _class "card-block" ] [
                         h4 [ _class "card-title" ] [ encodedText "Contributors" ]
-                        p [] [ strong [] [ encodedText "Curator:" ]; encodedText <| sprintf "%s %s" vm.CuratorFirstNames vm.CuratorSurname ]
-                        p [] ((strong [] [encodedText "Digitised by:"])::(vm.Digitisers |> List.map(fun d -> span [] [ str d ])))
-                        p [] ((strong [] [encodedText "Material contributed by:"])::(vm.Collectors |> List.map(fun d -> span [] [ str d ])))
+                        p [] [ strong [] [ encodedText "Curator: " ]; encodedText <| sprintf "%s %s" vm.CuratorFirstNames vm.CuratorSurname ]
+                        p [] [ strong [] [ encodedText "Digitised by: " ]; span [] [ str (vm.Digitisers |> String.concat ", ") ]]
+                        p [] [ strong [] [ encodedText "Material contributed by: " ]; span [] [ str (vm.Collectors |> String.concat ", ") ]]
                     ]
                 ]
                 div [ _class "card" ] [
@@ -1059,7 +1063,7 @@ module ReferenceCollections =
                     ]
                 ]
             ]
-            table [ _class "table table-responsive"; _id "reference-table"; _data "page-length" "100" ] [
+            table [ _class "table table-responsive"; _id "reference-table"; _data "page-length" "100"; _style "width:100%" ] [
                 thead [ _class "thead-default" ] [
                     tr [] [
                         th [] [ encodedText "#" ]
@@ -1097,10 +1101,10 @@ module ReferenceCollections =
                     ]
                 ))
             ]
-        ] |> Layout.standard [ "https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"
-                               "https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js" ]
-                               vm.Name "Individual Reference Collection"
-
+        ] |> Layout.standardWithScriptBlock [ "https://cdn.datatables.net/1.10.21/js/jquery.dataTables.min.js"
+                                              "https://cdn.datatables.net/1.10.21/js/dataTables.bootstrap4.min.js" ]
+                                            [ "$(document).ready(function() { $('#reference-table').DataTable({paging: false, order: [[ 2, 'asc' ]]});})" ]
+                                              vm.Name "Individual Reference Collection"
 
 module Identify =
 
@@ -1578,7 +1582,7 @@ module StatusPages =
                 ]
             ]
         ] 
-        |> Layout.master autocomplete.Scripts "Not Found"
+        |> Layout.master autocomplete.Scripts [] "Not Found"
 
     let statusLayout icon title description =
         [
@@ -1590,7 +1594,7 @@ module StatusPages =
                     a [ _href Urls.home ] [ encodedText "Get me back to the homepage" ]
                 ]
             ]
-        ] |> Layout.master [] title
+        ] |> Layout.master [] [] title
 
     let error = statusLayout "bomb" "Sorry, there's been a slight snag..." "Your request didn't go through. You can try again, or please come back later. If this happens often, please let us know."
     

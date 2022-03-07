@@ -496,7 +496,7 @@ function SlideDetailViewModel(detail) {
             })
             .done(function (data) {
                 rootVM.switchView(CurrentView.DETAIL, {
-                    Id: self.slideDetail().CollectionId
+                    Id: self.slideDetail().collectionId
                 });
             })
         }
@@ -690,26 +690,26 @@ function SlideDetailViewModel(detail) {
         if (self.selectedMagnification() == null)
             return "Select magnification"
 
-        return self.selectedMagnification().Level + "x";
+        return self.selectedMagnification().level + "x";
     }
 
     self.selectedMicroscopeName = function () {
         if (self.selectedMicroscope() == null)
             return "Select microscope"
 
-        return self.selectedMicroscope().Name;
+        return self.selectedMicroscope().name;
     }
 
     self.selectedMicroscopeMagnifications = function () {
         if (self.selectedMicroscope() == null)
             return [];
 
-        return self.selectedMicroscope().Magnifications;
+        return self.selectedMicroscope().magnifications;
     }
 
     self.selectMicroscope = function (element) {
         var selected = self.calibrations().find(function (e) {
-            return e.Id == element.Id;
+            return e.id == element.id;
         });
 
         self.selectedMicroscope(selected);
@@ -804,7 +804,7 @@ function SlideDetailViewModel(detail) {
             self.scaleBar.dispose();
         }
 
-        self.scaleBar = new ScaleBar(self.viewer, "#focus-image-previewer-scalebar", self.selectedMagnification().PixelWidth);
+        self.scaleBar = new ScaleBar(self.viewer, "#focus-image-previewer-scalebar", self.selectedMagnification().pixelWidth);
         self.scaleBar.initialise();
     }
 

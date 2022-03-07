@@ -82,8 +82,8 @@ module Profile =
 
     let getClaims (user:ApplicationUser) =
         [ Claim(IdentityModel.JwtClaimTypes.Subject, user.Id)
-          Claim(IdentityModel.JwtClaimTypes.GivenName, user.GivenNames)
-          Claim(IdentityModel.JwtClaimTypes.FamilyName, user.FamilyName)
+          if isNotNull user.GivenNames then Claim(IdentityModel.JwtClaimTypes.GivenName, user.GivenNames)
+          if isNotNull user.FamilyName then Claim(IdentityModel.JwtClaimTypes.FamilyName, user.FamilyName)
           Claim(IdentityModel.JwtClaimTypes.PreferredUserName, user.UserName)
           Claim(JwtRegisteredClaimNames.UniqueName, user.UserName) ]
         |> appendClaim "organisation" user.Organisation
@@ -168,8 +168,8 @@ module Routes =
 
     let error : ErrorHandler =
         fun x logger ->
-            logger.LogError(sprintf "There was an error!: %A" x.Message)    
-            text <| sprintf "There was an error!: %A" x.Message
+            logger.LogError(sprintf "There was an error: %A" x.Message)
+            text <| sprintf "There was an error: %A" x.Message
 
     let register request : HttpHandler =
         fun next ctx -> Handlers.register request next ctx

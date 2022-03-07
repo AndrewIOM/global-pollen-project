@@ -90,6 +90,8 @@ services:
       - html:/usr/share/nginx/html
       - certs:/etc/nginx/certs:ro
       - /var/run/docker.sock:/tmp/docker.sock:ro
+      # Contains settings to increase header size allowed (i.e., from identity-server):
+      - ./proxy.conf:/etc/nginx/proxy.conf:ro 
     restart: always
 
   acme-companion:
@@ -104,8 +106,6 @@ services:
       - certs:/etc/nginx/certs:rw
       - acme:/etc/acme.sh
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      # Contains settings to increase header size allowed (i.e., from identity-server):
-      - ./proxy.conf:/etc/nginx/proxy.conf:ro 
     environment:
       - NGINX_PROXY_CONTAINER=nginx-proxy
     restart: always

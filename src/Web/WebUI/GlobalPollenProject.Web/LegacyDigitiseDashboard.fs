@@ -650,7 +650,6 @@ module Partials =
 let appView =
     [
         span [ _id "digitise-app" ] []
-        link [ _rel "stylesheet"; _href "/lib/bootstrap-datepicker/dist/css/bootstrap-datepicker.min.css" ]
         link [ _rel "stylesheet"; _href "https://cdn.datatables.net/1.10.15/css/dataTables.bootstrap4.min.css"]
         Partials.addCollectionModal Requests.Empty.addCollection
         Partials.recordSlide
