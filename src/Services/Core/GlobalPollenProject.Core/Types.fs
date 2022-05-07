@@ -273,9 +273,6 @@ module ColVersion =
 
 
 // Pollen Traits: Simple
-type GrainDiameter = float<um> * float<um>
-type WallThickness = float<um>
-
 type GrainShape =
     | Bisacchate
     | Circular
@@ -299,8 +296,20 @@ type Pores =
     | Unsure
 
 type CitizenScienceTrait =
-| Shape of GrainShape
-| Size of GrainDiameter
-| Wall of WallThickness
-| Pattern of Patterning
-| Pores of Pores
+    | Shape of GrainShape
+    | Size of smallestDim:float<um> * largestDim:float<um>
+    | WallThickness of float<um>
+    | Pattern of Patterning
+    | Pores of Pores
+
+type ConfirmedTrait =
+    | ConfirmedShape of GrainShape
+    | ConfirmedSize of x:MeasureUncertainty * y:MeasureUncertainty
+    | ConfirmedWall of MeasureUncertainty
+    | ConfirmedPattern of Patterning
+    | ConfirmedPores of Pores
+
+and MeasureUncertainty = {
+    Value: float<um>
+    MeasurementUncertainty: float<um>
+}

@@ -52,6 +52,9 @@ type Event =
     | GrainIdentityChanged of GrainIdentityChanged
     | GrainIdentityUnconfirmed of GrainIdentityUnconfirmed
     | GrainIdentifiedExternally of GrainIdentifiedExternally
+    | GrainTraitIdentified of GrainTraitIdentified
+    | GrainTraitConfirmed of GrainTraitConfirmed
+    | ProblemFlagged of GrainFlagged
 
 and GrainSubmitted = {
     Id: GrainId
@@ -93,6 +96,22 @@ and GrainIdentityUnconfirmed = {
     Id: GrainId
 }
 
+and GrainTraitIdentified = {
+    Id: GrainId
+    Trait: CitizenScienceTrait
+    IdentifiedBy: UserId
+}
+
+and GrainTraitConfirmed = {
+    Id: GrainId
+    Trait: ConfirmedTrait
+}
+
+and GrainFlagged = {
+    Id: GrainId
+    Flag: GrainProblem
+}
+
 // State tracking
 type State =
     | InitialState
@@ -116,7 +135,8 @@ and GrainState = {
     Images: (Image * CartesianBox option) list
     IdentificationStatus: IdentificationStatus
     FromReferenceMaterial: bool
-    TraitMeasurements: (UserId * CitizenScienceTrait) list // TODO should be map to prevent dual values?
+    TraitMeasurements: Map<UserId,CitizenScienceTrait list>
+    Flags: GrainProblem list
 }
 
 // Decisions
@@ -140,12 +160,11 @@ let deriveGrainFromSlide getImageDimension (command:DeriveGrainFromSlide) state 
             | Unidentified
             | Partial _ -> invalidOp "Cannot derive grains from partially identified material"
             | Confirmed (ids,_) -> 
-                if ids.Length = 0 then invalidOp "Cannot derive grains from partially identified material" else [
+                if ids.Length = 0 then invalidOp "Cannot derive grains from partially identified material" else
                     GrainDerived {  Id = command.Id
                                     Origin = command.Origin
                                     Image = command.Image
-                                    ImageCroppedArea = command.ImageCroppedArea } ]
-                    |> List.append(ids |> List.map(fun i -> GrainIdentifiedExternally { Id = command.Id; Identification = i }))
+                                    ImageCroppedArea = command.ImageCroppedArea } :: (ids |> List.map(fun i -> GrainIdentifiedExternally { Id = command.Id; Identification = i }))
         match command.ImageCroppedArea with
         | None -> successEvents
         | Some crop ->
@@ -159,7 +178,7 @@ let deriveGrainFromSlide getImageDimension (command:DeriveGrainFromSlide) state 
                     && crop.BottomRight.X - crop.TopLeft.X > 0<pixels>
                     && crop.BottomRight.Y - crop.TopLeft.Y > 0<pixels>
                 then successEvents
-                else []
+                else invalidOp "Crop cannot be outside the image bounds"
     | _ -> invalidOp "This grain has already been submitted"
 
 let tryFindIdentificationForUser ids userId =
@@ -224,23 +243,82 @@ module Traits =
     let dipTestOfUnimodality v =
         failwith "not finished"
 
+    let continuousTraitTest (v:float<um> list) : MeasureUncertainty option =
+        // TODO Implement continuous trait test
+        None
+
     /// For categorical traits, we use the same algorithm for taxonomic identification,
     /// i.e. there need to be at least n observations, and these need to be the same.
     /// We also add in a disagreement score, such that the more disagreement there
     /// is, the higher the threshold in terms of the n required.
     let categoricalTraitTest v =
-        failwith "not finished"
+        Dependencies.acceptedCategoricalValue (fun a -> a, 1.) v
+
+    let identify confirmationTest userTraitIds traitMeasurements f conf (command:IdentifyTrait) =
+        match userTraitIds |> List.choose f |> List.isEmpty with
+        | false -> invalidOp "Cannot submit another trait ID"
+        | true ->
+            let event = GrainTraitIdentified {
+                    Id = command.Id
+                    IdentifiedBy = command.IdentifiedBy
+                    Trait = command.Trait
+                }
+            let accepted = 
+                traitMeasurements
+                |> Map.toList 
+                |> List.map snd |> List.collect id
+                |> List.append [ command.Trait ]
+                |> List.choose f
+                |> confirmationTest
+            match accepted with
+            | Some t -> [ event; GrainTraitConfirmed { Id = command.Id; Trait = conf t } ]
+            | None -> [ event ]
+
+    /// Identify a categorical trait. Only allow if specific trait not already identified
+    /// by this person. Trigger confirmation event when trait meets confirmation criteria.
+    let identifyCategorical userTraitIds traitMeasurements (f:CitizenScienceTrait -> Option<'b>) (conf:'b->ConfirmedTrait) (command:IdentifyTrait) =
+        identify categoricalTraitTest userTraitIds traitMeasurements f conf command
+
+    /// Identify a continuous trait. Only allow if specific trait not already identified
+    /// by this person. Trigger confirmation event when trait meets confirmation criteria.
+    let identifyContinuous userTraitIds traitMeasurements f conf command =
+        identify continuousTraitTest userTraitIds traitMeasurements f conf command
 
 
-let identifyTrait command state =
-    // match state with
-    // | InitialState -> invalidOp "This grain does not exist"
-    // | Submitted s -> 
-    //     s
-    failwith "not finished"
+let identifyTrait (command:IdentifyTrait) state =
+    match state with
+    | InitialState -> invalidOp "This grain does not exist"
+    | Submitted s -> 
+        let userTraitIds = 
+            s.TraitMeasurements 
+            |> Map.tryFind command.IdentifiedBy 
+            |> Option.toList 
+            |> List.collect id
+        match command.Trait with
+        | Shape _ -> 
+            Traits.identifyCategorical userTraitIds s.TraitMeasurements 
+                (fun t -> match t with | Shape sh -> Some sh | _ -> None) ConfirmedShape command
+        | Pattern _ -> 
+            Traits.identifyCategorical userTraitIds s.TraitMeasurements 
+                (fun t -> match t with | Pattern sh -> Some sh | _ -> None) ConfirmedPattern command
+        | Pores _ -> 
+            Traits.identifyCategorical userTraitIds s.TraitMeasurements 
+                (fun t -> match t with | Pores sh -> Some sh | _ -> None) ConfirmedPores command
+        | WallThickness _ ->
+            Traits.identifyContinuous userTraitIds s.TraitMeasurements 
+                (fun t -> match t with | WallThickness sh -> Some sh | _ -> None) ConfirmedWall command
+        | Size _ ->
+            failwith "not finished"
+        //     Traits.identifyContinuous userTraitIds s.TraitMeasurements 
+        //         (fun t -> match t with | Size (s1,s2) -> Some (s1,s2) | _ -> None) ConfirmedSize command
 
 let report grainId problem state =
-    failwith "not finished"
+    match state with
+    | InitialState -> invalidOp "This grain does not exist"
+    | Submitted s -> 
+        if s.Flags |> Seq.contains problem
+        then []
+        else [ ProblemFlagged { Id = grainId; Flag = problem } ]
 
 // Handle Commands to make Decisions.
 let handle (deps:Aggregate.Dependencies) = 
@@ -286,7 +364,8 @@ type State with
         | GrainSubmitted event -> 
             Submitted { 
               IdentificationStatus = Unidentified
-              TraitMeasurements = []
+              Flags = []
+              TraitMeasurements = Map.empty
               FromReferenceMaterial = false
               Owner = Some event.Owner
               Images = event.Images |> List.map(fun i -> i, None) }
@@ -294,7 +373,8 @@ type State with
         | GrainDerived event ->
             Submitted {
                 IdentificationStatus = Unidentified
-                TraitMeasurements = []
+                Flags = []
+                TraitMeasurements = Map.empty
                 FromReferenceMaterial = true
                 Owner = None
                 Images = [ event.Image, event.ImageCroppedArea ]
@@ -315,9 +395,41 @@ type State with
                 | _ -> invalidOp "Cannot transition from unsubmitted or confirmed to confirmed"
 
         | GrainIdentityChanged event ->
+            match state with
+            | InitialState -> invalidOp "Grain is not submitted"
+            | Submitted grainState ->
+                match grainState.IdentificationStatus with
+                | Confirmed (ids,_) ->
+                    Submitted {
+                        grainState with
+                            IdentificationStatus = Confirmed (ids, event.Taxon) }
+                | _ -> invalidOp "Can only 'change' taxon ID for a confirmed ID grain"
+
+        | GrainIdentityUnconfirmed event ->
+            match state with
+            | InitialState -> invalidOp "Grain is not submitted"
+            | Submitted grainState ->
+                match grainState.IdentificationStatus with
+                | Confirmed (ids,_) ->
+                    Submitted {
+                        grainState with
+                            IdentificationStatus = Partial ids }
+                | _ -> invalidOp "Cannot transition from unsubmitted or unconfirmed to unconfirmed"
+        
+        | GrainTraitIdentified event ->
+            match state with
+            | InitialState -> invalidOp "Grain is not submitted"
+            | Submitted grainState ->
+                match grainState.TraitMeasurements |> Map.tryFind event.IdentifiedBy with
+                | Some traits -> Submitted { grainState with TraitMeasurements = grainState.TraitMeasurements |> Map.add event.IdentifiedBy (event.Trait::traits) }
+                | None -> Submitted { grainState with TraitMeasurements = grainState.TraitMeasurements |> Map.add event.IdentifiedBy [ event.Trait ] }
+
+        | GrainTraitConfirmed event ->
             // TODO implement this
             state
 
-        | GrainIdentityUnconfirmed event ->
-            // TODO implement this
-            state
+        | ProblemFlagged event -> 
+            match state with
+            | InitialState -> invalidOp "Grain is not submitted"
+            | Submitted grainState ->
+                Submitted { grainState with Flags = event.Flag::grainState.Flags }

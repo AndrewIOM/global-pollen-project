@@ -26,6 +26,24 @@ let heirarchyToRanked (h:list<list<TaxonId>>) =
         | _ -> Error "There cannot be more than three ranks in the heirarchy" )
     |> mapResult id
 
+/// Determine if there is agreement for a specific categorical value from
+/// a list of categorical values, based on a 70% threshold with three or more
+/// total observations.
+let acceptedCategoricalValue makeWeight items =
+    if items |> List.isEmpty then None
+    else
+        let weights = 
+            items
+            |> List.map makeWeight
+            |> List.groupBy fst
+            |> List.map (fun x -> fst x, snd x |> List.map snd |> List.sum )
+            |> List.sortByDescending snd
+        let totalWeight = weights |> List.sumBy snd
+        let highestTaxonPercentage = (snd weights.Head / totalWeight) * 100.
+        match highestTaxonPercentage with
+        | agreement when agreement >= 70.00 -> Some <| fst weights.Head
+        | _ -> None
+
 /// Gets the weighting to give to different identification methods,
 /// from the most certain (botanical) to least certain (morphological).
 let weights id =
@@ -40,21 +58,8 @@ let weights id =
     | Morphological _ -> 0.25
 
 /// Calculate if an ID is accepted at a particular taxonomic rank.
-let acceptedId identifications =
-    if identifications |> List.isEmpty then None
-    else 
-        let idWeights = identifications |> List.map(fun (i,t) -> t, weights i )
-        let taxonWeights = 
-            idWeights 
-            |> List.groupBy fst
-            |> List.map (fun x -> fst x, snd x |> List.map snd |> List.sum )
-            |> List.sortByDescending snd
-        let totalWeight = taxonWeights |> List.sumBy snd
-        //70% agreement required, accounting for weighting of different ID types
-        let highestTaxonPercentage = (snd taxonWeights.Head / totalWeight) * 100.
-        match highestTaxonPercentage with
-        | agreement when agreement >= 70.00 -> Some <| fst taxonWeights.Head
-        | _ -> None
+let acceptedId (identifications:(TaxonIdentification * TaxonId) list) =
+    acceptedCategoricalValue (fun (a,b) -> b, weights a) identifications
 
 /// Calculates a 'confirmed' taxonomic identity based on a set of proposed
 /// taxonomic identities. 
