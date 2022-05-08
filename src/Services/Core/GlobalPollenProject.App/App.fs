@@ -190,6 +190,12 @@ let routes : HttpHandler =
                     POST >=> route  "/Slide/AddImage"       >=> postApi U.Digitise.uploadSlideImage
                 ])
 
+                // Traits
+                subRoute "/Traits" (Auth.checkUserIsLoggedIn >=> choose [
+                    POST >=> route "/Delineate"     >=> postAuthApi U.Digitise.delineateGrainOnSlide
+                    POST >=> route "/Tag"     >=> postAuthApi U.UnknownGrains.tagTrait
+                ])
+
                 // Caches
                 GET >=> routef  "/Cache/Neotoma/%i"     (fun i n c -> U.Cache.neotoma i |> apiResult n c)
                 

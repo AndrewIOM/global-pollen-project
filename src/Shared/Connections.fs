@@ -133,6 +133,10 @@ module CoreActions =
         let voidSlide (req:VoidSlideRequest) : CoreFunction<unit> = CPOST req "/api/v1/Digitise/Slide/Void"
         let uploadImage (req:SlideImageRequest) : CoreFunction<unit> = CPOST req "/api/v1/Digitise/Slide/AddImage"
 
+    module Traits =
+        let delineateGrainOnSlide (req:DelineateSpecimenRequest) = CPOST req "/api/v1/Traits/Delineate"
+        let tagTrait (req:TagTraitRequest) = CPOST req "/api/v1/Traits/Tag"
+
     module Cache =
         let neotoma (neotomaId:int) : CoreFunction<NeotomaCache> = CGET None (sprintf "/api/v1/anon/Cache/Neotoma/%i" neotomaId)
      

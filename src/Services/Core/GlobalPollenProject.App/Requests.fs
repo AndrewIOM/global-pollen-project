@@ -74,6 +74,22 @@ type SlideImageRequest = {
 }
 
 [<CLIMutable>]
+type ImageBox = {
+    [<Required>] [<Range(1, Int32.MaxValue)>] X1: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] X2: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] Y1: int
+    [<Required>] [<Range(1, Int32.MaxValue)>] Y2: int
+}
+
+[<CLIMutable>]
+type DelineateSpecimenRequest = {
+    CollectionId: Guid
+    SlideId: string
+    ImageNumber: int
+    Delineations: ImageBox list
+}
+
+[<CLIMutable>]
 type BackboneSearchRequest = {
     [<Required>] LatinName: string
     [<Required>] Rank: string
@@ -128,6 +144,15 @@ type CalibrateRequest = {
 type IdentifyGrainRequest = {
     [<Required>] TaxonId: Guid
     [<Required>] GrainId: Guid
+}
+
+[<CLIMutable>]
+type TagTraitRequest = {
+    [<Required>] GrainId: Guid
+    [<Required>] Trait: string
+    Value: string
+    Value1: float
+    Value2: float
 }
 
 [<CLIMutable>]

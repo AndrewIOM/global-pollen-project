@@ -24,6 +24,13 @@ let optionToResult opt =
     | Some o -> Ok o
     | None -> Error NotFound
 
+let isPositiveNumber f = if f > 0. && f <> nan && f <> infinity then true else false
+
+let positiveNumber f onError =
+    if isPositiveNumber f
+    then f * 1.<um> |> Ok
+    else onError 
+
 module Identity =
 
     open ReadStore
@@ -334,6 +341,13 @@ module Dto =
             PreparedBy = preparedBy
         }
 
+    let createDelineateGrainCommand userId id image delineations =
+            GlobalPollenProject.Core.Aggregates.ReferenceCollection.DelineateSpecimensOnImage {  
+                Slide = id 
+                Image = image
+                By = userId
+                Delineations = delineations }
+
     let toSubmitUnknownGrain grainId userId saveImage (request:AddUnknownGrainRequest) =
 
         let imagesOrError =
@@ -442,6 +456,82 @@ module Dto =
         <*> (imageForUploadOrError |> bind (saveImage >> toPersistenceError))
         <*> yearTakenOrError
 
+    let toDelinateGrainCommand userId readStoreGet (request:DelineateSpecimenRequest) =
+
+        let slideIdOrError = 
+            Identity.existingSlideIdOrError readStoreGet request.CollectionId request.SlideId
+
+        let imageNumberOrError =
+            if request.ImageNumber > 100 || request.ImageNumber < 0 
+            then Error <| Validation [{ Property = "ImageNumber"; Errors = ["Image number must be 1-100"]}]
+            else Ok request.ImageNumber
+
+        let delineationsOrError =
+            if request.Delineations |> Seq.isEmpty
+            then Error <| Validation [{ Property = "Delineations"; Errors = ["Must submit at least one delineation"]}]
+            else
+                request.Delineations
+                |> List.map(fun d -> 
+                    if isPositiveNumber d.X1 && isPositiveNumber d.X2 
+                        && isPositiveNumber d.Y1 && isPositiveNumber d.Y2 then Ok d
+                    else Error <| Validation [{ Property = "Delineations"; Errors = ["All delineations must have valid positive pixel numbers"]}]
+                )
+                |> List.map(fun d ->
+                    match d with
+                    | Error e -> Error e
+                    | Ok d ->
+                        { TopLeft = { X = List.min [ d.X1; d.X2 ] * 1<pixels>; Y = List.min [ d.Y1; d.Y2] * 1<pixels> }
+                          BottomRight = { X = List.max [ d.X1; d.X2 ] * 1<pixels>; Y = List.max [ d.Y1; d.Y2] * 1<pixels> }} |> Ok)
+                |> mapResult id
+
+        createDelineateGrainCommand userId
+        <!> slideIdOrError
+        <*> imageNumberOrError
+        <*> delineationsOrError
+
+module Traits =
+
+    let toTrait t value value1 value2 =
+        match t with
+        | "shape" -> 
+            match value with
+            | "bisacchate" -> Shape Bisacchate |> Ok
+            | "circular" -> Shape Circular |> Ok
+            | "ovular" -> Shape Ovular |> Ok
+            | "triangular" -> Shape Triangular |> Ok
+            | "trilobate" -> Shape Trilobate |> Ok
+            | "pentagon" -> Shape Pentagon |> Ok
+            | "hexagon" -> Shape Hexagon |> Ok
+            | "unsure"-> Shape GrainShape.Unsure |> Ok
+            | _ -> Error <| Validation [{ Property = "value"; Errors = [sprintf "%s is not a valid shape" value]}]
+        | "pattern" ->
+            match value with
+            | "patterned" -> Pattern Patterned |> Ok
+            | "smooth" -> Pattern Smooth |> Ok
+            | "unsure" -> Pattern Patterning.Unsure |> Ok
+            | _ -> Error <| Validation [{ Property = "value"; Errors = [sprintf "%s is not a valid patterning type" value]}]
+        | "pores" ->
+            match value with
+            | "pore" -> Pores Pore |> Ok
+            | "furrow" -> Pores Furrow |> Ok
+            | "poreandfurrow" -> Pores PoreAndFurrow |> Ok
+            | "no" -> Pores No |> Ok
+            | "unsure" -> Pores Unsure |> Ok
+            | _ -> Error <| Validation [{ Property = "value"; Errors = [sprintf "%s is not a valid pore type" value]}]
+        | "wall" ->
+            positiveNumber value1
+                (Error <| Validation [{ Property = "value1"; Errors = ["value1 must be a valid wall thickness measurement"]}])
+            |> Result.map (fun f -> WallThickness f)
+        | "size" ->
+            let makeSize v1 v2 = Size (v1, v2)
+            let v1 = 
+                positiveNumber value1
+                    (Error <| Validation [{ Property = "value1"; Errors = ["value1 must be a valid size measurement"]}])
+            let v2 = 
+                positiveNumber value2
+                    (Error <| Validation [{ Property = "value2"; Errors = ["value2 must be a valid size measurement"]}])
+            makeSize <!> v1 <*> v2
+        | _ -> Error <| Validation [{ Property = "trait"; Errors = [sprintf "%s is not a valid trait" t]}]
 
 module DomainToDto =
     let unwrapGrainId (GrainId e) : Guid = e

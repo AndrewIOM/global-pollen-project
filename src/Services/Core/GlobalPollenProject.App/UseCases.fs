@@ -220,6 +220,12 @@ module Digitise =
         |> lift issueCommand
         |> toAppResult
 
+    let delineateGrainOnSlide getCurrentUser (request:DelineateSpecimenRequest) =
+        let currentUser = UserId <| getCurrentUser()
+        request
+        |> Converters.Dto.toDelinateGrainCommand currentUser readStoreGet
+        |> lift issueCommand
+        |> toAppResult
 
 module Calibrations =
 
@@ -315,6 +321,18 @@ module UnknownGrains =
         createCommand user
         <!> grainIdOrError
         <*> taxonIdOrError
+        |> lift issueCommand
+        |> toAppResult
+
+    let tagTrait getCurrentUser (req:TagTraitRequest) =
+        let grainIdOrError = Converters.Identity.existingGrainOrError readStoreGet req.GrainId
+        let user = getCurrentUser() |> UserId
+        let traitOrError = Converters.Traits.toTrait req.Trait req.Value req.Value1 req.Value2
+        let createCommand userId grainId t =
+            IdentifyTrait { Id = grainId; IdentifiedBy = userId; Trait = t }
+        createCommand user
+        <!> grainIdOrError
+        <*> traitOrError
         |> lift issueCommand
         |> toAppResult
 
