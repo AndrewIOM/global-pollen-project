@@ -19,7 +19,7 @@ let domainDefaultDeps =
      GetNeotomaId        = fun unit -> (None |> Ok)
      GetEolId            = fun unit -> (None |> Ok)
      GetTime             = (fun x -> DateTime(2017,1,1))
-     GetImageDimension   = (fun img -> Error "not implemented")
+     GetImageDimension   = (fun img -> Ok { Height = 800<pixels>; Width = 600<pixels> })
      CalculateIdentity   = calcIdentity }
 
 let Given aggregate dep (events: 'a list) = aggregate, events, dep

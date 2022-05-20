@@ -198,11 +198,21 @@ module ``When correcting mistakes`` =
 
 module ``When delineating individual specimens on a slide`` =
 
+    let validDelineation = 
+        {   Slide = SlideId (collection, "GPP1")
+            Image = 1
+            By = currentUser
+            Delineations = [{
+                TopLeft = { X = 352<pixels>; Y = 786<pixels> }
+                BottomRight = { X = 432<pixels>; Y = 798<pixels> }
+            }] }
+
     [<Fact>]
     let ``At least one delineation must be specified`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
                 SlideRecorded slideRecorded
-                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None) ]
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1) ]
         |> When ( DelineateSpecimensOnImage {Slide = SlideId (collection, "GPP1")
                                              Image = 1
                                              By = currentUser
@@ -213,32 +223,65 @@ module ``When delineating individual specimens on a slide`` =
     let ``The image number must match one for the slide`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
                 SlideRecorded slideRecorded
-                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None) ]
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1) ]
         |> When ( DelineateSpecimensOnImage {Slide = SlideId (collection, "GPP1")
                                              Image = 2
                                              By = currentUser
                                              Delineations = [] } )
         |> ExpectInvalidOp
 
-    // [<Fact>]
-    // let ``Each delineation must be within the bounds of the image`` () =
-    //     invalidOp "Cool"
+    [<Fact>]
+    let ``Each delineation must be within the bounds of the image`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1) ]
+        |> When ( DelineateSpecimensOnImage {Slide = SlideId (collection, "GPP1")
+                                             Image = 1
+                                             By = currentUser
+                                             Delineations = [{
+                                                 TopLeft = { X = 500<pixels>; Y = 1500<pixels> }
+                                                 BottomRight = { X = 1000<pixels>; Y = 1000<pixels> }
+                                             }] } )
+        |> ExpectInvalidOp
 
-    // // [<Fact>]
-    // // let ``A user cannot delineate grains on the same image more than once`` () =
-    // //     Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
-    // //             SlideRecorded slideRecorded
-    // //             SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
-    // //             SpecimenDelineated ((SlideId (collection, "GPP1")), 1, {TopLeft; })
+    [<Fact>]
+    let ``A user cannot delineate grains on the same image more than once`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, currentUser, validDelineation.Delineations) ]
+        |> When ( DelineateSpecimensOnImage validDelineation )
+        |> ExpectInvalidOp
 
-    // [<Fact>]
-    // let ``Grains cannot be delineated on an unpublished slide`` () =
-    //     invalidOp "Cool"
+    [<Fact>]
+    let ``Grains cannot be delineated on an unpublished slide`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None) ]
+        |> When ( DelineateSpecimensOnImage validDelineation )
+        |> ExpectInvalidOp
 
-    // [<Fact>]
-    // let ``Every delineation is recorded`` () =
-    //     invalidOp "Cool"
+    [<Fact>]
+    let ``A valid delineation is recorded`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1) ]
+        |> When ( DelineateSpecimensOnImage validDelineation )
+        |> Expect [ SpecimensDelineated ((SlideId (collection, "GPP1")), 1, currentUser, validDelineation.Delineations) ]
 
-    // [<Fact>]
-    // let ``Where a delineation is in peer-blind agreement, the delineation is confirmed`` () =
-    //     invalidOp "Cool"
+    [<Fact>]
+    let ``Where a delineation is in peer blind agreement, the delineation is confirmed`` () =
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), validDelineation.Delineations)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), validDelineation.Delineations) ]
+        |> When ( DelineateSpecimensOnImage validDelineation )
+        |> Expect [ 
+            SpecimensDelineated ((SlideId (collection, "GPP1")), 1, currentUser, validDelineation.Delineations)
+            SpecimenConfirmed ((SlideId (collection, "GPP1")), 1, validDelineation.Delineations.Head) ]

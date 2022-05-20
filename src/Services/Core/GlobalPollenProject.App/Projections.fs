@@ -693,6 +693,11 @@ module Grain =
             | GrainIdentityChanged e -> identityChanged get set (Some e.Taxon) e.Id
             | GrainIdentityConfirmed e -> identityChanged get set (Some e.Taxon) e.Id
             | GrainIdentityUnconfirmed e -> identityChanged get set None e.Id
+            | GrainDerived(_) -> failwith "Not Implemented"
+            | GrainIdentifiedExternally(_) -> failwith "Not Implemented"
+            | GrainTraitIdentified(_) -> failwith "Not Implemented"
+            | GrainTraitConfirmed(_) -> failwith "Not Implemented"
+            | ProblemFlagged(_) -> failwith "Not Implemented"
         | _ -> Ok()
 
 
@@ -1184,6 +1189,8 @@ module Digitisation =
             | RevisionAdvised (id,note) -> revision get set id note
             | PublicAccessAssigned (id,curator,access) -> publicAccess get set id curator access
             | SlideVoided id -> voidSlide get set id
+            | SpecimensDelineated(_, _, _, _) -> failwith "Not Implemented"
+            | SpecimenConfirmed(_, _, _) -> failwith "Not Implemented"
         | _ -> Ok()
 
 
