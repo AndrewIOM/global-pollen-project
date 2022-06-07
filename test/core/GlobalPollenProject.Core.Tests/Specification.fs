@@ -31,7 +31,7 @@ let Expect expected (aggregate, events, deps, command) =
         events
         |> List.fold aggregate.evolve aggregate.initial
         |> aggregate.handle deps command
-     Assert.Equal<'Event>(result,expected)
+     Assert.Equal<'Event>(expected, result)
 
 let ExpectInvalidOp (aggregate, events, deps, command) =
     (fun () ->

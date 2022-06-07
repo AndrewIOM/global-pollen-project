@@ -276,43 +276,60 @@ let specifyCurator id curator access state =
     | InRevision (_,_)
     | Draft _ -> [ PublicAccessAssigned (id,curator,access) ]
 
-let inline diff x1 x2 =
-    if x1 < x2 then x1 - x2 else x2 - x1
+module Delineate =
 
-let maxExtent (boxes:CartesianBox list) : CartesianBox =
-    boxes
-    |> Seq.fold(fun maxBox box ->
-        { TopLeft = { X = if box.TopLeft.X < maxBox.TopLeft.X then box.TopLeft.X else maxBox.TopLeft.X
-                      Y = if box.TopLeft.Y < maxBox.TopLeft.Y then box.TopLeft.Y else maxBox.TopLeft.Y }
-          BottomRight = { X = if box.BottomRight.X > maxBox.BottomRight.X then box.BottomRight.X else maxBox.BottomRight.X
-                          Y = if box.BottomRight.Y > maxBox.BottomRight.Y then box.BottomRight.Y else maxBox.BottomRight.Y }}
-        ) boxes.Head
+    let inline diff x1 x2 =
+        if x1 < x2 then x2 - x1 else x1 - x2
 
-let inTolerance tol p s =
-    diff p.BottomRight.X s.BottomRight.X < tol &&
-    diff p.BottomRight.Y s.BottomRight.Y < tol &&
-    diff p.TopLeft.Y s.TopLeft.Y < tol &&
-    diff p.TopLeft.Y s.TopLeft.Y < tol
+    let maxExtent (boxes:CartesianBox list) : CartesianBox =
+        boxes
+        |> Seq.fold(fun box maxBox ->
+            { TopLeft = { X = if box.TopLeft.X < maxBox.TopLeft.X then box.TopLeft.X else maxBox.TopLeft.X
+                          Y = if box.TopLeft.Y < maxBox.TopLeft.Y then box.TopLeft.Y else maxBox.TopLeft.Y }
+              BottomRight = { X = if box.BottomRight.X > maxBox.BottomRight.X then box.BottomRight.X else maxBox.BottomRight.X
+                              Y = if box.BottomRight.Y > maxBox.BottomRight.Y then box.BottomRight.Y else maxBox.BottomRight.Y }}
+            ) boxes.Head
 
-/// Follows rules to determine likely individual specimens based on
-/// the currently submitted bounding boxes, and the existing 'confirmed'
-/// specimen positions in X-Y space. The rules are:
-/// - Absolute tolerance: 10px
-/// - Maximum overlap of 20% between specimens
-/// - Assess submitted possible positions from oldest to newest
-let checkConfirmed alreadyIdentified sightings =
-    Seq.fold(fun (confirmed,previous) s ->
-        let similar = previous |> List.where(fun p ->inTolerance 10<pixels> p s)
-        if similar |> List.isEmpty
-        then 
-            printfn "None similar."
-            (confirmed, previous |> List.append [s])
-        else 
-            let occ = maxExtent (s :: similar)
-            match alreadyIdentified |> List.append confirmed |> List.tryFind (inTolerance 10<pixels> occ) with
-            | Some _ -> (confirmed, previous |> List.append [s])
-            | None -> (confirmed |> List.append [occ], previous |> List.append [s])
-        ) ([],[]) sightings |> fst
+    let inTolerance tol p s =
+        diff p.BottomRight.X s.BottomRight.X < tol &&
+        diff p.BottomRight.Y s.BottomRight.Y < tol &&
+        diff p.TopLeft.X s.TopLeft.X < tol &&
+        diff p.TopLeft.Y s.TopLeft.Y < tol
+
+    let setOfRange start e =
+        let removeUnit (x:int<_>) = int x
+        seq { removeUnit start .. removeUnit e }
+        |> Seq.map(fun i -> i * 1<pixels>)
+        |> Set.ofSeq
+
+    let overlapsByArea percent a b =
+        let intersectX = Set.intersect (setOfRange a.TopLeft.X a.BottomRight.X) (setOfRange b.TopLeft.X b.BottomRight.X)
+        let intersectY = Set.intersect (setOfRange a.TopLeft.Y a.BottomRight.Y) (setOfRange b.TopLeft.Y b.BottomRight.Y)
+        if intersectX.IsEmpty || intersectY.IsEmpty
+        then false
+        else
+            let areaA = (a.BottomRight.X - a.TopLeft.X) * (a.BottomRight.Y - a.TopLeft.Y)
+            let overlapArea = (intersectX.MaximumElement - intersectX.MinimumElement) * (intersectY.MaximumElement - intersectY.MinimumElement)
+            overlapArea >= (percent areaA)
+
+    /// Follows rules to determine likely individual specimens based on
+    /// the currently submitted bounding boxes, and the existing 'confirmed'
+    /// specimen positions in X-Y space. The rules are:
+    /// - Absolute tolerance: 10px
+    /// - Maximum overlap of 20% between specimens
+    /// - Assess submitted possible positions from oldest to newest
+    let checkConfirmed alreadyIdentified sightings =
+        Seq.fold(fun (confirmed,previous) s ->
+            let similar = previous |> List.where(fun p -> inTolerance 10<pixels> p s)
+            if similar.Length < 2
+            then (confirmed, previous |> List.append [s])
+            else 
+                let occ = maxExtent (s :: similar)
+                printfn "Found: %A (confirmed = %A) (matches 1 = %A) (matches 2 = %A)" occ confirmed (alreadyIdentified |> List.append confirmed |> List.tryFind (fun b -> inTolerance 10<pixels> occ b)) ((alreadyIdentified |> List.append confirmed |> List.tryFind (fun b -> overlapsByArea (fun i -> i/ 5) occ b)))
+                match alreadyIdentified |> List.append confirmed |> List.tryFind (fun b -> inTolerance 10<pixels> occ b || overlapsByArea (fun i -> i/ 5) occ b) with
+                | Some _ -> (confirmed, List.append previous [s])
+                | None -> (List.append confirmed [occ], List.append previous [s])
+            ) ([],[]) sightings |> fst
 
 let delineate (getImageDimension:Image -> Result<Dimensions,string>) (command:DelineateSpecimensOnImage) state =
     match state with
@@ -346,9 +363,9 @@ let delineate (getImageDimension:Image -> Result<Dimensions,string>) (command:De
                         d.TopLeft.X <= dims.Width && d.TopLeft.Y <= dims.Height &&
                         d.BottomRight.X <= dims.Width && d.BottomRight.Y <= dims.Height)
                 if valid.Length <> command.Delineations.Length
-                then invalidOp "At least one delineation was not within image bounds or was zero pixels"
+                then invalidOp "At least one delineation was not within image bounds, was invalid, or was zero pixels"
                 let e = SpecimensDelineated (command.Slide, command.Image, command.By, valid)          
-                let newlyConfirmed = checkConfirmed img.Specimens (List.concat [img.Delineations; valid])
+                let newlyConfirmed = Delineate.checkConfirmed img.Specimens (List.concat [img.Delineations; valid])
                 if newlyConfirmed |> Seq.isEmpty
                 then [ e ]
                 else e :: (newlyConfirmed |> List.map (fun d -> SpecimenConfirmed (command.Slide, command.Image, d)))

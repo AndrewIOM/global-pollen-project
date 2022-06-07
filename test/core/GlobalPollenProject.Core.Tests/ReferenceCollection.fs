@@ -207,6 +207,21 @@ module ``When delineating individual specimens on a slide`` =
                 BottomRight = { X = 432<pixels>; Y = 798<pixels> }
             }] }
 
+    let delineation x1 y1 x2 y2 =
+        {   Slide = SlideId (collection, "GPP1")
+            Image = 1
+            By = currentUser
+            Delineations = [{
+                TopLeft = { X = x1; Y = y1 }
+                BottomRight = { X = x2; Y = y2 }
+            }] }
+
+    let delineationCombine d1 d2 = 
+        {   Slide = SlideId (collection, "GPP1")
+                    Image = 1
+                    By = currentUser
+                    Delineations = List.concat [d1; d2] }
+
     [<Fact>]
     let ``At least one delineation must be specified`` () =
         Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
@@ -285,3 +300,66 @@ module ``When delineating individual specimens on a slide`` =
         |> Expect [ 
             SpecimensDelineated ((SlideId (collection, "GPP1")), 1, currentUser, validDelineation.Delineations)
             SpecimenConfirmed ((SlideId (collection, "GPP1")), 1, validDelineation.Delineations.Head) ]
+
+    [<Fact>]
+    let ``Delineations are not confirmed when they overlap by more than twenty percent area`` () =
+        let d1 = delineation 120<pixels> 120<pixels> 140<pixels> 140<pixels>
+        let d2 = delineation 131<pixels> 120<pixels> 140<pixels> 170<pixels>
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), List.concat [d1.Delineations; d2.Delineations])
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), List.concat [d1.Delineations; d2.Delineations]) ]
+        |> When ( DelineateSpecimensOnImage (delineationCombine d1.Delineations d2.Delineations) )
+        |> Expect [ 
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, currentUser, List.concat [d1.Delineations; d2.Delineations])
+                SpecimenConfirmed ((SlideId (collection, "GPP1")), 1, d1.Delineations.Head) ]
+
+    [<Fact>]
+    let ``Two non-overlapping delineations can be confirmed at once`` () =
+        let d1 = delineation 120<pixels> 120<pixels> 140<pixels> 140<pixels>
+        // 80 pixel overlap threshold.
+        let d2 = delineation 350<pixels> 350<pixels> 450<pixels> 450<pixels>
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), List.concat [d1.Delineations; d2.Delineations])
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), List.concat [d1.Delineations; d2.Delineations]) ]
+        |> When ( DelineateSpecimensOnImage (delineationCombine d1.Delineations d2.Delineations) )
+        |> Expect [ 
+            SpecimensDelineated ((SlideId (collection, "GPP1")), 1, currentUser, List.concat [ d1.Delineations; d2.Delineations])
+            SpecimenConfirmed ((SlideId (collection, "GPP1")), 1, d1.Delineations.Head)
+            SpecimenConfirmed ((SlideId (collection, "GPP1")), 1, d2.Delineations.Head) ]
+
+    [<Fact>]
+    let ``Delineation is confirmed where each is within 10px of another with largest possible extent`` () =
+        let d1 = delineation 120<pixels> 120<pixels> 140<pixels> 140<pixels>
+        let d2 = delineation 129<pixels> 129<pixels> 149<pixels> 149<pixels>
+        let conf = delineation 120<pixels> 120<pixels> 149<pixels> 149<pixels>
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), d1.Delineations)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), d1.Delineations) ]
+        |> When ( DelineateSpecimensOnImage d2 )
+        |> Expect [ 
+            SpecimensDelineated ((SlideId (collection, "GPP1")), 1, currentUser, d2.Delineations)
+            SpecimenConfirmed ((SlideId (collection, "GPP1")), 1, conf.Delineations.Head) ]
+
+    [<Fact>]
+    let ``Delineation is not confirmed when maximum distances between corners is greater than 10px`` () =
+        let d1 = delineation 120<pixels> 120<pixels> 140<pixels> 140<pixels>
+        let d2 = delineation 131<pixels> 129<pixels> 149<pixels> 149<pixels>
+        Given [ DigitisationStarted {Id = collection; Name = "Test Collection"; Owner = currentUser; Description = "Test"}
+                SlideRecorded slideRecorded
+                SlideImageUploaded ((SlideId (collection, "GPP1")), singleImage, None)
+                CollectionPublished (collection, DateTime.Now, ColVersion 1)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), d1.Delineations)
+                SpecimensDelineated ((SlideId (collection, "GPP1")), 1, UserId <| Guid.NewGuid(), d1.Delineations) ]
+        |> When ( DelineateSpecimensOnImage d2 )
+        |> Expect [ 
+            SpecimensDelineated ((SlideId (collection, "GPP1")), 1, currentUser, d2.Delineations) ]
+    
