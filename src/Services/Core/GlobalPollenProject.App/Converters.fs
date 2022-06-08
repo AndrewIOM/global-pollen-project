@@ -566,7 +566,8 @@ module DomainToDto =
               Frames = [i |> toAbsoluteUrl |> Url.unwrap]
               PixelWidth = pixelWidth
               FramesSmall = [cachedImage |> Url.unwrap]
-              PixelWidthSmall = pixelWidth * cachedScaleFactor }
+              PixelWidthSmall = pixelWidth * cachedScaleFactor
+              Delineations = [] }
         | FocusImage (urls,_,magId) ->
             let magnification = getMag magId
             match magnification with
@@ -581,7 +582,8 @@ module DomainToDto =
                       Frames = urls |> List.map (toAbsoluteUrl >> Url.unwrap)
                       PixelWidth = mag.PixelWidth
                       FramesSmall = smallImages |> List.map (fst >> Url.unwrap)
-                      PixelWidthSmall = mag.PixelWidth * smallImageScaleFactor }
+                      PixelWidthSmall = mag.PixelWidth * smallImageScaleFactor
+                      Delineations = [] }
 
     let calibration id user name microscope =
 

@@ -10,6 +10,7 @@ type SlideImage = {
     PixelWidth:             float
     FramesSmall:            string list
     PixelWidthSmall:        float
+    Delineations:           List<(int * int) * (int * int)>
 }
 
 // GPP Master Reference Collection

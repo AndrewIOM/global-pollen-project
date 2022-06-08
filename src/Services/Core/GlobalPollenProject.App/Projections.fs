@@ -942,6 +942,20 @@ module Digitisation =
     open GlobalPollenProject.Core.Aggregates.ReferenceCollection
     open Converters.DomainToDto
 
+    let removeUnitInt (x:int<_>) = int x
+
+    /// Fetch a slide from the read model given a slide ID
+    let getSlide get slideId cont =
+        let colId = slideId |> unwrapSlideId |> fst |> unwrapRefId
+        let col = RepositoryBase.getSingle colId get deserialise<EditableRefCollection>
+        match col with
+        | Error e -> Error e
+        | Ok c -> 
+            let slide = c.Slides |> List.tryFind (fun x -> x.CollectionSlideId = (slideId |> unwrapSlideId |> snd))
+            match slide with
+            | None -> readModelErrorHandler()
+            | Some s -> cont colId c s
+
     let started (set:SetStoreValue) (setList:SetEntryInList) (e:DigitisationStarted) =
         let col = {
             Id = e.Id |> unwrapRefId
@@ -1013,93 +1027,65 @@ module Digitisation =
             RepositoryBase.setSingle colId { c with Slides = slide::c.Slides; SlideCount = c.SlideCount + 1 } setKey serialise
 
     let imageUploaded getKey setKey generateCacheImage toAbsoluteUrl id image =
-        let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
-        match col with
-        | Error e -> Error e
-        | Ok c -> 
-            let slide = c.Slides |> List.tryFind (fun x -> x.CollectionSlideId = (id |> unwrapSlideId |> snd))
-            match slide with
-            | None -> readModelErrorHandler()
-            | Some s ->
-                let thumbnailUrl = 
-                    let result = 
-                        match image with
-                        | SingleImage (relUrl,_) -> (generateCacheImage thumbnailSize "thumb") relUrl
-                        | FocusImage (frames,_,_) ->
-                            match frames |> List.length with
-                            | i when i > 0 -> (generateCacheImage thumbnailSize "thumb") frames.[i / 2]
-                            | _ -> invalidOp "Empty focus image"
-                    match result with
-                    | Ok (u,_) -> u |> Url.unwrap
-                    | Error _ -> ""
-                let getMag mag = 
-                    let calId,level = Converters.DomainToDto.unwrapMagId mag
-                    RepositoryBase.getSingle<Calibration> calId getKey deserialise
-                    |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
-                let cacheImage url =
-                    match generateCacheImage webImageSize "web" url with
-                    | Ok (r,s) -> r,s
-                    | Error _ -> url |> toAbsoluteUrl ,1.
-                let imageDto = Converters.DomainToDto.image cacheImage getMag toAbsoluteUrl image
-                let updatedSlide = { s with Images = imageDto :: s.Images; Thumbnail = thumbnailUrl }
-                let updatedSlides = 
-                    c.Slides 
-                    |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
-                    |> List.sortBy (fun s -> s.CollectionSlideId)
-                let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle colId updatedCol setKey serialise
+        getSlide getKey id (fun colId c s ->
+            let thumbnailUrl = 
+                let result = 
+                    match image with
+                    | SingleImage (relUrl,_) -> (generateCacheImage thumbnailSize "thumb") relUrl
+                    | FocusImage (frames,_,_) ->
+                        match frames |> List.length with
+                        | i when i > 0 -> (generateCacheImage thumbnailSize "thumb") frames.[i / 2]
+                        | _ -> invalidOp "Empty focus image"
+                match result with
+                | Ok (u,_) -> u |> Url.unwrap
+                | Error _ -> ""
+            let getMag mag = 
+                let calId,level = Converters.DomainToDto.unwrapMagId mag
+                RepositoryBase.getSingle<Calibration> calId getKey deserialise
+                |> lift (fun c -> c.Magnifications |> List.tryFind (fun m -> m.Level = level))
+            let cacheImage url =
+                match generateCacheImage webImageSize "web" url with
+                | Ok (r,s) -> r,s
+                | Error _ -> url |> toAbsoluteUrl ,1.
+            let imageDto = Converters.DomainToDto.image cacheImage getMag toAbsoluteUrl image
+            let updatedSlide = { s with Images = imageDto :: s.Images; Thumbnail = thumbnailUrl }
+            let updatedSlides = 
+                c.Slides 
+                |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+                |> List.sortBy (fun s -> s.CollectionSlideId)
+            let updatedCol = { c with Slides = updatedSlides }
+            RepositoryBase.setSingle colId updatedCol setKey serialise
+        )
 
     let digitised getKey setKey id =
-        let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
-        match col with
-        | Error e -> Error e
-        | Ok c -> 
-            let slide = c.Slides |> List.tryFind (fun x -> x.CollectionSlideId = (id |> unwrapSlideId |> snd))
-            match slide with
-            | None -> readModelErrorHandler()
-            | Some s ->
-                let updatedSlide = { s with IsFullyDigitised = true }
-                let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
-                let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle colId updatedCol setKey serialise
+        getSlide getKey id (fun colId c s ->
+            let updatedSlide = { s with IsFullyDigitised = true }
+            let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+            let updatedCol = { c with Slides = updatedSlides }
+            RepositoryBase.setSingle colId updatedCol setKey serialise
+        )
 
     let gainedIdentity getKey setKey id taxonId =
-        let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
-        match col with
-        | Error e -> Error e
-        | Ok c -> 
-            let slide = c.Slides |> List.tryFind (fun x -> x.CollectionSlideId = (id |> unwrapSlideId |> snd))
-            match slide with
-            | None -> readModelErrorHandler()
-            | Some s ->
-                let f,g,sp,auth,status = 
-                    let bbTaxon = RepositoryBase.getSingle ((taxonId |> unwrapTaxonId)) getKey deserialise<BackboneTaxon>
-                    match bbTaxon with
-                    | Error e -> readModelErrorHandler()
-                    | Ok t -> t.Family, t.Genus, t.Species, t.NamedBy, t.TaxonomicStatus
-                let updatedSlide = { s with CurrentTaxonStatus = status; CurrentFamily = f; CurrentGenus = g; CurrentSpecies = sp; CurrentSpAuth = auth; CurrentTaxonId = taxonId |> Converters.DomainToDto.unwrapTaxonId |> Some }
-                let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
-                let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle colId updatedCol setKey serialise
+        getSlide getKey id (fun colId c s ->
+            let f,g,sp,auth,status = 
+                let bbTaxon = RepositoryBase.getSingle ((taxonId |> unwrapTaxonId)) getKey deserialise<BackboneTaxon>
+                match bbTaxon with
+                | Error e -> readModelErrorHandler()
+                | Ok t -> t.Family, t.Genus, t.Species, t.NamedBy, t.TaxonomicStatus
+            let updatedSlide = { s with CurrentTaxonStatus = status; CurrentFamily = f; CurrentGenus = g; CurrentSpecies = sp; CurrentSpAuth = auth; CurrentTaxonId = taxonId |> Converters.DomainToDto.unwrapTaxonId |> Some }
+            let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+            let updatedCol = { c with Slides = updatedSlides }
+            RepositoryBase.setSingle colId updatedCol setKey serialise
+        )
 
     let gainedPrep getKey setKey id person =
-        let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle colId getKey deserialise<EditableRefCollection>
-        match col with
-        | Error e -> Error e
-        | Ok c -> 
-            let slide = c.Slides |> List.tryFind (fun x -> x.CollectionSlideId = (id |> unwrapSlideId |> snd))
-            match slide with
-            | None -> readModelErrorHandler()
-            | Some s ->
-                let personName = person |> Converters.DomainToDto.person
-                let updatedSlide = { s with PreppedBy = personName }
-                let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
-                let updatedCol = { c with Slides = updatedSlides }
-                RepositoryBase.setSingle colId updatedCol setKey serialise
+        getSlide getKey id (fun colId c s ->
+            let personName = person |> Converters.DomainToDto.person
+            let updatedSlide = { s with PreppedBy = personName }
+            let updatedSlides = c.Slides |> List.map (fun x -> if x.CollectionSlideId = s.CollectionSlideId then updatedSlide else x)
+            let updatedCol = { c with Slides = updatedSlides }
+            RepositoryBase.setSingle colId updatedCol setKey serialise
+        )
 
     let published getKey setKey id time (version:ColVersion) =
         let colId : Guid = id |> unwrapRefId
@@ -1161,18 +1147,34 @@ module Digitisation =
             RepositoryBase.setSingle colId updated set serialise
 
     let voidSlide get set id =
-        let colId : Guid = id |> unwrapSlideId |> fst |> unwrapRefId
-        let col = RepositoryBase.getSingle colId get deserialise<EditableRefCollection>
-        match col with
-        | Error e -> Error e
-        | Ok c -> 
-            let slide = c.Slides |> List.tryFind (fun x -> x.CollectionSlideId = (id |> unwrapSlideId |> snd))
-            match slide with
-            | None -> readModelErrorHandler()
-            | Some s ->
-                let updatedSlides = c.Slides |> List.except [s]
+        getSlide get id (fun colId c s ->
+            let updatedSlides = c.Slides |> List.except [s]
+            let updatedCol = { c with Slides = updatedSlides }
+            RepositoryBase.setSingle colId updatedCol set serialise
+        )
+
+    let delineated setList slideId imageNo userId =
+        let colId : Guid = slideId |> unwrapSlideId |> fst |> unwrapRefId
+        let key = sprintf "Delineations:%O:%s:img%i" colId (slideId |> unwrapSlideId |> snd) imageNo
+        RepositoryBase.setListItem (userId.ToString()) key setList
+
+    let confirmed get set slideId imageNumber (delineation:SpecimenDelineation) =
+        getSlide get slideId (fun colId c s ->
+            let d = (removeUnitInt delineation.TopLeft.X, removeUnitInt delineation.TopLeft.Y), (removeUnitInt delineation.BottomRight.X, removeUnitInt delineation.BottomRight.Y)
+            let img = 
+                s.Images 
+                |> Seq.tryFind(fun i -> i.Id = imageNumber)
+                |> Option.map(fun i -> { i with Delineations = d :: i.Delineations })
+            match img with
+            | Some img ->
+                let updatedSlides = c.Slides |> List.map(fun s ->
+                    if s.CollectionSlideId = (slideId |> unwrapSlideId |> snd)
+                    then { s with Images = s.Images |> List.map(fun i -> if i.Id = imageNumber then img else i) }
+                    else s )
                 let updatedCol = { c with Slides = updatedSlides }
                 RepositoryBase.setSingle colId updatedCol set serialise
+            | None -> Ok ()
+        )
 
     let handle get getSortedList set setList generateCacheImage toAbsoluteUrl (e:EventMessage) =
         match e |> toEvent with
@@ -1189,8 +1191,8 @@ module Digitisation =
             | RevisionAdvised (id,note) -> revision get set id note
             | PublicAccessAssigned (id,curator,access) -> publicAccess get set id curator access
             | SlideVoided id -> voidSlide get set id
-            | SpecimensDelineated(_, _, _, _) -> failwith "Not Implemented"
-            | SpecimenConfirmed(_, _, _) -> failwith "Not Implemented"
+            | SpecimensDelineated (a,b,c,_) -> delineated setList a b c
+            | SpecimenConfirmed(id,img,del) -> confirmed get set id img del 
         | _ -> Ok()
 
 
