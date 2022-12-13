@@ -9,6 +9,7 @@ type DomainError =
 type Dependencies =  {
     GenerateId:        unit -> Guid
     Log:               LogMessage -> unit
+    Random:            Random
     ValidateTaxon:     BackboneQuery -> TaxonId option
     GetGbifId:         TaxonId -> Result<int option,string>
     GetNeotomaId:      TaxonId -> Result<int option,string>

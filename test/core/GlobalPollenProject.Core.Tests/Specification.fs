@@ -14,6 +14,7 @@ let domainDefaultDeps =
 
     {GenerateId          = generateGuid
      Log                 = logger
+     Random              = System.Random()
      ValidateTaxon       = validate
      GetGbifId           = fun unit -> (None |> Ok)
      GetNeotomaId        = fun unit -> (None |> Ok)

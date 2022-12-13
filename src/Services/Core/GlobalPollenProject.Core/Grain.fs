@@ -240,12 +240,15 @@ module Traits =
     /// and stop these from becoming confirmed. Where there is unimodal, we can
     /// confirm, even if the associated error in measurement is high.
     /// See: https://skeptric.com/dip-statistic/
-    let dipTestOfUnimodality v =
-        failwith "not finished"
-
-    let continuousTraitTest (v:float<um> list) : MeasureUncertainty option =
-        // TODO Implement continuous trait test
-        None
+    let continuousTraitTest rnd (v:float<um> list) : MeasureUncertainty option =
+        let removeUnit (x:float<_>) = float x
+        let dipTest = Statistics.DipTest.dipTestSigSimulated (v |> List.map removeUnit |> List.toArray) 2000 rnd
+        match dipTest with
+        | Error _ -> None
+        | Ok (dip, pValue) ->
+            if pValue >= 0.05
+            then Some { Value = v |> Seq.average; MeasurementUncertainty = 0.<um> } // TODO Measurement uncertainty calculation
+            else None
 
     /// For categorical traits, we use the same algorithm for taxonomic identification,
     /// i.e. there need to be at least n observations, and these need to be the same.
@@ -281,11 +284,11 @@ module Traits =
 
     /// Identify a continuous trait. Only allow if specific trait not already identified
     /// by this person. Trigger confirmation event when trait meets confirmation criteria.
-    let identifyContinuous userTraitIds traitMeasurements f conf command =
-        identify continuousTraitTest userTraitIds traitMeasurements f conf command
+    let identifyContinuous rnd userTraitIds traitMeasurements f conf command =
+        identify (continuousTraitTest rnd) userTraitIds traitMeasurements f conf command
 
 
-let identifyTrait (command:IdentifyTrait) state =
+let identifyTrait rnd (command:IdentifyTrait) state =
     match state with
     | InitialState -> invalidOp "This grain does not exist"
     | Submitted s -> 
@@ -297,20 +300,19 @@ let identifyTrait (command:IdentifyTrait) state =
         match command.Trait with
         | Shape _ -> 
             Traits.identifyCategorical userTraitIds s.TraitMeasurements 
-                (fun t -> match t with | Shape sh -> Some sh | _ -> None) ConfirmedShape command
+                (fun t -> match t with | Shape sh -> (match sh with | GrainShape.Unsure -> None | _ -> Some sh) | _ -> None) ConfirmedShape command
         | Pattern _ -> 
             Traits.identifyCategorical userTraitIds s.TraitMeasurements 
-                (fun t -> match t with | Pattern sh -> Some sh | _ -> None) ConfirmedPattern command
+                (fun t -> match t with | Pattern sh -> (match sh with | Patterning.Unsure -> None | _ -> Some sh) | _ -> None) ConfirmedPattern command
         | Pores _ -> 
             Traits.identifyCategorical userTraitIds s.TraitMeasurements 
-                (fun t -> match t with | Pores sh -> Some sh | _ -> None) ConfirmedPores command
+                (fun t -> match t with | Pores sh -> (match sh with | Unsure -> None | _ -> Some sh) | _ -> None) ConfirmedPores command
         | WallThickness _ ->
-            Traits.identifyContinuous userTraitIds s.TraitMeasurements 
+            Traits.identifyContinuous rnd userTraitIds s.TraitMeasurements 
                 (fun t -> match t with | WallThickness sh -> Some sh | _ -> None) ConfirmedWall command
-        | Size _ ->
-            failwith "not finished"
-        //     Traits.identifyContinuous userTraitIds s.TraitMeasurements 
-        //         (fun t -> match t with | Size (s1,s2) -> Some (s1,s2) | _ -> None) ConfirmedSize command
+        | Size _ -> failwith "not finished"
+            // Traits.identifyContinuous rnd userTraitIds s.TraitMeasurements 
+            //     (fun t -> match t with | Size (s1,s2) -> Some (s1,s2) | _ -> None) ConfirmedSize command
 
 let report grainId problem state =
     match state with
@@ -327,7 +329,7 @@ let handle (deps:Aggregate.Dependencies) =
     | IdentifyUnknownGrain command -> identifyGrain deps.CalculateIdentity command
     | DeriveGrainFromSlide command -> deriveGrainFromSlide deps.GetImageDimension command
     | ReportProblem(grainId, problem) -> report grainId problem
-    | IdentifyTrait command -> identifyTrait command
+    | IdentifyTrait command -> identifyTrait deps.Random command
 
 let private unwrap (GrainId e) = e
 let getId = function
