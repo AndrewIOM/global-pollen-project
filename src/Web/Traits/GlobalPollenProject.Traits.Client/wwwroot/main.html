@@ -1,0 +1,57 @@
+<div class="columns">
+  <aside class="column sidebar is-narrow">
+    <section class="section">
+      <nav class="menu">
+        <ul class="menu-list">
+          ${Menu}
+          <template id="MenuItem">
+            <li><a class="${Active}" href="${Url}">${Text}</a></li>
+          </template>
+        </ul>
+      </nav>
+    </section>
+  </aside>
+  <div class="column">
+    <section class="section">
+      ${Body}
+
+      <div id="notification-area">
+        <div>${Error}</div>
+      </div>
+
+      <template id="Home">
+        <div class="row">
+          <div class="column">
+            ${Viewer}
+          </div>
+          <div class="column">
+            <div class="card">
+              ${TraitQuestion}
+            </div>
+            <div class="card">
+              <div class="card-header">Which plant is this from?</div>
+              <div class="card-body">
+                ${TaxonCard}
+              </div>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <template id="Help">
+        <h1 class="title">Help page</h1>
+        <p>
+          This is the help page.
+        </p>
+      </template>
+
+      <template id="ErrorNotification">
+        <div class="notification is-warning">
+          <button class="delete ${HideClass}" onclick="${Hide}"></button>
+          ${Text}
+        </div>
+      </template>
+
+    </section>
+  </div>
+</div>
