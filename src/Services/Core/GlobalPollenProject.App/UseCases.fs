@@ -177,7 +177,7 @@ module Digitise =
         let issueCommands newCol curator =
             newCol |> issueCommand
             curator |> issueCommand
-            Ok newId
+            Ok (DomainToDto.unwrapRefId newId)
 
         let newColCommand = 
             CreateCollection { Id = newId; Name = request.Name; Owner = currentUser; Description = request.Description }

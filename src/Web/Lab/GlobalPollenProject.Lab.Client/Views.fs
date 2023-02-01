@@ -486,19 +486,19 @@ module Partials =
                 Grid.column Small 3 [
                     input [ bind.change.string vm.OriginalFamily (fun s -> { vm with OriginalFamily = s |> capitalise } |> ChangeDraftSlide |> dispatch)
                             _type "text"; attr.id "original-Family"; _class "form-control"; attr.autocomplete "off"; attr.placeholder "Family"; ]
-                    div [ _class "dropdown-menu taxon-dropdown"; attr.id "FamilyList"; attr.style "display:none" ] []
+                    div [ _class "dropdown-menu taxon-dropdown shadow"; attr.id "FamilyList"; attr.style "display:none" ] []
                 ]
                 Grid.column Small 3 [
                     input [ bind.change.string vm.OriginalGenus (fun s -> { vm with OriginalGenus = s |> capitalise } |> ChangeDraftSlide |> dispatch);
                             if rank = Family then attr.disabled "disabled";
                             _type "text"; attr.id "original-Genus"; _class "form-control"; attr.autocomplete "off"; attr.placeholder "Genus" ]
-                    div [ _class "dropdown-menu taxon-dropdown"; attr.id "GenusList"; attr.id "display:none" ] []
+                    div [ _class "dropdown-menu taxon-dropdown shadow"; attr.id "GenusList"; attr.id "display:none" ] []
                 ]
                 Grid.column Small 3 [
                     input [ bind.change.string vm.OriginalSpecies (fun s -> { vm with OriginalSpecies = s } |> ChangeDraftSlide |> dispatch);
                             if rank <> Species then attr.disabled "disabled";
                             _type "text"; attr.id "original-Species"; _class "form-control"; attr.autocomplete "off"; attr.placeholder "Species" ]
-                    div [ _class "dropdown-menu taxon-dropdown"; attr.id "SpeciesList"; attr.style "display:none" ] []
+                    div [ _class "dropdown-menu taxon-dropdown shadow"; attr.id "SpeciesList"; attr.style "display:none" ] []
                 ]
                 Grid.column Small 3 [
                     input [ bind.change.string vm.OriginalAuthor (fun s -> { vm with OriginalAuthor = s |> capitalise } |> ChangeDraftSlide |> dispatch)

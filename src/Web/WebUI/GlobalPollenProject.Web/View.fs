@@ -1162,7 +1162,7 @@ module Identify =
                         keyup: suggest($element, 'Family') }"
                         _type "text"; _id "original-Family"; _class "form-control"
                         _autocomplete "off"; _placeholder "Family" ]
-                ul [ _class "dropdown-menu taxon-dropdown"; _id "FamilyList"
+                ul [ _class "dropdown-menu taxon-dropdown shadow"; _id "FamilyList"
                      _style "display:none" ] []
             ]
             Grid.column Small 3 [
@@ -1172,7 +1172,7 @@ module Identify =
                         blur: disable('Genus') }"
                         _type "text"; _id "original-Genus"; _class "form-control"
                         _autocomplete "off"; _placeholder "Genus" ]
-                ul [ _class "dropdown-menu taxon-dropdown"; _id "GenusList"
+                ul [ _class "dropdown-menu taxon-dropdown shadow"; _id "GenusList"
                      _style "display:none" ] []
             ]
             Grid.column Small 3 [
@@ -1180,7 +1180,7 @@ module Identify =
                         event: { blur: disable('Species'), keyup: suggest($element, 'Species') }"
                         _type "text"; _id "original-Species"; _class "form-control"
                         _autocomplete "off"; _placeholder "Species" ]
-                ul [ _class "dropdown-menu taxon-dropdown"; _id "SpeciesList"
+                ul [ _class "dropdown-menu taxon-dropdown shadow"; _id "SpeciesList"
                      _style "display:none" ] []
             ]
             Grid.column Small 3 [

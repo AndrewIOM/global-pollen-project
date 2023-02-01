@@ -176,15 +176,15 @@ function AddCollectionViewModel() {
                 rootVM.switchView(CurrentView.MASTER);
             },
             statusCode: {
-                400: function (err) {
+                400: err => {
                     self.validationErrors(err.responseJSON.errors);
                     self.isProcessing(false);
-                    $(".modal").scrollTop();
+                    $(".modal-dialog").scrollTop();
                 },
-                500: function (data) {
+                500: data => {
                     self.validationErrors(['Internal error. Please try again later.']);
                     self.isProcessing(false);
-                    $('.modal').animate({ scrollTop: 0 }, 'slow');
+                    $('.modal-dialog').animate({ scrollTop: 0 }, 'slow');
                 }
             }
         });
@@ -529,10 +529,10 @@ function SlideDetailViewModel(detail) {
             $("#digitisedYearStatic").val("").change();
             $("#digitisedYearStatic").datepicker({
                 format: " yyyy",
-                //viewMode: "years",
+                maxViewMode: "years",
+                minViewMode: "years",
                 startDate: '1850',
                 endDate: '+0d',
-                minViewMode: "years"
             });
         }
 
@@ -550,10 +550,10 @@ function SlideDetailViewModel(detail) {
             $("#digitisedYearFocus").val("").change();
             $("#digitisedYearFocus").datepicker({
                 format: " yyyy",
-                //viewMode: "years",
+                maxViewMode: "years",
+                minViewMode: "years",
                 startDate: '1850',
                 endDate: '+0d',
-                minViewMode: "years"
             });
 
             self.selectedMicroscope(null);
@@ -648,11 +648,11 @@ function SlideDetailViewModel(detail) {
         $("#static-image-previewer-container").html("<div id=\"static-image-previewer\"></div>");
         $("#digitisedYearStatic").datepicker({
             format: " yyyy",
-            //viewMode: "years",
+            maxViewMode: "years",
+            minViewMode: "years",
             startDate: '1850',
             endDate: '+0d',
-            minViewMode: "years"
-        });
+    });
 
         $("#measuredDistance").change(function () {
             self.measuredDistance($(this).val().toString().replace(/[^0-9.]/g, ""));
@@ -730,10 +730,10 @@ function SlideDetailViewModel(detail) {
 
         $("#digitisedYearFocus").datepicker({
             format: " yyyy",
-            //viewMode: "years",
+            maxViewMode: "years",
+            minViewMode: "years",
             startDate: '1850',
             endDate: '+0d',
-            minViewMode: "years"
         });
 
         if (self.viewer != null) {
