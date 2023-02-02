@@ -142,8 +142,12 @@ module Handlers =
                     let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s&returnUrl=%s" baseUrl user.Id codeBase64 returnUrlBase64
                     let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
                     let sendEmail = ctx.GetService<Email.SendEmail>()
-                    sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html } |> Async.RunSynchronously |> ignore
-                    return! htmlView (Views.Pages.confirmCode model.Email) next ctx
+                    let! emailResult = sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html }
+                    match emailResult with
+                    | Ok _ -> return! htmlView (Views.Pages.awaitingEmailConfirmation model.Email) next ctx
+                    | Error e -> 
+                        ctx.GetLogger().LogError e
+                        return! htmlView (Views.Pages.error "Your account has been created but there was an issue sending you a confirmation email. Please contact our support email to resolve this problem.") next ctx
                 | false -> return! (htmlView <| Views.Pages.register (result.Errors |> identityToValidationError) model) next ctx
             }
 
@@ -192,14 +196,6 @@ module Routes =
 
     let buildLoginViewModel returnUrl (context:AuthorizationRequest) (clientStore:IClientStore) =
         task {
-//            let allowLocal =
-//                if isNotNull context.ClientId
-//                then 
-//                    let! client = clientStore.FindClientByIdAsync(context.ClientId)
-//                    if isNotNull client
-//                    then client.EnableLocalLogin
-//                    else true
-//                else true
             return { ReturnUrl = returnUrl; Email = context.LoginHint; Password = ""; RememberMe = false }
         }
 
@@ -216,7 +212,7 @@ module Routes =
                     else
                         let clientStore = ctx.GetService<IClientStore>()
                         let! vm = buildLoginViewModel model.ReturnUrl context clientStore
-                        return! htmlView (Views.Pages.login vm) next ctx
+                        return! htmlView (Views.Pages.login None vm) next ctx
             }
 
     let loginPost (model:LoginRequest) : HttpHandler =
@@ -241,7 +237,7 @@ module Routes =
                         return! redirectTo true model.ReturnUrl next ctx
                     else
                         return! redirectTo true "~/" next ctx
-                else return! htmlView (Views.Pages.login model) next ctx
+                else return! htmlView (Views.Pages.login (Some "Your username and / or password were not recognised") model) next ctx
             }
 
     let confirm (model:ConfirmEmailRequest) : HttpHandler =
@@ -275,11 +271,61 @@ module Routes =
                         else return! htmlView (Views.Pages.error "The code was not valid. Please resend your email verification request.") next ctx
             }
 
+    let forgotPassword (model:ForgotPasswordViewModel) =
+        Views.Pages.forgotPassword model
+
+    let forgotPasswordPost (model:ForgotPasswordViewModel) =
+        fun next ctx -> task {
+            if String.IsNullOrEmpty(model.Email) || String.IsNullOrEmpty(model.ReturnUrl)
+            then return! htmlView (Views.Pages.forgotPassword model) next ctx
+            else
+                let manager = ctx.GetService<UserManager<ApplicationUser>>()
+                let! user = manager.FindByEmailAsync(model.Email) |> Async.AwaitTask
+                if isNull user then return! htmlView (Views.Pages.forgotPasswordConfirmation) next ctx
+                else
+                    let! code = manager.GeneratePasswordResetTokenAsync(user)
+                    let baseUrl = sprintf "%s://%s%s" ctx.Request.Scheme ctx.Request.Host.Value ctx.Request.PathBase.Value
+                    let codeBase64 = System.Text.Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
+                    let returnUrlBase64 = System.Text.Encoding.UTF8.GetBytes(model.ReturnUrl) |> WebEncoders.Base64UrlEncode
+                    let callbackUrl = sprintf "%s/Account/ResetPassword?&code=%s&returnUrl=%s" baseUrl codeBase64 returnUrlBase64
+                    let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
+                    let sendEmail = ctx.GetService<Email.SendEmail>()
+                    let! emailResult = sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html }
+                    match emailResult with
+                    | Ok _ -> return! htmlView (Views.Pages.forgotPasswordConfirmation) next ctx 
+                    | Error e -> 
+                        ctx.GetLogger().LogError e
+                        return! htmlView (Views.Pages.error "There was an issue sending you an email. Please contact our support email to resolve this problem.") next ctx
+        }
+
+    let resetPassword (model:ResetPasswordViewModel) next ctx =
+        task {
+            if String.IsNullOrEmpty model.Code || String.IsNullOrEmpty model.ReturnUrl
+            then return! htmlView (Views.Pages.error "The code specified was not valid. Please request another code.") next ctx
+            else return! htmlView (Views.Pages.resetPassword model) next ctx
+        }
+
+    let resetPasswordPost (model:ResetPasswordViewModel) next ctx =
+        task {
+            if String.IsNullOrEmpty model.Code || String.IsNullOrEmpty model.ConfirmPassword
+                || String.IsNullOrEmpty model.Email || String.IsNullOrEmpty model.Password
+                || String.IsNullOrEmpty model.ReturnUrl
+            then return! htmlView (Views.Pages.resetPassword model) next ctx
+            else
+                let manager = ctx.GetService<UserManager<ApplicationUser>>()
+                let! user = manager.FindByEmailAsync(model.Email) |> Async.AwaitTask
+                if isNull user then return! htmlView (Views.Pages.resetPasswordConfirmation) next ctx
+                else
+                    let! result = manager.ResetPasswordAsync(user, model.Code, model.Password)
+                    if result.Succeeded
+                    then return! htmlView (Views.Pages.resetPasswordConfirmation) next ctx
+                    else return! htmlView (Views.Pages.resetPassword model) next ctx
+        }
+
     let challengeWithProperties (authScheme : string) properties _ (ctx : HttpContext) =
         task {
             do! ctx.ChallengeAsync(authScheme,properties)
             return Some ctx }
-
 
     let externalLogin (model:ExternalLoginRequest) : HttpHandler = 
         fun next ctx ->
@@ -348,7 +394,10 @@ module Routes =
             GET  >=> route "/Account/Register"              >=> tryBindQuery parsingError None (fun (m:ReturnUrlQuery) -> htmlView (Views.Pages.register [] (ViewModels.Empty.newAppUserRequest m.ReturnUrl)))
             POST >=> route "/Account/Register"              >=> tryBindForm parsingError None Handlers.register
             GET  >=> route "/Account/ConfirmEmail"          >=> tryBindQuery parsingError None confirm
-            GET  >=> route "/Account/ForgotPassword"        >=> tryBindQuery parsingError None confirm
+            POST >=> route "/Account/ForgotPassword"        >=> tryBindForm parsingError None forgotPasswordPost
+            GET  >=> route "/Account/ForgotPassword"        >=> tryBindQuery parsingError None (fun (m:ReturnUrlQuery) -> htmlView (Views.Pages.forgotPassword (ViewModels.Empty.forgot m.ReturnUrl)))
+            POST >=> route "/Account/ResetPassword"         >=> tryBindForm parsingError None resetPasswordPost
+            GET  >=> route "/Account/ResetPassword"         >=> tryBindQuery parsingError None resetPassword
             subRoute "/Manage" manageRoutes
         ]
 
@@ -485,8 +534,12 @@ module Program =
                .AllowAnyHeader()
                |> ignore
 
-    let sendEmail appSettings message = 
-        message |> Email.Cloud.sendAsync (getAppSetting appSettings "SendGridKey") (getAppSetting appSettings "EmailFromName") (getAppSetting appSettings "EmailFromAddress")
+    let sendEmail appSettings message = async {
+        let! sent = message |> Email.Cloud.sendAsync (getAppSetting appSettings "SendGridKey") (getAppSetting appSettings "EmailFromName") (getAppSetting appSettings "EmailFromAddress")
+        if sent <> System.Net.HttpStatusCode.Accepted 
+        then return Error <| sprintf "Email request was not accepted. Status code was %A." sent
+        else return Ok ()
+    }
 
     let configureApp (app : IApplicationBuilder) =
         let env = app.ApplicationServices.GetService<IWebHostEnvironment>()

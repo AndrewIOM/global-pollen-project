@@ -89,12 +89,15 @@ type ResetPasswordViewModel = {
     [<DataType(DataType.Password)>]
     [<Display(Name = "Confirm password")>]
     [<Compare("Password", ErrorMessage = "The password and confirmation password do not match.")>]
+
     ConfirmPassword: string
+    [<Required>] ReturnUrl: string
 }
 
 [<CLIMutable>]
 type ForgotPasswordViewModel = {
     [<Required>] [<EmailAddress>] Email: string
+    [<Required>] ReturnUrl: string
 }
 
 [<CLIMutable>]
@@ -156,4 +159,5 @@ module Empty =
     let newAppUserRequest returnUrl = { ReturnUrl = returnUrl; Title = ""; FirstName = ""; LastName = ""; Organisation = ""; Email = "" ; EmailConfirmation = ""; Password = ""; ConfirmPassword = "" }
     let setPass = { NewPassword = ""; ConfirmPassword = "" }
     let changePass = { OldPassword = ""; NewPassword = ""; ConfirmPassword = "" }
-    
+    let forgot returnUrl = { Email = ""; ReturnUrl = returnUrl }
+    let resetPassword returnUrl code = { ReturnUrl = returnUrl; Code = code; Email = ""; Password = ""; ConfirmPassword = "" }

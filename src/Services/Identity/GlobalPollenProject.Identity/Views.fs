@@ -45,11 +45,14 @@ module Errors =
 
 module Pages = 
 
-    let login (vm:LoginRequest) =
+    let login message (vm:LoginRequest) =
         [
             div [ _class "container main-panel" ] [
                 h1 [ _class "title" ] [ str "Global Pollen Project" ]
                 p [] [ str "Sign in" ]
+                match message with
+                | None -> emptyText
+                | Some m -> div [ _class "message" ] [ str m ]
                 form [ _method "POST"; _action "/Account/Login" ] [
                     fieldset [] [
                         label [ _for "Email" ] [ str "Username" ]
@@ -66,6 +69,9 @@ module Pages =
                 form [ _method "GET"; _action "/Account/Register" ] [
                     input [ _type "hidden"; _name "ReturnUrl"; _value vm.ReturnUrl ]
                     input [ _class "button button-register"; _type "submit"; _value "Register with email" ] ]
+                form [ _method "GET"; _action "/Account/ForgotPassword" ] [
+                    input [ _type "hidden"; _name "ReturnUrl"; _value vm.ReturnUrl ]
+                    input [ _class "button button-register"; _type "submit"; _value "Forgotten my password" ] ]
                 form [ _method "GET"; _action "/Account/ExternalLogin" ] [
                     input [ _type "hidden"; _name "Provider"; _value "Facebook" ]
                     input [ _class "button button-social button-facebook"; _type "submit"; _value "Continue with Facebook" ] ]
@@ -130,14 +136,61 @@ module Pages =
             ]
         ] |> Template.master "Create a new account" 
 
-    let confirmCode emailAddress =
+    let awaitingEmailConfirmation emailAddress =
         [
             div [ _class "container main-panel" ] [
                 h1 [ _class "title" ] [ str "One Last Step..." ]
-                p [] [ str <| sprintf "You should shortly receive an email at %s. Please follow the link in that email. If you do not receive the email within five minutes, you can request another email here." emailAddress ]
-                a [ _class "button" ] [ str "Send me a new code" ]
+                p [] [ str "Please check your email for an activation link. You must do this before you can log in." ]
             ]
         ] |> Template.master "Awaiting your email code"
+
+    let forgotPassword (vm:ForgotPasswordViewModel) = 
+        [
+            div [ _class "container main-panel" ] [
+                h1 [ _class "title" ] [ str "Forgotten your password?" ]
+                p [] [ str "Enter the email address that you registered with below to recieve a password reset email." ]
+                form [ _method "POST"; _action "/Account/ForgotPassword" ] [
+                    fieldset [] [
+                        label [ _for "Email" ] [ str "Email address" ]
+                        input [ _type "text"; _placeholder "Your email"; _name "Email"; _value vm.Email; _style "text-align:center" ]
+                        input [ _class "button-primary"; _type "submit"; _value "Request password reset" ]
+                        input [ _type "hidden"; _name "ReturnUrl"; _value vm.ReturnUrl ]
+                    ]
+                ]
+            ]
+        ] |> Template.master "Forgot your password?"
+
+    let forgotPasswordConfirmation =
+        [
+            div [ _class "container main-panel" ] [
+                h1 [ _class "title" ] [ str "Password reset" ]
+                p [] [ str <| sprintf "You should shortly receive an email. Please follow the link in that email to reset your password." ]
+            ]
+        ] |> Template.master "Resetting your password"
+
+    let resetPassword (vm:ResetPasswordViewModel) =
+        [
+            form [ _action "/Account/ResetPassowrd"; _method "POST"; _class "form-horizontal" ] [
+                fieldset [] [
+                    label [ _for "Email" ] [ str "Email Address" ]
+                    input [ _type "email"; _name "Email"; _value vm.Email ]
+                    label [ _for "Password" ] [ str "Password" ]
+                    input [ _type "password"; _name "Password"; _value vm.Password ]
+                    label [ _for "ConfirmPassword" ] [ str "Confirm your password" ]
+                    input [ _type "password"; _name "ConfirmPassword" ]
+                    input [ _class "button-primary"; _type "submit"; _value "Request password reset" ]
+                    input [ _type "hidden"; _name "ReturnUrl"; _value vm.ReturnUrl ]
+                    input [ _hidden; _name "Code"; _value vm.Code ]
+                ]
+            ]
+        ] |> Template.master "Reset password"
+
+    let resetPasswordConfirmation =
+        [ p [] [ 
+            encodedText "Your password has been reset."
+            a [ _href "/Account/Login" ] [ encodedText "Click here to login." ] ]
+        ] |> Template.master "Confirm Email"
+
 
     let error message =
         [
@@ -359,11 +412,6 @@ module Account =
             "/lib/jquery-validation/jquery.validate.js"
             "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Nearly logged in..." ("Associate your" + provider + "account")
 
-    let awaitingEmailConfirmation =
-        [
-            p [] [ encodedText "Please check your email for an activation link. You must do this before you can log in." ]
-        ] |> Layout.standard [] "Confirm Email" ""
-
     let confirmEmail =
         [
             p [] [ 
@@ -372,48 +420,7 @@ module Account =
                 encodedText "." ]
         ] |> Layout.standard [] "Confirm Email" ""
 
-    let forgotPasswordConfirmation =
-        [ p [] [ encodedText "Please check your email to reset your password" ]
-        ] |> Layout.standard [] "Confirm Email" ""
-
     let externalLoginFailure =
         [ p [] [ encodedText "Unsuccessful login with service" ] ]
         |> Layout.standard [] "Login failure" ""
-
-    let resetPassword (vm:ResetPasswordViewModel) =
-        [
-            form [ _action "/Account/ResetPassowrd"; _method "POST"; _class "form-horizontal" ] [
-                // Validation summary
-                input [ _hidden; _value vm.Code ]
-                Forms.formField <@ vm.Email @>
-                Forms.formField <@ vm.Password @>
-                Forms.formField <@ vm.ConfirmPassword @>
-                Forms.submit
-            ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Reset Password" ""
-
-    let resetPasswordConfirmation =
-        [ p [] [ 
-            encodedText "Your password has been reset."
-            a [ _href "/Account/Login" ] [ encodedText "Click here to login." ] ]
-        ] |> Layout.standard [] "Confirm Email" ""
-
-    let lockout =
-        [
-
-        ] |> Layout.standard [] "" ""
-
-    let forgotPassword (vm:ForgotPasswordViewModel) =
-        [
-            form [ _href "/Account/ForgotPassword"; _method "POST"; _class "form-horizontal" ] [
-                h4 [] [ encodedText "Enter your email." ]
-                // Validation summary here
-                formField <@ vm.Email @>
-                Forms.submit
-            ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Forgot your password?" ""
 *)
