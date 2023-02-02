@@ -1,4 +1,16 @@
-#### 2.0.0 - unreleased
-* Feature: Universal identity across applications.
-* Feature: let's encrypt ssl on all user-facing apps.
-* Feature: public-facing API for data access.
+## [2.0.1] - 2023-02-02
+
+### Added
+- Re-enabled forgot password login flow
+
+### Changed
+- Better digitise dashboard layouts
+- Many misc bug fixes in digitise dashboard
+- Fixed Sendgrid connection
+
+## [2.0.0]
+
+### Added
+- Universal identity across applications.
+- let's encrypt ssl on all user-facing apps.
+- public-facing API for data access.

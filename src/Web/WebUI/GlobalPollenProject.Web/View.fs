@@ -262,7 +262,7 @@ module Layout =
                     hr []
                     div [ _class "col-md-12" ] [
                         p [ _style "text-align:center;" ] [ 
-                            encodedText "The Global Pollen Project 2.0"
+                            encodedText "The Global Pollen Project 2.0.1"
                             span [ _class "hide-xs" ] [ encodedText " · " ]
                             encodedText "Code available at "
                             a [ _href "https://github.com/AndrewIOM/gpp-cqrs"; _target "_blank" ] [ encodedText "GitHub" ] ]
@@ -1588,7 +1588,7 @@ module StatusPages =
         [
             div [ _class "row justify-content-center"; _style "text-align:center;margin: 12.5em 0 7.5em;" ] [
                 Grid.column Medium 4 [
-                    i [ _class ("fa fa-" + icon); _style "font-size: 6em;margin-bottom: 0.25em;" ] []
+                    i [ _class ("fa fa-" + icon); _style "font-size: 6em;margin-bottom: 0.25em; margin-right: 0;" ] []
                     h4 [] [ encodedText title ]
                     p [] [ encodedText description ]
                     a [ _href Urls.home ] [ encodedText "Get me back to the homepage" ]
