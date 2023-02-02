@@ -32,7 +32,7 @@ module Partials =
         ]
 
     let addCollectionModal (vm:StartCollectionRequest) =
-        div [ _koBind "BSModal: currentView() == CurrentView.ADD_COLLECTION, if: currentView() == CurrentView.ADD_COLLECTION"; _class "modal bd-example-modal-lg"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
+        div [ _koBind "BSModal: currentView() == CurrentView.ADD_COLLECTION, if: currentView() == CurrentView.ADD_COLLECTION"; _class "modal"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
             div [ _koBind "with: newCollectionVM"; _class "modal-dialog modal-lg" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
@@ -113,7 +113,7 @@ module Partials =
         ]
 
     let slideDetail =
-        div [ _koBind "BSModal: currentView() == CurrentView.SLIDE_DETAIL, if: currentView() == CurrentView.SLIDE_DETAIL"; _class "modal bd-example-modal-lg"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
+        div [ _koBind "BSModal: currentView() == CurrentView.SLIDE_DETAIL, if: currentView() == CurrentView.SLIDE_DETAIL"; _class "modal"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
             div [ _koBind "with: slideDetailVM"; _class "modal-dialog model-lg" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
@@ -286,43 +286,86 @@ module Partials =
     let addMicroscope =
         div [ _koBind "if: newMicroscope" ] [
             div [ _koBind "with: newMicroscope" ] [
-                h2 [] [ encodedText "Setting up new microscope" ]
+                h3 [] [ encodedText "Setting up new microscope" ]
+                hr []
+                p [] [ str "Please enter details about the microscope used for digitisation. Once set up, you will be able to select this calibration when uploading focusable images. Please note that only light microscopes are currently supported." ]
                 div [ _class "form-group" ] [
                     label [] [ encodedText "Calibration Friendly Name" ]
                     input [ _koBind "textInput: friendlyName"; _class "form-control"; _id "friendlyname" ]
-                    small [ _id "friendlyName-help"; _class "form-text text-muted" ] [ encodedText "Use a name that is specific to this microscope, for example its make and model." ]
+                    small [ _id "friendlyName-help"; _class "form-text text-muted" ] [ encodedText "Use a name that is specific to this microscope and can identify it, for example its owner or location." ]
                 ]
-                label [] [ encodedText "Microscope type" ]
-                select [ _koBind "value: microscopeType"; _class "form-control input-sm inline-dropdown" ] [
-                    option [ _value "Compound" ] [ encodedText "Compound" ]
-                    option [ _value "Single" ] [ encodedText "Single" ]
-                    option [ _value "Digital" ] [ encodedText "Digital" ]
+                div [ _class "form-group" ] [
+                    label [] [ encodedText "Camera Make and Model" ]
+                    input [ _koBind "textInput: microscopeModel"; _class "form-control" ]
+                    small [ _class "form-text text-muted" ] [ encodedText "If you are unsure of the model, the brand only is acceptable." ]
                 ]
-                div [ _koBind "foreach: magnifications" ] [
-                    input [ _class "required"; _koBind "value: $data, uniqueName: true" ]
-                    a [ _href "#"; _koBind "click: $root.removeMag" ] [ encodedText "Remove" ]
+                div [ _class "form-group" ] [
+                    label [] [ encodedText "Microscope type" ]
+                    select [ _koBind "value: microscopeType"; _class "form-control" ] [
+                        option [ _value "Compound" ] [ encodedText "Compound" ]
+                        option [ _value "Single" ] [ encodedText "Single" ]
+                        option [ _value "Digital" ] [ encodedText "Digital" ]
+                    ]
                 ]
-                button [ _koBind "click: function() { submit($parent) }"; _class "btn btn-primary" ] [ encodedText "Submit" ]
+                div [_koBind "visible: microscopeType() == 'Compound'" ] [
+                    div [ _class "form-group" ] [
+                        label [] [ encodedText "Ocular magnification" ]
+                        input [ _koBind "textInput: ocular"; _type "number"; _class "form-control" ]
+                        small [ _class "form-text text-muted" ] [ encodedText "The magnification provided by the ocular lens; this is the lens closest to the eye that magnify the image from the objective. Often this is 10x." ]
+                    ]
+                    div [ _class "form-group" ] [
+                        label [] [ str "Objectives" ]
+                        div [ _koBind "foreach: magnifications" ] [
+                            div [ _class "input-group mb-3" ] [
+                                input [ _class "required form-control"; _koBind "value: $data, uniqueName: true"; _type "number" ]
+                                div [ _class "input-group-append" ] [
+                                    button [ _koBind "click: $parent.removeMag"; _class "btn btn-outline-danger"; _type "button" ] [ str "Remove" ]
+                                ]
+                            ]
+                        ]
+                        button [ _koBind "click: addMag"; _class "btn btn-outline-secondary btn-sm btn-block"; _type "button" ] [ str "Add another objective" ]
+                        small [] [ str "For example, often a light microscope will have objectives of 10x, 40x, and 100x. Use the 'Remove' buttons and the below 'Add another objective' button to configure the number of objectives on your microscope." ]
+                    ]
+                ]
+                div [ _class "form-group"; _koBind "visible: microscopeType() != 'Compound'" ] [
+                    label [] [ str "Magnification Level" ]
+                    input [ _koBind "textInput: magnifications()[0]"; _class "form-control"; _type "number" ]
+                    small [ _class "form-text text-muted" ] [ encodedText "For a single or digital microscope, please enter the magnification level used." ]
+
+                ]
+                button [ _class "btn btn-outline-secondary"; _koBind "click: function() { $parent.changeView(1) }" ] [ encodedText "Cancel" ]
+                button [ _koBind "click: function() { submit($parent) }, enable: canSubmit"; _class "btn btn-primary" ] [ encodedText "Confirm Details" ]
             ]
         ]
 
     let editMicroscope =
         div [ _koBind "if: microscopeDetail" ] [
             div [ _koBind "with: microscopeDetail" ] [
-                h3 [ _koBind "text: microscope().Name" ] []
-                label [] [ encodedText "Already calibrated:" ]
-                span [ _style "font-style: italic;"; _koBind "visible: microscope().Magnifications.length == 0" ] [ encodedText "None" ]
-                ul [ _koBind "foreach: microscope().magnifications" ] [
-                    li [ _koBind "text: $parent.magName($data)" ] []
-                ]
-                div [ _koBind "visible: microscope().UncalibratedMags.length > 0" ] [
-                    label [] [ encodedText "Magnification Level" ]
-                    select [ _koBind "value: magnification, foreach: microscope().UncalibratedMags" ] [
-                        option [ _koBind "value: $data, text: $data" ] []
+                h3 [ _koBind "text: microscope().name" ] []
+                p [] [ str "Select a magnification level and use the drawing tool to calibrate each magnification that you wish to use for focus images." ]
+                hr []
+                div [ _class "form-group row" ] [
+                    label [ _class "col-sm-2 col-form-label" ] [ str "Already calibrated magnifications:" ]
+                    div [ _class "col-sm-10" ] [
+                        span [ _style "font-style: italic;"; _koBind "visible: microscope().magnifications.length == 0" ] [ encodedText "None" ]
+                        div [ _class "btn-group"; _role "group"; _koBind "foreach: microscope().magnifications, visible: microscope().magnifications.length > 0" ] [
+                            button [ _class "btn btn-secondary btn-sm" ] [ span [ _koBind "text: $parent.magName($data)" ] [] ]
+                        ]
                     ]
                 ]
-                br []
-                input [ _type "file"; _class "upload"; _koBind "event: { change: function() { createViewer($element) } }" ]
+                div [ _class "form-group row"; _koBind "visible: microscope().uncalibratedMags.length > 0" ] [
+                    label [ _class "col-sm-2 col-form-label" ] [ str "Calibrate this magnification:" ]
+                    div [ _class "col-sm-10" ] [
+                        select [ _koBind "value: magnification, foreach: microscope().uncalibratedMags"; _class "form-control" ] [
+                            option [ _koBind "value: $data, text: $data" ] []
+                        ]
+                    ]
+                ]
+                div [ _class "form-group row"; _koBind "visible: microscope().uncalibratedMags.length > 0" ] [
+                    label [ _class "col-sm-2 col-form-label" ] [ str "Calibration Image:" ]
+                    input [ _type "file"; _class "upload"; _koBind "event: { change: function() { createViewer($element) } }" ]
+                ]
+                hr []
                 div [ _id "calibration-viewer-container" ] []
                 div [ _class "card"; _id "calibration-static-measurement-section"; _koBind "visible: loadedImage" ] [
                     div [ _class "card-header" ] [ encodedText "Draw a line on the loaded image of known length" ]
@@ -342,29 +385,34 @@ module Partials =
                         ]
                     ]
                 ]
-                button [ _koBind "click: function() { submit($parent) }, visible: canSubmit"; _class "btn btn-primary" ] [ encodedText "Submit" ]
+                button [ _koBind "click: function() { submit($parent) }, enable: canSubmit"; _class "btn btn-primary" ] [ encodedText "Save Calibration" ]
             ]
         ]
 
     let calibrationModal =
-        div [ _koBind "BSModal: currentView() == CurrentView.CALIBRATE, if: currentView() == CurrentView.CALIBRATE"; _class "modal bd-example-modal-lg"; _role "dialog"; _data "keyboard" "false"; _data "backdrop" "static" ] [
-            div [ _koBind "with: calibrateVM"; _class "modal-dialog modal-lg" ] [
+        div [ _koBind "BSModal: currentView() == CurrentView.CALIBRATE, if: currentView() == CurrentView.CALIBRATE"; _class "modal"; _role "dialog"; _data "keyboard" "false"; _data "backdrop" "static" ] [
+            div [ _koBind "with: calibrateVM"; _class "modal-dialog modal-xl" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
-                        h5 [ _class "modal-title" ] [ encodedText "Calibrations" ]
+                        h5 [ _class "modal-title" ] [ encodedText "Microscope Calibrations" ]
                         button [ _type "button"; _class "close"; _koBind "click: function() { $parent.switchView(CurrentView.MASTER); }" ] [ span [] [ rawText "&times;" ] ]
                     ]
                     div [ _class "modal-body" ] [
+                        p [] [ 
+                            str "If you have a fixed camera setup, the Global Pollen Project supports uploading 'focus images'. These consist of a stack of images taken at variable focal levels. To upload focus images, you must first calibrate an image for each magnification level and for each microscope that you have used. "
+                            a [ _href "/Guide/Digitise" ] [ str "Please see the documentation for full details." ]
+                        ]
+                        hr []
                         Grid.row [
                             Grid.column Medium 4 [
                                 div [ _class "card"; _id "calibration-list-card" ] [
                                     div [ _class "card-header" ] [ encodedText "My Microscopes" ]
-                                ]
-                                div [ _class "card-block" ] [
-                                    ul [ _class "list-group backbone-list"; _id "calibration-list"; _koBind "foreach: myMicroscopes" ] [
-                                        li [ _class "list-group-item"; _koBind "text: name, click: function() { $parent.changeView(CalibrateView.DETAIL, $data); $parent.setActiveCalibrationTab($element); }" ] []
+                                    div [ _class "card-block" ] [
+                                        ul [ _class "list-group backbone-list"; _id "calibration-list"; _koBind "foreach: myMicroscopes" ] [
+                                            li [ _class "list-group-item"; _koBind "text: name, click: function() { $parent.changeView(2, $data); $parent.setActiveCalibrationTab($element); }" ] []
+                                        ]
+                                        button [ _class "btn btn-outline-secondary"; _id "calibration-add-new-button"; _koBind "click: function() { changeView(CalibrateView.ADD_MICROSCOPE); setActiveCalibrationTab(null); }, visible: $parent.currentView() != CalibrateView.ADD_MICROSCOPE" ] [ encodedText "Set up a microscope" ]
                                     ]
-                                    button [ _class "btn btn-primary"; _id "calibration-add-new-button"; _koBind "click: function() { changeView(CalibrateView.ADD_MICROSCOPE); setActiveCalibrationTab(null); }" ] [ encodedText "Add new" ]
                                 ]
                             ]
                             Grid.column Medium 8 [
@@ -374,7 +422,7 @@ module Partials =
                         ]
                     ]
                     div [ _class "modal-footer" ] [
-                        button [ _koBind "click: function() { $root.switchView(CurrentView.MASTER) }"; _class "btn btn-default" ] [ encodedText "Close" ]
+                        button [ _koBind "click: function() { $root.switchView(CurrentView.MASTER) }"; _class "btn btn-outline-secondary" ] [ encodedText "Done" ]
                     ]
                 ]
             ]
@@ -383,7 +431,7 @@ module Partials =
     let requiredSymbol = span [ _class "required-symbol" ] [ encodedText "*" ]
 
     let recordSlide =
-        div [ _koBind "BSModal: currentView() == CurrentView.ADD_SLIDE_RECORD, if: currentView() == CurrentView.ADD_SLIDE_RECORD"; _class "modal bd-example-modal-lg"; _role "dialog"; _data "keyboard" "false"; _data "backdrop" "static" ] [
+        div [ _koBind "BSModal: currentView() == CurrentView.ADD_SLIDE_RECORD, if: currentView() == CurrentView.ADD_SLIDE_RECORD"; _class "modal"; _role "dialog"; _data "keyboard" "false"; _data "backdrop" "static" ] [
             div [ _koBind "with: newSlideVM"; _class "modal-dialog modal-lg" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
@@ -607,8 +655,8 @@ module Partials =
                         hr []
                         div [ _class "form-group row"] [
                             label [ _class "col-sm-2 col-form-label" ] [ str "Slide Prepared By" ]
-                            Grid.column Small 2 [ input [ _koBind "value: preparedByFirstNames"; _placeholder "Forenames"; _class "form-control" ] ]
-                            Grid.column Small 2 [ input [ _koBind "value: preparedByLastName"; _placeholder "Surname"; _class "form-control" ] ]
+                            Grid.column Small 3 [ input [ _koBind "value: preparedByFirstNames"; _placeholder "Forenames"; _class "form-control" ] ]
+                            Grid.column Small 3 [ input [ _koBind "value: preparedByLastName"; _placeholder "Surname"; _class "form-control" ] ]
                         ]
                         div [ _class "form-group row" ] [
                             label [ _for "preperationMethod"; _class "col-sm-2 col-form-label" ] [ str "Chemical Treatment" ]
@@ -715,11 +763,11 @@ let appView =
                         thead [] [
                             tr [] [
                                 th [] [ encodedText "ID" ]
-                                th [] [ encodedText "Family" ]
-                                th [] [ encodedText "Genus" ]
-                                th [] [ encodedText "Species" ]
+                                th [] [ encodedText "Original Family" ]
+                                th [] [ encodedText "Original Genus" ]
+                                th [] [ encodedText "Original Species" ]
                                 th [] [ encodedText "Current Taxon" ]
-                                th [] [ encodedText "Image Count" ]
+                                th [] [ encodedText "Number of Images Uploaded" ]
                                 th [] [ encodedText "Actions" ]
                             ]
                         ]
@@ -732,7 +780,7 @@ let appView =
                                 td [ _koBind "text: $data.currentFamily + ' ' + $data.currentGenus + ' ' + $data.currentSpecies + ' ' + $data.currentSpAuth" ] []
                                 td [ _koBind "text: $data.images.length" ] []
                                 td [] [
-                                    button [ _koBind "click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }, enable: function() { $data.Voided() == false }"; _class "btn btn-outline-secondary collection-slide-upload-image-button" ] [ encodedText "Details" ]
+                                    button [ _koBind "click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }, enable: function() { $data.Voided() == false }"; _class "btn btn-sm btn-outline-secondary collection-slide-upload-image-button" ] [ encodedText "Details" ]
                                 ]
                             ]
                         ]

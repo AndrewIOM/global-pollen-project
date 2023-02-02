@@ -893,19 +893,34 @@ function CalibrateViewModel() {
 function MicroscopeViewModel() {
     let self = this;
     self.CurrentView = CurrentView;
-    self.friendlyName = ko.observable();
-    self.microscopeType = ko.observable();
-    self.ocular = ko.observable();
-    self.microscopeModel = ko.observable("FAKE MICROSCOPE");
+    self.friendlyName = ko.observable("");
+    self.microscopeType = ko.observable("Compound");
+    self.ocular = ko.observable(10);
+    self.microscopeModel = ko.observable("");
     self.magnifications = ko.observableArray([10, 20, 40, 100]);
 
+    self.microscopeType.subscribe(function (value) {
+        if (value == "Compound") {
+            self.magnifications = ko.observableArray([10, 20, 40, 100]);
+        } else {
+            self.magnifications = ko.observableArray([40]);
+        }
+    });
+
     self.addMag = function () {
-        self.magnifications.push();
+        self.magnifications.push(10);
     }
 
     self.removeMag = function (mag) {
+        console.log("Removing " + mag);
         self.magnifications.remove(mag);
     }
+
+    self.canSubmit = ko.computed(function () {
+        if (self.magnifications().length > 0 && self.friendlyName().length > 0
+            && self.ocular() != null && self.microscopeModel().length > 0) return true;
+        return false;
+    }, self);
 
     self.submit = function (parentVM) {
         let request = {
@@ -957,7 +972,7 @@ function ImageCalibrationViewModel(currentMicroscope) {
 
         convertToDataURLviaCanvas(self.viewer.imagePaths[0], function (d) {
             let request = {
-                calibrationId: self.microscope().Id,
+                calibrationId: self.microscope().id,
                 magnification: self.magnification(),
                 x1: Math.round(self.floatingCal()[0][0]),
                 x2: Math.round(self.floatingCal()[1][0]),
@@ -997,9 +1012,8 @@ function ImageCalibrationViewModel(currentMicroscope) {
         self.measuringLine.activate();
         $("#calibration-draw-line-button").prop("disabled", true);
 
-        $(self.measuringLine).on(MeasuringLineEvent.EVENT_DRAWN, function () {
+        $(self.measuringLine.id).on(MeasuringLineEvent.EVENT_DRAWN, function () {
             $("#calibration-draw-line-button").prop("disabled", false);
-
             self.floatingCal(self.measuringLine.getPixelPoints());
         });
     };

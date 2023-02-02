@@ -440,6 +440,38 @@ module Dto =
         <*> (imageForUploadOrError |> bind (saveImage >> toPersistenceError))
         <*> yearTakenOrError
 
+    let toNewMicroscopeCommand newId currentUser (req:AddMicroscopeRequest) =
+        let microscope = 
+            match req.Type with
+            | "Compound" -> 
+                if req.Objectives.Length = 0 then Error <| Validation [ { Property = "Objectives"; Errors = [ "Must specify an objective" ] } ]
+                else if req.Objectives |> List.exists(fun i -> i < 1 || i > 10000) then Error <| Validation [ { Property = "Objectives"; Errors = [ "Objectives must be between 1 and 10,000x" ] } ]
+                else if req.Objectives |> List.distinct |> List.length <> (req.Objectives |> List.length) then Error <| Validation [ { Property = "Objectives"; Errors = [ "Cannot specify duplicate objectives" ] } ]
+                else if req.Ocular < 1 || req.Ocular > 1000 then Error <| Validation [ { Property = "Objectives"; Errors = [ "Ocular must be between 1 and 1000x" ] } ]
+                else if req.Model.Length = 0 || req.Model.Length > 150 then Error <| Validation [ { Property = "Model"; Errors = [ "Model must be 1 - 150 characters long" ] } ]
+                else Light <| Compound (req.Ocular, req.Objectives, req.Model) |> Ok
+            | "Single"
+            | "Digital" ->
+                if req.Objectives.Length <> 1 then Error <| Validation [ { Property = "Objectives"; Errors = [ "Must specify one magnification" ] } ]
+                else if req.Objectives.Head < 1 || req.Objectives.Head > 10000 then Error <| Validation [ { Property = "Objectives"; Errors = [ "Magnification must be between 1x and 10,000x" ] } ]
+                else if req.Model.Length = 0 || req.Model.Length > 150 then Error <| Validation [ { Property = "Model"; Errors = [ "Model must be 1 - 150 characters long" ] } ]
+                else 
+                    if req.Type = "Single" then Light <| Single (req.Objectives.Head * 1<timesMagnified>, req.Model) |> Ok
+                    else Light <| Single (req.Objectives.Head * 1<timesMagnified>, req.Model) |> Ok
+            | _ -> Error <| Validation [ { Property = "Type"; Errors = [ "Not a known microscope type" ] } ]
+        
+        let createCommand microscope friendlyName = 
+            GlobalPollenProject.Core.Aggregates.Calibration.UseMicroscope { 
+                Id = CalibrationId <| newId
+                User = currentUser
+                FriendlyName = friendlyName
+                Microscope = microscope }
+
+        createCommand
+        <!> microscope
+        <*> (ShortText.create req.Name |> Result.mapError(fun _ -> 
+            Validation [ { Property = "Name"; Errors = [ "The friendly name was not short text" ] } ]))
+
 
 module DomainToDto =
     let unwrapGrainId (GrainId e) : Guid = e

@@ -115,7 +115,7 @@ type AddMicroscopeRequest = {
 [<CLIMutable>]
 type CalibrateRequest = {
     [<Required>] CalibrationId: Guid
-    [<Required>] [<Range(1, 100)>] Magnification: int
+    [<Required>] [<Range(1, 10000)>] Magnification: int
     [<Required>] [<Range(1, Int32.MaxValue)>] X1: int
     [<Required>] [<Range(1, Int32.MaxValue)>] X2: int
     [<Required>] [<Range(1, Int32.MaxValue)>] Y1: int

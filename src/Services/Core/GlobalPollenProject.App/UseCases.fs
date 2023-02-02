@@ -240,14 +240,10 @@ module Calibrations =
             |> Ok
 
     let setupMicroscope getCurrentUser (req:AddMicroscopeRequest) =
-        let microscope = Microscope.Light <| LightMicroscope.Compound (10, [ 10; 20; 40; 100 ], "Nikon")
-        let name = req.Name |> ShortText.create
-        let cmd = UseMicroscope { Id = CalibrationId <| domainDependencies.GenerateId()
-                                  User = getCurrentUser() |> UserId
-                                  FriendlyName = req.Name
-                                  Microscope = microscope }
-        issueCommand cmd
-        |> Ok
+        Converters.Dto.toNewMicroscopeCommand
+            (domainDependencies.GenerateId())
+            (getCurrentUser() |> UserId) req
+        |> Result.map issueCommand
 
     let calibrateMagnification getCurrentUser (req:CalibrateRequest) =
         let getUrl img =
