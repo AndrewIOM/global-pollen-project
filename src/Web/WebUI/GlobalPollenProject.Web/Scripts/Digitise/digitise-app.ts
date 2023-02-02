@@ -179,12 +179,12 @@ function AddCollectionViewModel() {
                 400: err => {
                     self.validationErrors(err.responseJSON.errors);
                     self.isProcessing(false);
-                    $(".modal-dialog").scrollTop();
+                    $('.modal').animate({ scrollTop: 0 }, 'slow');
                 },
                 500: data => {
-                    self.validationErrors(['Internal error. Please try again later.']);
+                    self.validationErrors([{'property': 'unknown', 'errors': ['Internal error. Please try again later.']}]);
                     self.isProcessing(false);
-                    $('.modal-dialog').animate({ scrollTop: 0 }, 'slow');
+                    $('.modal').animate({ scrollTop: 0 }, 'slow');
                 }
             }
         });
@@ -267,11 +267,10 @@ function RecordSlideViewModel(currentCollection) {
     self.typingTimer;
     const doneTypingInterval = 100;
     
-    self.suggest = (entryBox, rank) => {
-        console.log(entryBox);
+    self.suggest = (entryBox:HTMLInputElement, rank:string) => {
         clearTimeout(self.typingTimer);
         if (entryBox.value) {
-            self.typingTimer = setTimeout(function () {
+            self.typingTimer = setTimeout(() => {
                 self.updateList(entryBox, rank);
             }, doneTypingInterval);
         }
@@ -428,10 +427,12 @@ function RecordSlideViewModel(currentCollection) {
                         console.log(err.responseJSON);
                         self.validationErrors(err.responseJSON.errors);
                         self.isProcessing(false);
+                        $('.modal').animate({ scrollTop: 0 }, 'slow');
                     },
                     500: function (data) {
-                        self.validationErrors(['Internal error. Please try again later.']);
+                        self.validationErrors([{'property': 'unknown', 'errors': ['Internal error. Please try again later.']}]);
                         self.isProcessing(false);
+                        $('.modal').animate({ scrollTop: 0 }, 'slow');
                     }
                 }
             });
@@ -609,15 +610,14 @@ function SlideDetailViewModel(detail) {
                 });
             },
             statusCode: {
-                400: function (err) {
-                    self.validationErrors([]);
-                    err.responseJSON.errors.forEach(function (e) {
-                        self.validationErrors().push(e.errors[0]);
-                        self.isProcessing(false);
-                    });
+                400: err => {
+                    self.validationErrors(err.responseJSON.errors);
+                    self.uploadPercentage(null);
+                    self.isProcessing(false);
                 },
-                500: function (data) {
-                    self.validationErrors(['Internal error. Please try again later.']);
+                500: data => {
+                    self.validationErrors([{'property': 'unknown', 'errors': ['Internal error. Please try again later.']}]);
+                    self.uploadPercentage(null);
                     self.isProcessing(false);
                 }
             }
@@ -938,7 +938,7 @@ function MicroscopeViewModel() {
                 contentType: "application/json"
             })
             .done(function (data) {
-                parentVM.changeView(CalibrateView.MASTER);
+                parentVM.changeView(CalibrateView.MASTER, null);
             })
     }
 }

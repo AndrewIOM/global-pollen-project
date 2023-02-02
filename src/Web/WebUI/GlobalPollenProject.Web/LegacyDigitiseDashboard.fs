@@ -9,6 +9,14 @@ module Knockout =
 
 module Partials =
 
+    let validationErrorAlert message =
+        div [ _class "alert alert-danger"; _koBind "visible: validationErrors().length > 0, if: validationErrors().length > 0" ] [
+            str message
+            ul [ _koBind "foreach: validationErrors" ] [
+                li [ _koBind "text: $data.property + ': ' + $data.errors[0]" ] []
+            ]
+        ] 
+
     let tutorialModal =
         div [ _id "tutorialModal"; _class "modal fade" ] [
             div [ _class "modal-dialog modal-dialog-centered"; _role "document" ] [
@@ -41,11 +49,7 @@ module Partials =
                     ]
                     div [ _class "modal-body" ] [
                         p [] [ encodedText "Please tell us about the reference collection you wish to digitise. You can edit this information later if necessary." ]
-                        div [ _class "alert alert-danger"; _role "alert"; _koBind "visible: validationErrors().length > 0" ] [
-                            ul [ _koBind "foreach: validationErrors" ] [
-                                li [ _koBind "text: $data.errors[0]" ] []
-                            ]
-                        ]
+                        validationErrorAlert "There were issues with your start collection request."
                         div [ _class "form-group" ] [
                             label [] [ str "Collection Name"]
                             input [ _koBind "textInput: name"; _class "form-control"; _id "name" ]
@@ -114,7 +118,7 @@ module Partials =
 
     let slideDetail =
         div [ _koBind "BSModal: currentView() == CurrentView.SLIDE_DETAIL, if: currentView() == CurrentView.SLIDE_DETAIL"; _class "modal"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
-            div [ _koBind "with: slideDetailVM"; _class "modal-dialog model-lg" ] [
+            div [ _koBind "with: slideDetailVM"; _class "modal-dialog modal-lg" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
                         h5 [ _class "modal-title"; _koBind "text: 'Slide: ' + slideDetail().collectionSlideId + ' - ' + slideDetail().familyOriginal + ' ' + slideDetail().genusOriginal + ' ' + slideDetail().speciesOriginal" ] []
@@ -128,14 +132,51 @@ module Partials =
                         ]
 
                         div [ _id "slidedetail-overview-tab"; _koBind "visible: currentTab() == 1" ] [
-                            div [ _class "alert alert-info"; _koBind "visible: !slideDetail().isFullyDigitised" ] [
+                            div [ _class "alert alert-info mt-4"; _koBind "visible: !slideDetail().isFullyDigitised" ] [
                                 Icons.fontawesome "info-circle"
-                                encodedText "This slide has not been fully digitised. Upload at least one image"
+                                encodedText " **This slide has not been fully digitised.** Please upload at least one image for this slide to appear in the GPP's Master Reference Collection. Otherwise, the record will only appear on your collection marked as undigitised."
                             ]
-                            div [ _class "alert alert-success"; _koBind "visible: slideDetail().isFullyDigitised" ] [
+                            div [ _class "alert alert-success mt-4"; _koBind "visible: slideDetail().isFullyDigitised" ] [
                                 Icons.fontawesome "check-circle"
-                                encodedText "Fully digitised"
+                                encodedText " **This slide has been fully digitised.** If it has an accepted current taxonomic identity, it will appear in the GPP's Master Reference Collection."
                             ]
+
+                            p [] [ str "Please find below a summary of this slide." ]
+                            h4 [] [ str "Taxonomic Identity" ]
+                            hr []
+                            table [ _class "table table-dark" ] [
+                                thead [] [
+                                    tr [] [
+                                        th [] [ str "" ]
+                                        th [] [ str "As Marked on Original Slide" ]
+                                        th [] [ str "Current Identity" ]
+                                    ]
+                                ]
+                                tbody [] [
+                                    tr [] [
+                                        td [] [ str "Family" ]
+                                        td [] [ span [ _koBind "text: slideDetail().familyOriginal" ] [] ]
+                                        td [] [ span [ _koBind "text: slideDetail().currentFamily" ] [] ]
+                                    ]
+                                    tr [] [
+                                        td [] [ str "Genus" ]
+                                        td [] [ span [ _koBind "text: slideDetail().genusOriginal" ] [] ]
+                                        td [] [ span [ _koBind "text: slideDetail().currentGenus" ] [] ]
+                                    ]
+                                    tr [] [
+                                        td [] [ str "Species" ]
+                                        td [] [ span [ _koBind "text: slideDetail().speciesOriginal" ] [] ]
+                                        td [] [ span [ _koBind "text: slideDetail().currentSpecies" ] [] ]
+                                    ]
+                                    tr [] [
+                                        td [] [ str "Authorship" ]
+                                        td [] [ span [ _koBind "" ] [] ]
+                                        td [] [ span [ _koBind "text: slideDetail().currentSpAuth" ] [] ]
+                                    ]
+                                ]
+                            ]
+                            h4 [] [ str "Digitised Images" ]
+                            hr []
                             Grid.container [
                                 ul [ _class "grain-grid"; _koBind "foreach: slideDetail().images" ] [
                                     li [] [
@@ -145,24 +186,16 @@ module Partials =
                                     ]
                                 ]
                             ]
-                            p [] [ 
-                                encodedText "The original reference slide has the taxonomic identification:"
-                                span [ _koBind "text: slideDetail().familyOriginal + ' ' + slideDetail().genusOriginal + ' ' + slideDetail().speciesOriginal" ] [] ]
-                            p [] [
-                                encodedText "The most current name for this taxon is: "
-                                span [ _koBind "text: slideDetail().currentFamily + ' ' + slideDetail().currentGenus + ' ' + slideDetail().currentSpecies + ' ' + slideDetail().currentSpAuth" ] [] 
-                            ]
+                            h4 [] [ str "Void this slide entry" ]
+                            hr []
                             p [] [ encodedText "If this slide contains errors, you can void it. This will remove the slide from the collection and allow re-entry of another slide with the correct information." ]
                             button [ _type "button"; _koBind "click: function() { voidSlide(); }"; _class "btn btn-danger" ] [
-                                Icons.fontawesome "trash-o"
-                                encodedText "Void Slide"
+                                Icons.fontawesome "trash"
+                                encodedText " Void Slide"
                             ]
                         ]
 
                         div [ _id "slidedetail-static-tab"; _koBind "visible: currentTab() == 2" ] [
-                            ul [ _koBind "foreach: validationErrors" ] [
-                                li [ _koBind "text: $data" ] []
-                            ]
                             h5 [] [ encodedText "Upload a static image" ]
                             p [] [ encodedText "A static image uses a floating calibration to discren size within the image. You must complete the calibration step for every image." ]
                             input [ _type "file"; _class "upload btn"; _koBind "event: { change: function() { createStaticImageViewer($element); } }" ]
@@ -198,11 +231,12 @@ module Partials =
                                     ]
                                 ]
                             ]
+                            validationErrorAlert "Could not upload this static image. Correct these errors and try again."
                             div [ _class "card"; _koBind "visible: loadedStaticImage" ] [
                                 div [ _class "card-block" ] [
                                     Grid.row [
-                                        div [ _class "col-sm-9 progress"; _id "slidedetail-static-upload-progress" ] [
-                                            div [ _koBind "visible: uploadPercentage, style: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }"; _class "progress-bar progress-bar-striped progress-bar-animated"; _id "slidedetail-static-upload-progressbar"; _style "width:100%" ] []
+                                        div [ _class "col-sm-9 progress slidedetail-upload-progress"; _id "slidedetail-static-upload-progress" ] [
+                                            div [ _koBind "visible: uploadPercentage, style: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }"; _class "progress-bar progress-bar-striped progress-bar-animated slidedetail-upload-progressbar"; _id "slidedetail-static-upload-progressbar"; _style "width:100%" ] []
                                         ]
                                         div [ _class "col-sm-3" ] [
                                             button [ _koBind "click: function() { submitStatic($root); }, enable: isValidStaticRequest"; _class "btn btn-primary" ] [ encodedText "Upload Image" ]
@@ -216,9 +250,6 @@ module Partials =
                             div [ _koBind "visible: calibrations().length == 0"; _class "alert alert-danger"; _id "slidedetail-no-calibrations-alert" ] [
                                 strong [] [ encodedText "Error" ]
                                 encodedText " - no microscope calibrations have been configured"
-                            ]
-                            ul [ _koBind "foreach: validationErrors" ] [
-                                li [ _koBind "text: $data" ] []
                             ]
                             div [ _koBind "visible: calibrations().length > 0" ] [
                                 h5 [] [ encodedText "Upload a focusable image" ]
@@ -264,11 +295,12 @@ module Partials =
                                         ]
                                     ]
                                 ]
+                                validationErrorAlert "Could not upload this focusable image. Correct these errors and try again."
                                 div [ _class "card"; _koBind "visible: loadedFocusImages" ] [
                                     div [ _class "card-block" ] [
                                         Grid.row [
-                                            div [ _class "col-sm-9 prgoress"; _id "slidedetail-focus-upload-progress" ] [
-                                                div [ _koBind "visible: uploadPercentage, style: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }"; _class "progress-bar progress-bar-striped progress-bar-animated"; _id "slidedetail-focus-upload-progressbar"; _style "width:100%" ] []
+                                            div [ _class "col-sm-9 progress slidedetail-upload-progress"; _id "slidedetail-focus-upload-progress" ] [
+                                                div [ _koBind "visible: uploadPercentage, style: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }"; _class "progress-bar progress-bar-striped progress-bar-animated slidedetail-upload-progressbar"; _id "slidedetail-focus-upload-progressbar"; _style "width:100%" ] []
                                             ]
                                             Grid.column Small 3 [
                                                 button [ _koBind "click: function() { submitFocus($root); }, enable: isValidFocusRequest"; _type "button"; _class "btn btn-primary" ] [ encodedText "Upload Image" ]
@@ -444,6 +476,7 @@ module Partials =
                             a [ _href "/Guide"; _target "blank" ] [ encodedText "please refer to the GPP guide" ]
                             encodedText "."
                         ]
+                        validationErrorAlert "We could not add this slide, as some information did not pass validation. Please address the problems listed below and try again:"
                         div [ _class "form-group row" ] [
                             label [ _for "inputExistingId"; _class "col-sm-2 col-form-label" ] [ encodedText "Existing ID" ]
                             Grid.column Small 10 [
@@ -693,12 +726,6 @@ module Partials =
                                 small [ _class "form-text text-muted" ] [ str "When was this slide made from the plant material or environmental sample?" ]
                             ]
                         ]
-                        div [ _class "alert alert-danger"; _koBind "visible: validationErrors().length > 0, if: validationErrors().length > 0" ] [
-                            str "We could not add this slide, as some information did not pass validation. Please address the problems listed below and try again:"
-                            ul [ _koBind "foreach: validationErrors" ] [
-                                li [ _koBind "text: $data.property + ': ' + $data.errors[0]" ] []
-                            ]
-                        ]
                     ]
                     div [ _class "modal-footer" ] [
                         button [ _koBind "click: function() { submit($root) }, disable: !isValidAddSlideRequest() || isProcessing()"; _type "button"; _class "btn btn-primary" ] [ str "Record Slide" ]
@@ -749,7 +776,7 @@ let appView =
                                         ]
                                     ]
                                     Grid.column Medium 7 [
-                                        button [ _koBind "click: publish, visible: activeCollection().awaitingReview == false"; _class "btn btn-primary"; _id "collection-publish-button" ] [
+                                        button [ _koBind "click: publish, visible: activeCollection().awaitingReview == false, enable: activeCollection().slides.length > 0"; _class "btn btn-outline-secondary"; _id "collection-publish-button" ] [
                                             Icons.fontawesome "beer"
                                             encodedText "Request Publication"
                                         ]
