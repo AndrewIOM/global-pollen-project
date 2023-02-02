@@ -6,6 +6,10 @@ open GlobalPollenProject.Core.DomainTypes
 open GlobalPollenProject.Core.Aggregate
 open GlobalPollenProject.Core.Aggregates.Calibration
 
+let forceOk = function
+    | Ok e -> e
+    | Error e -> failwith e
+
 let a = {
     initial = State.Initial
     evolve = State.Evolve
@@ -24,14 +28,14 @@ module ``When creating a calibration set`` =
     [<Fact>]
     let ``The microscope is setup correctly`` () =
         Given []
-        |> When (UseMicroscope { Id = calId; User = currentUser; Microscope = microscope; FriendlyName = "Lab microscope" })
+        |> When (UseMicroscope { Id = calId; User = currentUser; Microscope = microscope; FriendlyName = ShortText.create "Lab microscope" |> forceOk })
         |> Expect [ SetupMicroscope { Id = calId; User = currentUser; Microscope = microscope; FriendlyName = "Lab microscope" } ]
 
     [<Fact>]
     let ``A compound light microscope must have at least one objective`` () =
         let badMicroscope = Light <| Compound (10, [ ], "Nikon D3100")
         Given []
-        |> When (UseMicroscope { Id = calId; User = currentUser; Microscope = badMicroscope; FriendlyName = "Lab microscope" })
+        |> When (UseMicroscope { Id = calId; User = currentUser; Microscope = badMicroscope; FriendlyName = ShortText.create "Lab microscope" |> forceOk })
         |> ExpectInvalidOp
 
     [<Fact>]

@@ -3,7 +3,7 @@
     <AssemblyName>GlobalPollenProject.Web</AssemblyName>
     <TargetFramework>net6.0</TargetFramework>
   </PropertyGroup>
-  <Target Name="PrepublishScript" BeforeTargets="PrepareForPublish">
+  <Target Name="PrebuildScript" BeforeTargets="BeforeBuild">
     <Exec Command="yarn" />
     <Exec Command="yarn run build:prod" />
   </Target>

@@ -176,13 +176,13 @@ function AddCollectionViewModel() {
                 rootVM.switchView(CurrentView.MASTER);
             },
             statusCode: {
-                400: function (err) {
+                400: err => {
                     self.validationErrors(err.responseJSON.errors);
                     self.isProcessing(false);
-                    $(".modal").scrollTop();
+                    $('.modal').animate({ scrollTop: 0 }, 'slow');
                 },
-                500: function (data) {
-                    self.validationErrors(['Internal error. Please try again later.']);
+                500: data => {
+                    self.validationErrors([{'property': 'unknown', 'errors': ['Internal error. Please try again later.']}]);
                     self.isProcessing(false);
                     $('.modal').animate({ scrollTop: 0 }, 'slow');
                 }
@@ -267,11 +267,10 @@ function RecordSlideViewModel(currentCollection) {
     self.typingTimer;
     const doneTypingInterval = 100;
     
-    self.suggest = (entryBox, rank) => {
-        console.log(entryBox);
+    self.suggest = (entryBox:HTMLInputElement, rank:string) => {
         clearTimeout(self.typingTimer);
         if (entryBox.value) {
-            self.typingTimer = setTimeout(function () {
+            self.typingTimer = setTimeout(() => {
                 self.updateList(entryBox, rank);
             }, doneTypingInterval);
         }
@@ -428,10 +427,12 @@ function RecordSlideViewModel(currentCollection) {
                         console.log(err.responseJSON);
                         self.validationErrors(err.responseJSON.errors);
                         self.isProcessing(false);
+                        $('.modal').animate({ scrollTop: 0 }, 'slow');
                     },
                     500: function (data) {
-                        self.validationErrors(['Internal error. Please try again later.']);
+                        self.validationErrors([{'property': 'unknown', 'errors': ['Internal error. Please try again later.']}]);
                         self.isProcessing(false);
+                        $('.modal').animate({ scrollTop: 0 }, 'slow');
                     }
                 }
             });
@@ -529,10 +530,10 @@ function SlideDetailViewModel(detail) {
             $("#digitisedYearStatic").val("").change();
             $("#digitisedYearStatic").datepicker({
                 format: " yyyy",
-                //viewMode: "years",
+                maxViewMode: "years",
+                minViewMode: "years",
                 startDate: '1850',
                 endDate: '+0d',
-                minViewMode: "years"
             });
         }
 
@@ -550,10 +551,10 @@ function SlideDetailViewModel(detail) {
             $("#digitisedYearFocus").val("").change();
             $("#digitisedYearFocus").datepicker({
                 format: " yyyy",
-                //viewMode: "years",
+                maxViewMode: "years",
+                minViewMode: "years",
                 startDate: '1850',
                 endDate: '+0d',
-                minViewMode: "years"
             });
 
             self.selectedMicroscope(null);
@@ -609,15 +610,14 @@ function SlideDetailViewModel(detail) {
                 });
             },
             statusCode: {
-                400: function (err) {
-                    self.validationErrors([]);
-                    err.responseJSON.errors.forEach(function (e) {
-                        self.validationErrors().push(e.errors[0]);
-                        self.isProcessing(false);
-                    });
+                400: err => {
+                    self.validationErrors(err.responseJSON.errors);
+                    self.uploadPercentage(null);
+                    self.isProcessing(false);
                 },
-                500: function (data) {
-                    self.validationErrors(['Internal error. Please try again later.']);
+                500: data => {
+                    self.validationErrors([{'property': 'unknown', 'errors': ['Internal error. Please try again later.']}]);
+                    self.uploadPercentage(null);
                     self.isProcessing(false);
                 }
             }
@@ -648,11 +648,11 @@ function SlideDetailViewModel(detail) {
         $("#static-image-previewer-container").html("<div id=\"static-image-previewer\"></div>");
         $("#digitisedYearStatic").datepicker({
             format: " yyyy",
-            //viewMode: "years",
+            maxViewMode: "years",
+            minViewMode: "years",
             startDate: '1850',
             endDate: '+0d',
-            minViewMode: "years"
-        });
+    });
 
         $("#measuredDistance").change(function () {
             self.measuredDistance($(this).val().toString().replace(/[^0-9.]/g, ""));
@@ -730,10 +730,10 @@ function SlideDetailViewModel(detail) {
 
         $("#digitisedYearFocus").datepicker({
             format: " yyyy",
-            //viewMode: "years",
+            maxViewMode: "years",
+            minViewMode: "years",
             startDate: '1850',
             endDate: '+0d',
-            minViewMode: "years"
         });
 
         if (self.viewer != null) {
@@ -893,19 +893,34 @@ function CalibrateViewModel() {
 function MicroscopeViewModel() {
     let self = this;
     self.CurrentView = CurrentView;
-    self.friendlyName = ko.observable();
-    self.microscopeType = ko.observable();
-    self.ocular = ko.observable();
-    self.microscopeModel = ko.observable("FAKE MICROSCOPE");
+    self.friendlyName = ko.observable("");
+    self.microscopeType = ko.observable("Compound");
+    self.ocular = ko.observable(10);
+    self.microscopeModel = ko.observable("");
     self.magnifications = ko.observableArray([10, 20, 40, 100]);
 
+    self.microscopeType.subscribe(function (value) {
+        if (value == "Compound") {
+            self.magnifications = ko.observableArray([10, 20, 40, 100]);
+        } else {
+            self.magnifications = ko.observableArray([40]);
+        }
+    });
+
     self.addMag = function () {
-        self.magnifications.push();
+        self.magnifications.push(10);
     }
 
     self.removeMag = function (mag) {
+        console.log("Removing " + mag);
         self.magnifications.remove(mag);
     }
+
+    self.canSubmit = ko.computed(function () {
+        if (self.magnifications().length > 0 && self.friendlyName().length > 0
+            && self.ocular() != null && self.microscopeModel().length > 0) return true;
+        return false;
+    }, self);
 
     self.submit = function (parentVM) {
         let request = {
@@ -923,7 +938,7 @@ function MicroscopeViewModel() {
                 contentType: "application/json"
             })
             .done(function (data) {
-                parentVM.changeView(CalibrateView.MASTER);
+                parentVM.changeView(CalibrateView.MASTER, null);
             })
     }
 }
@@ -957,7 +972,7 @@ function ImageCalibrationViewModel(currentMicroscope) {
 
         convertToDataURLviaCanvas(self.viewer.imagePaths[0], function (d) {
             let request = {
-                calibrationId: self.microscope().Id,
+                calibrationId: self.microscope().id,
                 magnification: self.magnification(),
                 x1: Math.round(self.floatingCal()[0][0]),
                 x2: Math.round(self.floatingCal()[1][0]),
@@ -997,9 +1012,8 @@ function ImageCalibrationViewModel(currentMicroscope) {
         self.measuringLine.activate();
         $("#calibration-draw-line-button").prop("disabled", true);
 
-        $(self.measuringLine).on(MeasuringLineEvent.EVENT_DRAWN, function () {
+        $(self.measuringLine.id).on(MeasuringLineEvent.EVENT_DRAWN, function () {
             $("#calibration-draw-line-button").prop("disabled", false);
-
             self.floatingCal(self.measuringLine.getPixelPoints());
         });
     };

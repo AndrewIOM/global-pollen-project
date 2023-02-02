@@ -70,7 +70,7 @@ type SlideImageRequest = {
     [<Range(0,Int32.MaxValue)>] MeasuredDistance: Nullable<float>
     CalibrationId: Guid
     [<Range(0,10000)>] Magnification: int
-    [<Range(1950,2017)>] DigitisedYear: Nullable<int>
+    [<Range(1950,2023)>] DigitisedYear: Nullable<int>
 }
 
 [<CLIMutable>]
@@ -115,7 +115,7 @@ type AddMicroscopeRequest = {
 [<CLIMutable>]
 type CalibrateRequest = {
     [<Required>] CalibrationId: Guid
-    [<Required>] [<Range(1, 100)>] Magnification: int
+    [<Required>] [<Range(1, 10000)>] Magnification: int
     [<Required>] [<Range(1, Int32.MaxValue)>] X1: int
     [<Required>] [<Range(1, Int32.MaxValue)>] X2: int
     [<Required>] [<Range(1, Int32.MaxValue)>] Y1: int

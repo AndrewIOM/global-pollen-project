@@ -49,7 +49,7 @@ let seedTestData () =
                             AccessMethod = "institution"
                             Institution = "Oxford"
                             InstitutionUrl = "https://ox.ac.uk" } with
-                | Ok g -> g
+                | Ok g -> (CollectionId g)
                 | Error _ -> invalidOp "Could not start collection"
             
             let backboneTaxon =

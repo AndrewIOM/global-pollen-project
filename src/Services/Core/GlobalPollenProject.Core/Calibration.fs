@@ -10,7 +10,7 @@ type Command =
 and UseMicroscope = {
     Id:             CalibrationId
     User:           UserId
-    FriendlyName:   string
+    FriendlyName:   ShortText
     Microscope:     Microscope
 }
 
@@ -72,6 +72,8 @@ let calculatePixelDistance x1 y1 x2 y2 measuredLength =
             let scale (actual:float<_>) image = actual / image
             scale measuredLength pixelDistance
 
+let unwrapShortText (ShortText s) = s
+
 let setup (command:UseMicroscope) state =
     match state with
     | Uncalibrated _
@@ -81,7 +83,7 @@ let setup (command:UseMicroscope) state =
         checkObjectives command.Microscope
         [ SetupMicroscope { Id = command.Id
                             User = command.User
-                            FriendlyName = command.FriendlyName
+                            FriendlyName = command.FriendlyName |> unwrapShortText
                             Microscope = command.Microscope } ]
 
 let calibrate id mag imageCal state =

@@ -9,6 +9,14 @@ module Knockout =
 
 module Partials =
 
+    let validationErrorAlert message =
+        div [ _class "alert alert-danger"; _koBind "visible: validationErrors().length > 0, if: validationErrors().length > 0" ] [
+            str message
+            ul [ _koBind "foreach: validationErrors" ] [
+                li [ _koBind "text: $data.property + ': ' + $data.errors[0]" ] []
+            ]
+        ] 
+
     let tutorialModal =
         div [ _id "tutorialModal"; _class "modal fade" ] [
             div [ _class "modal-dialog modal-dialog-centered"; _role "document" ] [
@@ -32,7 +40,7 @@ module Partials =
         ]
 
     let addCollectionModal (vm:StartCollectionRequest) =
-        div [ _koBind "BSModal: currentView() == CurrentView.ADD_COLLECTION, if: currentView() == CurrentView.ADD_COLLECTION"; _class "modal bd-example-modal-lg"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
+        div [ _koBind "BSModal: currentView() == CurrentView.ADD_COLLECTION, if: currentView() == CurrentView.ADD_COLLECTION"; _class "modal"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
             div [ _koBind "with: newCollectionVM"; _class "modal-dialog modal-lg" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
@@ -41,10 +49,7 @@ module Partials =
                     ]
                     div [ _class "modal-body" ] [
                         p [] [ encodedText "Please tell us about the reference collection you wish to digitise. You can edit this information later if necessary." ]
-                        ul [ _koBind "foreach: validationErrors" ] [
-                            li [ _koBind "text: $data.errors[0]" ] []
-                        ]
-
+                        validationErrorAlert "There were issues with your start collection request."
                         div [ _class "form-group" ] [
                             label [] [ str "Collection Name"]
                             input [ _koBind "textInput: name"; _class "form-control"; _id "name" ]
@@ -112,8 +117,8 @@ module Partials =
         ]
 
     let slideDetail =
-        div [ _koBind "BSModal: currentView() == CurrentView.SLIDE_DETAIL, if: currentView() == CurrentView.SLIDE_DETAIL"; _class "modal bd-example-modal-lg"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
-            div [ _koBind "with: slideDetailVM"; _class "modal-dialog model-lg" ] [
+        div [ _koBind "BSModal: currentView() == CurrentView.SLIDE_DETAIL, if: currentView() == CurrentView.SLIDE_DETAIL"; _class "modal"; _aria "hidden" "true"; _data "keyboard" "false"; _data "backdrop" "static" ] [
+            div [ _koBind "with: slideDetailVM"; _class "modal-dialog modal-lg" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
                         h5 [ _class "modal-title"; _koBind "text: 'Slide: ' + slideDetail().collectionSlideId + ' - ' + slideDetail().familyOriginal + ' ' + slideDetail().genusOriginal + ' ' + slideDetail().speciesOriginal" ] []
@@ -127,14 +132,51 @@ module Partials =
                         ]
 
                         div [ _id "slidedetail-overview-tab"; _koBind "visible: currentTab() == 1" ] [
-                            div [ _class "alert alert-info"; _koBind "visible: !slideDetail().isFullyDigitised" ] [
+                            div [ _class "alert alert-info mt-4"; _koBind "visible: !slideDetail().isFullyDigitised" ] [
                                 Icons.fontawesome "info-circle"
-                                encodedText "This slide has not been fully digitised. Upload at least one image"
+                                encodedText " **This slide has not been fully digitised.** Please upload at least one image for this slide to appear in the GPP's Master Reference Collection. Otherwise, the record will only appear on your collection marked as undigitised."
                             ]
-                            div [ _class "alert alert-success"; _koBind "visible: slideDetail().isFullyDigitised" ] [
+                            div [ _class "alert alert-success mt-4"; _koBind "visible: slideDetail().isFullyDigitised" ] [
                                 Icons.fontawesome "check-circle"
-                                encodedText "Fully digitised"
+                                encodedText " **This slide has been fully digitised.** If it has an accepted current taxonomic identity, it will appear in the GPP's Master Reference Collection."
                             ]
+
+                            p [] [ str "Please find below a summary of this slide." ]
+                            h4 [] [ str "Taxonomic Identity" ]
+                            hr []
+                            table [ _class "table table-dark" ] [
+                                thead [] [
+                                    tr [] [
+                                        th [] [ str "" ]
+                                        th [] [ str "As Marked on Original Slide" ]
+                                        th [] [ str "Current Identity" ]
+                                    ]
+                                ]
+                                tbody [] [
+                                    tr [] [
+                                        td [] [ str "Family" ]
+                                        td [] [ span [ _koBind "text: slideDetail().familyOriginal" ] [] ]
+                                        td [] [ span [ _koBind "text: slideDetail().currentFamily" ] [] ]
+                                    ]
+                                    tr [] [
+                                        td [] [ str "Genus" ]
+                                        td [] [ span [ _koBind "text: slideDetail().genusOriginal" ] [] ]
+                                        td [] [ span [ _koBind "text: slideDetail().currentGenus" ] [] ]
+                                    ]
+                                    tr [] [
+                                        td [] [ str "Species" ]
+                                        td [] [ span [ _koBind "text: slideDetail().speciesOriginal" ] [] ]
+                                        td [] [ span [ _koBind "text: slideDetail().currentSpecies" ] [] ]
+                                    ]
+                                    tr [] [
+                                        td [] [ str "Authorship" ]
+                                        td [] [ span [ _koBind "" ] [] ]
+                                        td [] [ span [ _koBind "text: slideDetail().currentSpAuth" ] [] ]
+                                    ]
+                                ]
+                            ]
+                            h4 [] [ str "Digitised Images" ]
+                            hr []
                             Grid.container [
                                 ul [ _class "grain-grid"; _koBind "foreach: slideDetail().images" ] [
                                     li [] [
@@ -144,24 +186,16 @@ module Partials =
                                     ]
                                 ]
                             ]
-                            p [] [ 
-                                encodedText "The original reference slide has the taxonomic identification:"
-                                span [ _koBind "text: slideDetail().familyOriginal + ' ' + slideDetail().genusOriginal + ' ' + slideDetail().speciesOriginal" ] [] ]
-                            p [] [
-                                encodedText "The most current name for this taxon is: "
-                                span [ _koBind "text: slideDetail().currentFamily + ' ' + slideDetail().currentGenus + ' ' + slideDetail().currentSpecies + ' ' + slideDetail().currentSpAuth" ] [] 
-                            ]
+                            h4 [] [ str "Void this slide entry" ]
+                            hr []
                             p [] [ encodedText "If this slide contains errors, you can void it. This will remove the slide from the collection and allow re-entry of another slide with the correct information." ]
                             button [ _type "button"; _koBind "click: function() { voidSlide(); }"; _class "btn btn-danger" ] [
-                                Icons.fontawesome "trash-o"
-                                encodedText "Void Slide"
+                                Icons.fontawesome "trash"
+                                encodedText " Void Slide"
                             ]
                         ]
 
                         div [ _id "slidedetail-static-tab"; _koBind "visible: currentTab() == 2" ] [
-                            ul [ _koBind "foreach: validationErrors" ] [
-                                li [ _koBind "text: $data" ] []
-                            ]
                             h5 [] [ encodedText "Upload a static image" ]
                             p [] [ encodedText "A static image uses a floating calibration to discren size within the image. You must complete the calibration step for every image." ]
                             input [ _type "file"; _class "upload btn"; _koBind "event: { change: function() { createStaticImageViewer($element); } }" ]
@@ -197,11 +231,12 @@ module Partials =
                                     ]
                                 ]
                             ]
+                            validationErrorAlert "Could not upload this static image. Correct these errors and try again."
                             div [ _class "card"; _koBind "visible: loadedStaticImage" ] [
                                 div [ _class "card-block" ] [
                                     Grid.row [
-                                        div [ _class "col-sm-9 progress"; _id "slidedetail-static-upload-progress" ] [
-                                            div [ _koBind "visible: uploadPercentage, style: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }"; _class "progress-bar progress-bar-striped progress-bar-animated"; _id "slidedetail-static-upload-progressbar"; _style "width:100%" ] []
+                                        div [ _class "col-sm-9 progress slidedetail-upload-progress"; _id "slidedetail-static-upload-progress" ] [
+                                            div [ _koBind "visible: uploadPercentage, style: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }"; _class "progress-bar progress-bar-striped progress-bar-animated slidedetail-upload-progressbar"; _id "slidedetail-static-upload-progressbar"; _style "width:100%" ] []
                                         ]
                                         div [ _class "col-sm-3" ] [
                                             button [ _koBind "click: function() { submitStatic($root); }, enable: isValidStaticRequest"; _class "btn btn-primary" ] [ encodedText "Upload Image" ]
@@ -215,9 +250,6 @@ module Partials =
                             div [ _koBind "visible: calibrations().length == 0"; _class "alert alert-danger"; _id "slidedetail-no-calibrations-alert" ] [
                                 strong [] [ encodedText "Error" ]
                                 encodedText " - no microscope calibrations have been configured"
-                            ]
-                            ul [ _koBind "foreach: validationErrors" ] [
-                                li [ _koBind "text: $data" ] []
                             ]
                             div [ _koBind "visible: calibrations().length > 0" ] [
                                 h5 [] [ encodedText "Upload a focusable image" ]
@@ -263,11 +295,12 @@ module Partials =
                                         ]
                                     ]
                                 ]
+                                validationErrorAlert "Could not upload this focusable image. Correct these errors and try again."
                                 div [ _class "card"; _koBind "visible: loadedFocusImages" ] [
                                     div [ _class "card-block" ] [
                                         Grid.row [
-                                            div [ _class "col-sm-9 prgoress"; _id "slidedetail-focus-upload-progress" ] [
-                                                div [ _koBind "visible: uploadPercentage, style: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }"; _class "progress-bar progress-bar-striped progress-bar-animated"; _id "slidedetail-focus-upload-progressbar"; _style "width:100%" ] []
+                                            div [ _class "col-sm-9 progress slidedetail-upload-progress"; _id "slidedetail-focus-upload-progress" ] [
+                                                div [ _koBind "visible: uploadPercentage, style: { width: function() { if (uploadPercentage() != null) { return uploadPercentage() + '%'; } } }"; _class "progress-bar progress-bar-striped progress-bar-animated slidedetail-upload-progressbar"; _id "slidedetail-focus-upload-progressbar"; _style "width:100%" ] []
                                             ]
                                             Grid.column Small 3 [
                                                 button [ _koBind "click: function() { submitFocus($root); }, enable: isValidFocusRequest"; _type "button"; _class "btn btn-primary" ] [ encodedText "Upload Image" ]
@@ -285,43 +318,86 @@ module Partials =
     let addMicroscope =
         div [ _koBind "if: newMicroscope" ] [
             div [ _koBind "with: newMicroscope" ] [
-                h2 [] [ encodedText "Setting up new microscope" ]
+                h3 [] [ encodedText "Setting up new microscope" ]
+                hr []
+                p [] [ str "Please enter details about the microscope used for digitisation. Once set up, you will be able to select this calibration when uploading focusable images. Please note that only light microscopes are currently supported." ]
                 div [ _class "form-group" ] [
                     label [] [ encodedText "Calibration Friendly Name" ]
                     input [ _koBind "textInput: friendlyName"; _class "form-control"; _id "friendlyname" ]
-                    small [ _id "friendlyName-help"; _class "form-text text-muted" ] [ encodedText "Use a name that is specific to this microscope, for example its make and model." ]
+                    small [ _id "friendlyName-help"; _class "form-text text-muted" ] [ encodedText "Use a name that is specific to this microscope and can identify it, for example its owner or location." ]
                 ]
-                label [] [ encodedText "Microscope type" ]
-                select [ _koBind "value: microscopeType"; _class "form-control input-sm inline-dropdown" ] [
-                    option [ _value "Compound" ] [ encodedText "Compound" ]
-                    option [ _value "Single" ] [ encodedText "Single" ]
-                    option [ _value "Digital" ] [ encodedText "Digital" ]
+                div [ _class "form-group" ] [
+                    label [] [ encodedText "Camera Make and Model" ]
+                    input [ _koBind "textInput: microscopeModel"; _class "form-control" ]
+                    small [ _class "form-text text-muted" ] [ encodedText "If you are unsure of the model, the brand only is acceptable." ]
                 ]
-                div [ _koBind "foreach: magnifications" ] [
-                    input [ _class "required"; _koBind "value: $data, uniqueName: true" ]
-                    a [ _href "#"; _koBind "click: $root.removeMag" ] [ encodedText "Remove" ]
+                div [ _class "form-group" ] [
+                    label [] [ encodedText "Microscope type" ]
+                    select [ _koBind "value: microscopeType"; _class "form-control" ] [
+                        option [ _value "Compound" ] [ encodedText "Compound" ]
+                        option [ _value "Single" ] [ encodedText "Single" ]
+                        option [ _value "Digital" ] [ encodedText "Digital" ]
+                    ]
                 ]
-                button [ _koBind "click: function() { submit($parent) }"; _class "btn btn-primary" ] [ encodedText "Submit" ]
+                div [_koBind "visible: microscopeType() == 'Compound'" ] [
+                    div [ _class "form-group" ] [
+                        label [] [ encodedText "Ocular magnification" ]
+                        input [ _koBind "textInput: ocular"; _type "number"; _class "form-control" ]
+                        small [ _class "form-text text-muted" ] [ encodedText "The magnification provided by the ocular lens; this is the lens closest to the eye that magnify the image from the objective. Often this is 10x." ]
+                    ]
+                    div [ _class "form-group" ] [
+                        label [] [ str "Objectives" ]
+                        div [ _koBind "foreach: magnifications" ] [
+                            div [ _class "input-group mb-3" ] [
+                                input [ _class "required form-control"; _koBind "value: $data, uniqueName: true"; _type "number" ]
+                                div [ _class "input-group-append" ] [
+                                    button [ _koBind "click: $parent.removeMag"; _class "btn btn-outline-danger"; _type "button" ] [ str "Remove" ]
+                                ]
+                            ]
+                        ]
+                        button [ _koBind "click: addMag"; _class "btn btn-outline-secondary btn-sm btn-block"; _type "button" ] [ str "Add another objective" ]
+                        small [] [ str "For example, often a light microscope will have objectives of 10x, 40x, and 100x. Use the 'Remove' buttons and the below 'Add another objective' button to configure the number of objectives on your microscope." ]
+                    ]
+                ]
+                div [ _class "form-group"; _koBind "visible: microscopeType() != 'Compound'" ] [
+                    label [] [ str "Magnification Level" ]
+                    input [ _koBind "textInput: magnifications()[0]"; _class "form-control"; _type "number" ]
+                    small [ _class "form-text text-muted" ] [ encodedText "For a single or digital microscope, please enter the magnification level used." ]
+
+                ]
+                button [ _class "btn btn-outline-secondary"; _koBind "click: function() { $parent.changeView(1) }" ] [ encodedText "Cancel" ]
+                button [ _koBind "click: function() { submit($parent) }, enable: canSubmit"; _class "btn btn-primary" ] [ encodedText "Confirm Details" ]
             ]
         ]
 
     let editMicroscope =
         div [ _koBind "if: microscopeDetail" ] [
             div [ _koBind "with: microscopeDetail" ] [
-                h3 [ _koBind "text: microscope().Name" ] []
-                label [] [ encodedText "Already calibrated:" ]
-                span [ _style "font-style: italic;"; _koBind "visible: microscope().Magnifications.length == 0" ] [ encodedText "None" ]
-                ul [ _koBind "foreach: microscope().magnifications" ] [
-                    li [ _koBind "text: $parent.magName($data)" ] []
-                ]
-                div [ _koBind "visible: microscope().UncalibratedMags.length > 0" ] [
-                    label [] [ encodedText "Magnification Level" ]
-                    select [ _koBind "value: magnification, foreach: microscope().UncalibratedMags" ] [
-                        option [ _koBind "value: $data, text: $data" ] []
+                h3 [ _koBind "text: microscope().name" ] []
+                p [] [ str "Select a magnification level and use the drawing tool to calibrate each magnification that you wish to use for focus images." ]
+                hr []
+                div [ _class "form-group row" ] [
+                    label [ _class "col-sm-2 col-form-label" ] [ str "Already calibrated magnifications:" ]
+                    div [ _class "col-sm-10" ] [
+                        span [ _style "font-style: italic;"; _koBind "visible: microscope().magnifications.length == 0" ] [ encodedText "None" ]
+                        div [ _class "btn-group"; _role "group"; _koBind "foreach: microscope().magnifications, visible: microscope().magnifications.length > 0" ] [
+                            button [ _class "btn btn-secondary btn-sm" ] [ span [ _koBind "text: $parent.magName($data)" ] [] ]
+                        ]
                     ]
                 ]
-                br []
-                input [ _type "file"; _class "upload"; _koBind "event: { change: function() { createViewer($element) } }" ]
+                div [ _class "form-group row"; _koBind "visible: microscope().uncalibratedMags.length > 0" ] [
+                    label [ _class "col-sm-2 col-form-label" ] [ str "Calibrate this magnification:" ]
+                    div [ _class "col-sm-10" ] [
+                        select [ _koBind "value: magnification, foreach: microscope().uncalibratedMags"; _class "form-control" ] [
+                            option [ _koBind "value: $data, text: $data" ] []
+                        ]
+                    ]
+                ]
+                div [ _class "form-group row"; _koBind "visible: microscope().uncalibratedMags.length > 0" ] [
+                    label [ _class "col-sm-2 col-form-label" ] [ str "Calibration Image:" ]
+                    input [ _type "file"; _class "upload"; _koBind "event: { change: function() { createViewer($element) } }" ]
+                ]
+                hr []
                 div [ _id "calibration-viewer-container" ] []
                 div [ _class "card"; _id "calibration-static-measurement-section"; _koBind "visible: loadedImage" ] [
                     div [ _class "card-header" ] [ encodedText "Draw a line on the loaded image of known length" ]
@@ -341,29 +417,34 @@ module Partials =
                         ]
                     ]
                 ]
-                button [ _koBind "click: function() { submit($parent) }, visible: canSubmit"; _class "btn btn-primary" ] [ encodedText "Submit" ]
+                button [ _koBind "click: function() { submit($parent) }, enable: canSubmit"; _class "btn btn-primary" ] [ encodedText "Save Calibration" ]
             ]
         ]
 
     let calibrationModal =
-        div [ _koBind "BSModal: currentView() == CurrentView.CALIBRATE, if: currentView() == CurrentView.CALIBRATE"; _class "modal bd-example-modal-lg"; _role "dialog"; _data "keyboard" "false"; _data "backdrop" "static" ] [
-            div [ _koBind "with: calibrateVM"; _class "modal-dialog modal-lg" ] [
+        div [ _koBind "BSModal: currentView() == CurrentView.CALIBRATE, if: currentView() == CurrentView.CALIBRATE"; _class "modal"; _role "dialog"; _data "keyboard" "false"; _data "backdrop" "static" ] [
+            div [ _koBind "with: calibrateVM"; _class "modal-dialog modal-xl" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
-                        h5 [ _class "modal-title" ] [ encodedText "Calibrations" ]
+                        h5 [ _class "modal-title" ] [ encodedText "Microscope Calibrations" ]
                         button [ _type "button"; _class "close"; _koBind "click: function() { $parent.switchView(CurrentView.MASTER); }" ] [ span [] [ rawText "&times;" ] ]
                     ]
                     div [ _class "modal-body" ] [
+                        p [] [ 
+                            str "If you have a fixed camera setup, the Global Pollen Project supports uploading 'focus images'. These consist of a stack of images taken at variable focal levels. To upload focus images, you must first calibrate an image for each magnification level and for each microscope that you have used. "
+                            a [ _href "/Guide/Digitise" ] [ str "Please see the documentation for full details." ]
+                        ]
+                        hr []
                         Grid.row [
                             Grid.column Medium 4 [
                                 div [ _class "card"; _id "calibration-list-card" ] [
                                     div [ _class "card-header" ] [ encodedText "My Microscopes" ]
-                                ]
-                                div [ _class "card-block" ] [
-                                    ul [ _class "list-group backbone-list"; _id "calibration-list"; _koBind "foreach: myMicroscopes" ] [
-                                        li [ _class "list-group-item"; _koBind "text: name, click: function() { $parent.changeView(CalibrateView.DETAIL, $data); $parent.setActiveCalibrationTab($element); }" ] []
+                                    div [ _class "card-block" ] [
+                                        ul [ _class "list-group backbone-list"; _id "calibration-list"; _koBind "foreach: myMicroscopes" ] [
+                                            li [ _class "list-group-item"; _koBind "text: name, click: function() { $parent.changeView(2, $data); $parent.setActiveCalibrationTab($element); }" ] []
+                                        ]
+                                        button [ _class "btn btn-outline-secondary"; _id "calibration-add-new-button"; _koBind "click: function() { changeView(CalibrateView.ADD_MICROSCOPE); setActiveCalibrationTab(null); }, visible: $parent.currentView() != CalibrateView.ADD_MICROSCOPE" ] [ encodedText "Set up a microscope" ]
                                     ]
-                                    button [ _class "btn btn-primary"; _id "calibration-add-new-button"; _koBind "click: function() { changeView(CalibrateView.ADD_MICROSCOPE); setActiveCalibrationTab(null); }" ] [ encodedText "Add new" ]
                                 ]
                             ]
                             Grid.column Medium 8 [
@@ -373,7 +454,7 @@ module Partials =
                         ]
                     ]
                     div [ _class "modal-footer" ] [
-                        button [ _koBind "click: function() { $root.switchView(CurrentView.MASTER) }"; _class "btn btn-default" ] [ encodedText "Close" ]
+                        button [ _koBind "click: function() { $root.switchView(CurrentView.MASTER) }"; _class "btn btn-outline-secondary" ] [ encodedText "Done" ]
                     ]
                 ]
             ]
@@ -382,7 +463,7 @@ module Partials =
     let requiredSymbol = span [ _class "required-symbol" ] [ encodedText "*" ]
 
     let recordSlide =
-        div [ _koBind "BSModal: currentView() == CurrentView.ADD_SLIDE_RECORD, if: currentView() == CurrentView.ADD_SLIDE_RECORD"; _class "modal bd-example-modal-lg"; _role "dialog"; _data "keyboard" "false"; _data "backdrop" "static" ] [
+        div [ _koBind "BSModal: currentView() == CurrentView.ADD_SLIDE_RECORD, if: currentView() == CurrentView.ADD_SLIDE_RECORD"; _class "modal"; _role "dialog"; _data "keyboard" "false"; _data "backdrop" "static" ] [
             div [ _koBind "with: newSlideVM"; _class "modal-dialog modal-lg" ] [
                 div [ _class "modal-content" ] [
                     div [ _class "modal-header" ] [
@@ -392,9 +473,10 @@ module Partials =
                     div [ _class "modal-body" ] [
                         p [] [ 
                             encodedText "We require information on the taxonomic identity, sample origin, spatial properties, and temporal properties for every slide. Please fill these in below. For more information,"
-                            a [ _href "/Guide" ] [ encodedText "please refer to the GPP guide" ]
+                            a [ _href "/Guide"; _target "blank" ] [ encodedText "please refer to the GPP guide" ]
                             encodedText "."
                         ]
+                        validationErrorAlert "We could not add this slide, as some information did not pass validation. Please address the problems listed below and try again:"
                         div [ _class "form-group row" ] [
                             label [ _for "inputExistingId"; _class "col-sm-2 col-form-label" ] [ encodedText "Existing ID" ]
                             Grid.column Small 10 [
@@ -405,78 +487,84 @@ module Partials =
                         h5 [] [ encodedText "1. Taxonomic Identity" ]
                         hr []
                         p [] [ encodedText "How has the material on this slide been identified?"; requiredSymbol ]
-                        div [ _class "form-check" ] [
-                            label [ _class "form-check-label" ] [
-                                input [ _class "form-check-input"; _type "radio"; _name "sampleType"; _id "botanical"; _value "botanical"; _koBind "checked: identificationMethod" ]
-                                strong [] [ encodedText "Direct." ]
-                                encodedText "Pollen or spores sampled from plant material."
+                        div [] [
+                            div [ _class "custom-control custom-radio" ] [
+                                input [ _class "custom-control-input"; _type "radio"; _name "sampleType"; _id "botanical"; _value "botanical"; _koBind "checked: identificationMethod" ]
+                                label [ _class "custom-control-label" ] [
+                                    strong [] [ encodedText "From plant material ('directly'). " ]
+                                    encodedText "Pollen or spores sampled from plant material of a known taxonomic identity." ]
                             ]
-                            label [ _class "form-check-label" ] [
-                                input [ _class "form-check-input"; _type "radio"; _name "sampleType"; _id "morphological"; _value "morphological"; _koBind "checked: identificationMethod" ]
-                                strong [] [ encodedText "Morphological." ]
-                                encodedText "A taxonomic identification attributed to the grains by morphology, for example using pollen keys."
+                            div [ _class "custom-control custom-radio" ] [
+                                input [ _class "custom-control-input"; _type "radio"; _name "sampleType"; _id "morphological"; _value "morphological"; _koBind "checked: identificationMethod" ]
+                                label [ _class "custom-control-label" ] [
+                                    strong [] [ encodedText "Morphological. " ]
+                                    encodedText "A taxonomic identification attributed to the grains by morphology, for example using pollen keys." ]
                             ]
-                            label [ _class "form-check-label" ] [
-                                input [ _class "form-check-input"; _type "radio"; _name "sampleType"; _id "environmental"; _value "environmental"; _koBind "checked: identificationMethod" ]
-                                strong [] [ encodedText "Environmental." ]
-                                encodedText "The pollen was extracted from an environmental sample, for example surface water or a pollen trap. The taxonomic identification has been constrained by species occuring known to occur in this area."
+                            div [ _class "custom-control custom-radio" ] [
+                                input [ _class "custom-control-input"; _type "radio"; _name "sampleType"; _id "environmental"; _value "environmental"; _koBind "checked: identificationMethod" ]
+                                label [ _class "custom-control-label" ] [
+                                    strong [] [ encodedText "Environmental. " ]
+                                    encodedText "The pollen was extracted from an environmental sample, for example surface water or a pollen trap. The taxonomic identification has been constrained by species occuring known to occur in this area." ]
                             ]
                         ]
+                        br []
                         p [] [
-                            encodedText "This reference slide is of"
-                            select [ _koBind "value: rank"; _class "form-control input-sm inline-dropdown" ] [
+                            encodedText "This reference slide is of "
+                            select [ _koBind "value: rank"; _class "form-control form-control-sm inline-dropdown" ] [
                                 option [ _value "Species" ] [ encodedText "Species" ]
                                 option [ _value "Genus" ] [ encodedText "Genus" ]
                                 option [ _value "Family" ] [ encodedText "Family" ]
                             ]
                             encodedText "rank."
                         ]
-                        p [] [ encodedText "Please enter the original taxonomic identity given to the slide."; requiredSymbol ]
+                        p [] [ encodedText "Please enter the original taxonomic identity given to the slide:"; requiredSymbol ]
                         Grid.row [
                             Grid.column Small 3 [
                                 input [ _koBind "value: family, event: { blur: capitaliseFirstLetter($element), keyup: suggest($element, 'Family') }"; _type "text"; _id "original-Family"; _class "form-control"; _autocomplete "off"; _placeholder "Family"; ]
-                                div [ _class "dropdown-menu taxon-dropdown"; _id "FamilyList"; _style "display:none" ] []
+                                div [ _class "dropdown-menu taxon-dropdown shadow"; _id "FamilyList"; _style "display:none" ] []
                             ]
                             Grid.column Small 3 [
                                 input [ _koBind "value: genus, enable: rank() != 'Family', event: { blur: capitaliseFirstLetter($element), keyup: suggest($element, 'Genus'), blur: disable('Genus') }"; _type "text"; _id "original-Genus"; _class "form-control"; _autocomplete "off"; _placeholder "Genus"; ]
-                                div [ _class "dropdown-menu taxon-dropdown"; _id "GenusList"; _style "display:none" ] []
+                                div [ _class "dropdown-menu taxon-dropdown shadow"; _id "GenusList"; _style "display:none" ] []
                             ]
                             Grid.column Small 3 [
                                 input [ _koBind "value: species, disable: rank() != 'Species', event: { blur: disable('Species'), keyup: suggest($element, 'Species') }"; _type "text"; _id "original-Species"; _class "form-control"; _autocomplete "off"; _placeholder "Species"; ]
-                                div [ _class "dropdown-menu taxon-dropdown"; _id "SpeciesList"; _style "display:none" ] []
+                                div [ _class "dropdown-menu taxon-dropdown shadow"; _id "SpeciesList"; _style "display:none" ] []
                             ]
                             Grid.column Small 3 [
                                 input [ _koBind "value: author, disable: rank() != 'Species', event: { blur: capitaliseFirstLetter($element) }"; _type "text"; _class "form-control"; _autocomplete "off"; _placeholder "Auth." ]
                             ]
                         ]
                         small [ _id "taxon-help"; _class "form-text text-muted" ] [ encodedText "This identity will be validated against the taxonomic backbone. If / when taxonomic changes occur, or have occurred, these will be reflected on this slide automatically." ]
-                        button [ _class "btn btn-default"; _koBind "visible: newSlideTaxonStatus() == null, click: validateTaxon, enable: isValidTaxonSearch"; _style "margin-bottom:0.5em" ] [ encodedText "Validate Taxon" ]
+                        button [ _class "btn btn-secondary"; _koBind "visible: newSlideTaxonStatus() == null, click: validateTaxon, enable: isValidTaxonSearch"; _style "margin-bottom:0.5em" ] [ encodedText "Validate Taxon" ]
                         div [ _koBind "visible: newSlideTaxonStatus, if: newSlideTaxonStatus" ] [
                             div [ _koBind "visible: newSlideTaxonStatus() == 'Error'" ] [ encodedText "There was a problem communicating with the taxonomic backbone." ]
                             div [ _koBind "if: newSlideTaxonStatus() != 'Error'" ] [
                                 div [ _class "alert alert-success"; _koBind "visible: newSlideTaxonStatus()[0].taxonomicStatus == 'accepted'" ] [
                                     p [] [ strong [] [ encodedText "This taxon is an accepted name." ] ]
+                                    p [] [ encodedText "The taxon record will include the original taxonomic name (as stated above), but the record will be displayed under the following current name on the Master Reference Collection:" ]
                                     p [] [
-                                        encodedText "GPP Taxon:"
                                         span [ _koBind "text: newSlideTaxonStatus()[0].family" ] []
-                                        span [] [ encodedText ">" ]
+                                        encodedText " "
                                         span [ _koBind "text: newSlideTaxonStatus()[0].genus" ] []
+                                        encodedText " "
                                         span [ _koBind "text: newSlideTaxonStatus()[0].species" ] []
+                                        encodedText " "
                                         span [ _koBind "text: newSlideTaxonStatus()[0].namedBy" ] []
                                     ]
                                 ]
-                                div [ _class "alert-success"; _koBind "visible: newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].taxonomicStatus == 'synonym'" ] [
+                                div [ _class "alert alert-success"; _koBind "visible: newSlideTaxonStatus().length == 1 && newSlideTaxonStatus()[0].taxonomicStatus == 'synonym'" ] [
                                     p [] [ 
                                         str "This taxon is a synonym of "
                                         span [ _koBind "text: newSlideTaxonStatus().length" ] []
                                         str "."
                                     ]
                                 ]
-                                div [ _class "alert-danger"; _koBind "visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length > 1" ] [
+                                div [ _class "alert alert-danger"; _koBind "visible: newSlideTaxonStatus() != 'Error' && newSlideTaxonStatus().length > 1" ] [
                                     p [] [ 
                                         str "There are "
                                         span [ _koBind "text: newSlideTaxonStatus().length" ] []
-                                        str " possible taxa in the GPP's taxonomic backbone:"
+                                        str " plausable matching taxa in the GPP's taxonomic backbone. If you have more details (e.g. name authorship), please enter it to clear ambuguity. The possible names are:"
                                     ]
                                     ul [ _koBind "foreach: newSlideTaxonStatus" ] [
                                         li [ _koBind "text: latinName + ' ' + namedBy + ' (' + taxonomicStatus + ' name)'" ] []
@@ -545,12 +633,14 @@ module Partials =
                                 Grid.column Small 4 [ input [ _koBind "value: identifiedByLastName"; _placeholder "Surname"; _class "form-control" ] ]
                             ]
                         ]
-                        div [ _koBind "visible: identificationMethod() == 'botanical' || identificationMethod() == 'field'" ] [
+                        div [ _koBind "visible: identificationMethod() == 'botanical' || identificationMethod() == 'field'"; _class "form-group row" ] [
                             label [ _for "inputCollectionYear"; _class "col-sm-2 col-form-label" ] [ str "Year Sample Taken" ]
                             Grid.column Small 5 [
-                                div [ _class "input-group" ] [
+                                div [ _class "input-group mb-3" ] [
                                     input [ _id "inputCollectionYear"; _koBind "value: yearCollected"; _type "number"; _class "form-control"; _aria "describedby" "year-addon" ]
-                                    span [ _class "input-group-addon"; _id "year-addon" ] [ str "Calendar Year" ]
+                                    div [ _class "input-group-append" ] [
+                                        span [ _class "input-group-text"; _id "year-addon" ] [ str "Calendar Year" ]
+                                    ]
                                 ]
                             ]
                         ]
@@ -598,8 +688,8 @@ module Partials =
                         hr []
                         div [ _class "form-group row"] [
                             label [ _class "col-sm-2 col-form-label" ] [ str "Slide Prepared By" ]
-                            Grid.column Small 2 [ input [ _koBind "value: preparedByFirstNames"; _placeholder "Forenames"; _class "form-control" ] ]
-                            Grid.column Small 2 [ input [ _koBind "value: preparedByLastName"; _placeholder "Surname"; _class "form-control" ] ]
+                            Grid.column Small 3 [ input [ _koBind "value: preparedByFirstNames"; _placeholder "Forenames"; _class "form-control" ] ]
+                            Grid.column Small 3 [ input [ _koBind "value: preparedByLastName"; _placeholder "Surname"; _class "form-control" ] ]
                         ]
                         div [ _class "form-group row" ] [
                             label [ _for "preperationMethod"; _class "col-sm-2 col-form-label" ] [ str "Chemical Treatment" ]
@@ -625,18 +715,15 @@ module Partials =
                             ]
                         ]
                         div [ _class "form-group row" ] [
-                            label [ _class "col-sm-2 col-form-label" ] [ str "When was this slide made from the plant material?" ]
+                            label [ _class "col-sm-2 col-form-label" ] [ str "Preperation Date" ]
                             Grid.column Small 5 [
-                                div [ _class "input-group" ] [
+                                div [ _class "input-group mb-3" ] [
                                     input [ _koBind "value: yearPrepared"; _type "number"; _class "form-control"; _aria "described-by" "year-addon" ]
-                                    span [ _class "input-group-addon"; _id "year-addon" ] [ str "Calendar Year" ]
+                                    div [ _class "input-group-append" ] [
+                                        span [ _class "input-group-text"; _id "year-addon" ] [ str "Calendar Year" ]
+                                    ]
                                 ]
-                            ]
-                        ]
-                        div [ _class "alert-danger"; _koBind "visible: validationErrors().length > 0, if: validationErrors().length > 0" ] [
-                            str "There was a problem with this slide. Please address the below problems and try again:"
-                            ul [ _koBind "foreach: validationErrors" ] [
-                                li [ _koBind "text: $data.property + ': ' + $data.errors[0]" ] []
+                                small [ _class "form-text text-muted" ] [ str "When was this slide made from the plant material or environmental sample?" ]
                             ]
                         ]
                     ]
@@ -689,7 +776,7 @@ let appView =
                                         ]
                                     ]
                                     Grid.column Medium 7 [
-                                        button [ _koBind "click: publish, visible: activeCollection().awaitingReview == false"; _class "btn btn-primary"; _id "collection-publish-button" ] [
+                                        button [ _koBind "click: publish, visible: activeCollection().awaitingReview == false, enable: activeCollection().slides.length > 0"; _class "btn btn-outline-secondary"; _id "collection-publish-button" ] [
                                             Icons.fontawesome "beer"
                                             encodedText "Request Publication"
                                         ]
@@ -703,11 +790,11 @@ let appView =
                         thead [] [
                             tr [] [
                                 th [] [ encodedText "ID" ]
-                                th [] [ encodedText "Family" ]
-                                th [] [ encodedText "Genus" ]
-                                th [] [ encodedText "Species" ]
+                                th [] [ encodedText "Original Family" ]
+                                th [] [ encodedText "Original Genus" ]
+                                th [] [ encodedText "Original Species" ]
                                 th [] [ encodedText "Current Taxon" ]
-                                th [] [ encodedText "Image Count" ]
+                                th [] [ encodedText "Number of Images Uploaded" ]
                                 th [] [ encodedText "Actions" ]
                             ]
                         ]
@@ -720,7 +807,7 @@ let appView =
                                 td [ _koBind "text: $data.currentFamily + ' ' + $data.currentGenus + ' ' + $data.currentSpecies + ' ' + $data.currentSpAuth" ] []
                                 td [ _koBind "text: $data.images.length" ] []
                                 td [] [
-                                    button [ _koBind "click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }, enable: function() { $data.Voided() == false }"; _class "btn btn-outline-secondary collection-slide-upload-image-button" ] [ encodedText "Details" ]
+                                    button [ _koBind "click: function() { $parent.switchView(CurrentView.SLIDE_DETAIL, $data) }, enable: function() { $data.Voided() == false }"; _class "btn btn-sm btn-outline-secondary collection-slide-upload-image-button" ] [ encodedText "Details" ]
                                 ]
                             ]
                         ]

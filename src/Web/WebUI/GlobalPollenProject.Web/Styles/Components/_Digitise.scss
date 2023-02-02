@@ -24,12 +24,14 @@
     margin-bottom: 10px;
 }
 
-#slidedetail-static-upload-progress {
+.slidedetail-upload-progress {
     padding-left: 0 !important;
     padding-right: 0 !important;
+    padding-top: 0.1em;
+    height: 3.5em;
 }
 
-#slidedetail-static-upload-progressbar {
+.slidedetail-upload-progressbar {
     height: 100%;
 }
 
@@ -119,4 +121,8 @@ span.year.active {
 
 #calibration-viewer-container {
     margin: 10px auto;
+}
+
+.custom-control-input {
+    z-index: 100 !important;
 }

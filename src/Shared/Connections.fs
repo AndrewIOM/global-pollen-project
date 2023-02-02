@@ -71,14 +71,14 @@ module CoreActions =
             | Ok j ->
                 let stringContent = new StringContent(j, UnicodeEncoding.UTF8, MediaTypeNames.Application.Json)
                 let! response = c.PostAsync(u.Uri, stringContent) |> Async.AwaitTask
-                if response.IsSuccessStatusCode
+                if response.IsSuccessStatusCode || response.StatusCode = Net.HttpStatusCode.BadRequest
                 then
                     let! content = response.Content.ReadAsStringAsync() |> Async.AwaitTask
                     printfn "Received json from POST: %s" content
                     match Serialisation.deserialise<Result<'b,ServiceError>> content with
                     | Ok m -> return m
-                    | Error _ -> return Error InvalidRequestFormat
-                else return Error InvalidRequestFormat
+                    | Error _ -> return Error Core
+                else return Error Core
             | Error _ -> return Error InvalidRequestFormat
         }
 

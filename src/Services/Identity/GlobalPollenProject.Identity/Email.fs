@@ -6,7 +6,7 @@ type EmailMessage = {
     MessageHtml: string
 }
 
-type SendEmail = EmailMessage -> Async<System.Net.HttpStatusCode>
+type SendEmail = EmailMessage -> Async<Result<unit, string>>
 
 module Cloud =
 

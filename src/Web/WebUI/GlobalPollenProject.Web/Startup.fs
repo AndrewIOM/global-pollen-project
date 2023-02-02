@@ -54,7 +54,7 @@ type HttpClientRequestIdDelegatingHandler() =
 /// App Configuration
 ///////////////////////////
 
-type Startup (configuration: IConfiguration) =
+type Startup (env: IWebHostEnvironment, configuration: IConfiguration) =
 
     member __.AddCustomAuthentication(services:IServiceCollection) =   
         let identityUrl = configuration.GetValue<string>("IdentityUrl")
@@ -75,7 +75,7 @@ type Startup (configuration: IConfiguration) =
                 opt.ResponseType <- "code id_token"
                 opt.SaveTokens <- true
                 opt.GetClaimsFromUserInfoEndpoint <- true
-                opt.RequireHttpsMetadata <- true // TODO turn off in development
+                opt.RequireHttpsMetadata <- not (env.IsDevelopment())
                 opt.Scope.Add("openid")
                 opt.Scope.Add("profile")
                 opt.Scope.Add("webapigw")
