@@ -20,6 +20,7 @@ let api = "/Guide/API"
 let tools = "/Tools"
 let cite = "/Cite"
 let terms = "/Terms"
+let contactUs = "/Contact"
 let notFound = "/NotFound"
 
 module MasterReference =

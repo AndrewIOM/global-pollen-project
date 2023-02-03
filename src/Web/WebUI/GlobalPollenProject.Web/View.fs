@@ -234,9 +234,10 @@ module Layout =
                         h4 [] [ encodedText "Information" ]
                         ul [] [
                             li [] [ a [ _href Urls.guide ] [ encodedText "About"] ]
-                            li [] [ a [ _href Urls.api ] [ encodedText "Public API"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Beta" ] ] ]
+                            li [] [ a [ _href Urls.api ] [ encodedText "Public API"; span [ _style "font-weight: normal;margin-left: 0.5em;"; _class "badge badge-info" ] [ encodedText "Preview" ] ] ]
                             li [] [ a [ _href Urls.terms ] [ encodedText "Terms and Licensing"] ]
                             li [] [ a [ _href Urls.cite ] [ encodedText "How to Cite"] ]
+                            li [] [ a [ _href Urls.contactUs ] [ encodedText "Contact Us"] ]
                         ]
                     ]
                     div [ _class "col-md-5"; _style "padding-right:4em" ] [
