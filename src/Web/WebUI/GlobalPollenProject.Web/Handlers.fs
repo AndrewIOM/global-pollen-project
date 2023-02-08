@@ -51,7 +51,6 @@ module Profile =
         | :? ClaimsPrincipal as claims ->
             claims.Claims
             |> Seq.tryFind(fun x -> x.Type = "sub")
-            |> fun x -> printfn "User ID is %A" x; x
             |> Option.bind(fun c -> parseGuid c.Value)
             |> Option.map(fun i ->
                 { Firstname =  claims.Claims |> Seq.tryFind(fun x -> x.Type = "given_name")  |> Option.bind(fun x -> Some x.Value)
@@ -84,16 +83,12 @@ module Profile =
         task {
             if ctx.User.Identity.IsAuthenticated then
                 let userFromClaims = ctx.User |> tryParsePrincipal
-                printfn "User logged in is %A" userFromClaims
                 match userFromClaims with
                 | Some user ->
                     let! profile = getPublicProfile ctx user.Id
-                    printfn "Public profile is %A" profile
                     return { user with Profile = profile |> resultToOption } |> Some
                 | None -> return None
-            else
-                printfn "User NOT logged in"
-                return None
+            else return None
         }
 
 /////////////////////

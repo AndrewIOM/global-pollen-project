@@ -60,12 +60,15 @@ type Startup (env: IWebHostEnvironment, configuration: IConfiguration) =
         let identityUrl = configuration.GetValue<string>("IdentityUrl")
         let callBackUrl = configuration.GetValue<string>("CallBackUrl")
         let authSecret = configuration.GetValue<string>("AuthSecret")
-        let sessionCookieLifetime = configuration.GetValue("SessionCookieLifetimeMinutes", 60.)
+        let sessionCookieLifetime = configuration.GetValue<float>("SessionCookieLifetimeMinutes", 120.)
         services
             .AddAuthentication(fun opt ->
                 opt.DefaultScheme <- CookieAuthenticationDefaults.AuthenticationScheme
                 opt.DefaultChallengeScheme <- OpenIdConnectDefaults.AuthenticationScheme)
-            .AddCookie(fun setup -> setup.ExpireTimeSpan <- TimeSpan.FromMinutes(sessionCookieLifetime))
+            .AddCookie(fun setup -> 
+                setup.ExpireTimeSpan <- TimeSpan.FromMinutes(sessionCookieLifetime)
+                setup.Cookie.MaxAge <- TimeSpan.FromMinutes(sessionCookieLifetime)
+                setup.SlidingExpiration <- true)
             .AddOpenIdConnect(fun opt ->
                 opt.SignInScheme <- CookieAuthenticationDefaults.AuthenticationScheme
                 opt.Authority <- identityUrl.ToString()
@@ -76,6 +79,7 @@ type Startup (env: IWebHostEnvironment, configuration: IConfiguration) =
                 opt.SaveTokens <- true
                 opt.GetClaimsFromUserInfoEndpoint <- true
                 opt.RequireHttpsMetadata <- not (env.IsDevelopment())
+                opt.UseTokenLifetime <- false
                 opt.Scope.Add("openid")
                 opt.Scope.Add("profile")
                 opt.Scope.Add("webapigw")

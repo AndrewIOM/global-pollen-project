@@ -593,7 +593,8 @@ module Program =
         services.AddTransient<IProfileService, Profile.ProfileService>() |> ignore
         services.AddIdentityServer(fun config ->
             config.IssuerUri <- "null"
-            config.Authentication.CookieLifetime <- TimeSpan.FromHours 2.)
+            config.Authentication.CookieLifetime <- TimeSpan.FromMinutes (getAppSetting appSettings "SessionCookieLifetimeMinutes" |> float)
+            config.Authentication.CookieSlidingExpiration <- true)
             //.AddSigningCredential
             .AddDeveloperSigningCredential()
             .AddAspNetIdentity<ApplicationUser>()
