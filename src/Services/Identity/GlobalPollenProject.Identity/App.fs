@@ -18,6 +18,31 @@ open Microsoft.AspNetCore.WebUtilities
 open Microsoft.AspNetCore.Http
 open Microsoft.Extensions.Hosting
 
+module Validation =
+
+    open System.Collections.Generic
+    open Microsoft.AspNetCore.Mvc.ModelBinding
+    open GlobalPollenProject.Shared
+
+    let validateModel' model =
+        let context = ValidationContext(model)
+        let validationResults = new List<ValidationResult>() 
+        let isValid = Validator.TryValidateObject(model,context,validationResults,true)
+        let dict = ModelStateDictionary()
+        for error in validationResults do dict.AddModelError(error.MemberNames |> Seq.head, error.ErrorMessage)
+        isValid, dict
+
+    let modelIsValid model =
+        let context = ValidationContext(model)
+        let validationResults = new List<ValidationResult>() 
+        let isValid = Validator.TryValidateObject(model,context,validationResults,true)
+        let errors = 
+            validationResults 
+            |> Seq.map(fun e -> { Property = e.MemberNames |> Seq.head; Errors = [ e.ErrorMessage ] } )
+            |> Seq.toList
+        isValid, errors
+
+
 module Login =
 
     type ILoginService<'T> =
@@ -125,31 +150,34 @@ module Handlers =
  
     let register (model:NewAppUserRequest) : HttpHandler =
         fun next ctx ->
-            // TODO Validate model here
-            task {
-                let userManager = ctx.GetService<UserManager<ApplicationUser>>()
-                let user = ApplicationUser(UserName = model.Email, Email = model.Email,
-                                           Organisation = model.Organisation, GivenNames = model.FirstName,
-                                           FamilyName = model.LastName)
-                let! result = userManager.CreateAsync(user, model.Password)
-                match result.Succeeded with
-                | true ->
-                    ctx.GetLogger().LogInformation "User created a new account with password."
-                    let baseUrl = sprintf "%s://%s%s" ctx.Request.Scheme ctx.Request.Host.Value ctx.Request.PathBase.Value
-                    let! code = userManager.GenerateEmailConfirmationTokenAsync(user)
-                    let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
-                    let returnUrlBase64 = Encoding.UTF8.GetBytes(model.ReturnUrl) |> WebEncoders.Base64UrlEncode
-                    let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s&returnUrl=%s" baseUrl user.Id codeBase64 returnUrlBase64
-                    let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
-                    let sendEmail = ctx.GetService<Email.SendEmail>()
-                    let! emailResult = sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html }
-                    match emailResult with
-                    | Ok _ -> return! htmlView (Views.Pages.awaitingEmailConfirmation model.Email) next ctx
-                    | Error e -> 
-                        ctx.GetLogger().LogError e
-                        return! htmlView (Views.Pages.error "Your account has been created but there was an issue sending you a confirmation email. Please contact our support email to resolve this problem.") next ctx
-                | false -> return! (htmlView <| Views.Pages.register (result.Errors |> identityToValidationError) model) next ctx
-            }
+            let isValid, errors = Validation.modelIsValid model 
+            if not isValid
+            then (htmlView <| Views.Pages.register errors model) next ctx
+            else
+                task {
+                    let userManager = ctx.GetService<UserManager<ApplicationUser>>()
+                    let user = ApplicationUser(UserName = model.Email, Email = model.Email,
+                                            Organisation = model.Organisation, GivenNames = model.FirstName,
+                                            FamilyName = model.LastName)
+                    let! result = userManager.CreateAsync(user, model.Password)
+                    match result.Succeeded with
+                    | true ->
+                        ctx.GetLogger().LogInformation "User created a new account with password."
+                        let baseUrl = sprintf "%s://%s%s" ctx.Request.Scheme ctx.Request.Host.Value ctx.Request.PathBase.Value
+                        let! code = userManager.GenerateEmailConfirmationTokenAsync(user)
+                        let codeBase64 = Encoding.UTF8.GetBytes(code) |> WebEncoders.Base64UrlEncode
+                        let returnUrlBase64 = Encoding.UTF8.GetBytes(model.ReturnUrl) |> WebEncoders.Base64UrlEncode
+                        let callbackUrl = sprintf "%s/Account/ConfirmEmail?userId=%s&code=%s&returnUrl=%s" baseUrl user.Id codeBase64 returnUrlBase64
+                        let html = sprintf "Please confirm your account by following this link: <a href=\"%s\">%s</a>. You can also copy and paste the address into your browser." callbackUrl callbackUrl
+                        let sendEmail = ctx.GetService<Email.SendEmail>()
+                        let! emailResult = sendEmail { To = model.Email; Subject = "Confirm your email"; MessageHtml = html }
+                        match emailResult with
+                        | Ok _ -> return! htmlView (Views.Pages.awaitingEmailConfirmation model.Email) next ctx
+                        | Error e -> 
+                            ctx.GetLogger().LogError e
+                            return! htmlView (Views.Pages.error "Your account has been created but there was an issue sending you a confirmation email. Please contact our support email to resolve this problem.") next ctx
+                    | false -> return! (htmlView <| Views.Pages.register (result.Errors |> identityToValidationError) model) next ctx
+                }
 
 
 module Routes =
@@ -302,24 +330,24 @@ module Routes =
         task {
             if String.IsNullOrEmpty model.Code || String.IsNullOrEmpty model.ReturnUrl
             then return! htmlView (Views.Pages.error "The code specified was not valid. Please request another code.") next ctx
-            else return! htmlView (Views.Pages.resetPassword model) next ctx
+            else return! htmlView (Views.Pages.resetPassword [] model) next ctx
         }
 
     let resetPasswordPost (model:ResetPasswordViewModel) next ctx =
         task {
-            if String.IsNullOrEmpty model.Code || String.IsNullOrEmpty model.ConfirmPassword
-                || String.IsNullOrEmpty model.Email || String.IsNullOrEmpty model.Password
-                || String.IsNullOrEmpty model.ReturnUrl
-            then return! htmlView (Views.Pages.resetPassword model) next ctx
+            let isValid, errors = Validation.modelIsValid model 
+            if not isValid
+            then return! (htmlView <| Views.Pages.resetPassword errors model) next ctx
             else
                 let manager = ctx.GetService<UserManager<ApplicationUser>>()
                 let! user = manager.FindByEmailAsync(model.Email) |> Async.AwaitTask
-                if isNull user then return! htmlView (Views.Pages.resetPasswordConfirmation) next ctx
+                if isNull user then return! htmlView (Views.Pages.resetPasswordConfirmation model.ReturnUrl) next ctx
                 else
-                    let! result = manager.ResetPasswordAsync(user, model.Code, model.Password)
+                    let decodedCode = WebEncoders.Base64UrlDecode(model.Code) |> System.Text.Encoding.UTF8.GetString
+                    let! result = manager.ResetPasswordAsync(user, decodedCode, model.Password)
                     if result.Succeeded
-                    then return! htmlView (Views.Pages.resetPasswordConfirmation) next ctx
-                    else return! htmlView (Views.Pages.resetPassword model) next ctx
+                    then return! htmlView (Views.Pages.resetPasswordConfirmation model.ReturnUrl) next ctx
+                    else return! htmlView (Views.Pages.resetPassword [ { Property = "Password"; Errors = [ "There was a problem changing your password. Please contact us for assistance." ] } ] model) next ctx
         }
 
     let challengeWithProperties (authScheme : string) properties _ (ctx : HttpContext) =
@@ -397,7 +425,7 @@ module Routes =
             POST >=> route "/Account/ForgotPassword"        >=> tryBindForm parsingError None forgotPasswordPost
             GET  >=> route "/Account/ForgotPassword"        >=> tryBindQuery parsingError None (fun (m:ReturnUrlQuery) -> htmlView (Views.Pages.forgotPassword (ViewModels.Empty.forgot m.ReturnUrl)))
             POST >=> route "/Account/ResetPassword"         >=> tryBindForm parsingError None resetPasswordPost
-            GET  >=> route "/Account/ResetPassword"         >=> tryBindQuery parsingError None resetPassword
+            GET  >=> route "/Account/ResetPassword"         >=> tryBindQuery parsingError None (fun (m:ResetPasswordQuery) -> htmlView (Views.Pages.resetPassword [] (ViewModels.Empty.resetPassword m.ReturnUrl m.Code)))
             subRoute "/Manage" manageRoutes
         ]
 

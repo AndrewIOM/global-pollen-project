@@ -17,6 +17,12 @@ type ReturnUrlQuery = {
 }
 
 [<CLIMutable>]
+type ResetPasswordQuery = {
+    ReturnUrl: string
+    Code: string
+}
+
+[<CLIMutable>]
 type NewAppUserRequest = {
     [<Required>] [<Display(Name ="Title")>] Title: string
     [<Required>] [<Display(Name = "Forename(s)")>] FirstName: string

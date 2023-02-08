@@ -49,11 +49,11 @@ form {
     border-color: #38A1F3 !important;
 }
 
-.message {
-    background: lightpink;
-    border-radius: 5px;
-    padding: 0.25em 2em;
+.validation-error {
+    background-color: #B02C3A;
+    color: white;
+    font-size: 0.85em;
+    border-radius: 0.3em;
+    padding: 1em;
     margin-bottom: 1em;
-    font-style: italic;
-    font-size: 0.9em;
 }
