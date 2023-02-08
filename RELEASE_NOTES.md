@@ -1,3 +1,12 @@
+## Unreleased
+
+### Changed
+- Set cookies to have sliding expiration
+
+### Fixed
+- Fixed forgot password workflow
+
+
 ## [2.0.1] - 2023-02-02
 
 ### Added
