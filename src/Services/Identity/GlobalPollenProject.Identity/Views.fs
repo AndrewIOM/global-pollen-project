@@ -40,8 +40,12 @@ module Errors =
             let errorHtml =
                 additionalErrors
                 |> List.collect (fun e -> e.Errors)
-                |> List.map encodedText
-            div [] errorHtml
+                |> List.map(fun s -> li [] [ encodedText s ])
+            if errorHtml.Length > 1 then 
+                div [ _class "validation-error" ] [
+                    ul [] errorHtml
+                ]
+            else emptyText
 
 module Pages = 
 
@@ -52,7 +56,7 @@ module Pages =
                 p [] [ str "Sign in" ]
                 match message with
                 | None -> emptyText
-                | Some m -> div [ _class "message" ] [ str m ]
+                | Some m -> div [ _class "validation-error" ] [ str m ]
                 form [ _method "POST"; _action "/Account/Login" ] [
                     fieldset [] [
                         label [ _for "Email" ] [ str "Username" ]
@@ -168,45 +172,55 @@ module Pages =
             ]
         ] |> Template.master "Resetting your password"
 
-    let resetPassword (vm:ResetPasswordViewModel) =
+    let resetPassword errors (vm:ResetPasswordViewModel) =
         [
-            form [ _action "/Account/ResetPassowrd"; _method "POST"; _class "form-horizontal" ] [
-                fieldset [] [
-                    label [ _for "Email" ] [ str "Email Address" ]
-                    input [ _type "email"; _name "Email"; _value vm.Email ]
-                    label [ _for "Password" ] [ str "Password" ]
-                    input [ _type "password"; _name "Password"; _value vm.Password ]
-                    label [ _for "ConfirmPassword" ] [ str "Confirm your password" ]
-                    input [ _type "password"; _name "ConfirmPassword" ]
-                    input [ _class "button-primary"; _type "submit"; _value "Request password reset" ]
-                    input [ _type "hidden"; _name "ReturnUrl"; _value vm.ReturnUrl ]
-                    input [ _hidden; _name "Code"; _value vm.Code ]
+            div [ _class "container main-panel" ] [
+                form [ _action "/Account/ResetPassword"; _method "POST"; _class "form-horizontal" ] [
+                    Errors.validationSummary errors
+                    fieldset [] [
+                        label [ _for "Email" ] [ str "Email Address" ]
+                        input [ _type "email"; _name "Email"; _value vm.Email ]
+                        label [ _for "Password" ] [ str "Password" ]
+                        input [ _type "password"; _name "Password"; _value vm.Password ]
+                        label [ _for "ConfirmPassword" ] [ str "Confirm your password" ]
+                        input [ _type "password"; _name "ConfirmPassword" ]
+                        input [ _class "button-primary"; _type "submit"; _value "Request password reset" ]
+                        input [ _type "hidden"; _name "ReturnUrl"; _value vm.ReturnUrl ]
+                        input [ _hidden; _name "Code"; _value vm.Code ]
+                    ]
                 ]
             ]
         ] |> Template.master "Reset password"
 
-    let resetPasswordConfirmation =
-        [ p [] [ 
-            encodedText "Your password has been reset."
-            a [ _href "/Account/Login" ] [ encodedText "Click here to login." ] ]
-        ] |> Template.master "Confirm Email"
+    let resetPasswordConfirmation returnUrl =
+        [ 
+            div [ _class "container main-panel" ] [
+                p [] [ 
+                encodedText "Your password has been reset. "
+                a [ _href (sprintf "/Account/Login?returnUrl=%s" returnUrl) ] [ encodedText "Click here to login." ] ]
+            ]
+        ] |> Template.master "Your password was reset"
 
 
     let error message =
         [
-            h1 [] [ str "There was an error" ]
-            p [] [ str message ]
+            div [ _class "container main-panel" ] [
+                h1 [] [ str "There was an error" ]
+                p [] [ str message ]
+            ]
         ] |> Template.master "Error"
 
     let loggedOut model =
         [
-            h1 [] [ str "You are now logged out" ]
-            (if not <| isNull model.PostLogoutRedirectUri
-            then div [] [
-                a [ _href model.PostLogoutRedirectUri ] [ str "Click here" ]
-                str (sprintf " to return to the %s app." model.ClientName)
+            div [ _class "container main-panel" ] [
+                h1 [] [ str "You are now logged out" ]
+                (if not <| isNull model.PostLogoutRedirectUri
+                then div [] [
+                    a [ _href model.PostLogoutRedirectUri ] [ str "Click here" ]
+                    str (sprintf " to return to the %s app." model.ClientName)
+                ]
+                else span [] [])
             ]
-            else span [] [])
         ] |> Template.master "Successfully logged out"
         
         
@@ -313,114 +327,3 @@ module Pages =
                         ))
                 ]
             ] |> Template.master "Remove linked login"
-
-
-(*
-
-module Account =
-
-    open Forms
-
-    let login errors (vm:Requests.LoginRequest) =
-        [
-            Grid.row [
-                Grid.column Medium 8 [
-                    form [ _action "/Account/Login"; _method "POST"; _class "form-horizontal" ] [
-                        validationSummary errors vm
-                        formField <@ vm.Email @>
-                        formField <@ vm.Password @>
-                        formField <@ vm.RememberMe @>
-                        div [ _class "row form-group" ] [
-                            div [ _class "offset-sm-2 col-sm-10" ] [
-                                button [ _type "submit"; _class "btn btn-primary" ] [ encodedText "Sign in" ]
-                                a [ _class "btn btn-secondary"; _href "/Account/ForgotPassword" ] [ encodedText "Forgotten Password" ] 
-                            ]
-                        ]
-                    ]
-                ]
-                Grid.column Medium 4 [
-                    section [] [
-                        form [ _action "/Account/ExternalLogin"; _method "POST"; _class "form-horizontal" ] [
-                            button [ _name "provider"; _class "btn btn-block btn-social btn-facebook"; _type "submit"; _value "Facebook" ] [ 
-                                Icons.fontawesome "facebook"
-                                encodedText "Sign in with Facebook" ]
-                            button [ _name "provider"; _class "btn btn-block btn-social btn-twitter"; _type "submit"; _value "Twitter" ] [ 
-                                Icons.fontawesome "twitter"
-                                encodedText "Sign in with Twitter" ]
-                        ]
-                        br []
-                        div [ _class "panel panel-primary" ] [
-                            div [ _class "panel-heading" ] [
-                                Icons.fontawesome "pencil"
-                                encodedText "Sign up today"
-                            ]
-                            div [ _class "panel-body" ] [
-                                p [] [ encodedText "Register to submit your pollen and exchange identifications." ]
-                                a [ _class "btn btn-secondary"; _href "/Account/Register" ] [ encodedText "Register" ]
-                            ]
-                        ]
-                    ]
-                ]
-            ]
-        ] |> Layout.standard [] "Log in" "Use your existing Global Pollen Project account, Facebook or Twitter"
-
-    let register errors (vm:NewAppUserRequest) =
-        [
-            form [ _action "/Account/Register"; _method "POST"; _class "form-horizontal" ] [
-                p [] [ encodedText "An account will enable you to submit your own unknown pollen grains and identify others. You can also request access to our digitisation features." ]
-                p [] [ encodedText "You can also alternatively"; a [ _href "/Account/Login" ] [ encodedText "sign in with your Facebook or Twitter account." ] ]
-                hr []
-                validationSummary errors vm
-                h4 [] [ encodedText "About You" ]
-                formField <@ vm.Title @>
-                formField <@ vm.FirstName @>
-                formField <@ vm.LastName @>
-                formField <@ vm.Email @>
-                formField <@ vm.EmailConfirmation @>
-                formField <@ vm.Password @>
-                formField <@ vm.ConfirmPassword @>
-                hr []
-                h4 [] [ encodedText "Your Organisation" ]
-                p [] [ encodedText "Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By using a common group name, you can build up your score together. Can your organisation become top identifiers?" ]
-                formField <@ vm.Organisation @>
-                p [] [ encodedText "By registering, you agree to the Global Pollen Project"; a [ _href "/Guide/Terms" ] [ encodedText "Terms and Conditions." ] ]
-                button [ _type "submit"; _class "btn btn-primary" ] [ encodedText "Register" ]
-            ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Register" "Create a new account"
-
-    let externalRegistration provider errors (vm:ExternalLoginConfirmationViewModel) =
-        [
-            form [ _action "/Account/ExternalLoginConfirmation"; _method "POST"; _class "form-horizontal" ] [
-                p [] [ encodedText ("You've successfully authenticated with " + provider + ". We just need a few more personal details from you before you can log in.") ]
-                validationSummary errors vm
-                h4 [] [ encodedText "About You" ]
-                formField <@ vm.Title @>
-                formField <@ vm.FirstName @>
-                formField <@ vm.LastName @>
-                formField <@ vm.Email @>
-                formField <@ vm.EmailConfirmation @>
-                hr []
-                h4 [] [ encodedText "Your Organisation" ]
-                p [] [ encodedText "Are you a member of a lab group, company or other organisation? Each grain you identify gives you a bounty score. By using a common group name, you can build up your score together. Can your organisation become top identifiers?" ]
-                formField <@ vm.Organisation @>
-                p [] [ encodedText "By registering, you agree to the Global Pollen Project"; a [ _href "/Guide/Terms" ] [ encodedText "Terms and Conditions." ] ]
-                button [ _type "submit"; _class "btn btn-primary" ] [ encodedText "Register" ]
-            ]
-        ] |> Layout.standard [ 
-            "/lib/jquery-validation/jquery.validate.js"
-            "/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.js" ] "Nearly logged in..." ("Associate your" + provider + "account")
-
-    let confirmEmail =
-        [
-            p [] [ 
-                encodedText "Thank you for confirming your email. Please"
-                a [ _href Urls.Account.login ] [ encodedText "Click here to Log in" ]
-                encodedText "." ]
-        ] |> Layout.standard [] "Confirm Email" ""
-
-    let externalLoginFailure =
-        [ p [] [ encodedText "Unsuccessful login with service" ] ]
-        |> Layout.standard [] "Login failure" ""
-*)
