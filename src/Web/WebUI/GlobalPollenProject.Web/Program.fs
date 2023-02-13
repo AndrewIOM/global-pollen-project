@@ -16,7 +16,7 @@ let BuildWebHost args =
     WebHost
         .CreateDefaultBuilder(args)
         .UseKestrel(fun opt ->
-            opt.Limits.MaxRequestBodySize <- Nullable<int64>(int64 (1024 * 1024 * 10)))
+            opt.Limits.MaxRequestBodySize <- System.Nullable<int64>(int64 (1024 * 1024 * 100)))
         .UseStartup<Startup.Startup>()
         .Build()
 

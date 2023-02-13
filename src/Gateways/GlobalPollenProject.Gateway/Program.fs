@@ -16,7 +16,8 @@ module Program =
     let CreateHostBuilder args =
         WebHost
             .CreateDefaultBuilder(args)
-            .UseKestrel()
+            .UseKestrel(fun opt ->
+                opt.Limits.MaxRequestBodySize <- System.Nullable<int64>(int64 (1024 * 1024 * 100)))
             .UseContentRoot(Directory.GetCurrentDirectory())
             .ConfigureAppConfiguration(fun w config ->
                 config
