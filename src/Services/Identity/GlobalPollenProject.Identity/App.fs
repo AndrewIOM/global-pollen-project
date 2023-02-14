@@ -125,6 +125,8 @@ module Profile =
                     if isNull user then invalidArg "subjectId" "Invalid subject identifier"
                     let claims = getClaims user
                     context.IssuedClaims <- claims |> Collections.Generic.List
+                    let roleClaims = context.Subject.FindAll(IdentityModel.JwtClaimTypes.Role)
+                    context.IssuedClaims.AddRange(roleClaims)
                 } :> Task
 
             member __.IsActiveAsync(context: IsActiveContext): Task = 
@@ -461,6 +463,7 @@ module Program =
         let resources : IdentityResource list = [
             IdentityResources.OpenId()
             IdentityResources.Profile()
+            IdentityResource("roles", [ "role" ])
         ]
         
         let clients (mvcSecret:string) websiteUrl (labAppSecret:string) labAppUrl = [
@@ -482,6 +485,7 @@ module Program =
                     IdentityServerConstants.StandardScopes.OfflineAccess
                     "core"
                     "webapigw"
+                    "roles"
                 |])
             Client(
                 ClientId = "lab-ui",
