@@ -24,11 +24,12 @@ let contactUs = "/Contact"
 let notFound = "/NotFound"
 
 module MasterReference =
+    let private specificEphitet (latinName:string) = latinName.Split(' ') |> Array.last
     let root = "/Taxon"
     let rootBy rank letter = root + "?rank=" + rank + "&lex=" + letter
     let family family = root + "/" + family
     let genus family genus = root + "/" + family + "/" + genus
-    let species family genus species = root + "/" + family + "/" + genus + "/" + species
+    let species family genus species = root + "/" + family + "/" + genus + "/" + specificEphitet species
     let taxonById (id:System.Guid) = sprintf "%s/ID/%s" root (id.ToString())
 
 module Account =

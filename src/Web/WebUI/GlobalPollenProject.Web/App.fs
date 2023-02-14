@@ -76,7 +76,7 @@ module Actions =
             task {
                 let core = ctx.GetService<CoreMicroservice>()
                 let! result = CoreActions.MRC.getSlide (col.ToString()) slide |> core.Apply
-                return! result |> renderViewResult HtmlViews.Slide.content next ctx
+                return! result |> Result.map(fun r -> (r, ctx.User.Identity.IsAuthenticated)) |> renderViewResult HtmlViews.Slide.content next ctx
              }
 
         let taxonDetail family genus species : HttpHandler =

@@ -540,7 +540,7 @@ module Slide =
             | _ ->
                 [ mrc; { Name = model.Slide.CurrentFamily; Url = Urls.MasterReference.family model.Slide.CurrentFamily }
                   { Name = model.Slide.CurrentGenus; Url = Urls.MasterReference.genus model.Slide.CurrentFamily model.Slide.CurrentGenus }
-                  { Name = sprintf "%s (%s)" model.Slide.CurrentSpecies model.Slide.CurrentSpAuth; Url = Urls.MasterReference.species model.Slide.CurrentFamily model.Slide.CurrentGenus (model.Slide.CurrentSpecies.Split(" ").[1]) } ]
+                  { Name = sprintf "%s (%s)" model.Slide.CurrentSpecies model.Slide.CurrentSpAuth; Url = Urls.MasterReference.species model.Slide.CurrentFamily model.Slide.CurrentGenus model.Slide.CurrentSpecies } ]
         else
             [ { Name = "Individual Reference Collections"; Url = Urls.Collections.root }
               { Name = model.Collection.Name; Url = Urls.Collections.byId model.Collection.Id } ]
@@ -559,24 +559,33 @@ module Slide =
     
     let location model =
         div [] [
-            span [ _class "fa-stack fa-lg mr-2" ] [
+            span [ _class "fa-stack fa-lg mr-2 align-top" ] [
                 i [ _class "fa fa-circle fa-stack-2x" ] []
                 i [ _class "fa fa-globe fa-stack-1x fa-inverse" ] []
             ]
             match model.Slide.LocationType with
             | "Unknown" -> span [] [ encodedText "Unknown location" ]
             | "Place name" ->
-                let layers = Regex.Matches(model.Slide.Location, @"(?<== ).*?(?=;)") |> Seq.toList
-                if layers.Length = 0 then span [] [ encodedText "Unknown" ]
-                else
-                    
-                    div [] []
+                let m = Regex.Match(model.Slide.Location, "Locality = (.*); District = (.*); Region = (.*); Country = (.*)")
+                if m.Success then
+                    let places = 
+                        [ m.Groups.[1].Value; m.Groups.[2].Value;  m.Groups.[3].Value;  m.Groups.[4].Value ]
+                        |> List.where(fun s -> String.IsNullOrEmpty s |> not)
+                    if places |> List.isEmpty
+                    then span [] [ encodedText "An unrecognised place name" ]
+                    else
+                        span [ _style "display:inline-block" ] [
+                            encodedText places.Head
+                            br []
+                            small [] [ places.Tail |> String.concat ", " |> encodedText ]
+                        ]
+                else span [] [ encodedText "An unrecognised place name" ]
             | _ -> span [] [ encodedText model.Slide.Location ]
         ]
     
     let time model =
         div [] [
-            span [ _class "fa-stack fa-lg mr-2" ] [
+            span [ _class "fa-stack fa-lg mr-2 align-top" ] [
                 i [ _class "fa fa-circle fa-stack-2x" ] []
                 i [ _class "fa fa-calendar fa-stack-1x fa-inverse" ] []
             ]
@@ -588,7 +597,7 @@ module Slide =
         let name, description =
             match model.Slide.IdMethod with
             | "Botanical" ->
-                match model.Slide.IdMethod with
+                match model.Slide.PlantId.Method with
                 | "Field" ->
                     "Taken from a wild plant",
                     (sprintf "The plant was identified by %s." model.Slide.PlantId.IdentifiedBySurname)
@@ -613,7 +622,7 @@ module Slide =
         
     /// View for an individual slide with image viewer
     /// TODO Add in cropping interface (also removed from typescript)
-    let content model =
+    let content (model, isLoggedIn) =
         let latinName =
             if model.Slide.Rank = "Family" then model.Slide.CurrentFamily
             else if model.Slide.Rank = "Genus" then model.Slide.CurrentGenus
@@ -630,7 +639,7 @@ module Slide =
                     License.nonCommercial
                 ]
                 Grid.column Medium 4 [
-                    cropPanel false // TODO propagate isSignedIn to here
+                    cropPanel isLoggedIn
                     Components.card "Origin" [
                         identificationMethod model
                         hr []
@@ -935,16 +944,13 @@ module Guide =
 
 
 module MRC =
-
-    let specificEphitet (latinName:string) =
-        latinName.Split(' ') |> Array.last
     
     let taxonCard (summary:TaxonSummary) =
         let taxonLink =
             match summary.Rank with
             | "Family" -> Urls.MasterReference.family summary.Family
             | "Genus" -> Urls.MasterReference.genus summary.Family summary.Genus
-            | "Species" -> Urls.MasterReference.species summary.Family summary.Genus (specificEphitet summary.Species)
+            | "Species" -> Urls.MasterReference.species summary.Family summary.Genus summary.Species
             | _ -> Urls.notFound
 
         div [ _class "taxon-list-item" ] [
