@@ -80,6 +80,9 @@ type Startup (env: IWebHostEnvironment, configuration: IConfiguration) =
                 opt.GetClaimsFromUserInfoEndpoint <- true
                 opt.RequireHttpsMetadata <- not (env.IsDevelopment())
                 opt.UseTokenLifetime <- false
+                opt.Scope.Add("roles")
+                opt.ClaimActions.MapJsonKey("role", "role", "role")
+                opt.TokenValidationParameters.RoleClaimType <- "role"
                 opt.Scope.Add("openid")
                 opt.Scope.Add("profile")
                 opt.Scope.Add("webapigw")
