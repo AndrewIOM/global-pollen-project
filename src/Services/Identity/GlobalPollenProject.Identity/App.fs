@@ -575,9 +575,6 @@ module Program =
 
     let configureApp (app : IApplicationBuilder) =
         let env = app.ApplicationServices.GetService<IWebHostEnvironment>()
-        // use serviceScope = app.ApplicationServices.CreateScope()
-        // let context = serviceScope.ServiceProvider.GetService<UserDbContext>()
-        // context.Database.Migrate()
         app.UseForwardedHeaders() |> ignore
         if env.IsDevelopment() 
             then app.UseDeveloperExceptionPage() |> ignore
