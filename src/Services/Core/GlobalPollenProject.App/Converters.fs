@@ -101,7 +101,7 @@ module Metadata =
 
     let createAccess accessMethod institutionName institutionUrl =
         match accessMethod with
-        | "digitial" -> DigitialOnly |> Ok
+        | "digital" -> DigitialOnly |> Ok
         | "institution" -> 
             let createInstitution name web = { Name = name; Web = web }
             createInstitution
