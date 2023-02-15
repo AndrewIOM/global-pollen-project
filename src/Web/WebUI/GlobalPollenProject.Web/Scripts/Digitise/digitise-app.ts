@@ -717,7 +717,6 @@ function SlideDetailViewModel(detail) {
 
     self.selectMagnification = function (element) {
         self.selectedMagnification(element);
-
         self.activateFocusScaleBar();
     }
 
@@ -805,7 +804,8 @@ function SlideDetailViewModel(detail) {
         }
 
         self.scaleBar = new ScaleBar(self.viewer, "#focus-image-previewer-scalebar", self.selectedMagnification().pixelWidth);
-        self.scaleBar.initialise();
+        // Manually trigger loaded images event to connect the scalebar.
+        $(self.viewer.containerId).trigger(ViewerEvent.EVENT_LOADED_IMAGES);
     }
 
     self.activateMeasuringLine = function () {

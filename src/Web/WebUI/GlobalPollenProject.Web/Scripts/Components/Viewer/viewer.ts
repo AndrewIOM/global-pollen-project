@@ -51,10 +51,14 @@ export class Viewer {
         this.focusLevel = 0;
         this.imgHeight = undefined;
         this.imgWidth = undefined;
+        $(this.containerId).empty();
         $(this.containerId).css("position", "relative");
         $(this.containerId).css("width", this.width);
         $(this.containerId).css("height", this.height);
+        $(this.containerId).css("background-color", "grey");
+        $(this.containerId).append("<div class='viewer-loading-message'><div class='fa-3x'><i class='fas fa-spinner fa-spin'></i></div><span>Loading image...</span></div>");
         this.loadImages(() => {
+            $(this.containerId + ' .viewer-loading-message').remove();
             this.createCanvas(() => {
                 this.render();
             });
@@ -174,7 +178,7 @@ export class Viewer {
             .attr("id", this.id.substr(1))
             .attr("width", this.width)
             .attr("height", this.height)
-            .call(zoomBehaviour);                
+            .call(zoomBehaviour);
 
         this.context = this.canvas.node().getContext("2d");
         

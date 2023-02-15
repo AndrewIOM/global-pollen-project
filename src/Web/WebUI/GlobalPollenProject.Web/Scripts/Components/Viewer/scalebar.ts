@@ -22,6 +22,7 @@ export class ScaleBar {
         this.id = barId;
         this.scale = scale;
         $(this.viewer.containerId).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
+            this.dispose();
             this.initialise();
             this.loaded = true;
         });

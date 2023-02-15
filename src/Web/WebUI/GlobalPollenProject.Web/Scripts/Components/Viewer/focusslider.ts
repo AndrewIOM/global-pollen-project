@@ -19,6 +19,7 @@ export class FocusSlider {
         this.id = sliderId;
         this.viewer = viewer;
         $(this.viewer.containerId).on(ViewerEvent.EVENT_LOADED_IMAGES, () => {
+            this.dispose();
             this.append();
         });
     }
