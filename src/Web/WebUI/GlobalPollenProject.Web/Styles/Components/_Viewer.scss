@@ -6,3 +6,13 @@
 
 #cropping-container img { max-width: none;} /* fix responsive issue*/
 .jcrop-container img { max-width: none; }
+
+
+.viewer-loading-message {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #fff;
+}

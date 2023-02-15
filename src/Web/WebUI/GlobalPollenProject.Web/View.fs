@@ -393,14 +393,14 @@ module Components =
         
     let galleryViewImageList images =
         div [ _class "card" ] [
-            div [ _class "card-header" ] [ str "Select image:" ]
+            div [ _class "card-header" ] [ strf "Select a different view (%i available)" (images |> List.length) ]
             div [ _class "card-block" ] [
                 div [ _class "row"; _id "slide-gallery" ] (images |> List.map(fun i ->
                     div [ _class "slide-gallery-item col-md-3"
                           attr "data-frames" (JsonSerializer.Serialize(i.Frames))
                           attr "data-pixelwidth" (i.PixelWidth.ToString()) ] [
-                        img [ _src i.Frames.Head; _alt "Image preview" ]
-                    ]) )
+                            img [ _src i.FramesSmall.Head; _alt "Image preview" ]
+                    ]))
             ]
         ]
 
@@ -505,24 +505,38 @@ module Home =
 
 module Slide =
     
+    let toInitials (s:string) =
+        s.Split(" ") 
+        |> Array.choose (fun s -> if s.Length > 0 then Some (String([|s.[0]|])) else None)
+        |> String.concat ". "
+
+    let personDtoToLastFirst (s:string) =
+        if s = "Unknown" || String.IsNullOrEmpty(s) then "Unknown"
+        else
+            let lastName = s.Split(". ") |> Seq.last
+            let firstNames = s.Split(". ") |> Seq.rev |> Seq.tail |> String.concat ". "
+            sprintf "%s, %s" lastName firstNames
+
     let citation vm latinName =
         let authors = 
-            [ vm.Slide.CollectorName; vm.Slide.PreppedBy
-              sprintf "%s, %s" vm.Collection.CuratorSurname vm.Collection.CuratorFirstNames ]
+            [ (personDtoToLastFirst vm.Slide.CollectorName); (personDtoToLastFirst vm.Slide.PreppedBy) ]
+            |> List.sort
+            |> List.append [ sprintf "%s, %s" vm.Collection.CuratorSurname (toInitials vm.Collection.CuratorFirstNames) ]
             |> List.filter (fun s -> not (String.IsNullOrEmpty s) && s <> "Unknown")
+            |> List.distinct
         div [ _class "card card-inverse card-primary crop-panel mb-3" ] [
             div [ _class "card-block" ] [
                 h4 [ _class "card-title" ] [ encodedText "Citation" ]
                 p [] [ 
                     if authors.Length = 1 then strf "%s (%i). " authors.Head vm.Collection.Published.Year
-                    else strf "%s (%i). " (authors |> String.concat ";") vm.Collection.Published.Year
+                    else strf "%s (%i). " (authors |> String.concat "; ") vm.Collection.Published.Year
                     strf "%s (%s). " latinName vm.Slide.CollectionSlideId
                     str "Digitised palynological slide. In: "
                     em [] [ str vm.Collection.Name ]
                     strf " (Version %i, published %s). " vm.Collection.Version (vm.Collection.Published.ToString("d"))
                     if String.IsNullOrEmpty(vm.Collection.Institution) |> not then strf "Original material located at %s. " vm.Collection.Institution
                     str "Retrieved from globalpollenproject.org on "
-                    strf "%s."(DateTime.Now.ToString("d"))
+                    strf "%s."(DateTime.Now.ToString("yyyy-MM-dd"))
                 ]
             ]
         ]

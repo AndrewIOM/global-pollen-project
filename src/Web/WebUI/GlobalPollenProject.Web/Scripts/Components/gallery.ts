@@ -3,11 +3,6 @@ import { FocusSlider } from "./Viewer/focusslider";
 import { ScaleBar } from "./Viewer/scalebar";
 import "knockout";
 
-const containerId = "#viewer-container"
-const canvasId = "#viewer-canvas"
-const sliderId = "#viewer-focus-slider"
-const scaleBarId = "#viewer-scaleBar"
-
 export function activate(_: HTMLElement) {
     const image = $(".slide-gallery-item").first();
     if (image) {
@@ -26,6 +21,11 @@ export class Gallery {
     scaleBar: ScaleBar
     //jCropApi: JQuery.Jcrop.Api
     
+    containerId = "#viewer-container"
+    canvasId = "#viewer-canvas"
+    sliderId = "#viewer-focus-slider"
+    scaleBarId = "#viewer-scaleBar"    
+
     /**
      * Creates/updates the image viewer
      * @param {*} frames        an array of image URLs, in focus order
@@ -38,15 +38,15 @@ export class Gallery {
     }
     
     changeImage(frames: string[], pixelWidth: number) {
-        if(this.viewer != null) this.viewer.dispose();
         if(this.slider != null) this.slider.dispose();
         if(this.scaleBar != null) this.scaleBar.dispose();
+        if(this.viewer != null) this.viewer.dispose();
         $("#viewer-container").empty();
-        this.viewer = new Viewer(containerId, canvasId, $(containerId).width(), 500, frames);
+        this.viewer = new Viewer(this.containerId, this.canvasId, $(this.containerId).width(), 500, frames);
         if(frames.length > 1) {
-            this.slider = new FocusSlider(this.viewer, sliderId);
+            this.slider = new FocusSlider(this.viewer, this.sliderId);
         }
-        this.scaleBar = new ScaleBar(this.viewer, scaleBarId, pixelWidth);
+        this.scaleBar = new ScaleBar(this.viewer, this.scaleBarId, pixelWidth);
     }
     
     activateGalleryLinks() {
