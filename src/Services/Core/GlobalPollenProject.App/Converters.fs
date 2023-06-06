@@ -491,7 +491,10 @@ module Dto =
 
 module Traits =
 
-    let toTrait t value value1 value2 =
+    let toTrait t (value: string option) (value1: float option) (value2: float option) =
+        let value = if value.IsSome then value.Value else ""
+        let value1 = if value1.IsSome then value1.Value else Int32.MinValue
+        let value2 = if value2.IsSome then value2.Value else Int32.MinValue
         match t with
         | "shape" -> 
             match value with

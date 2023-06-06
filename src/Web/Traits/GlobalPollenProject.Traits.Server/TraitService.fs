@@ -12,7 +12,7 @@ open GlobalPollenProject.Traits
 open Microsoft.AspNetCore.Authentication
 
 type TraitService(ctx: IRemoteContext, env: IWebHostEnvironment, core:Connections.CoreMicroservice) =
-    inherit RemoteHandler<Client.Main.TraitService>()
+    inherit RemoteHandler<Client.Main.ITraitService>()
 
     override this.Handler =
         {
@@ -20,14 +20,16 @@ type TraitService(ctx: IRemoteContext, env: IWebHostEnvironment, core:Connection
                 return Error Core }
 
             delineate = fun request -> async {
-                return Error Core }
+                return! Connections.CoreActions.Traits.delineateGrainOnSlide request |> core.Apply
+            }
             
             tagTrait = fun request -> async {
-                return Error Core }
+                return! Connections.CoreActions.Traits.tagTrait request |> core.Apply
+            }
 
             signIn = fun () -> async {
                 do! ctx.HttpContext.ChallengeAsync() |> Async.AwaitTask
-                return Some username
+                return Some ""
             }
             
             signOut = fun () -> async {

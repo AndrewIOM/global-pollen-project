@@ -89,7 +89,7 @@ let initModel =
 type ITraitService =
     {
         /// Get a citizen science question from the server.
-        getNextQuestion: unit -> Async<TraitQuestion>
+        getNextQuestion: unit -> Async<TraitQuestion result>
 
         /// Add a book in the collection.
         delineate: DelineateSpecimenRequest -> Async<unit result>
@@ -114,7 +114,8 @@ type ITraitService =
 type Message =
     | SetPage of Page
     | GetQuestion
-    | GotQuestion of TraitQuestion
+    | SkipQuestion
+    | GotQuestion of TraitQuestion result
     | GetSignedInAs
     | RecvSignedInAs of option<string>
     | SendSignIn
@@ -140,13 +141,15 @@ let update remote message model =
     match message with
     | SetPage page ->
         { model with page = page }, Cmd.none
-
+    | SkipQuestion ->
+        { model with question = None }, Cmd.ofMsg GetQuestion
     | GetQuestion ->
         let cmd = Cmd.OfAsync.either remote.getNextQuestion () GotQuestion Error
         { model with question = None }, cmd
     | GotQuestion question ->
-        { model with question = Some question }, Cmd.none
-
+        match question with
+        | Ok q -> { model with question = Some q }, Cmd.none
+        // | Error _ -> model, Cmd.none
     | GetSignedInAs ->
         model, Cmd.OfAuthorized.either remote.getUsername () RecvSignedInAs Error
     | RecvSignedInAs username ->
@@ -244,7 +247,7 @@ let traitQuestion (model:Model) dispatch =
                     h2 { text "How big is the pollen or spore?" }
                     p { text "On the image, make the cross shape fit over the longest and shotest diameters." }
                     button {
-                        on.click (fun _ -> SendTraitTag )
+                        on.click (fun _ -> SendTraitTag |> dispatch )
                         text "I've finished"
                     }
                     button {

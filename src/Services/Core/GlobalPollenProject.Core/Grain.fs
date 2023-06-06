@@ -27,6 +27,7 @@ and IdentifyUnknownGrain = {
 
 and IdentifyTrait = {
     Id: GrainId
+    Image: int
     IdentifiedBy: UserId
     Trait: CitizenScienceTrait
 }
@@ -288,6 +289,7 @@ module Traits =
         identify (continuousTraitTest rnd) userTraitIds traitMeasurements f conf command
 
 
+// TODO - handle specific images used for tagging.
 let identifyTrait rnd (command:IdentifyTrait) state =
     match state with
     | InitialState -> invalidOp "This grain does not exist"

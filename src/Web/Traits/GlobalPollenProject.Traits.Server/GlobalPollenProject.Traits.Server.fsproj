@@ -6,6 +6,7 @@
   <ItemGroup>
     <Compile Include="../../../Shared/Serialisation.fs" />
     <Compile Include="../../../Shared/Connections.fs" />
+    <Compile Include="../../../Shared/Auth.fs" />
     <Compile Include="TraitService.fs" />
     <Compile Include="Index.fs" />
     <Compile Include="Startup.fs" />
@@ -16,8 +17,9 @@
   <ItemGroup>
     <PackageReference Include="Bolero.Server" Version="0.*" />
     <PackageReference Include="Bolero.HotReload.Server" Version="0.*" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="3.1.*" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="6.0.*" />
-    <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.11.6" />
+    <PackageReference Include="Microsoft.FSharpLu.Json" Version="0.11.7" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="5.6.0" />
   </ItemGroup>
 </Project>

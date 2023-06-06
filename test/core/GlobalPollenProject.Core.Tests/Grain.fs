@@ -163,7 +163,7 @@ module ``When tagging morphological traits`` =
     let ``A user can only tag each trait once`` () =
         Given [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser; Temporal = Some time; Spatial = Site latlon }
                 GrainTraitIdentified { Id = grainId; IdentifiedBy = currentUser; Trait = Shape Circular } ]
-        |> When(IdentifyTrait { Id = grainId; IdentifiedBy = currentUser; Trait = Shape Trilobate })
+        |> When(IdentifyTrait { Image = 1; Id = grainId; IdentifiedBy = currentUser; Trait = Shape Trilobate })
         |> ExpectInvalidOp
 
     [<Fact>]
@@ -175,7 +175,7 @@ module ``When tagging morphological traits`` =
                 GrainTraitIdentified { Id = grainId; IdentifiedBy = UserId <| Guid.NewGuid(); Trait = Shape Ovular }
                 GrainTraitIdentified { Id = grainId; IdentifiedBy = UserId <| Guid.NewGuid(); Trait = Shape Circular }
                 GrainTraitIdentified { Id = grainId; IdentifiedBy = UserId <| Guid.NewGuid(); Trait = Shape Circular } ]
-        |> When(IdentifyTrait { Id = grainId; IdentifiedBy = currentUser; Trait = Shape Circular })
+        |> When(IdentifyTrait { Image = 1; Id = grainId; IdentifiedBy = currentUser; Trait = Shape Circular })
         |> Expect [ 
                 GrainTraitIdentified { Id = grainId; IdentifiedBy = currentUser; Trait = Shape Circular }
                 GrainTraitConfirmed { Id = grainId; Trait = ConfirmedShape Circular} ]
@@ -185,7 +185,7 @@ module ``When tagging morphological traits`` =
         Given [ GrainSubmitted { Id = grainId; Images = [testImage]; Owner = currentUser; Temporal = Some time; Spatial = Site latlon }
                 GrainTraitIdentified { Id = grainId; IdentifiedBy = UserId <| Guid.NewGuid(); Trait = Shape Circular }
                 GrainTraitIdentified { Id = grainId; IdentifiedBy = UserId <| Guid.NewGuid(); Trait = Shape Circular } ]
-        |> When(IdentifyTrait { Id = grainId; IdentifiedBy = currentUser; Trait = Shape Circular })
+        |> When(IdentifyTrait { Image = 1; Id = grainId; IdentifiedBy = currentUser; Trait = Shape Circular })
         |> Expect [ 
                 GrainTraitIdentified { Id = grainId; IdentifiedBy = currentUser; Trait = Shape Circular }
                 GrainTraitConfirmed { Id = grainId; Trait = ConfirmedShape Circular} ]

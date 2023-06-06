@@ -46,11 +46,17 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "web", "web", "{CEBA6DB2-2541-468B-A023-60955AFDA37D}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Shared", "Shared", "{AB8F43EB-AD1C-423F-9BF3-39D48E183955}"
-ProjectSection(SolutionItems) = preProject
-	src\Shared\Serialisation.fs = src\Shared\Serialisation.fs
-	src\Shared\Responses.fs = src\Shared\Responses.fs
-	src\Shared\Connections.fs = src\Shared\Connections.fs
-EndProjectSection
+	ProjectSection(SolutionItems) = preProject
+		src\Shared\Serialisation.fs = src\Shared\Serialisation.fs
+		src\Shared\Responses.fs = src\Shared\Responses.fs
+		src\Shared\Connections.fs = src\Shared\Connections.fs
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Traits", "Traits", "{58C54949-65E1-44E3-AF98-F4BD22A664C2}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GlobalPollenProject.Traits.Client", "src\Web\Traits\GlobalPollenProject.Traits.Client\GlobalPollenProject.Traits.Client.fsproj", "{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}"
+EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "GlobalPollenProject.Traits.Server", "src\Web\Traits\GlobalPollenProject.Traits.Server\GlobalPollenProject.Traits.Server.fsproj", "{7FCDEBB5-A821-4C85-9373-11966E42219F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -185,8 +191,33 @@ Global
 		{A3D7C899-FD18-4477-AC08-16FC9083A171}.Release|x64.Build.0 = Release|Any CPU
 		{A3D7C899-FD18-4477-AC08-16FC9083A171}.Release|x86.ActiveCfg = Release|Any CPU
 		{A3D7C899-FD18-4477-AC08-16FC9083A171}.Release|x86.Build.0 = Release|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Debug|x64.Build.0 = Debug|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Debug|x86.Build.0 = Debug|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Release|x64.ActiveCfg = Release|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Release|x64.Build.0 = Release|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Release|x86.ActiveCfg = Release|Any CPU
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7}.Release|x86.Build.0 = Release|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Debug|x64.Build.0 = Debug|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Debug|x86.Build.0 = Debug|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Release|x64.ActiveCfg = Release|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Release|x64.Build.0 = Release|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Release|x86.ActiveCfg = Release|Any CPU
+		{7FCDEBB5-A821-4C85-9373-11966E42219F}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{58C54949-65E1-44E3-AF98-F4BD22A664C2} = {6A072DC4-03CC-433D-B6E9-4992527F5E59}
 		{14C0297F-CDB7-4C79-A7FE-223762659406} = {DA349832-1036-46C5-89CD-0A09C6684FCE}
 		{1E10F823-83D8-48B9-A02B-9E8D2E406D3E} = {14C0297F-CDB7-4C79-A7FE-223762659406}
 		{E157A265-6D60-4429-AA0B-15C271A19424} = {1E10F823-83D8-48B9-A02B-9E8D2E406D3E}
@@ -207,5 +238,7 @@ Global
 		{A3D7C899-FD18-4477-AC08-16FC9083A171} = {F11D01EF-E4BF-4FB9-86EA-422EF5A07FBB}
 		{CEBA6DB2-2541-468B-A023-60955AFDA37D} = {59BF3DA1-2EAA-4702-9142-11A66EB6D319}
 		{AB8F43EB-AD1C-423F-9BF3-39D48E183955} = {DA349832-1036-46C5-89CD-0A09C6684FCE}
+		{CE9C05B0-7B31-4374-B13A-FA466AD4A2A7} = {58C54949-65E1-44E3-AF98-F4BD22A664C2}
+		{7FCDEBB5-A821-4C85-9373-11966E42219F} = {58C54949-65E1-44E3-AF98-F4BD22A664C2}
 	EndGlobalSection
 EndGlobal

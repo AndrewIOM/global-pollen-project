@@ -123,6 +123,7 @@ let domainDependencies =
       GetNeotomaId        = neotomaLink
       GetEolId            = eolLink
       GetTime             = (fun _ -> DateTime.Now)
+      Random              = Random ()
       ValidateTaxon       = isValidTaxon
       CalculateIdentity   = calculateIdentity
       GetImageDimension   = getDimensions }
@@ -329,7 +330,7 @@ module UnknownGrains =
         let user = getCurrentUser() |> UserId
         let traitOrError = Converters.Traits.toTrait req.Trait req.Value req.Value1 req.Value2
         let createCommand userId grainId t =
-            IdentifyTrait { Id = grainId; IdentifiedBy = userId; Trait = t }
+            IdentifyTrait { Id = grainId; IdentifiedBy = userId; Trait = t; Image = req.ImageId }
         createCommand user
         <!> grainIdOrError
         <*> traitOrError

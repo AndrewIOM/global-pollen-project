@@ -49,6 +49,15 @@ services:
     ports:
     - "5102:80"
 
+  web.lab:
+    environment:
+    - ASPNETCORE_ENVIRONMENT=Development
+    - ASPNETCORE_URLS=http://0.0.0.0:80
+    - IdentityUrl= http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5203
+    - CallBackUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5101
+    ports:
+    - "5103:80"
+
   core.eventstore:
     environment:
       - EVENTSTORE_DEV=true

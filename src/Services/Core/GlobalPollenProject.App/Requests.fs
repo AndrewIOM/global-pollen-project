@@ -149,10 +149,11 @@ type IdentifyGrainRequest = {
 [<CLIMutable>]
 type TagTraitRequest = {
     [<Required>] GrainId: Guid
+    [<Required>] ImageId: int
     [<Required>] Trait: string
-    Value: string
-    Value1: float
-    Value2: float
+    Value: string option
+    Value1: float option
+    Value2: float option
 }
 
 [<CLIMutable>]
