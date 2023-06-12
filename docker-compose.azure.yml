@@ -61,11 +61,12 @@ services:
       - EVENTSTORE_DB=/var/lib/eventstore-db
       - EVENTSTORE_INDEX=/var/lib/eventstore-index
       - EVENTSTORE_LOG=/var/log/eventstore
+      - EVENTSTORE_STATS_PERIOD_SEC=86400
     restart: always
     volumes:
       - /data/eventstore-db:/var/lib/eventstore-db
       - /data/eventstore-index:/var/lib/eventstore-index
-      - /var/log/eventstore:/var/log/eventstore
+      - /data/eventstore-logs:/var/log/eventstore
 
   core.readmodel:
     command: redis-server --appendonly yes
