@@ -1,0 +1,10 @@
+group Identity
+Microsoft.EntityFrameworkCore.SqlServer
+Microsoft.AspNetCore.Identity.EntityFrameworkCore
+Microsoft.AspNetCore.Authentication.Facebook
+Microsoft.AspNetCore.Authentication.Twitter
+Microsoft.Extensions.Configuration.Json
+IdentityServer4.AspNetIdentity
+IdentityServer4.EntityFramework
+Giraffe
+SendGrid

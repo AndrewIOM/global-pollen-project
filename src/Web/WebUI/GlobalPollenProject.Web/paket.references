@@ -1,0 +1,7 @@
+group Web
+Giraffe
+Markdig
+Microsoft.AspNet.WebApi.Client
+Microsoft.AspNetCore.Authentication.OpenIdConnect
+Microsoft.Extensions.Http.Polly
+Microsoft.FSharpLu.Json

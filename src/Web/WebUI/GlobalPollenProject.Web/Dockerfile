@@ -1,12 +1,12 @@
-FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 EXPOSE 5000
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
 # set up node
-ENV NODE_VERSION 17.4.0
+ENV NODE_VERSION 20.10.0
 ENV NODE_DOWNLOAD_URL https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.gz
 ENV NODE_DOWNLOAD_SHA 132c61652c315a6f784167b97a53e9638bac45853f1544a84d4cbb90fe7a3bda
 

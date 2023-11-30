@@ -1,0 +1,6 @@
+group Web
+    Microsoft.AspNetCore.Mvc.NewtonsoftJson
+    Swashbuckle.AspNetCore
+    TaskBuilder.fs
+    Microsoft.FSharpLu.Json
+    IdentityServer4.AccessTokenValidation
