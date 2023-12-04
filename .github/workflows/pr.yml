@@ -21,7 +21,6 @@ jobs:
         node-version: 20.x
     - name: Corepack enable
       run: corepack enable
-
     - name: Restore .NET tools
       run: dotnet tool restore
     - name: Restore dependencies

@@ -6,6 +6,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build
 WORKDIR /src
 
 # Copy project and restore as distinct layers
+COPY /.paket ./paket
 COPY /src/Web/WebApi/GlobalPollenProject.Web.API/GlobalPollenProject.Web.API.fsproj /src/Web/WebApi/GlobalPollenProject.Web.API/GlobalPollenProject.Web.API.fsproj
 RUN dotnet restore --disable-parallel /src/Web/WebApi/GlobalPollenProject.Web.API/GlobalPollenProject.Web.API.fsproj
 

@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0-alpine AS build-env
 WORKDIR /src
 
 # Copy project and restore as distinct layers
+COPY /.paket ./paket
 COPY /src/Services/Core/GlobalPollenProject.Core/GlobalPollenProject.Core.fsproj /src/Services/Core/GlobalPollenProject.Core/GlobalPollenProject.Core.fsproj
 COPY /src/Services/Core/GlobalPollenProject.App/GlobalPollenProject.App.fsproj /src/Services/Core/GlobalPollenProject.App/GlobalPollenProject.App.fsproj
 COPY /src/Services/Core/GlobalPollenProject.Persistence/GlobalPollenProject.Persistence.fsproj /src/Services/Core/GlobalPollenProject.Persistence/GlobalPollenProject.Persistence.fsproj
