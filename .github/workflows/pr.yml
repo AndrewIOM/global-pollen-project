@@ -15,6 +15,10 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '8.0.100'
+    - name: Set Node.js 16.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
     - name: Restore .NET tools
       run: dotnet tool restore
     - name: Restore dependencies
