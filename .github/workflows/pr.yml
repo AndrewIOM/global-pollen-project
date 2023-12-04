@@ -14,10 +14,12 @@ jobs:
     - name: Setup .NET 
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.100'
+        dotnet-version: '8.0.100'
     - name: Restore dependencies
       run: dotnet restore gpp.sln
     - name: Build
       run: dotnet build gpp.sln
-    - name: Build
+    - name: Run tests
       run: dotnet test gpp.sln
+    - name: Build docker images
+      run: docker compose -f docker-compose.yml build
