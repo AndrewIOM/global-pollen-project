@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy-chiseled AS base
 WORKDIR /app
 EXPOSE 5000
 

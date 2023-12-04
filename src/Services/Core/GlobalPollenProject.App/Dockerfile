@@ -13,7 +13,7 @@ COPY /src/Shared /src/Shared
 WORKDIR /src/Services/Core/GlobalPollenProject.App
 RUN dotnet publish -c Release -o /app
 
-FROM mcr.microsoft.com/dotnet/aspnet:8.0
+FROM mcr.microsoft.com/dotnet/runtime:8.0-jammy-chiseled
 EXPOSE 5000
 WORKDIR /app
 COPY --from=build-env /app .
