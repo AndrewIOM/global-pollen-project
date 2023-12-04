@@ -15,6 +15,8 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '8.0.100'
+    - name: Restore .NET tools
+      run: dotnet tool restore
     - name: Restore dependencies
       run: dotnet restore gpp.sln
     - name: Build
