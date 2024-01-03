@@ -59,15 +59,7 @@ const config: webpack.Configuration = {
             filename: './../css/styles.css',
             chunkFilename: "[id].css",
         }),
-        new CssMinimizerPlugin(),
-        // new OptimiseCssAssets({
-        //     assetNameRegExp: /\.min\.css$/,
-        //     cssProcessorOptions: { discardComments: { removeAll: true } }
-        // }),
-        // new UglifyJSPlugin({
-        //     sourceMap: true,
-        //     include: /\.min\.js$/
-        // })
+        new CssMinimizerPlugin()
     ],
 }
 

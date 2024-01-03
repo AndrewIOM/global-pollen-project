@@ -1,0 +1,5 @@
+FSharp.Core
+group Gateway
+Microsoft.AspNetCore.Authentication.JwtBearer
+Microsoft.Extensions.Configuration.Json
+Ocelot

@@ -14,10 +14,20 @@ jobs:
     - name: Setup .NET 
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '6.0.100'
+        dotnet-version: '8.0.100'
+    - name: Set Node.js 20.x
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+    - name: Corepack enable
+      run: corepack enable
+    - name: Restore .NET tools
+      run: dotnet tool restore
     - name: Restore dependencies
       run: dotnet restore gpp.sln
     - name: Build
       run: dotnet build gpp.sln
-    - name: Build
+    - name: Run tests
       run: dotnet test gpp.sln
+    - name: Build docker images
+      run: docker compose -f docker-compose.yml build

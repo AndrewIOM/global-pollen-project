@@ -85,7 +85,7 @@ module Url =
 [<AutoOpen>]
 module EmailAddress =
     type EmailAddress = EmailAddress of string
-    let create mail =
+    let create (mail:string) =
         let regex = Text.RegularExpressions.Regex(@"\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*")
         match regex.IsMatch mail with
         | true -> EmailAddress mail |> Ok

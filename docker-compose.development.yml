@@ -10,6 +10,8 @@ services:
     - ASPNETCORE_URLS=http://0.0.0.0:80
 
   webapigw:
+    environment:
+    - ASPNETCORE_URLS=http://0.0.0.0:80
     ports:
     - "5202:80"
 
@@ -22,6 +24,7 @@ services:
       - "identity.sqldb:identitydb"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://0.0.0.0:80
       - WebsiteUrl=http://${GPP_EXTERNAL_DNS_NAME_OR_IP}:5101
 
   identity.sqldb:

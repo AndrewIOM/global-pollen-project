@@ -1,0 +1,6 @@
+group Core
+EventStore.Client
+Microsoft.FSharpLu.Json
+Microsoft.Azure.Storage.Blob
+SixLabors.ImageSharp
+StackExchange.Redis

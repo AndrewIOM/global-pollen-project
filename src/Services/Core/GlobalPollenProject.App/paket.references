@@ -1,0 +1,7 @@
+FSharp.Core
+group Core
+Giraffe
+Microsoft.FSharpLu.Json
+Microsoft.AspNetCore.Authentication.JwtBearer
+Microsoft.Extensions.Configuration.Json
+System.ComponentModel.Annotations

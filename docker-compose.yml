@@ -36,7 +36,7 @@ services:
       - Authentication__Facebook__AppSecret=${FACEBOOK_SECRET}
       - Authentication__Twitter__ConsumerKey=${TWITTER_KEY}
       - Authentication__Twitter__ConsumerSecret=${TWITTER_SECRET}
-      - ConnectionStrings__UserConnection=Server=identitydb,1433;Database=${USER_SQL_DB};User=${USER_SQL_USER};Password=${USER_SQL_PASSWORD}
+      - ConnectionStrings__UserConnection=Server=identitydb,1433;Database=${USER_SQL_DB};User=${USER_SQL_USER};Password=${USER_SQL_PASSWORD};TrustServerCertificate=true
       - EmailFromName=${EMAIL_FROM_NAME}
       - EmailFromAddress=${EMAIL_FROM_ADDR}
       - SendGridKey=${SENDGRID_KEY}

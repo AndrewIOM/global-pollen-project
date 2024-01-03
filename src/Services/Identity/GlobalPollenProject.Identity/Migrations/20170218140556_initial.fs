@@ -1,3 +1,4 @@
+#nowarn "0044"
 namespace GlobalPollenProject.Auth.Migrations
 
 open Microsoft.EntityFrameworkCore.Infrastructure

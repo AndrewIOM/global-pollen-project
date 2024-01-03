@@ -112,7 +112,7 @@ type Startup (env: IWebHostEnvironment, configuration: IConfiguration) =
         this.AddHttpClientServices(services) |> ignore
         this.AddCustomAuthentication(services) |> ignore
         this.AddHealthChecks(services) |> ignore
-        let customSettings = JsonSerializerSettings(Culture = CultureInfo("en-GB"),
+        let customSettings = JsonSerializerSettings(Culture = CultureInfo.InvariantCulture,
                                                     ContractResolver = Serialization.CamelCasePropertyNamesContractResolver())
         customSettings.Converters.Add(Microsoft.FSharpLu.Json.CompactUnionJsonConverter(true))
         services.AddSingleton<Json.ISerializer>(NewtonsoftJson.Serializer(customSettings)) |> ignore

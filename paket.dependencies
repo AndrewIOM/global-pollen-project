@@ -1,0 +1,81 @@
+source https://api.nuget.org/v3/index.json
+
+framework: net8.0
+storage: none
+
+nuget FSharp.Core ~> 8
+
+group Gateway
+    
+    source https://api.nuget.org/v3/index.json
+    storage: none
+    
+    nuget Microsoft.AspNetCore.Authentication.JwtBearer ~> 8
+    nuget Microsoft.Extensions.Configuration.Json ~> 8
+    nuget Ocelot ~> 22
+    nuget System.IdentityModel.Tokens.Jwt ~> 7.0.3
+
+group Core
+
+    source https://api.nuget.org/v3/index.json
+    storage: none
+
+    nuget EventStore.Client ~> 22 # Legacy version for ES v5
+    nuget Giraffe ~> 6.2
+    nuget Microsoft.FSharpLu.Json == 0.11.7
+    nuget Microsoft.AspNetCore.Authentication.JwtBearer ~> 8
+    nuget Microsoft.Azure.Storage.Blob ~> 11.2.3
+    nuget Microsoft.Extensions.Configuration ~> 8
+    nuget Microsoft.Extensions.Configuration.FileExtensions ~> 8
+    nuget Microsoft.Extensions.Configuration.Json ~> 8
+    nuget Newtonsoft.Json ~> 13
+    nuget SixLabors.ImageSharp ~> 1.0.4 # v3 available
+    nuget StackExchange.Redis ~> 2
+    nuget System.ComponentModel.Annotations ~> 5
+
+group Identity
+
+    source https://api.nuget.org/v3/index.json
+    storage: none
+
+    nuget Microsoft.EntityFrameworkCore ~> 8
+    nuget Microsoft.EntityFrameworkCore.SqlServer ~> 8
+    nuget Microsoft.AspNetCore.Identity.EntityFrameworkCore ~> 8
+    nuget Microsoft.AspNetCore.Authentication.Facebook ~> 8
+    nuget Microsoft.AspNetCore.Authentication.Twitter ~> 8
+    nuget Microsoft.Extensions.Configuration ~> 8
+    nuget Microsoft.Extensions.Configuration.FileExtensions ~> 8
+    nuget Microsoft.Extensions.Configuration.Json ~> 8
+    nuget IdentityServer4.AspNetIdentity ~> 3 # v4 available
+    nuget IdentityServer4.EntityFramework ~> 3 # v4 available
+    nuget Giraffe ~> 6.2
+    nuget Giraffe.ViewEngine ~> 1 # v2 available
+    nuget SendGrid ~> 9
+
+group Web
+
+    source https://api.nuget.org/v3/index.json
+    storage: none
+
+    nuget Microsoft.AspNetCore.Mvc.NewtonsoftJson ~> 8
+    nuget Swashbuckle.AspNetCore ~> 6
+    nuget TaskBuilder.fs ~> 2.1
+    nuget IdentityServer4.AccessTokenValidation ~> 3.0.1
+    nuget Giraffe ~> 6.2
+    nuget Markdig ~> 0.34
+    nuget Microsoft.AspNet.WebApi.Client ~> 6
+    nuget Microsoft.AspNetCore.Authentication.OpenIdConnect ~> 8
+    nuget Microsoft.Extensions.Http.Polly ~> 8
+    nuget Microsoft.FSharpLu.Json ~> 0.11.7
+    nuget Polly ~> 8.2
+    nuget Polly.Extensions.Http ~> 3
+    nuget System.IdentityModel.Tokens.Jwt ~> 7
+
+group Test
+
+    source https://api.nuget.org/v3/index.json
+    storage: none
+
+    nuget xunit
+    nuget xunit.runner.visualstudio
+    nuget Microsoft.NET.Test.Sdk
