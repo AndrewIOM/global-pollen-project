@@ -14,11 +14,11 @@ COPY /src/Web/Lab /src/Web/Lab
 COPY /src/Shared /src/Shared
 COPY /src/Services/Core /src/Services/Core
 WORKDIR /src/Web/Lab/GlobalPollenProject.Lab.Server
-RUN dotnet publish -c Release -o /app
+RUN dotnet publish -c Release -r linux-x64 -o /app
 
 FROM build AS publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app .
-ENTRYPOINT ["dotnet", "GlobalPollenProject.Lab.Server.dll"]
+ENTRYPOINT ["./GlobalPollenProject.Lab.Server"]

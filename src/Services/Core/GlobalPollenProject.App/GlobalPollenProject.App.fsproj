@@ -6,6 +6,7 @@
     <AssemblyName>GlobalPollenProject.App</AssemblyName>
     <PackageId>GlobalPollenProject.App</PackageId>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="ReadStoreKeys.fs" />

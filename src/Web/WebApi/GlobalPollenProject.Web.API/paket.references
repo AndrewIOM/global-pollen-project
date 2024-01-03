@@ -1,3 +1,4 @@
+FSharp.Core
 group Web
     Microsoft.AspNetCore.Mvc.NewtonsoftJson
     Swashbuckle.AspNetCore

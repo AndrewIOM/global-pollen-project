@@ -1,3 +1,4 @@
+FSharp.Core
 group Identity
 Microsoft.EntityFrameworkCore.SqlServer
 Microsoft.AspNetCore.Identity.EntityFrameworkCore

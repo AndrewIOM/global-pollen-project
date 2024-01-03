@@ -220,7 +220,7 @@ type Startup () =
                 opt.RequireHttpsMetadata <- false
                 opt.Audience <- "core" ) |> ignore
         services.AddGiraffe() |> ignore
-        let customSettings = Newtonsoft.Json.JsonSerializerSettings(Culture = CultureInfo("en-GB"))
+        let customSettings = Newtonsoft.Json.JsonSerializerSettings(Culture = CultureInfo.InvariantCulture)
         customSettings.Converters.Add(Microsoft.FSharpLu.Json.CompactUnionJsonConverter(true))
         services.AddSingleton<Json.ISerializer>(NewtonsoftJson.Serializer(customSettings)) |> ignore    
     
